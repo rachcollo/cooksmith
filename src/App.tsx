@@ -1,17 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { BookOpen, CalendarDays, Check, ChevronLeft, ExternalLink, Flame, Home, ListChecks, PackageOpen, Plus, Search, ShoppingBasket, Trash2, X } from 'lucide-react'
 import { days, recipes as seeded } from './data'
-import { useStoredState } from './hooks'
 import type { PantryItem, Plan, Recipe } from './types'
+import { Auth } from './Auth'
+import { supabase } from './supabase'
+import { useCooksmithData } from './useCooksmithData'
 
 type Tab = 'home'|'recipes'|'pantry'|'plan'|'shop'
 const tabs: {id:Tab;label:string;icon:typeof Home}[]=[{id:'home',label:'Home',icon:Home},{id:'recipes',label:'Recipes',icon:BookOpen},{id:'pantry',label:'Pantry',icon:PackageOpen},{id:'plan',label:'Plan',icon:CalendarDays},{id:'shop',label:'Shop',icon:ShoppingBasket}]
 
-export default function App(){
- const [tab,setTab]=useState<Tab>('home'); const [personal,setPersonal]=useStoredState<Recipe[]>('cooksmith-recipes',[]); const [pantry,setPantry]=useStoredState<PantryItem[]>('cooksmith-pantry',[]); const [plan,setPlan]=useStoredState<Plan>('cooksmith-plan',{}); const [view,setView]=useState<Recipe|null>(null); const [addRecipe,setAddRecipe]=useState(false)
+export default function App(){const [session,setSession]=useState<Session|null>(null);const [checking,setChecking]=useState(true);useEffect(()=>{supabase.auth.getSession().then(({data})=>{setSession(data.session);setChecking(false)});const {data}=supabase.auth.onAuthStateChange((_event,next)=>{setSession(next);setChecking(false)});return()=>data.subscription.unsubscribe()},[]);if(checking)return <div className="splash"><span className="mark">C</span><p>Heating the forge…</p></div>;return session?<CooksmithApp session={session}/>:<Auth/>}
+
+function CooksmithApp({session}:{session:Session}){
+ const [tab,setTab]=useState<Tab>('home'); const {personal,setPersonal,pantry,setPantry,plan,setPlan,loading}=useCooksmithData(session.user.id); const [view,setView]=useState<Recipe|null>(null); const [addRecipe,setAddRecipe]=useState(false)
  const all=[...personal,...seeded]
  const content=tab==='home'?<HomeView recipes={all} plan={plan} pantry={pantry} go={setTab} open={setView}/>:tab==='recipes'?<Recipes recipes={all} open={setView} add={()=>setAddRecipe(true)}/>:tab==='pantry'?<Pantry items={pantry} set={setPantry}/>:tab==='plan'?<Planner recipes={all} plan={plan} set={setPlan} open={setView}/>:<Shopping recipes={all} plan={plan} pantry={pantry}/>
- return <div className="app"><header><button className="brand" onClick={()=>setTab('home')}><span className="mark">C</span><span>COOKSMITH<small>Forge a better week</small></span></button><button className="avatar">RC</button></header><main>{content}</main><nav>{tabs.map(t=><button key={t.id} className={tab===t.id?'active':''} onClick={()=>setTab(t.id)}><t.icon size={21}/><span>{t.label}</span></button>)}</nav>{view&&<RecipeDetail recipe={view} close={()=>setView(null)}/>} {addRecipe&&<AddRecipe close={()=>setAddRecipe(false)} save={r=>{setPersonal([r,...personal]);setAddRecipe(false);setView(r)}}/>}</div>
+ const initials=(session.user.email||'CS').slice(0,2).toUpperCase()
+ if(loading)return <div className="splash"><span className="mark">C</span><p>Checking what’s in the pantry…</p></div>
+ return <div className="app"><header><button className="brand" onClick={()=>setTab('home')}><span className="mark">C</span><span>COOKSMITH<small>Forge a better week</small></span></button><button className="avatar" title="Sign out" onClick={()=>confirm('Sign out of Cooksmith?')&&supabase.auth.signOut()}>{initials}</button></header><main>{content}</main><nav>{tabs.map(t=><button key={t.id} className={tab===t.id?'active':''} onClick={()=>setTab(t.id)}><t.icon size={21}/><span>{t.label}</span></button>)}</nav>{view&&<RecipeDetail recipe={view} close={()=>setView(null)}/>} {addRecipe&&<AddRecipe close={()=>setAddRecipe(false)} save={r=>{setPersonal([r,...personal]);setAddRecipe(false);setView(r)}}/>}</div>
 }
 
 function HomeView({recipes,plan,pantry,go,open}:{recipes:Recipe[];plan:Plan;pantry:PantryItem[];go:(t:Tab)=>void;open:(r:Recipe)=>void}){const planned=Object.values(plan).filter(Boolean).length;return <><section className="hero"><p className="eyebrow">SUNDAY, 12 JULY</p><h1>Righto. What’s for dinner?</h1><p>You’ve got enough decisions to make. Let’s make this one less annoying.</p><button className="primary" onClick={()=>go('plan')}>Plan the week <CalendarDays size={18}/></button></section><section className="week-card"><div><p className="eyebrow">THIS WEEK</p><h2>{planned?`${planned} meal${planned===1?'':'s'} sorted`:'A beautifully blank slate'}</h2><p>{planned?'Look at you. Practically organised.':'No, you don’t need to plan all seven nights.'}</p></div><button className="round" onClick={()=>go('plan')}>→</button></section><SectionTitle title="Quick wins" subtitle="Dinner without the dramatic subplot." action="See all" click={()=>go('recipes')}/><div className="card-row">{recipes.filter(r=>r.time<=25).slice(0,4).map(r=><RecipeCard key={r.id} recipe={r} open={open}/>)}</div><section className="pantry-call"><div className="pantry-icon">🥫</div><div><p className="eyebrow">THE PANTRY</p><h2>{pantry.length?`${pantry.length} things kicking around`:'What have you got?'}</h2><p>{pantry.length?'Keep it honest-ish. We won’t audit you.':'Add the basics. We’ll help make sense of the rest.'}</p></div><button onClick={()=>go('pantry')}>Have a look →</button></section></>}

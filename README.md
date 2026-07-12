@@ -9,14 +9,15 @@ A deliberately lean, mobile-first prototype for testing Cooksmith with real hous
 - Lightweight pantry list
 - Seven-day meal planner
 - Shopping list generated from the meal plan
-- Browser persistence for zero-setup product testing
+- Supabase email magic-link authentication
+- Private household persistence with row-level security
 
 ## Run locally
 
-```bash
-npm install
-npm run dev
-```
+1. Run `supabase/migrations/001_initial_schema.sql` in the Supabase SQL Editor.
+2. Copy `.env.example` to `.env.local`.
+3. Add the Supabase Project URL and publishable/anon key.
+4. Run `npm install` then `npm run dev`.
 
 ## Production build
 
@@ -24,4 +25,4 @@ npm run dev
 npm run build
 ```
 
-The output is written to `dist/` and can be deployed to Vercel or Netlify. Browser storage is intentionally used in this first product prototype. Supabase authentication, household data and row-level security are the next hardening step before broader testing.
+The output is written to `dist/` and can be deployed to Vercel. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` to the Vercel project settings before deployment. Never add the service-role key to the browser or repository.
