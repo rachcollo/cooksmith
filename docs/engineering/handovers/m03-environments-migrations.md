@@ -3,7 +3,7 @@
 - **Date:** 2026-07-14
 - **Branch:** `m03-environments-migrations`
 - **Target:** `v2`
-- **Commit:** See the local completion commit recorded in Git history and the final handover.
+- **Commit:** `98620b6`
 - **Pull request:** Not created. The branch was not published.
 - **Status:** Implemented, runtime validation pending
 
