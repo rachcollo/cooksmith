@@ -25,6 +25,9 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - v2 project conventions: [Project structure](engineering/v2/project-structure.md)
 - v2 environment and preview: [Environment and preview setup](engineering/v2/environment-and-preview.md)
 - v2 dependency policy: [Dependency management](engineering/v2/dependency-management.md)
+- v2 database workflow: [Environment and migration discipline](engineering/v2/database-workflow.md)
+- Supabase staging setup: [Staging project guide](engineering/v2/staging-supabase-setup.md)
+- Milestone 3 completion report: [Environment and migration discipline](engineering/reports/m03-environments-migrations.md)
 - Milestone 2 completion report: [v2 application shell and quality baseline](engineering/reports/m02-v2-application-shell.md)
 
 ## Reference material

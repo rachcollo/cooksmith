@@ -26,3 +26,4 @@ ADRs record durable technical and delivery decisions that affect Cooksmith v2. T
 | [005](005-deterministic-logic-separate-from-ai.md) | Accepted | Keep deterministic logic separate from AI |
 | [006](006-fortnight-planning.md) | Accepted | Use fortnight planning rather than week-only planning |
 | [007](007-shopping-list-copy-export.md) | Accepted | Use shopping-list copy export before retailer API integration |
+| [008](008-isolate-v2-database-assets.md) | Accepted | Isolate v2 database assets from the prototype schema |
