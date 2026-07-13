@@ -1,0 +1,63 @@
+name: v2 quality
+
+on:
+  pull_request:
+    branches: [v2]
+  push:
+    branches: [v2]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate v2
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use pinned Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install pinned dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run unit and integration tests
+        run: npm run test
+
+      - name: Build production assets
+        run: npm run build
+
+      - name: Install Chromium for smoke tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end smoke tests
+        run: npm run test:e2e
+
+      - name: Upload smoke-test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
