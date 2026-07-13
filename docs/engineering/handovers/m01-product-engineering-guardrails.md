@@ -25,7 +25,7 @@ Give Cooksmith v2 a clear product and engineering decision framework before appl
 - No pull-request template, ADR structure, milestone handover process or governance checklists existed.
 - `package.json` defined `dev`, `build`, `lint` and `preview`. It did not define `typecheck` or `test`.
 - Immediate governance risks were unclear document authority, no architecture decision trail, no PR controls, a broken lint baseline, missing test and typecheck commands, dependencies declared as `latest`, no CI quality gate and no established v2 integration branch.
-- The supplied Product Specification was not available in the attachments or repository. Its authority and missing status are explicit in the documentation index so contributors do not invent a replacement.
+- The approved Product Specification v2.0 was added after the initial Milestone 1 commit and is recorded as authority priority 2.
 
 ## Changes made
 
@@ -82,7 +82,6 @@ Review `docs/README.md`, follow its links, then compare `AGENTS.md`, the PR temp
 
 ## Known limitations
 
-- The authoritative Product Specification was named but not supplied. It must be added unchanged when available.
 - The existing lint command is not operational.
 - Typecheck and test commands do not exist.
 - There is no CI workflow or automated accessibility check.

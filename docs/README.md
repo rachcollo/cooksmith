@@ -7,12 +7,10 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 | Priority | Document | Role | Repository status |
 |---:|---|---|---|
 | 1 | [Product Principles](product/Cooksmith_Product_Principles.md) | Governing product and delivery lens | Available |
-| 2 | Cooksmith Product Specification | Defines what Cooksmith is | Not supplied to this repository at Milestone 1 |
+| 2 | [Product Specification](product/Cooksmith_Product_Specification.md) | Defines what Cooksmith is | Available |
 | 3 | [Functional Specification and User Story Catalogue](product/Cooksmith_Functional_Specification_and_User_Story_Catalogue.md) | Defines expected behaviour | Available |
 | 4 | [Technical Architecture Specification](engineering/Cooksmith_Technical_Architecture_Specification.md) | Defines the approved target architecture | Available |
 | 5 | [Implementation Roadmap](engineering/Cooksmith_Implementation_Roadmap.md) | Defines milestone sequence and delivery scope | Available |
-
-The Product Specification remains authoritative at priority 2 even though its content was not available for this milestone. Do not infer, reconstruct or replace it. Add the approved source unchanged when it becomes available, then update this index.
 
 ## Engineering governance
 
