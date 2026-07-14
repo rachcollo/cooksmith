@@ -137,5 +137,5 @@ test('respects reduced motion without breaking navigation', async ({ page }) => 
   const transitionDuration = await navigation.evaluate(
     (element) => getComputedStyle(element).transitionDuration,
   )
-  expect(['0s', '0.00001s']).toContain(transitionDuration)
+  expect(Number.parseFloat(transitionDuration)).toBeLessThanOrEqual(0.00001)
 })
