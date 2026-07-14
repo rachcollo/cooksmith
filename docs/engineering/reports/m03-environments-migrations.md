@@ -133,7 +133,7 @@ Commit the genuinely generated `database.types.ts` if it differs. Do not bypass 
 ## 14. Git handover
 
 - **Local branch:** `m03-environments-migrations`
-- **Local completion commit:** This report is included in the completion commit. Record its hash from Git history and the final task handover.
+- **Local completion commit:** `98620b6`
 - **Published:** No
 - **Manual publishing command:** `git push -u origin m03-environments-migrations`
 
