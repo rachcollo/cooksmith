@@ -95,6 +95,15 @@ Follow [AGENTS.md](AGENTS.md), the authoritative [documentation index](docs/READ
 
 Dependency changes must be intentional, exact-versioned and accompanied by a regenerated lockfile. See [dependency management](docs/engineering/v2/dependency-management.md).
 
+## Engineering standards
+
+- [Codex build rules](docs/engineering/CODEX_BUILD_RULES.md)
+- [Development standards](docs/engineering/DEVELOPMENT_STANDARDS.md)
+- [Database standards](docs/engineering/DATABASE_STANDARDS.md)
+- [Testing standards](docs/engineering/TESTING_STANDARDS.md)
+- [Release checklist](docs/engineering/RELEASE_CHECKLIST.md)
+- [Architecture decisions](docs/engineering/ARCHITECTURE_DECISIONS.md)
+
 ## Current limitations
 
 - The current v2 routes are purposeful placeholders, not product workflows.

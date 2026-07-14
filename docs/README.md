@@ -15,6 +15,12 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 ## Engineering governance
 
 - Contributor rules: [`AGENTS.md`](../AGENTS.md)
+- Permanent Codex workflow: [Codex build rules](engineering/CODEX_BUILD_RULES.md)
+- Development standards: [Development standards](engineering/DEVELOPMENT_STANDARDS.md)
+- Database standards: [Database standards](engineering/DATABASE_STANDARDS.md)
+- Testing standards: [Testing standards](engineering/TESTING_STANDARDS.md)
+- Release and merge checks: [Release checklist](engineering/RELEASE_CHECKLIST.md)
+- Architecture decision guidance: [Architecture decisions](engineering/ARCHITECTURE_DECISIONS.md)
 - Architecture decisions: [ADR index](architecture/decisions/README.md)
 - ADR template: [ADR template](architecture/decisions/000-template.md)
 - Cost review: [Cost approval checklist](engineering/checklists/cost-approval.md)
@@ -31,6 +37,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - v2 core household schema: [Core household schema](engineering/v2/core-household-schema.md)
 - v2 authorisation and RLS: [Authorisation and row level security](engineering/v2/authorisation-and-row-level-security.md)
 - Milestone 5B completion report: [Authorisation helpers and row level security](engineering/reports/m05b-rls-authorisation.md)
+- Engineering standards foundation report: [Completion report](engineering/reports/engineering-standards-foundation.md)
 - Milestone 5A completion report: [Core household schema](engineering/reports/m05a-core-household-schema.md)
 - Milestone 4 completion report: [Design system, routing and accessible navigation](engineering/reports/m04-design-routing-navigation.md)
 - Milestone 3 completion report: [Environment and migration discipline](engineering/reports/m03-environments-migrations.md)

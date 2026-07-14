@@ -11,7 +11,7 @@ What problem or constraint requires a durable decision?
 
 What has been decided?
 
-## Options considered
+## Alternatives
 
 - **Option:** Summary and reason accepted or rejected.
 
@@ -19,9 +19,17 @@ What has been decided?
 
 What becomes easier, harder, required or intentionally deferred?
 
+## Security impact
+
+State changes to trust boundaries, permissions, secrets, privacy, abuse cases and required security tests. Use `None` only with a reason.
+
 ## Cost impact
 
 State expected monthly and annual cost, including `A$0` where applicable. Link the cost approval if required.
+
+## Migration impact
+
+State data, API, deployment, compatibility and rollback or forward-fix implications. Use `None` only with a reason.
 
 ## Product Principles supported
 

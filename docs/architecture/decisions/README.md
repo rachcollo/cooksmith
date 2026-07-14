@@ -13,7 +13,9 @@ ADRs record durable technical and delivery decisions that affect Cooksmith v2. T
 
 ## Status values
 
-`Proposed`, `Accepted`, `Rejected`, `Superseded` or `Deprecated`.
+`Proposed`, `Accepted`, `Superseded` or `Rejected`.
+
+See the permanent [architecture decision standards](../../engineering/ARCHITECTURE_DECISIONS.md) for required sections and guidance on when a new ADR is necessary.
 
 ## Decision index
 
