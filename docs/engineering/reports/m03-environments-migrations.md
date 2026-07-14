@@ -22,17 +22,17 @@ Milestone 3 establishes a repository-pinned Supabase workflow for Cooksmith v2. 
 
 ## 4. Supabase structure
 
-| File | Purpose |
-| --- | --- |
-| `supabase/config.toml` | Local v2 project and service configuration |
-| `supabase/migrations/20260714000100_create_v2_infrastructure_baseline.sql` | Non-domain `cooksmith.infrastructure_health` baseline |
-| `supabase/seed.sql` | Deterministic infrastructure seed |
-| `supabase/tests/0001_infrastructure_baseline.test.sql` | pgTAP schema, table, key and seed tests |
-| `supabase/prototype-migrations/001_initial_schema.sql` | Preserved prototype history outside v2 execution |
-| `src/infrastructure/database/generated/database.types.ts` | Generated and current local-schema types |
-| `scripts/check-database-prerequisites.mjs` | Runtime and pinned-tool checks |
-| `scripts/check-database-config.mjs` | Local-only configuration checks |
-| `scripts/database-types.mjs` | Local generation, repository formatting and stale-type checking |
+| File                                                                       | Purpose                                                         |
+| -------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `supabase/config.toml`                                                     | Local v2 project and service configuration                      |
+| `supabase/migrations/20260714000100_create_v2_infrastructure_baseline.sql` | Non-domain `cooksmith.infrastructure_health` baseline           |
+| `supabase/seed.sql`                                                        | Deterministic infrastructure seed                               |
+| `supabase/tests/0001_infrastructure_baseline.test.sql`                     | pgTAP schema, table, key and seed tests                         |
+| `supabase/prototype-migrations/001_initial_schema.sql`                     | Preserved prototype history outside v2 execution                |
+| `src/infrastructure/database/generated/database.types.ts`                  | Generated and current local-schema types                        |
+| `scripts/check-database-prerequisites.mjs`                                 | Runtime and pinned-tool checks                                  |
+| `scripts/check-database-config.mjs`                                        | Local-only configuration checks                                 |
+| `scripts/database-types.mjs`                                               | Local generation, repository formatting and stale-type checking |
 
 ## 5. Tooling
 
@@ -45,11 +45,11 @@ Milestone 3 establishes a repository-pinned Supabase workflow for Cooksmith v2. 
 
 ## 6. Environment model
 
-| Environment | Frontend | Supabase | Data |
-| --- | --- | --- | --- |
-| Development | Local Vite or remote branch work | Local Supabase | Synthetic seeds |
-| Preview/Staging | Vercel Preview | One free staging project | Synthetic or controlled test data |
-| Production | Future v2 Vercel production | Future v2 production project | Real customer data after approval |
+| Environment     | Frontend                         | Supabase                     | Data                              |
+| --------------- | -------------------------------- | ---------------------------- | --------------------------------- |
+| Development     | Local Vite or remote branch work | Local Supabase               | Synthetic seeds                   |
+| Preview/Staging | Vercel Preview                   | One free staging project     | Synthetic or controlled test data |
+| Production      | Future v2 Vercel production      | Future v2 production project | Real customer data after approval |
 
 CI uses isolated local services. Preview must use staging and never production. The current prototype production environment remains untouched.
 
@@ -69,24 +69,24 @@ GitHub Actions installs pinned dependencies, validates database configuration, s
 
 ## 10. Validation results
 
-| Command or check | Result | Notes |
-| --- | --- | --- |
-| `npm ci` | Passed | Clean GitHub-hosted installation |
-| `npm run db:config:check` | Passed | Local-only configuration verified |
-| `npm run db:start` | Passed | Isolated Supabase started remotely |
-| `npm run db:reset` | Passed | Fresh migration and seed applied |
-| `npm run db:lint` | Passed | Database lint completed |
-| `npm run db:test` | Passed | 1 file and 4 pgTAP checks |
-| `npm run db:types` | Passed | Types generated and formatted |
-| Generated type freshness | Passed | Committed output matches local schema |
-| `npm run format:check` | Passed | Repository formatting current |
-| `npm run lint` | Passed | Zero warnings |
-| `npm run typecheck` | Passed | Strict TypeScript checks |
-| `npm run test` | Passed | 4 files and 14 tests |
-| `npm run build` | Passed | Production build completed |
-| Playwright smoke and accessibility checks | Passed | Browser validation completed |
-| `npm run db:stop` | Passed | Isolated services stopped |
-| Secret and sensitive-file checks | Passed | No credential material found |
+| Command or check                          | Result | Notes                                 |
+| ----------------------------------------- | ------ | ------------------------------------- |
+| `npm ci`                                  | Passed | Clean GitHub-hosted installation      |
+| `npm run db:config:check`                 | Passed | Local-only configuration verified     |
+| `npm run db:start`                        | Passed | Isolated Supabase started remotely    |
+| `npm run db:reset`                        | Passed | Fresh migration and seed applied      |
+| `npm run db:lint`                         | Passed | Database lint completed               |
+| `npm run db:test`                         | Passed | 1 file and 4 pgTAP checks             |
+| `npm run db:types`                        | Passed | Types generated and formatted         |
+| Generated type freshness                  | Passed | Committed output matches local schema |
+| `npm run format:check`                    | Passed | Repository formatting current         |
+| `npm run lint`                            | Passed | Zero warnings                         |
+| `npm run typecheck`                       | Passed | Strict TypeScript checks              |
+| `npm run test`                            | Passed | 4 files and 14 tests                  |
+| `npm run build`                           | Passed | Production build completed            |
+| Playwright smoke and accessibility checks | Passed | Browser validation completed          |
+| `npm run db:stop`                         | Passed | Isolated services stopped             |
+| Secret and sensitive-file checks          | Passed | No credential material found          |
 
 Validation evidence: GitHub Actions `v2 quality` run 9 on PR #4.
 
