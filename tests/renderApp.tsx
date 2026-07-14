@@ -3,7 +3,7 @@ import { RouterProvider } from 'react-router-dom'
 
 import { AppErrorBoundary } from '../src/app/errors/AppErrorBoundary'
 import { AppProviders } from '../src/app/providers/AppProviders'
-import { createTestRouter } from '../src/app/router/createAppRouter'
+import { createRouteErrorTestRouter, createTestRouter } from '../src/app/router/createAppRouter'
 import type { PublicEnv } from '../src/config/env'
 
 const defaultConfig: PublicEnv = { appEnvironment: 'test', buildCommit: 'test-build' }
@@ -21,4 +21,14 @@ export function renderApp(path = '/', config: PublicEnv = defaultConfig) {
       </AppErrorBoundary>,
     ),
   }
+}
+
+export function renderRouteError(config: PublicEnv = defaultConfig) {
+  return render(
+    <AppErrorBoundary>
+      <AppProviders config={config}>
+        <RouterProvider router={createRouteErrorTestRouter()} />
+      </AppProviders>
+    </AppErrorBoundary>,
+  )
 }

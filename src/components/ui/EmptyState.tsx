@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 
 interface EmptyStateProps {
   action?: ReactNode
@@ -7,12 +7,14 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ action, message, title }: EmptyStateProps) {
+  const titleId = useId()
+
   return (
-    <section className="state" aria-labelledby="empty-state-title">
+    <section className="state state-card" aria-labelledby={titleId}>
       <p className="eyebrow">NOTHING NEEDED YET</p>
-      <h2 id="empty-state-title">{title}</h2>
+      <h2 id={titleId}>{title}</h2>
       <p>{message}</p>
-      {action}
+      {action ? <div className="state-actions">{action}</div> : null}
     </section>
   )
 }

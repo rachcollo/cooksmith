@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 import { Button } from './Button'
 
 interface ErrorStateProps {
@@ -19,10 +21,12 @@ export function ErrorState({
   reference,
   title,
 }: ErrorStateProps) {
+  const titleId = useId()
+
   return (
-    <section className="state error-state" aria-labelledby="error-state-title" role="alert">
+    <section className="state state-card error-state" aria-labelledby={titleId} role="alert">
       <p className="eyebrow">{eyebrow}</p>
-      <h1 id="error-state-title">{title}</h1>
+      <h1 id={titleId}>{title}</h1>
       <p>{message}</p>
       {reference ? <small>Reference: {reference}</small> : null}
       {actionLabel && href ? (

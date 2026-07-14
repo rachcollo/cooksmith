@@ -59,7 +59,7 @@ The application starts safely without an environment file. See [environment and 
 src/
   app/             routing, layouts, providers and boundaries
   application/     use-case orchestration in later milestones
-  components/ui/   small reusable presentation primitives
+  components/      reusable layout and presentation primitives
   config/          validated runtime configuration
   domain/          framework-independent business rules in later milestones
   infrastructure/  external systems and logging adapters
@@ -77,6 +77,8 @@ supabase/
 
 Read [project structure and conventions](docs/engineering/v2/project-structure.md) before adding a domain module. The prototype is a product-learning reference only, not a source architecture for v2.
 
+Read [design, routing and navigation](docs/engineering/v2/design-system-and-routing.md) before adding a route or interface component. It documents the primary route map, page-header pattern, component states and accessibility expectations.
+
 Read the [database workflow](docs/engineering/v2/database-workflow.md) before creating a migration. It documents every database command, immutable migration rules, generated types, reset behaviour and Docker troubleshooting.
 
 ## CI and previews
@@ -93,8 +95,8 @@ Dependency changes must be intentional, exact-versioned and accompanied by a reg
 
 ## Current limitations
 
-- This milestone provides an application shell, not product workflows.
+- The current v2 routes are purposeful placeholders, not product workflows.
 - Product authentication and Supabase client integration begin only in their approved milestones.
 - Preview creation and environment values require repository-owner access to Vercel.
 - Browser tests install Chromium separately because browsers are not npm package dependencies.
-- Docker-dependent Milestone 3 validation and real type generation remain pending in this implementation environment.
+- Local Docker remains optional because GitHub Actions performs the complete Milestone 3 database validation remotely.

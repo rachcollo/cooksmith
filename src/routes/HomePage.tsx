@@ -1,31 +1,70 @@
+import { Check, Compass, ShieldCheck } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { Panel } from '../components/ui/Panel'
+import { DocumentTitle } from '../app/router/DocumentTitle'
+import { PageHeader } from '../components/layout/PageHeader'
+import { ResponsiveGrid, Stack } from '../components/layout/LayoutPrimitives'
+import { Button } from '../components/ui/Button'
+import { Dialog } from '../components/ui/Dialog'
+import { Card } from '../components/ui/Panel'
 
 export function HomePage() {
+  const [detailsOpen, setDetailsOpen] = useState(false)
+
   return (
-    <section className="hero" aria-labelledby="home-title">
-      <p className="eyebrow">COOKSMITH V2 FOUNDATION</p>
-      <h1 id="home-title">A calmer way to answer, “What’s for dinner?”</h1>
-      <p className="hero-copy">
-        The new foundation is ready for the approved household, pantry, recipe and planning
-        milestones. Those features are not connected yet.
-      </p>
+    <Stack gap="large">
+      <DocumentTitle title="Home" />
+      <PageHeader
+        actions={
+          <div className="action-group">
+            <Link className="button button-primary" to="/pantry">
+              Explore the pantry frame
+            </Link>
+            <Button variant="secondary" onClick={() => setDetailsOpen(true)}>
+              About this preview
+            </Button>
+          </div>
+        }
+        description="Cooksmith will quietly organise meals, ingredients and shopping. For now, this preview establishes the calm frame those useful tools will share."
+        eyebrow="Cooksmith v2 foundation"
+        title="Dinner decisions, made lighter."
+      />
 
-      <div className="hero-actions">
-        <Link className="button button-primary" to="/health">
-          Check foundation status
-        </Link>
-      </div>
+      <ResponsiveGrid minimum="14rem" aria-label="Foundation qualities">
+        <Card>
+          <Compass aria-hidden="true" />
+          <h2>One clear next step</h2>
+          <p>Stable routes and restrained actions make it obvious where to go next.</p>
+        </Card>
+        <Card>
+          <ShieldCheck aria-hidden="true" />
+          <h2>Safe foundations</h2>
+          <p>
+            Preview data stays isolated while later household features remain deliberately absent.
+          </p>
+        </Card>
+        <Card>
+          <Check aria-hidden="true" />
+          <h2>Built to include</h2>
+          <p>Keyboard, focus, reduced motion and responsive behaviour are part of the frame.</p>
+        </Card>
+      </ResponsiveGrid>
 
-      <Panel className="next-step-panel">
-        <p className="eyebrow">WHAT HAPPENS NEXT</p>
-        <h2>The useful bits come next, one dependable layer at a time.</h2>
-        <p>
-          This preview proves the v2 shell, routing, accessibility and quality gates without
-          pretending later product features already work.
-        </p>
-      </Panel>
-    </section>
+      <Dialog
+        description="This is a real foundation check, not a working product feature."
+        onOpenChange={setDetailsOpen}
+        open={detailsOpen}
+        title="What this preview proves"
+      >
+        <Stack>
+          <p>
+            Cooksmith now has direct routes, accessible navigation, reusable interface patterns and
+            automated quality checks for future milestones.
+          </p>
+          <Button onClick={() => setDetailsOpen(false)}>Got it</Button>
+        </Stack>
+      </Dialog>
+    </Stack>
   )
 }
