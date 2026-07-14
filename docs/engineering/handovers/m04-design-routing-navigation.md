@@ -3,8 +3,8 @@
 - **Date:** 2026-07-14
 - **Branch:** `m04-design-routing-navigation`
 - **Target:** `v2`
-- **Commit:** Recorded after the completion commit
-- **Pull request:** Pending publication
+- **Commit:** The commit containing this final handover
+- **Pull request:** [#5](https://github.com/rachcollo/cooksmith/pull/5)
 - **Status:** Implemented, manual validation pending
 
 ## Objective
@@ -53,7 +53,7 @@ Run `npm ci`, then `npm run dev`. Use `npm run test:e2e:install` once on a brows
 
 ## Tests run
 
-See the [Milestone 4 completion report](../reports/m04-design-routing-navigation.md) for the complete command matrix. Static validation and 24 Vitest tests pass locally. The browser suite is delegated to GitHub Actions because Chromium could not be downloaded in this execution environment.
+See the [Milestone 4 completion report](../reports/m04-design-routing-navigation.md) for the complete command matrix. Static validation and 24 Vitest tests pass locally. GitHub Actions passed the complete Supabase gate and all 20 browser, responsive and axe checks.
 
 ## Preview or verification instructions
 
@@ -64,11 +64,11 @@ Open `/`, then use every primary navigation destination. Verify direct links, re
 - **Accessibility:** Semantic landmarks, labels, focus, status announcements, reduced motion and responsive touch targets are implemented. VoiceOver and physical-device checks remain pending.
 - **Security and privacy:** No product data, credential, provider error or service-role value is exposed.
 - **Cost impact:** A$0 monthly and A$0 annually.
-- **Credential check:** Repository content must pass the final sensitive-file scan before completion.
+- **Credential check:** The final repository scan found no credential material or sensitive environment file.
 
 ## Known limitations
 
-Remote Playwright and axe validation, VoiceOver and physical-device checks remain pending. Placeholder routes intentionally contain no product behaviour.
+VoiceOver and physical-device checks remain pending. Placeholder routes intentionally contain no product behaviour.
 
 ## Deferred work
 

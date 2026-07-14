@@ -4,7 +4,7 @@
 
 **Implemented, manual validation pending**
 
-All static and component-level automated checks pass locally. Browser automation is delegated to the existing GitHub Actions runner because the execution environment cannot download a Playwright browser. VoiceOver and physical-device checks remain manual.
+All local static and component-level checks pass. GitHub Actions also passed the complete isolated Supabase and browser validation gate. VoiceOver and physical-device checks remain manual.
 
 ## 2. Baseline
 
@@ -51,23 +51,23 @@ Mobile uses five labelled bottom destinations and a separate Settings header lin
 
 ## 8. Tests
 
-| Command or test suite                     | Result                       | Notes                                                                                                                                         |
-| ----------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm ci --cache /tmp/cooksmith-npm-cache` | Passed                       | Clean exact dependency installation                                                                                                           |
-| `npm run format:check`                    | Passed after report creation | Maintained files formatted                                                                                                                    |
-| `npm run lint`                            | Passed                       | Zero warnings                                                                                                                                 |
-| `npm run typecheck`                       | Passed                       | Strict TypeScript checks                                                                                                                      |
-| `npm run test`                            | Passed                       | 7 files and 24 behavioural tests                                                                                                              |
-| `npm run build`                           | Passed                       | Production assets and lazy route chunks built                                                                                                 |
-| `npm run db:config:check`                 | Passed                       | Milestone 3 local-only safeguards retained                                                                                                    |
-| `npm run db:prerequisites`                | Passed                       | Pinned Node, npm and Supabase tooling retained                                                                                                |
-| `npm run test:e2e:install`                | Not available locally        | Browser download blocked by the execution network; CI installs Chromium                                                                       |
-| `npm run test:e2e`                        | Pending remote CI            | 20 browser, responsive and axe checks configured                                                                                              |
-| `npm run db:validate`                     | Runtime unavailable locally  | Configuration passed, then the unchanged prerequisite guard stopped safely because Docker is unavailable; CI continues the full database gate |
+| Command or test suite                     | Result                       | Notes                                                                                                                                           |
+| ----------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm ci --cache /tmp/cooksmith-npm-cache` | Passed                       | Clean exact dependency installation                                                                                                             |
+| `npm run format:check`                    | Passed after report creation | Maintained files formatted                                                                                                                      |
+| `npm run lint`                            | Passed                       | Zero warnings                                                                                                                                   |
+| `npm run typecheck`                       | Passed                       | Strict TypeScript checks                                                                                                                        |
+| `npm run test`                            | Passed                       | 7 files and 24 behavioural tests                                                                                                                |
+| `npm run build`                           | Passed                       | Production assets and lazy route chunks built                                                                                                   |
+| `npm run db:config:check`                 | Passed                       | Milestone 3 local-only safeguards retained                                                                                                      |
+| `npm run db:prerequisites`                | Passed                       | Pinned Node, npm and Supabase tooling retained                                                                                                  |
+| `npm run test:e2e:install`                | Not available locally        | Browser download blocked by the execution network; CI installs Chromium                                                                         |
+| `npm run test:e2e`                        | Passed remotely              | 20 browser, responsive and axe checks passed on desktop and mobile Chromium                                                                     |
+| `npm run db:validate`                     | Passed remotely              | Fresh reset, lint, pgTAP and generated-type freshness passed in isolated GitHub Actions; local prerequisite guard stopped safely without Docker |
 
 ## 9. Responsive verification
 
-Automated checks target 320-pixel small mobile, 393-pixel larger mobile, 768-pixel tablet and 1280-pixel desktop layouts. They verify the appropriate navigation, no horizontal overflow, usable overlays and route behaviour. Remote browser execution and real-device review remain pending.
+Automated checks passed at 320-pixel small mobile, 393-pixel larger mobile, 768-pixel tablet and 1280-pixel desktop layouts. They verify the appropriate navigation, no horizontal overflow, usable overlays and route behaviour. Real-device review remains pending.
 
 ## 10. Dependencies
 
@@ -92,7 +92,6 @@ Environment validation, preview safety, Supabase files, database commands, gener
 
 ## 14. Known limitations
 
-- Remote Playwright and axe execution must pass before the milestone is accepted as complete.
 - VoiceOver and physical iPhone checks remain manual.
 - Placeholder routes deliberately contain no product behaviour.
 - Native dialog support follows the repository browser baseline and should be checked on target iOS Safari before friend testing.
@@ -100,8 +99,9 @@ Environment validation, preview safety, Supabase files, database commands, gener
 ## 15. Git handover
 
 - **Branch:** `m04-design-routing-navigation`
-- **Completion commit:** Recorded in the final handover after validation
-- **Publishing status:** Recorded after the publishing attempt
+- **Completion commit:** The commit containing this final report
+- **Publishing status:** Published through the connected GitHub repository
+- **Pull request:** [#5](https://github.com/rachcollo/cooksmith/pull/5), targeting `v2`
 - **Manual push:** `git push -u origin m04-design-routing-navigation`
 
 ## 16. Readiness for Milestone 5
