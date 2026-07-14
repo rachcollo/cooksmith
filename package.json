@@ -39,6 +39,7 @@
     "validate": "npm run validate:static && npm run test:e2e"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.110.5",
     "lucide-react": "1.24.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",

@@ -166,6 +166,37 @@
   gap: var(--space-2);
 }
 
+.auth-shell {
+  align-items: center;
+  display: grid;
+  gap: var(--space-6);
+  justify-items: center;
+  min-height: 100dvh;
+  padding: var(--space-5);
+}
+
+.auth-card {
+  background: var(--colour-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: var(--space-4);
+  max-width: 30rem;
+  padding: clamp(var(--space-5), 6vw, var(--space-8));
+  width: 100%;
+}
+
+.auth-form,
+.auth-actions {
+  display: grid;
+  gap: var(--space-4);
+}
+.auth-actions .button {
+  justify-content: center;
+  text-decoration: none;
+}
+
 .form-label {
   align-items: baseline;
   display: flex;

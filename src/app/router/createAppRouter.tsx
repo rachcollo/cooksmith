@@ -6,6 +6,8 @@ import {
 } from 'react-router-dom'
 
 import { RootLayout } from '../layout/RootLayout'
+import { AuthLayout } from '../layout/AuthLayout'
+import { PublicOnlyRoute, RequireAuth } from '../auth/RouteGuards'
 import { RouteErrorPage } from '../errors/RouteErrorPage'
 import { LoadingState } from '../../components/ui/LoadingState'
 import {
@@ -18,21 +20,61 @@ import {
   SettingsPage,
   ShoppingPage,
 } from './routeModules'
+import {
+  CreateAccountPage,
+  EmailConfirmationPage,
+  ForgotPasswordPage,
+  MagicLinkPage,
+  ResetPasswordPage,
+  SignInPage,
+  WelcomePage,
+} from '../../routes/auth/AuthPages'
 
 export const appRoutes: RouteObject[] = [
   {
-    path: '/',
-    element: <RootLayout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: 'pantry', element: <PantryPage /> },
-      { path: 'recipes', element: <RecipesPage /> },
-      { path: 'plan', element: <PlanPage /> },
-      { path: 'shopping', element: <ShoppingPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      {
+        element: <PublicOnlyRoute />,
+        children: [
+          {
+            element: <AuthLayout />,
+            children: [
+              { path: 'welcome', element: <WelcomePage /> },
+              { path: 'auth/sign-in', element: <SignInPage /> },
+              { path: 'auth/create-account', element: <CreateAccountPage /> },
+              { path: 'auth/magic-link', element: <MagicLinkPage /> },
+              { path: 'auth/forgot-password', element: <ForgotPasswordPage /> },
+            ],
+          },
+        ],
+      },
+      {
+        element: <AuthLayout />,
+        children: [
+          { path: 'auth/reset-password', element: <ResetPasswordPage /> },
+          { path: 'auth/confirm', element: <EmailConfirmationPage /> },
+        ],
+      },
       { path: 'health', element: <HealthPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        element: <RequireAuth />,
+        children: [
+          {
+            path: '/',
+            element: <RootLayout />,
+            children: [
+              { index: true, element: <HomePage /> },
+              { path: 'pantry', element: <PantryPage /> },
+              { path: 'recipes', element: <RecipesPage /> },
+              { path: 'plan', element: <PlanPage /> },
+              { path: 'shopping', element: <ShoppingPage /> },
+              { path: 'settings', element: <SettingsPage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
+          },
+        ],
+      },
     ],
   },
 ]
