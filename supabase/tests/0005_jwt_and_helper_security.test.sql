@@ -8,7 +8,11 @@ select results_eq(
     where pg_namespace.nspname = 'cooksmith'
       and pg_proc.proname in ('is_active_household_member', 'has_household_role', 'has_application_role')
       and pg_proc.prosecdef and pg_proc.provolatile = 's'
-      and coalesce(pg_proc.proconfig, array[]::text[]) @> array['search_path=']$$,
+      and exists (
+        select 1 from unnest(pg_proc.proconfig) as setting
+        where setting like 'search_path=%'
+          and replace(setting, 'search_path=', '') in ('', '""')
+      )$$,
   array[3], 'Every authorisation helper is stable, security definer, and has an empty search path'
 );
 select ok(

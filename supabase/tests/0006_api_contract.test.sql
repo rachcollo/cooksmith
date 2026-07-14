@@ -11,16 +11,16 @@ select results_eq(
 );
 
 select results_eq(
-  $$select tablename || ':' || cmd from pg_catalog.pg_policies
+  $$select (tablename::text || ':' || cmd::text) collate "C" from pg_catalog.pg_policies
     where schemaname = 'cooksmith' order by tablename, cmd$$,
-  array[
+  (array[
     'household_allergies:DELETE', 'household_allergies:INSERT', 'household_allergies:SELECT', 'household_allergies:UPDATE',
     'household_dietary_requirements:DELETE', 'household_dietary_requirements:INSERT', 'household_dietary_requirements:SELECT', 'household_dietary_requirements:UPDATE',
     'household_members:DELETE', 'household_members:INSERT', 'household_members:SELECT', 'household_members:UPDATE',
     'household_settings:DELETE', 'household_settings:INSERT', 'household_settings:SELECT', 'household_settings:UPDATE',
     'households:SELECT', 'households:UPDATE',
     'profiles:INSERT', 'profiles:SELECT', 'profiles:UPDATE'
-  ]::text[], 'Policy operation matrix matches the approved API contract'
+  ]::text[]) collate "C", 'Policy operation matrix matches the approved API contract'
 );
 
 select results_eq(
