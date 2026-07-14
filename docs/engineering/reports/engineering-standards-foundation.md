@@ -2,9 +2,9 @@
 
 ## 1. Status
 
-**Implemented, validation pending**
+**Complete**
 
-The permanent engineering standards and repository instruction links are implemented. Final local and GitHub Actions validation remain to be recorded.
+The permanent engineering standards and repository instruction links are implemented. All local and GitHub Actions validation passed.
 
 ## 2. Starting branch and commit
 
@@ -39,18 +39,19 @@ The standards link to and preserve the authoritative product hierarchy, implemen
 
 ## 6. Validation
 
-| Command or check           | Result | Notes                                             |
-| -------------------------- | ------ | ------------------------------------------------- |
-| `npm ci`                   | Passed | 396 exact packages installed from the lockfile    |
-| `npm run format:check`     | Passed | Includes all six permanent standards              |
-| `npm run lint`             | Passed | Zero warnings                                     |
-| `npm run typecheck`        | Passed | Strict TypeScript gate                            |
-| `npm run test`             | Passed | 8 files and 30 tests                              |
-| `npm run build`            | Passed | Production TypeScript and Vite build              |
-| Markdown link verification | Passed | All local links resolve across 54 Markdown files  |
-| `git diff --check`         | Passed | No whitespace errors                              |
-| Secret scan                | Passed | No token, private-key or service-role value found |
-| Scope verification         | Passed | No `src` or `supabase` file changed               |
+| Command or check            | Result | Notes                                                              |
+| --------------------------- | ------ | ------------------------------------------------------------------ |
+| `npm ci`                    | Passed | 396 exact packages installed from the lockfile                     |
+| `npm run format:check`      | Passed | Includes all six permanent standards                               |
+| `npm run lint`              | Passed | Zero warnings                                                      |
+| `npm run typecheck`         | Passed | Strict TypeScript gate                                             |
+| `npm run test`              | Passed | 8 files and 30 tests                                               |
+| `npm run build`             | Passed | Production TypeScript and Vite build                               |
+| Markdown link verification  | Passed | All local links resolve across 54 Markdown files                   |
+| `git diff --check`          | Passed | No whitespace errors                                               |
+| Secret scan                 | Passed | No token, private-key or service-role value found                  |
+| Scope verification          | Passed | No `src` or `supabase` file changed                                |
+| GitHub Actions `v2 quality` | Passed | Database, generated types, static, browser and accessibility gates |
 
 ## 7. Security and production protection
 
@@ -68,12 +69,14 @@ A$0 monthly and A$0 annually. No dependency, provider, service or tier was added
 ## 10. Git handover
 
 - Branch: `docs/codex-engineering-standards`
-- Local commit: pending
-- Publishing status: pending
+- Local implementation commit: `a86d4887e14886ac1e01ca2ffbba4eac38f7c51c`
+- Published implementation commit: `25563ac0ab0490c6d18f35118f3699579f5633c0`
+- Publishing status: Draft pull request #8
 - Pull request target: `v2`
-- Handover artifact: repository handover file; no bundle is required if GitHub publishing succeeds
+- Pull request: <https://github.com/rachcollo/cooksmith/pull/8>
+- Handover artifact: Repository handover file; no bundle required because GitHub publishing succeeded
 - `main`: unchanged
 
 ## 11. Readiness for Milestone 5C
 
-Not ready until this documentation pull request passes validation, is reviewed and is merged into `v2`. Milestone 5C has not begun.
+Ready to begin Milestone 5C after this documentation pull request is reviewed and merged into `v2`. Milestone 5C has not begun.

@@ -3,9 +3,9 @@
 - **Date:** 2026-07-14
 - **Branch:** `docs/codex-engineering-standards`
 - **Target:** `v2`
-- **Commit:** Pending
-- **Pull request:** Pending
-- **Status:** Validation pending
+- **Commit:** `25563ac0ab0490c6d18f35118f3699579f5633c0`
+- **Pull request:** [#8](https://github.com/rachcollo/cooksmith/pull/8)
+- **Status:** Complete
 
 ## Objective
 
