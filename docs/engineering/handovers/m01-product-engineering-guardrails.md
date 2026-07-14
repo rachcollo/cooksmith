@@ -38,15 +38,15 @@ Give Cooksmith v2 a clear product and engineering decision framework before appl
 
 ## Files and components affected
 
-| File or component | Purpose |
-|---|---|
-| `AGENTS.md` | Actionable contributor and Codex rules |
-| `docs/README.md` | Authoritative document index and precedence |
-| `docs/product/` | Available authoritative product documents |
-| `docs/engineering/` | Technical architecture, roadmap, templates, handovers and checklists |
-| `docs/reference/` | Non-authoritative current-state evidence |
-| `docs/architecture/decisions/` | ADR process, template and approved decisions 001 to 007 |
-| `.github/pull_request_template.md` | Required milestone PR evidence and confirmations |
+| File or component                  | Purpose                                                              |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `AGENTS.md`                        | Actionable contributor and Codex rules                               |
+| `docs/README.md`                   | Authoritative document index and precedence                          |
+| `docs/product/`                    | Available authoritative product documents                            |
+| `docs/engineering/`                | Technical architecture, roadmap, templates, handovers and checklists |
+| `docs/reference/`                  | Non-authoritative current-state evidence                             |
+| `docs/architecture/decisions/`     | ADR process, template and approved decisions 001 to 007              |
+| `.github/pull_request_template.md` | Required milestone PR evidence and confirmations                     |
 
 ## Migrations
 
@@ -58,16 +58,16 @@ None. This milestone adds Markdown governance only and introduces no dependency,
 
 ## Tests run
 
-| Command or check | Result | Notes |
-|---|---|---|
-| `npm install` | Blocked by environment | npm repeatedly attempted to use the unwritable `/root/.npm` cache. A retry with a writable temporary cache still reached the same runtime-level path. No dependency or lockfile change was retained. |
-| `npm run lint` | Failed, existing baseline | ESLint 10 could not find `eslint.config.js`, `eslint.config.mjs` or `eslint.config.cjs`. The current-state assessment records the same issue. |
-| `npm run typecheck` | Not available | `package.json` has no `typecheck` script. |
-| `npm run test` | Not available | `package.json` has no `test` script and no test suite was discovered. |
-| `npm run build` | Passed | TypeScript project build and Vite production build completed. An existing `node_modules` installation with byte-identical `package.json` and `package-lock.json` was used after the runtime blocked install. |
-| Secret pattern scan | Passed | No common private-key, GitHub token, AWS key, OpenAI key or service-role assignment pattern was found in repository content. |
-| Sensitive file review | Passed | No credential or sensitive environment file was added by this milestone. |
-| Behavioural diff review | Passed | No application, runtime or database file changed. |
+| Command or check        | Result                    | Notes                                                                                                                                                                                                        |
+| ----------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm install`           | Blocked by environment    | npm repeatedly attempted to use the unwritable `/root/.npm` cache. A retry with a writable temporary cache still reached the same runtime-level path. No dependency or lockfile change was retained.         |
+| `npm run lint`          | Failed, existing baseline | ESLint 10 could not find `eslint.config.js`, `eslint.config.mjs` or `eslint.config.cjs`. The current-state assessment records the same issue.                                                                |
+| `npm run typecheck`     | Not available             | `package.json` has no `typecheck` script.                                                                                                                                                                    |
+| `npm run test`          | Not available             | `package.json` has no `test` script and no test suite was discovered.                                                                                                                                        |
+| `npm run build`         | Passed                    | TypeScript project build and Vite production build completed. An existing `node_modules` installation with byte-identical `package.json` and `package-lock.json` was used after the runtime blocked install. |
+| Secret pattern scan     | Passed                    | No common private-key, GitHub token, AWS key, OpenAI key or service-role assignment pattern was found in repository content.                                                                                 |
+| Sensitive file review   | Passed                    | No credential or sensitive environment file was added by this milestone.                                                                                                                                     |
+| Behavioural diff review | Passed                    | No application, runtime or database file changed.                                                                                                                                                            |
 
 ## Preview or verification instructions
 

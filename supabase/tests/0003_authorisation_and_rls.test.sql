@@ -107,8 +107,8 @@ select results_eq(
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.household_members$$,
-  array[2],
-  'Owner A can read active members of Household A only'
+  array[3],
+  'Owner A can read Household A memberships only, including inactive records'
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.household_settings$$,

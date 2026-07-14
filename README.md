@@ -48,6 +48,7 @@ The application starts safely without an environment file. See [environment and 
 | `npm run db:reset`         | Rebuild from v2 migrations and synthetic seed  |
 | `npm run db:lint`          | Lint the local v2 schema                       |
 | `npm run db:test`          | Run local pgTAP database tests                 |
+| `npm run db:test:security` | Run focused adversarial RLS and contract tests |
 | `npm run db:types`         | Generate types from local Supabase             |
 | `npm run db:types:check`   | Detect stale generated database types          |
 | `npm run db:validate`      | Run the complete local database gate           |
@@ -81,7 +82,7 @@ Read [design, routing and navigation](docs/engineering/v2/design-system-and-rout
 
 Read the [database workflow](docs/engineering/v2/database-workflow.md) before creating a migration. It documents every database command, immutable migration rules, generated types, reset behaviour and Docker troubleshooting.
 
-Read the [core household schema](docs/engineering/v2/core-household-schema.md) and [authorisation policy](docs/engineering/v2/authorisation-and-row-level-security.md) before extending profiles, households, memberships, settings, dietary requirements or allergies.
+Read the [core household schema](docs/engineering/v2/core-household-schema.md), [authorisation policy](docs/engineering/v2/authorisation-and-row-level-security.md) and [Milestone 5 security evidence](docs/engineering/v2/milestone-5-security-validation.md) before extending profiles, households, memberships, settings, dietary requirements or allergies.
 
 ## CI and previews
 

@@ -52,12 +52,12 @@ Framework-independent application names and unions live in `src/domain/household
 
 `supabase/seed.sql` contains deterministic, non-production fixtures:
 
-- Household A with Owner A and Member A
+- Household A with Owner A, Member A and Inactive Member A
 - Household B with Owner B
 - Unrelated User with no membership
 - separate settings rows plus one explicit dietary requirement and allergy
 
-The Auth identities have no email address, password or credential. Fixture UUIDs and timestamps are synthetic and stable to make isolation failures obvious in Milestones 5B and 5C.
+The Auth identities have no email address, password or credential. Fixture UUIDs and timestamps are synthetic and stable to make isolation failures obvious. The inactive membership proves that current database state, rather than stale session claims, controls access.
 
 ## Applying and correcting the migration
 

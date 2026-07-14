@@ -32,6 +32,11 @@ if (/project_ref|access_token|service_role|password\s*=/.test(config)) {
   problems.push('supabase/config.toml contains a remote reference or credential-like setting.')
 }
 
+const apiSchemas = config.match(/\[api\][\s\S]*?schemas\s*=\s*\[([^\]]*)\]/)?.[1] ?? ''
+if (/['"]cooksmith['"]/.test(apiSchemas)) {
+  problems.push('The private cooksmith schema must not be exposed through the Data API.')
+}
+
 const migrations = readdirSync(migrationPath).filter((file) => file.endsWith('.sql'))
 const migrationName = /^\d{14}_[a-z0-9_]+\.sql$/
 
