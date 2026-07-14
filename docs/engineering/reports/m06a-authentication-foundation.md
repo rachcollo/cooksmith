@@ -37,7 +37,9 @@ Coverage includes protected/public routes, redirect manipulation, existing compo
 - `npm run build`: passed
 - `npm run db:config:check`: passed
 - `git diff --check` and secrets scan: passed
-- `npm run test:e2e`: configured but not executable locally because the Playwright Chromium download was blocked/truncated; remote CI pending
+- `npm run test:e2e`: local Chromium download was blocked/truncated
+- GitHub Actions isolated Supabase validation: passed, including migrations, database lint, pgTAP/RLS security tests, and generated-type freshness
+- GitHub Actions Playwright suite: passed, 12 desktop/mobile auth, responsive, redirect, and axe checks
 
 ## 9. Known limitations
 
@@ -51,4 +53,4 @@ Branch `m06a-authentication-foundation`. Commit and PR details are added after v
 
 ## 11. Readiness for Milestone 6B
 
-Not ready until Milestone 6A validation passes, the PR is accepted, and hosted SMTP/redirect configuration is completed. Milestone 6B has not begun.
+Ready for Milestone 6B after this PR is accepted and hosted SMTP/redirect configuration is completed. Milestone 6B has not begun.
