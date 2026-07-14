@@ -5,11 +5,12 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": [
     "eslint.config.js",
     "playwright.config.ts",
+    "src/config/env.ts",
     "vite.config.ts",
     "vitest.config.ts"
   ]

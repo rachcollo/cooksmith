@@ -17,7 +17,7 @@ jobs:
   validate:
     name: Validate v2
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
 
     steps:
       - name: Check out repository
@@ -31,6 +31,30 @@ jobs:
 
       - name: Install pinned dependencies
         run: npm ci
+
+      - name: Check database configuration
+        run: npm run db:config:check
+
+      - name: Confirm local database runtime
+        run: npm run db:prerequisites:runtime
+
+      - name: Start isolated local Supabase
+        run: npm run db:start
+
+      - name: Rebuild database from migrations and synthetic seed
+        run: npm run db:reset
+
+      - name: Lint local database
+        run: npm run db:lint
+
+      - name: Run database tests
+        run: npm run db:test
+
+      - name: Generate local database types
+        run: npm run db:types
+
+      - name: Detect stale generated database types
+        run: git diff --exit-code -- src/infrastructure/database/generated/database.types.ts
 
       - name: Check formatting
         run: npm run format:check
@@ -61,3 +85,7 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Stop local Supabase
+        if: always()
+        run: npm run db:stop

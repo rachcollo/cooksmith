@@ -17,19 +17,22 @@ Domain code must not import React, router modules, Supabase clients or browser A
 
 ## Directories
 
-| Directory            | Responsibility                                                            |
-| -------------------- | ------------------------------------------------------------------------- |
-| `src/app`            | Application composition, routes, layouts, providers and error boundaries  |
-| `src/application`    | Use-case services and ports introduced with an approved feature milestone |
-| `src/components/ui`  | Minimal accessible visual primitives with no domain knowledge             |
-| `src/config`         | Typed, validated runtime configuration                                    |
-| `src/domain`         | Domain modules and deterministic business rules                           |
-| `src/infrastructure` | Logging and future adapters for approved external systems                 |
-| `src/routes`         | Route-level presentation and page composition                             |
-| `src/shared`         | Small utilities that are genuinely shared across modules                  |
-| `tests/unit`         | Isolated logic and component behaviour                                    |
-| `tests/integration`  | Application behaviour across real module boundaries                       |
-| `tests/e2e`          | Critical browser journeys against a production-like server                |
+| Directory                       | Responsibility                                                            |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `src/app`                       | Application composition, routes, layouts, providers and error boundaries  |
+| `src/application`               | Use-case services and ports introduced with an approved feature milestone |
+| `src/components/ui`             | Minimal accessible visual primitives with no domain knowledge             |
+| `src/config`                    | Typed, validated runtime configuration                                    |
+| `src/domain`                    | Domain modules and deterministic business rules                           |
+| `src/infrastructure`            | Logging and future adapters for approved external systems                 |
+| `src/routes`                    | Route-level presentation and page composition                             |
+| `src/shared`                    | Small utilities that are genuinely shared across modules                  |
+| `tests/unit`                    | Isolated logic and component behaviour                                    |
+| `tests/integration`             | Application behaviour across real module boundaries                       |
+| `tests/e2e`                     | Critical browser journeys against a production-like server                |
+| `supabase/migrations`           | Active timestamped Cooksmith v2 migrations only                           |
+| `supabase/tests`                | pgTAP tests against the isolated local database                           |
+| `supabase/prototype-migrations` | Preserved MVP SQL, excluded from the v2 CLI path                          |
 
 Do not create empty abstractions for possible future features. A later milestone should add a module only when it has a real use case and test.
 

@@ -1,32 +1,56 @@
 # v2 environment and preview setup
 
-## Local environment
+## Environment model
 
-Copy `.env.example` to `.env.local` when local build metadata is useful. The shell runs without it.
+| Environment     | Frontend          | Supabase                     | Data                                      |
+| --------------- | ----------------- | ---------------------------- | ----------------------------------------- |
+| Development     | Local Vite        | Local Supabase               | Synthetic seeds                           |
+| Preview/Staging | Vercel Preview    | One free staging project     | Synthetic or controlled test data         |
+| Production      | Vercel Production | Future v2 Production project | Real customer data after release approval |
 
-| Variable            | Exposure             | Required | Purpose                                                   |
-| ------------------- | -------------------- | -------: | --------------------------------------------------------- |
-| `VITE_APP_ENV`      | Public browser value |       No | One of `development`, `test`, `preview` or `production`   |
-| `VITE_BUILD_COMMIT` | Public browser value |       No | Optional non-sensitive build reference shown on `/health` |
+The current prototype Production application and database remain untouched. Cooksmith v2 Production provisioning is outside Milestone 3.
 
-The application validates public values before rendering and displays a controlled configuration error for invalid values. Variables prefixed with `VITE_` are bundled for the browser and must never contain credentials, tokens or private household information.
+## Variables
 
-Server-only environment variables are not needed in this milestone. When a later milestone introduces them, validate them in a server-only module that is never imported by browser code.
+Copy `.env.example` to `.env.local`. Values prefixed with `VITE_` are bundled into browser code and must never contain a secret or service-role credential.
+
+| Variable                                     | Exposure   | Requirement                          | Purpose                                                                       |
+| -------------------------------------------- | ---------- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| `VITE_APP_ENV`                               | Public     | Optional locally, required in Vercel | `development`, `test`, `preview` or `production`                              |
+| `VITE_BUILD_COMMIT`                          | Public     | Optional                             | Non-sensitive build reference shown on `/health`                              |
+| `VITE_SUPABASE_URL`                          | Public     | Paired with publishable key          | Local or environment-specific Supabase URL                                    |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`              | Public     | Paired with URL                      | Supabase publishable browser key, never the secret/service-role key           |
+| `COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS` | Build-only | Required for Preview                 | Comma-separated Production project references denied to non-production builds |
+
+Development may omit both Supabase public values while working on the shell. Preview and Production require both. One value without the other is invalid.
+
+## Preview safety guard
+
+Vite validates environment configuration before building:
+
+- Vercel Preview must set `VITE_APP_ENV=preview`.
+- Vercel Production must set `VITE_APP_ENV=production`.
+- Preview requires a hosted staging URL, not localhost.
+- Preview requires the build-only Production project deny-list.
+- Development and Preview reject a hosted project whose reference appears in that deny-list.
+- Errors never include keys, complete URLs or project-reference values.
+
+The deny-list does not replace Vercel environment separation. It provides a second deterministic guard against a mistaken project assignment.
 
 ## Independent Vercel preview
 
-`vercel.json` declares the Vite build, `dist` output, single-page application routing and baseline response headers. With Vercel Git integration enabled, each pull request or branch can receive a preview without replacing the production prototype.
+`vercel.json` declares the Vite build, `dist` output, single-page routing and baseline headers. With Vercel Git integration enabled, each milestone branch can receive a preview without replacing the prototype on `main`.
 
 Repository-owner setup:
 
-1. Keep `main` as the Vercel production branch for the existing prototype.
-2. Confirm branch and pull-request preview deployments are enabled for the v2 repository or project.
-3. Set `VITE_APP_ENV=preview` for the Preview environment only.
-4. Optionally set `VITE_BUILD_COMMIT` to a non-sensitive build reference.
-5. Do not copy production credentials into the v2 preview.
-6. Verify `/`, `/health`, a deep link such as `/unknown-route`, and the `X-Robots-Tag: noindex, nofollow` response header.
+1. Keep `main` as the existing prototype Production branch.
+2. Enable branch and pull-request previews for v2 work.
+3. Provision the free staging project using the [staging setup guide](staging-supabase-setup.md).
+4. Add the four required Preview values through Vercel settings, with Preview scope only.
+5. Do not copy Production credentials or customer data into Preview.
+6. Verify `/`, `/health`, a nested deep link and the `X-Robots-Tag: noindex, nofollow` header.
 
-The repository contains no deployment credential. Vercel project membership and Git integration remain manual platform configuration.
+The repository contains no deployment or database credential.
 
 ## Local production smoke check
 
@@ -35,8 +59,8 @@ npm run build
 npm run preview
 ```
 
-Playwright starts this preview server automatically when `npm run test:e2e` runs. The static `/health.json` asset is available for platform health probes, while `/health` verifies the rendered shell.
+Playwright starts this preview server automatically for `npm run test:e2e`. The static `/health.json` asset supports platform probes.
 
-## Missing or invalid values
+## Failure behaviour
 
-An absent optional variable uses a safe development default. An invalid `VITE_APP_ENV` stops normal bootstrap and renders a controlled error message. Configuration errors are not silently converted into production settings.
+Invalid public configuration stops normal bootstrap and renders a controlled error. Invalid build configuration fails before Vite creates deployable assets. Cooksmith never converts an unknown or missing environment into Production.
