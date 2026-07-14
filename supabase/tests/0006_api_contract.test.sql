@@ -34,25 +34,25 @@ select results_eq(
 );
 
 select results_eq(
-  $$select routine_name::text || ':' || data_type::text
+  $$select (routine_name::text || ':' || data_type::text) collate "C"
     from information_schema.routines
     where routine_schema = 'cooksmith'
       and routine_name in ('is_active_household_member', 'has_household_role', 'has_application_role')
     order by routine_name$$,
-  array[
+  (array[
     'has_application_role:boolean',
     'has_household_role:boolean',
     'is_active_household_member:boolean'
-  ]::text[], 'Authorisation helper return contract is stable'
+  ]::text[]) collate "C", 'Authorisation helper return contract is stable'
 );
 
 select results_eq(
-  $$select table_name::text from information_schema.tables
+  $$select table_name::text collate "C" from information_schema.tables
     where table_schema = 'cooksmith' and table_type = 'BASE TABLE' order by table_name$$,
-  array[
+  (array[
     'app_user_roles', 'household_allergies', 'household_dietary_requirements',
     'household_members', 'household_settings', 'households', 'infrastructure_health', 'profiles'
-  ]::text[], 'Private table surface matches the generated API contract'
+  ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );
 
 select ok(
