@@ -7,9 +7,17 @@ import {
 
 import { RootLayout } from '../layout/RootLayout'
 import { RouteErrorPage } from '../errors/RouteErrorPage'
-import { HealthPage } from '../../routes/HealthPage'
-import { HomePage } from '../../routes/HomePage'
-import { NotFoundPage } from '../../routes/NotFoundPage'
+import { LoadingState } from '../../components/ui/LoadingState'
+import {
+  HealthPage,
+  HomePage,
+  NotFoundPage,
+  PantryPage,
+  PlanPage,
+  RecipesPage,
+  SettingsPage,
+  ShoppingPage,
+} from './routeModules'
 
 export const appRoutes: RouteObject[] = [
   {
@@ -18,6 +26,11 @@ export const appRoutes: RouteObject[] = [
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'pantry', element: <PantryPage /> },
+      { path: 'recipes', element: <RecipesPage /> },
+      { path: 'plan', element: <PlanPage /> },
+      { path: 'shopping', element: <ShoppingPage /> },
+      { path: 'settings', element: <SettingsPage /> },
       { path: 'health', element: <HealthPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
@@ -30,4 +43,26 @@ export function createAppRouter() {
 
 export function createTestRouter(initialEntries: InitialEntry[] = ['/']) {
   return createMemoryRouter(appRoutes, { initialEntries })
+}
+
+export function createRouteErrorTestRouter() {
+  const routes: RouteObject[] = [
+    {
+      path: '/',
+      element: <RootLayout />,
+      errorElement: <RouteErrorPage />,
+      HydrateFallback: () => <LoadingState label="Opening test route" fullPage />,
+      children: [
+        {
+          index: true,
+          loader: () => {
+            throw new Error('Controlled route test failure')
+          },
+          element: <div />,
+        },
+      ],
+    },
+  ]
+
+  return createMemoryRouter(routes, { initialEntries: ['/'] })
 }

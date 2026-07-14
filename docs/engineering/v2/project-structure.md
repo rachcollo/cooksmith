@@ -21,6 +21,7 @@ Domain code must not import React, router modules, Supabase clients or browser A
 | ------------------------------- | ------------------------------------------------------------------------- |
 | `src/app`                       | Application composition, routes, layouts, providers and error boundaries  |
 | `src/application`               | Use-case services and ports introduced with an approved feature milestone |
+| `src/components/layout`         | Responsive page and composition primitives with no domain knowledge       |
 | `src/components/ui`             | Minimal accessible visual primitives with no domain knowledge             |
 | `src/config`                    | Typed, validated runtime configuration                                    |
 | `src/domain`                    | Domain modules and deterministic business rules                           |
@@ -40,11 +41,11 @@ Do not create empty abstractions for possible future features. A later milestone
 
 React Router owns client-side routing. The root layout supplies semantic landmarks, navigation, responsive containment and a non-production environment marker. Route errors use the route boundary, unexpected render failures use the application boundary, and unknown locations use the explicit not-found route.
 
-Milestone 2 exposes only `/`, `/health` and the not-found state. Authenticated product routes are deferred until the milestones that own those journeys.
+Milestone 4 exposes stable placeholder routes for Home, Pantry, Recipes, Plan, Shopping and Settings. These pages contain no product workflow or data access. `/health` remains a non-primary diagnostic route. See [design, routing and navigation](design-system-and-routing.md) for the route map and extension rules.
 
 ## UI baseline
 
-CSS custom properties in `src/styles/tokens.css` define the small approved token set. `src/styles/global.css` supplies the reset, layout and component presentation. Primitives are intentionally modest and should grow only in response to product needs.
+CSS custom properties in `src/styles/tokens.css` define semantic tokens. Layout, component and navigation styles remain split by concern. Primitives are intentionally modest and should grow only in response to product needs.
 
 All interactive work must preserve visible focus, semantic names, 44-pixel minimum touch targets, reduced-motion behaviour and status communication that does not rely on colour alone.
 

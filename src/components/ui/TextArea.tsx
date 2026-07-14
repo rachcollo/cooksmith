@@ -1,23 +1,15 @@
-import { useId, type InputHTMLAttributes } from 'react'
+import { useId, type TextareaHTMLAttributes } from 'react'
 
 import { FormError, FormHint, FormLabel } from './FormField'
 
-interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string
   hint?: string
   label: string
   optional?: boolean
 }
 
-export function TextField({
-  error,
-  hint,
-  id,
-  label,
-  optional = false,
-  required,
-  ...props
-}: TextFieldProps) {
+export function TextArea({ error, hint, id, label, optional = false, ...props }: TextAreaProps) {
   const generatedId = useId()
   const inputId = id ?? generatedId
   const messageId = `${inputId}-message`
@@ -28,11 +20,10 @@ export function TextField({
         {label}
         {optional ? <span className="form-optional">Optional</span> : null}
       </FormLabel>
-      <input
+      <textarea
         aria-describedby={error || hint ? messageId : undefined}
         aria-invalid={Boolean(error)}
         id={inputId}
-        required={required}
         {...props}
       />
       {error ? (

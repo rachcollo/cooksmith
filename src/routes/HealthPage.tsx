@@ -1,15 +1,20 @@
 import { Panel } from '../components/ui/Panel'
+import { DocumentTitle } from '../app/router/DocumentTitle'
+import { PageHeader } from '../components/layout/PageHeader'
+import { Stack } from '../components/layout/LayoutPrimitives'
 import { useAppConfig } from '../app/providers/appConfigContext'
 
 export function HealthPage() {
   const { appEnvironment, buildCommit } = useAppConfig()
 
   return (
-    <section className="narrow-page" aria-labelledby="health-title">
-      <p className="eyebrow">FOUNDATION STATUS</p>
-      <h1 id="health-title">The forge is ready.</h1>
-      <p>Cooksmith v2 loaded successfully. No production household data is connected.</p>
-
+    <Stack className="narrow-page" gap="large">
+      <DocumentTitle title="Foundation status" />
+      <PageHeader
+        description="Cooksmith v2 loaded successfully. No production household data is connected."
+        eyebrow="Foundation status"
+        title="The forge is ready."
+      />
       <Panel>
         <dl className="status-list">
           <div>
@@ -32,6 +37,6 @@ export function HealthPage() {
           ) : null}
         </dl>
       </Panel>
-    </section>
+    </Stack>
   )
 }

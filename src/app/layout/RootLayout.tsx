@@ -1,6 +1,12 @@
+import { Settings } from 'lucide-react'
+import { Suspense } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 
+import { PrimaryNavigation } from '../navigation/PrimaryNavigation'
+import { RouteAnnouncer } from '../navigation/RouteAnnouncer'
 import { useAppConfig } from '../providers/appConfigContext'
+import { PageContainer } from '../../components/layout/LayoutPrimitives'
+import { LoadingState } from '../../components/ui/LoadingState'
 
 export function RootLayout() {
   const { appEnvironment } = useAppConfig()
@@ -11,41 +17,59 @@ export function RootLayout() {
         Skip to content
       </a>
 
+      <aside className="desktop-rail">
+        <Link className="brand brand-desktop" to="/" aria-label="Cooksmith home">
+          <span className="brand-mark" aria-hidden="true">
+            C
+          </span>
+          <span>
+            <strong>Cooksmith</strong>
+            <small>A calmer fortnight</small>
+          </span>
+        </Link>
+        <PrimaryNavigation variant="desktop" />
+        <p className="rail-note">v2 foundation preview</p>
+      </aside>
+
       <header className="site-header">
-        <div className="container header-inner">
-          <Link className="brand" to="/" aria-label="Cooksmith v2 home">
+        <PageContainer className="header-inner">
+          <Link className="brand" to="/" aria-label="Cooksmith home">
             <span className="brand-mark" aria-hidden="true">
               C
             </span>
             <span>
               <strong>Cooksmith</strong>
-              <small>Forge a calmer fortnight</small>
+              <small>A calmer fortnight</small>
             </span>
           </Link>
 
-          <nav aria-label="Foundation navigation">
-            <NavLink to="/" end>
-              Home
-            </NavLink>
-            <NavLink to="/health">Status</NavLink>
-          </nav>
-        </div>
+          <NavLink className="header-settings" to="/settings" aria-label="Settings">
+            <Settings aria-hidden="true" />
+          </NavLink>
+        </PageContainer>
       </header>
 
-      <main id="main-content" className="container page-content" tabIndex={-1}>
-        {appEnvironment !== 'production' ? (
-          <p className="environment-badge">
-            {appEnvironment === 'preview' ? 'v2 preview' : `v2 ${appEnvironment} preview`}
-          </p>
-        ) : null}
-        <Outlet />
+      <main id="main-content" className="page-content" tabIndex={-1}>
+        <PageContainer>
+          {appEnvironment !== 'production' ? (
+            <p className="environment-badge">
+              {appEnvironment === 'preview' ? 'v2 preview' : `v2 ${appEnvironment} preview`}
+            </p>
+          ) : null}
+          <Suspense fallback={<LoadingState label="Opening page" />}>
+            <Outlet />
+          </Suspense>
+        </PageContainer>
       </main>
 
       <footer className="site-footer">
-        <div className="container">
+        <PageContainer>
           <p>Cooksmith v2 foundation. No household data is connected yet.</p>
-        </div>
+        </PageContainer>
       </footer>
+
+      <PrimaryNavigation variant="mobile" />
+      <RouteAnnouncer />
     </div>
   )
 }
