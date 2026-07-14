@@ -104,6 +104,7 @@ Dependency changes must be intentional, exact-versioned and accompanied by a reg
 - [Testing standards](docs/engineering/TESTING_STANDARDS.md)
 - [Release checklist](docs/engineering/RELEASE_CHECKLIST.md)
 - [Architecture decisions](docs/engineering/ARCHITECTURE_DECISIONS.md)
+- [Authentication foundation](docs/engineering/v2/authentication.md)
 
 ## Current limitations
 

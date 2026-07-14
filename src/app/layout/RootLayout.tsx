@@ -7,9 +7,12 @@ import { RouteAnnouncer } from '../navigation/RouteAnnouncer'
 import { useAppConfig } from '../providers/appConfigContext'
 import { PageContainer } from '../../components/layout/LayoutPrimitives'
 import { LoadingState } from '../../components/ui/LoadingState'
+import { Button } from '../../components/ui/Button'
+import { useAuth } from '../auth/authContext'
 
 export function RootLayout() {
   const { appEnvironment } = useAppConfig()
+  const { signOut } = useAuth()
 
   return (
     <div className="site-frame">
@@ -46,6 +49,9 @@ export function RootLayout() {
           <NavLink className="header-settings" to="/settings" aria-label="Settings">
             <Settings aria-hidden="true" />
           </NavLink>
+          <Button variant="quiet" onClick={() => void signOut()}>
+            Sign out
+          </Button>
         </PageContainer>
       </header>
 

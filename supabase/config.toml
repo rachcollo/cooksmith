@@ -57,20 +57,20 @@ backend = "postgres"
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:4173"
-additional_redirect_urls = ["http://127.0.0.1:4173"]
+additional_redirect_urls = ["http://127.0.0.1:4173/**", "http://localhost:4173/**", "http://127.0.0.1:5173/**", "http://localhost:5173/**"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
 enable_anonymous_sign_ins = false
 enable_manual_linking = false
-minimum_password_length = 8
+minimum_password_length = 10
 password_requirements = "letters_digits"
 
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = false
+enable_confirmations = true
 secure_password_change = true
 max_frequency = "1s"
 otp_length = 6
