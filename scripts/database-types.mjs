@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { format } from 'prettier'
+import { format, resolveConfig } from 'prettier'
 
 const outputPath = join(
   process.cwd(),
@@ -30,7 +30,9 @@ export function generateTypes() {
 }
 
 const mode = process.argv[2]
+const prettierConfig = (await resolveConfig(outputPath)) ?? {}
 const generated = await format(`${generatedHeader}${generateTypes()}`, {
+  ...prettierConfig,
   filepath: outputPath,
 })
 
