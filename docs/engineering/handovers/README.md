@@ -9,3 +9,4 @@ Store one completed handover per milestone in this directory using `mNN-short-ti
 |         3 | [Environment and migration discipline](m03-environments-migrations.md)               | Complete                    |
 |         4 | [Design system, routing and accessible navigation](m04-design-routing-navigation.md) | Manual validation pending   |
 |        5A | [Core household schema](m05a-core-household-schema.md)                               | Database validation pending |
+|        5B | [Authorisation helpers and row level security](m05b-rls-authorisation.md)            | Database validation pending |
