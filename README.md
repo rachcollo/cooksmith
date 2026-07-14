@@ -81,7 +81,7 @@ Read [design, routing and navigation](docs/engineering/v2/design-system-and-rout
 
 Read the [database workflow](docs/engineering/v2/database-workflow.md) before creating a migration. It documents every database command, immutable migration rules, generated types, reset behaviour and Docker troubleshooting.
 
-Read the [core household schema](docs/engineering/v2/core-household-schema.md) before extending profiles, households, memberships, settings, dietary requirements or allergies. The schema is structural only until Milestone 5B adds and verifies default-deny RLS policies.
+Read the [core household schema](docs/engineering/v2/core-household-schema.md) and [authorisation policy](docs/engineering/v2/authorisation-and-row-level-security.md) before extending profiles, households, memberships, settings, dietary requirements or allergies.
 
 ## CI and previews
 
@@ -99,7 +99,7 @@ Dependency changes must be intentional, exact-versioned and accompanied by a reg
 
 - The current v2 routes are purposeful placeholders, not product workflows.
 - Product authentication and Supabase client integration begin only in their approved milestones.
-- The Milestone 5A household tables must not be deployed to a shared environment until Milestone 5B supplies reviewed default-deny RLS and grants.
+- The `cooksmith` schema remains outside the Data API exposure list. Any later exposure requires matching least-privilege grants, RLS policies and cross-household tests.
 - Preview creation and environment values require repository-owner access to Vercel.
 - Browser tests install Chromium separately because browsers are not npm package dependencies.
 - Local Docker remains optional because GitHub Actions performs the complete Milestone 3 database validation remotely.
