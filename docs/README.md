@@ -28,6 +28,8 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - v2 database workflow: [Environment and migration discipline](engineering/v2/database-workflow.md)
 - Supabase staging setup: [Staging project guide](engineering/v2/staging-supabase-setup.md)
 - v2 design system and routing: [Design, routing and navigation](engineering/v2/design-system-and-routing.md)
+- v2 core household schema: [Core household schema](engineering/v2/core-household-schema.md)
+- Milestone 5A completion report: [Core household schema](engineering/reports/m05a-core-household-schema.md)
 - Milestone 4 completion report: [Design system, routing and accessible navigation](engineering/reports/m04-design-routing-navigation.md)
 - Milestone 3 completion report: [Environment and migration discipline](engineering/reports/m03-environments-migrations.md)
 - Milestone 2 completion report: [v2 application shell and quality baseline](engineering/reports/m02-v2-application-shell.md)

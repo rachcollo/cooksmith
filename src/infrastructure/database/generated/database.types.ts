@@ -5,6 +5,283 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   cooksmith: {
     Tables: {
+      app_user_roles: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          role: Database['cooksmith']['Enums']['application_role']
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          role: Database['cooksmith']['Enums']['application_role']
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          role?: Database['cooksmith']['Enums']['application_role']
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      household_allergies: {
+        Row: {
+          allergen: string
+          applies_to_member_id: string | null
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          normalised_allergen: string
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allergen: string
+          applies_to_member_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          normalised_allergen?: never
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allergen?: string
+          applies_to_member_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          normalised_allergen?: never
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_allergies_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'household_allergies_member_scope_fk'
+            columns: ['household_id', 'applies_to_member_id']
+            isOneToOne: false
+            referencedRelation: 'household_members'
+            referencedColumns: ['household_id', 'id']
+          },
+        ]
+      }
+      household_dietary_requirements: {
+        Row: {
+          applies_to_member_id: string | null
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          normalised_requirement: string
+          notes: string | null
+          requirement: string
+          strength: Database['cooksmith']['Enums']['constraint_strength']
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          applies_to_member_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          normalised_requirement?: never
+          notes?: string | null
+          requirement: string
+          strength?: Database['cooksmith']['Enums']['constraint_strength']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          applies_to_member_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          normalised_requirement?: never
+          notes?: string | null
+          requirement?: string
+          strength?: Database['cooksmith']['Enums']['constraint_strength']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_dietary_requirements_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'household_dietary_requirements_member_scope_fk'
+            columns: ['household_id', 'applies_to_member_id']
+            isOneToOne: false
+            referencedRelation: 'household_members'
+            referencedColumns: ['household_id', 'id']
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          inactive_at: string | null
+          joined_at: string
+          role: Database['cooksmith']['Enums']['household_role']
+          status: Database['cooksmith']['Enums']['membership_status']
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          inactive_at?: string | null
+          joined_at?: string
+          role?: Database['cooksmith']['Enums']['household_role']
+          status?: Database['cooksmith']['Enums']['membership_status']
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          inactive_at?: string | null
+          joined_at?: string
+          role?: Database['cooksmith']['Enums']['household_role']
+          status?: Database['cooksmith']['Enums']['membership_status']
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_members_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      household_settings: {
+        Row: {
+          budget_band: Database['cooksmith']['Enums']['budget_band']
+          cooking_enjoyment: Database['cooksmith']['Enums']['cooking_enjoyment']
+          cooking_skill: Database['cooksmith']['Enums']['cooking_skill']
+          created_at: string
+          created_by: string | null
+          default_servings: number
+          default_store: string | null
+          household_id: string
+          preferred_prep_day: number | null
+          prep_mode: Database['cooksmith']['Enums']['prep_mode']
+          updated_at: string
+          updated_by: string | null
+          weekend_max_minutes: number
+          weeknight_max_minutes: number
+        }
+        Insert: {
+          budget_band?: Database['cooksmith']['Enums']['budget_band']
+          cooking_enjoyment?: Database['cooksmith']['Enums']['cooking_enjoyment']
+          cooking_skill?: Database['cooksmith']['Enums']['cooking_skill']
+          created_at?: string
+          created_by?: string | null
+          default_servings?: number
+          default_store?: string | null
+          household_id: string
+          preferred_prep_day?: number | null
+          prep_mode?: Database['cooksmith']['Enums']['prep_mode']
+          updated_at?: string
+          updated_by?: string | null
+          weekend_max_minutes?: number
+          weeknight_max_minutes?: number
+        }
+        Update: {
+          budget_band?: Database['cooksmith']['Enums']['budget_band']
+          cooking_enjoyment?: Database['cooksmith']['Enums']['cooking_enjoyment']
+          cooking_skill?: Database['cooksmith']['Enums']['cooking_skill']
+          created_at?: string
+          created_by?: string | null
+          default_servings?: number
+          default_store?: string | null
+          household_id?: string
+          preferred_prep_day?: number | null
+          prep_mode?: Database['cooksmith']['Enums']['prep_mode']
+          updated_at?: string
+          updated_by?: string | null
+          weekend_max_minutes?: number
+          weeknight_max_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_settings_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: true
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      households: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          status: Database['cooksmith']['Enums']['household_status']
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          status?: Database['cooksmith']['Enums']['household_status']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          status?: Database['cooksmith']['Enums']['household_status']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       infrastructure_health: {
         Row: {
           key: string
@@ -23,6 +300,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          locale: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id: string
+          locale?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          locale?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -31,7 +335,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      application_role: 'admin' | 'content_editor' | 'support'
+      budget_band: 'economy' | 'standard' | 'flexible'
+      constraint_strength: 'hard' | 'soft'
+      cooking_enjoyment: 'low' | 'neutral' | 'high'
+      cooking_skill: 'beginner' | 'confident' | 'experienced'
+      household_role: 'owner' | 'member'
+      household_status: 'active' | 'archived'
+      membership_status: 'active' | 'inactive'
+      prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -152,6 +464,16 @@ export type CompositeTypes<
 
 export const Constants = {
   cooksmith: {
-    Enums: {},
+    Enums: {
+      application_role: ['admin', 'content_editor', 'support'],
+      budget_band: ['economy', 'standard', 'flexible'],
+      constraint_strength: ['hard', 'soft'],
+      cooking_enjoyment: ['low', 'neutral', 'high'],
+      cooking_skill: ['beginner', 'confident', 'experienced'],
+      household_role: ['owner', 'member'],
+      household_status: ['active', 'archived'],
+      membership_status: ['active', 'inactive'],
+      prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
+    },
   },
 } as const

@@ -1,6 +1,6 @@
 # Cooksmith v2
 
-Cooksmith quietly removes the invisible work of feeding a household. This branch contains the clean v2 application foundation. It is independent of the prototype on `main` and deliberately contains no household, pantry, recipe, planning or shopping-list functionality yet.
+Cooksmith quietly removes the invisible work of feeding a household. This branch contains the clean v2 application foundation. It is independent of the prototype on `main` and deliberately contains no user-facing household, pantry, recipe, planning or shopping-list functionality yet.
 
 ## Requirements
 
@@ -81,6 +81,8 @@ Read [design, routing and navigation](docs/engineering/v2/design-system-and-rout
 
 Read the [database workflow](docs/engineering/v2/database-workflow.md) before creating a migration. It documents every database command, immutable migration rules, generated types, reset behaviour and Docker troubleshooting.
 
+Read the [core household schema](docs/engineering/v2/core-household-schema.md) before extending profiles, households, memberships, settings, dietary requirements or allergies. The schema is structural only until Milestone 5B adds and verifies default-deny RLS policies.
+
 ## CI and previews
 
 Pull requests targeting `v2` run a fresh local Supabase migration, seed, lint, pgTAP and generated-type check before the existing formatting, linting, type-checking, unit, integration, build, Chromium and axe checks. CI uses local services and requires no hosted Supabase credentials.
@@ -97,6 +99,7 @@ Dependency changes must be intentional, exact-versioned and accompanied by a reg
 
 - The current v2 routes are purposeful placeholders, not product workflows.
 - Product authentication and Supabase client integration begin only in their approved milestones.
+- The Milestone 5A household tables must not be deployed to a shared environment until Milestone 5B supplies reviewed default-deny RLS and grants.
 - Preview creation and environment values require repository-owner access to Vercel.
 - Browser tests install Chromium separately because browsers are not npm package dependencies.
 - Local Docker remains optional because GitHub Actions performs the complete Milestone 3 database validation remotely.
