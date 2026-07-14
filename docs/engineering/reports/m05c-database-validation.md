@@ -2,9 +2,9 @@
 
 ## 1. Status
 
-**Implemented, database validation pending**
+**Complete**
 
-Implementation and non-Docker validation are complete. The isolated GitHub Actions database runtime must execute the final pgTAP suite before this status becomes Complete.
+Implementation and all local and GitHub Actions validation are complete. Docker-backed database verification ran in the isolated GitHub Actions environment.
 
 ## 2. Baseline commit
 
@@ -58,41 +58,44 @@ The existing `v2 quality` job now runs `npm run db:test:security` after the comp
 
 ## 10. Validation results
 
-| Command or check                  | Result  | Notes                                                                         |
-| --------------------------------- | ------- | ----------------------------------------------------------------------------- |
-| Standards and baseline inspection | Passed  | Correct merged `v2` baseline                                                  |
-| `npm ci`                          | Passed  | Exact lockfile install; writable temporary cache required in this environment |
-| `npm run db:config:check`         | Passed  | Three immutable migrations and private API boundary verified                  |
-| `npm run db:prerequisites`        | Passed  | Pinned Node, npm and Supabase CLI available                                   |
-| `npm run format:check`            | Passed  | All maintained source and documentation formatted                             |
-| `npm run lint`                    | Passed  | Zero warnings                                                                 |
-| `npm run typecheck`               | Passed  | Strict TypeScript and generated contract checks                               |
-| `npm run test`                    | Passed  | 9 files and 33 application/API-contract tests                                 |
-| `npm run build`                   | Passed  | Production TypeScript and Vite build                                          |
-| Markdown link verification        | Passed  | All local links in 57 Markdown files resolve                                  |
-| `npm run db:validate`             | Pending | Stopped safely because no Docker-compatible runtime is available              |
-| `git diff --check`                | Passed  | No whitespace errors                                                          |
-| Tracked secret scan               | Passed  | No private-key, token, AWS-key or service-role value found                    |
+| Command or check                  | Result          | Notes                                                                         |
+| --------------------------------- | --------------- | ----------------------------------------------------------------------------- |
+| Standards and baseline inspection | Passed          | Correct merged `v2` baseline                                                  |
+| `npm ci`                          | Passed          | Exact lockfile install; writable temporary cache required in this environment |
+| `npm run db:config:check`         | Passed          | Three immutable migrations and private API boundary verified                  |
+| `npm run db:prerequisites`        | Passed          | Pinned Node, npm and Supabase CLI available                                   |
+| `npm run format:check`            | Passed          | All maintained source and documentation formatted                             |
+| `npm run lint`                    | Passed          | Zero warnings                                                                 |
+| `npm run typecheck`               | Passed          | Strict TypeScript and generated contract checks                               |
+| `npm run test`                    | Passed          | 9 files and 33 application/API-contract tests                                 |
+| `npm run build`                   | Passed          | Production TypeScript and Vite build                                          |
+| Markdown link verification        | Passed          | All local links in 57 Markdown files resolve                                  |
+| `npm run db:validate`             | Passed remotely | Fresh reset, lint, complete pgTAP suite and type freshness passed in CI       |
+| `npm run db:test:security`        | Passed remotely | Focused tenant, JWT, helper and API contracts passed independently            |
+| GitHub Actions browser checks     | Passed remotely | Playwright, responsive and accessibility regressions preserved                |
+| `git diff --check`                | Passed          | No whitespace errors                                                          |
+| Tracked secret scan               | Passed          | No private-key, token, AWS-key or service-role value found                    |
 
 ## 11. Known limitations
 
 - The `cooksmith` schema remains deliberately outside the Data API.
 - Trusted application-role administration, Auth UI and household lifecycle workflows remain later work.
-- Local database validation depends on a Docker-compatible runtime; CI is the required fallback.
+- Local database validation still depends on a Docker-compatible runtime; CI supplied the accepted equivalent.
 
 ## 12. Git handover
 
 - Branch: `m05c-database-validation`
-- Commit: pending final validation
-- Publishing status: pending
-- Pull request: pending
+- Local implementation head: `3c2f340f069d470ba2d7f3eaf3cad698c0df71bd`
+- Published validated head: `a616fe023087db97f6d91551818ec0b6fc2e45c2`
+- Publishing status: draft pull request #9
+- Pull request: <https://github.com/rachcollo/cooksmith/pull/9>
 - Pull request target: `v2`
 - `main`: unchanged
 
 ## 13. Final Milestone 5 status
 
-Implemented; final database validation pending.
+Complete. Milestones 5A, 5B and 5C now provide the schema, default-deny RLS framework and full adversarial proof suite.
 
 ## 14. Readiness for Milestone 6
 
-Not ready until the Milestone 5C pull request passes the complete remote database gate and is accepted.
+Ready for Milestone 6 after pull request #9 is reviewed and merged into `v2`. Milestone 6 has not begun.

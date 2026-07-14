@@ -31,4 +31,4 @@ No dependency, provider, paid service or recurring cost was introduced. No secre
 
 ## Recommended next milestone
 
-Milestone 6 may begin only after this pull request is accepted and the complete remote database gate passes. It must preserve and extend the private-table checklist in the database and testing standards.
+The complete remote database gate passes. Milestone 6 may begin only after this pull request is accepted and merged into `v2`. It must preserve and extend the private-table checklist in the database and testing standards.
