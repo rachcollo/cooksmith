@@ -31,18 +31,18 @@ Create a safe, repeatable and isolated database development workflow for Cooksmi
 
 ## Files and components affected
 
-| File or component | Purpose |
-| --- | --- |
-| `supabase/config.toml` | Local v2 Supabase configuration |
-| `supabase/migrations/20260714000100_create_v2_infrastructure_baseline.sql` | Minimal non-domain baseline |
-| `supabase/seed.sql` | Deterministic infrastructure seed |
-| `supabase/tests/0001_infrastructure_baseline.test.sql` | Real-database pgTAP tests |
-| `supabase/prototype-migrations/` | Preserved inactive prototype history |
-| `scripts/` | Prerequisite, configuration and generated-type checks |
-| `src/config/env.ts` | Public environment validation and production guard |
-| `src/infrastructure/database/generated/` | Current generated database types |
-| `.github/workflows/v2-quality.yml` | Complete remote validation |
-| `docs/engineering/v2/` | Workflow, staging and environment guidance |
+| File or component                                                          | Purpose                                               |
+| -------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `supabase/config.toml`                                                     | Local v2 Supabase configuration                       |
+| `supabase/migrations/20260714000100_create_v2_infrastructure_baseline.sql` | Minimal non-domain baseline                           |
+| `supabase/seed.sql`                                                        | Deterministic infrastructure seed                     |
+| `supabase/tests/0001_infrastructure_baseline.test.sql`                     | Real-database pgTAP tests                             |
+| `supabase/prototype-migrations/`                                           | Preserved inactive prototype history                  |
+| `scripts/`                                                                 | Prerequisite, configuration and generated-type checks |
+| `src/config/env.ts`                                                        | Public environment validation and production guard    |
+| `src/infrastructure/database/generated/`                                   | Current generated database types                      |
+| `.github/workflows/v2-quality.yml`                                         | Complete remote validation                            |
+| `docs/engineering/v2/`                                                     | Workflow, staging and environment guidance            |
 
 ## Migrations
 
@@ -54,19 +54,19 @@ Routine contributors need only Node.js 24.14.0, npm 11.9.0 and GitHub access. Pu
 
 ## Tests run
 
-| Command or check | Result | Notes |
-| --- | --- | --- |
-| Clean dependency install | Passed | GitHub-hosted runner |
-| Supabase start and reset | Passed | Isolated remote Docker runtime |
-| Database lint | Passed | Local schema |
-| pgTAP database tests | Passed | 1 file and 4 tests |
-| Type generation and freshness | Passed | Generated output committed |
-| Formatting and lint | Passed | Zero warnings |
-| TypeScript | Passed | Strict checks |
-| Application tests | Passed | 4 files and 14 tests |
-| Production build | Passed | Vite production output |
-| Playwright and accessibility smoke | Passed | Browser checks |
-| Supabase cleanup | Passed | Services stopped |
+| Command or check                   | Result | Notes                          |
+| ---------------------------------- | ------ | ------------------------------ |
+| Clean dependency install           | Passed | GitHub-hosted runner           |
+| Supabase start and reset           | Passed | Isolated remote Docker runtime |
+| Database lint                      | Passed | Local schema                   |
+| pgTAP database tests               | Passed | 1 file and 4 tests             |
+| Type generation and freshness      | Passed | Generated output committed     |
+| Formatting and lint                | Passed | Zero warnings                  |
+| TypeScript                         | Passed | Strict checks                  |
+| Application tests                  | Passed | 4 files and 14 tests           |
+| Production build                   | Passed | Vite production output         |
+| Playwright and accessibility smoke | Passed | Browser checks                 |
+| Supabase cleanup                   | Passed | Services stopped               |
 
 ## Preview or verification instructions
 
