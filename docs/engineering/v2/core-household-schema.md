@@ -65,6 +65,6 @@ Run the normal [database workflow](database-workflow.md). Before this migration 
 
 Do not apply this schema to the existing prototype database or a production database. No destructive rollback is supplied. If removal is required before shared deployment, reset the isolated local v2 database. After shared deployment, use an explicitly reviewed forward migration.
 
-## Security boundary and next milestone
+## Security boundary
 
-Milestone 5A revokes direct table access from `public`, `anon` and `authenticated`, but it does not claim tenant isolation. RLS enablement, reusable authorisation helpers, policies, grants and adversarial policy tests are Milestone 5B work. Until those pass, the schema is not ready for browser access or shared deployment.
+Milestone 5B enables default-deny RLS, adds reusable authorisation helpers and grants only policy-protected access to authenticated users. See [Authorisation and row level security](authorisation-and-row-level-security.md) for the current policy matrix. The schema remains outside the local Data API exposure list until a later approved client-integration milestone.

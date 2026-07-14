@@ -332,7 +332,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_application_role: {
+        Args: {
+          required_role: Database['cooksmith']['Enums']['application_role']
+        }
+        Returns: boolean
+      }
+      has_household_role: {
+        Args: {
+          required_role: Database['cooksmith']['Enums']['household_role']
+          target_household_id: string
+        }
+        Returns: boolean
+      }
+      is_active_household_member: {
+        Args: { target_household_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       application_role: 'admin' | 'content_editor' | 'support'
