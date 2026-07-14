@@ -50,9 +50,7 @@ Milestone 5B grants `authenticated` the minimum table privileges required for th
 
 ## Verification
 
-`supabase/tests/0003_authorisation_and_rls.test.sql` provides the Milestone 5B smoke coverage. It verifies RLS enablement, hardened helper configuration, privilege boundaries, owner/member behaviour, cross-household reads and writes, self-promotion rejection and household/application role separation.
-
-Milestone 5C must add the full adversarial tenant-isolation and API-contract suite. It should expand operation-by-operation coverage, inactive-membership cases, malformed or absent JWT claims, ownership lifecycle edges and policy behaviour for every later private table.
+`supabase/tests/0003_authorisation_and_rls.test.sql` provides the Milestone 5B smoke coverage. Milestone 5C adds the complete operation, actor, JWT, helper and API-contract suites in tests `0004` through `0006`. See [Milestone 5 security validation](milestone-5-security-validation.md) for the final evidence matrix and extension rules.
 
 ## Extension rules
 

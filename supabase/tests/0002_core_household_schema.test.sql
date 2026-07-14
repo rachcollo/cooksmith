@@ -61,8 +61,8 @@ select has_trigger(
 
 select results_eq(
   $$select count(*)::integer from cooksmith.profiles$$,
-  array[4],
-  'Four deterministic synthetic profiles are seeded'
+  array[5],
+  'Five deterministic synthetic profiles are seeded'
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.households$$,
@@ -71,8 +71,8 @@ select results_eq(
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.household_members$$,
-  array[3],
-  'Owner and member fixtures are seeded'
+  array[4],
+  'Owner, member, and inactive-member fixtures are seeded'
 );
 select results_eq(
   $$

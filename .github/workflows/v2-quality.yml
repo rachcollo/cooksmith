@@ -50,6 +50,9 @@ jobs:
       - name: Run database tests
         run: npm run db:test
 
+      - name: Enforce Milestone 5 security contracts
+        run: npm run db:test:security
+
       - name: Generate local database types
         run: npm run db:types
 
