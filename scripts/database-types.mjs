@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { format } from 'prettier'
 
 const outputPath = join(
   process.cwd(),
@@ -29,11 +30,13 @@ export function generateTypes() {
 }
 
 const mode = process.argv[2]
-const generated = `${generatedHeader}${generateTypes()}`
+const generated = await format(`${generatedHeader}${generateTypes()}`, {
+  filepath: outputPath,
+})
 
 if (mode === 'write') {
   writeFileSync(outputPath, generated)
-  process.stdout.write('Generated local Cooksmith database types.\n')
+  process.stdout.write('Generated and formatted local Cooksmith database types.\n')
 } else if (mode === 'check') {
   const committed = readFileSync(outputPath, 'utf8')
 
