@@ -21,3 +21,5 @@ Do not perform broad dependency upgrades as part of an unrelated feature. Automa
 ## Browser test dependency
 
 Playwright is pinned as an npm package, but its Chromium binary is installed separately with `npm run test:e2e:install`. CI uses `playwright install --with-deps chromium` to install the matching browser and Linux system libraries.
+
+Supabase CLI 2.109.1 is pinned as an npm development dependency. Always run it through the documented npm database scripts so local and CI use the same version. The CLI binary is reproducible through the lockfile; its local services still require Docker-compatible images.

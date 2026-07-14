@@ -46,7 +46,7 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
-    files: ['*.config.{js,ts}', 'eslint.config.js', 'tests/**/*.{ts,tsx}'],
+    files: ['*.config.{js,ts}', 'eslint.config.js', 'scripts/**/*.mjs', 'tests/**/*.{ts,tsx}'],
     languageOptions: {
       globals: {
         ...globals.node,
