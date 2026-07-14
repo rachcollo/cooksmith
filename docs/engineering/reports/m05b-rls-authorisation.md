@@ -2,9 +2,9 @@
 
 ## 1. Status
 
-**Implemented, database validation pending**
+**Complete**
 
-Implementation is complete. Local Docker-backed reset, pgTAP and generated-type verification are unavailable in the current workspace and must pass in GitHub Actions before acceptance.
+Implementation and all available local and GitHub Actions validation are complete. Docker-backed database verification ran in the isolated GitHub Actions environment.
 
 ## 2. Baseline commit
 
@@ -43,21 +43,23 @@ Anonymous access is denied throughout.
 
 ## 6. Validation results
 
-| Command or check                      | Result         | Notes                                                                        |
-| ------------------------------------- | -------------- | ---------------------------------------------------------------------------- |
-| Baseline and working-tree inspection  | Passed         | Correct merged `v2` baseline                                                 |
-| Supabase current documentation review | Passed         | Confirmed RLS, grants, update checks and hardened helper pattern             |
-| `npm ci`                              | Passed         | Clean exact dependency installation after using the writable workspace cache |
-| `npm run format`                      | Passed         | Repository formatting applied                                                |
-| `npm run db:config:check`             | Passed         | Three timestamped local-only migrations recognised                           |
-| `npm run db:prerequisites`            | Passed         | Pinned Node, npm and Supabase CLI available                                  |
-| `npm run lint`                        | Passed         | Zero warnings                                                                |
-| `npm run typecheck`                   | Passed         | Strict TypeScript checks                                                     |
-| `npm run test`                        | Passed         | 8 files and 30 application tests                                             |
-| `npm run build`                       | Passed         | Production TypeScript and Vite build                                         |
-| `npm run db:validate`                 | Stopped safely | Static configuration passed; Docker-compatible runtime unavailable           |
-| Tracked-file secret scan              | Passed         | No credential, private-key or service-role value found                       |
-| `git diff --check`                    | Passed         | No whitespace errors                                                         |
+| Command or check                      | Result          | Notes                                                                        |
+| ------------------------------------- | --------------- | ---------------------------------------------------------------------------- |
+| Baseline and working-tree inspection  | Passed          | Correct merged `v2` baseline                                                 |
+| Supabase current documentation review | Passed          | Confirmed RLS, grants, update checks and hardened helper pattern             |
+| `npm ci`                              | Passed          | Clean exact dependency installation after using the writable workspace cache |
+| `npm run format`                      | Passed          | Repository formatting applied                                                |
+| `npm run db:config:check`             | Passed          | Three timestamped local-only migrations recognised                           |
+| `npm run db:prerequisites`            | Passed          | Pinned Node, npm and Supabase CLI available                                  |
+| `npm run lint`                        | Passed          | Zero warnings                                                                |
+| `npm run typecheck`                   | Passed          | Strict TypeScript checks                                                     |
+| `npm run test`                        | Passed          | 8 files and 30 application tests                                             |
+| `npm run build`                       | Passed          | Production TypeScript and Vite build                                         |
+| `npm run db:validate`                 | Passed remotely | Fresh reset, database lint, pgTAP and generated-type freshness passed in CI  |
+| GitHub Actions database tests         | Passed          | Existing schema tests plus 24 Milestone 5B RLS smoke checks                  |
+| GitHub Actions browser smoke tests    | Passed          | Existing application and accessibility baseline preserved                    |
+| Tracked-file secret scan              | Passed          | No credential, private-key or service-role value found                       |
+| `git diff --check`                    | Passed          | No whitespace errors                                                         |
 
 ## 7. Deferred work for Milestone 5C
 
@@ -73,7 +75,8 @@ Authentication UI, onboarding, invitations and all product domains remain outsid
 ## 8. Git handover
 
 - Branch: `m05b-rls-authorisation`
-- Completion commit: pending final validation and commit
-- Publishing status: pending
+- Local completion commit: `e6db619063cc915eb39031ee59dd299a4f3fe6b0`
+- Published implementation commit: `116d9c1d7214165115e4427138211fb542d23d88`
+- Publishing status: draft pull request #7
 - Pull request target: `v2`
 - `main`: unchanged
