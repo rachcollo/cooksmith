@@ -13,8 +13,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
-    "format": "prettier --write src tests scripts .github/workflows README.md docs/README.md docs/engineering/v2 docs/engineering/handovers/README.md docs/engineering/handovers/m02-v2-application-shell.md docs/engineering/handovers/m03-environments-migrations.md docs/engineering/handovers/m04-design-routing-navigation.md docs/engineering/reports/m02-v2-application-shell.md docs/engineering/reports/m03-environments-migrations.md docs/engineering/reports/m04-design-routing-navigation.md package.json vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js vercel.json",
-    "format:check": "prettier --check src tests scripts .github/workflows README.md docs/README.md docs/engineering/v2 docs/engineering/handovers/README.md docs/engineering/handovers/m02-v2-application-shell.md docs/engineering/handovers/m03-environments-migrations.md docs/engineering/handovers/m04-design-routing-navigation.md docs/engineering/reports/m02-v2-application-shell.md docs/engineering/reports/m03-environments-migrations.md docs/engineering/reports/m04-design-routing-navigation.md package.json vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js vercel.json",
+    "format": "prettier --write src tests scripts .github/workflows README.md docs/README.md docs/engineering/v2 docs/engineering/handovers/README.md docs/engineering/handovers/m02-v2-application-shell.md docs/engineering/handovers/m03-environments-migrations.md docs/engineering/handovers/m04-design-routing-navigation.md docs/engineering/handovers/m05a-core-household-schema.md docs/engineering/reports/m02-v2-application-shell.md docs/engineering/reports/m03-environments-migrations.md docs/engineering/reports/m04-design-routing-navigation.md docs/engineering/reports/m05a-core-household-schema.md package.json vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js vercel.json",
+    "format:check": "prettier --check src tests scripts .github/workflows README.md docs/README.md docs/engineering/v2 docs/engineering/handovers/README.md docs/engineering/handovers/m02-v2-application-shell.md docs/engineering/handovers/m03-environments-migrations.md docs/engineering/handovers/m04-design-routing-navigation.md docs/engineering/handovers/m05a-core-household-schema.md docs/engineering/reports/m02-v2-application-shell.md docs/engineering/reports/m03-environments-migrations.md docs/engineering/reports/m04-design-routing-navigation.md docs/engineering/reports/m05a-core-household-schema.md package.json vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js vercel.json",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
@@ -41,7 +41,8 @@
     "lucide-react": "1.24.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "react-router-dom": "7.18.1"
+    "react-router-dom": "7.18.1",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
