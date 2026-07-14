@@ -37,7 +37,7 @@ export type Database = {
           created_by: string | null
           household_id: string
           id: string
-          normalised_allergen: string
+          normalised_allergen: string | null
           notes: string | null
           updated_at: string
           updated_by: string | null
@@ -49,7 +49,7 @@ export type Database = {
           created_by?: string | null
           household_id: string
           id?: string
-          normalised_allergen?: never
+          normalised_allergen?: string | null
           notes?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -61,7 +61,7 @@ export type Database = {
           created_by?: string | null
           household_id?: string
           id?: string
-          normalised_allergen?: never
+          normalised_allergen?: string | null
           notes?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -90,7 +90,7 @@ export type Database = {
           created_by: string | null
           household_id: string
           id: string
-          normalised_requirement: string
+          normalised_requirement: string | null
           notes: string | null
           requirement: string
           strength: Database['cooksmith']['Enums']['constraint_strength']
@@ -103,7 +103,7 @@ export type Database = {
           created_by?: string | null
           household_id: string
           id?: string
-          normalised_requirement?: never
+          normalised_requirement?: string | null
           notes?: string | null
           requirement: string
           strength?: Database['cooksmith']['Enums']['constraint_strength']
@@ -116,7 +116,7 @@ export type Database = {
           created_by?: string | null
           household_id?: string
           id?: string
-          normalised_requirement?: never
+          normalised_requirement?: string | null
           notes?: string | null
           requirement?: string
           strength?: Database['cooksmith']['Enums']['constraint_strength']
