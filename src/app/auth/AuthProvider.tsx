@@ -84,6 +84,7 @@ export function AuthProvider({
 
   const value = useMemo<AuthContextValue>(
     () => ({
+      client,
       configured: Boolean(client),
       loading,
       session,

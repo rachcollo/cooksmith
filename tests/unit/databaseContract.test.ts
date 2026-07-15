@@ -33,6 +33,9 @@ describe('generated database API contract', () => {
     expectTypeOf<Enums<{ schema: 'cooksmith' }, 'household_role'>>().toEqualTypeOf<
       'owner' | 'member'
     >()
+    expectTypeOf<
+      Database['cooksmith']['Functions']['bootstrap_household']['Returns']
+    >().toEqualTypeOf<string>()
   })
 
   it('exports runtime enum constants that match validation and policy inputs', () => {

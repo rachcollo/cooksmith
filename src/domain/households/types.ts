@@ -23,6 +23,8 @@ export interface Profile {
   displayName: string
   timezone: string
   locale: string
+  onboardingStep: number
+  onboardingCompletedAt?: string
   createdAt: string
   updatedAt: string
 }

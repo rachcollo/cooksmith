@@ -67,4 +67,4 @@ Do not apply this schema to the existing prototype database or a production data
 
 ## Security boundary
 
-Milestone 5B enables default-deny RLS, adds reusable authorisation helpers and grants only policy-protected access to authenticated users. See [Authorisation and row level security](authorisation-and-row-level-security.md) for the current policy matrix. The schema remains outside the local Data API exposure list until a later approved client-integration milestone.
+Milestone 5B enables default-deny RLS, adds reusable authorisation helpers and grants only policy-protected access to authenticated users. See [Authorisation and row level security](authorisation-and-row-level-security.md) for the current policy matrix. Milestone 6B exposes the schema through the Data API for typed onboarding access without weakening those controls.

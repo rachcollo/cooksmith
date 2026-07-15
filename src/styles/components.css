@@ -192,6 +192,95 @@
   display: grid;
   gap: var(--space-4);
 }
+
+.onboarding-shell {
+  align-items: start;
+  display: grid;
+  gap: var(--space-5);
+  justify-items: center;
+  min-height: 100dvh;
+  padding: clamp(var(--space-4), 5vw, var(--space-8));
+}
+
+.onboarding-card {
+  background: var(--colour-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-large);
+  box-shadow: var(--shadow-soft);
+  max-width: 44rem;
+  padding: clamp(var(--space-5), 5vw, var(--space-8));
+  width: 100%;
+}
+
+.onboarding-progress {
+  color: var(--colour-text-muted);
+  display: grid;
+  font-size: var(--font-size-small);
+  font-weight: 700;
+  gap: var(--space-2);
+}
+
+.onboarding-progress progress {
+  accent-color: var(--colour-brand);
+  height: 0.5rem;
+  width: 100%;
+}
+
+.onboarding-heading p {
+  color: var(--colour-text-muted);
+  margin-bottom: 0;
+}
+
+.onboarding-form,
+.onboarding-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.onboarding-form > .button {
+  justify-self: start;
+}
+
+.choice-group {
+  border: 0;
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.choice-group legend {
+  font-size: 1.1rem;
+  font-weight: 750;
+}
+
+.choice-grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.choice-grid label {
+  align-items: center;
+  border: var(--border-default);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+}
+
+.choice-grid input {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+@media (min-width: 42rem) {
+  .onboarding-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .auth-actions .button {
   justify-content: center;
   text-decoration: none;
