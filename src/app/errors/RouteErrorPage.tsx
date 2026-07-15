@@ -1,0 +1,28 @@
+import { isRouteErrorResponse, useRouteError } from 'react-router-dom'
+
+import { ErrorState } from '../../components/ui/ErrorState'
+import { logger } from '../../infrastructure/logging/logger'
+import { createCorrelationId } from '../../shared/utils/createCorrelationId'
+
+export function RouteErrorPage() {
+  const error = useRouteError()
+  const correlationId = createCorrelationId()
+  const status = isRouteErrorResponse(error) ? error.status : undefined
+
+  logger.error('route_render_failed', {
+    correlationId,
+    status,
+  })
+
+  return (
+    <main className="container page-content">
+      <ErrorState
+        title="That page did not come together"
+        message="The rest of Cooksmith is still safe. Head home and try another path."
+        reference={correlationId}
+        href="/"
+        actionLabel="Back to Cooksmith"
+      />
+    </main>
+  )
+}

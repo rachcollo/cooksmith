@@ -1,1 +1,17 @@
-{"compilerOptions":{"composite":true,"skipLibCheck":true,"module":"ESNext","moduleResolution":"Bundler","noEmit":true},"include":["vite.config.ts"]}
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "types": ["node", "vite/client"]
+  },
+  "include": [
+    "eslint.config.js",
+    "playwright.config.ts",
+    "src/config/env.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
+}
