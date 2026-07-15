@@ -12,5 +12,5 @@ Store one completed handover per milestone in this directory using `mNN-short-ti
 |        5B | [Authorisation helpers and row level security](m05b-rls-authorisation.md)            | Complete                    |
 |        5C | [Database and RLS validation](m05c-database-validation.md)                           | Complete                    |
 |        6A | [Authentication foundation](m06a-authentication-foundation.md)                       | Complete                    |
-|        6B | [User onboarding and household bootstrap](m06b-user-onboarding.md)                   | Database validation pending |
+|        6B | [User onboarding and household bootstrap](m06b-user-onboarding.md)                   | Complete                    |
 | Standards | [Engineering standards foundation](engineering-standards-foundation.md)              | Complete                    |
