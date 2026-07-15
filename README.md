@@ -1,6 +1,6 @@
 # Cooksmith v2
 
-Cooksmith quietly removes the invisible work of feeding a household. This branch contains the clean v2 application foundation. It is independent of the prototype on `main` and deliberately contains no user-facing household, pantry, recipe, planning or shopping-list functionality yet.
+Cooksmith quietly removes the invisible work of feeding a household. `main` is the temporary single source of truth while the private MVP is built. Feature branches are reviewed into `main` and deploy automatically through the existing Vercel project.
 
 ## Requirements
 
@@ -86,9 +86,9 @@ Read the [core household schema](docs/engineering/v2/core-household-schema.md), 
 
 ## CI and previews
 
-Pull requests targeting `v2` run a fresh local Supabase migration, seed, lint, pgTAP and generated-type check before the existing formatting, linting, type-checking, unit, integration, build, Chromium and axe checks. CI uses local services and requires no hosted Supabase credentials.
+Pull requests targeting `main` run a fresh local Supabase migration, seed, lint, pgTAP and generated-type check before formatting, linting, type-checking, unit, integration, build, Chromium and axe checks. CI uses local services and requires no hosted Supabase credentials.
 
-The preview must retain `main` as the production branch. Configure preview-only variables in the Vercel project settings, not in source control. Full instructions and the manual platform checks are in [environment and preview setup](docs/engineering/v2/environment-and-preview.md).
+Temporary MVP delivery is `feature branch → main → automatic Vercel deployment`. The primary deployment URL is the canonical application URL. A separate staging integration workflow will be reinstated before public beta. Full environment guidance is in [environment and preview setup](docs/engineering/v2/environment-and-preview.md).
 
 ## Contributing
 
@@ -109,7 +109,7 @@ Dependency changes must be intentional, exact-versioned and accompanied by a reg
 ## Current limitations
 
 - The current v2 routes are purposeful placeholders, not product workflows.
-- Product authentication and Supabase client integration begin only in their approved milestones.
+- Hosted authentication email delivery remains pending environment-level Resend SMTP and redirect configuration.
 - The `cooksmith` schema remains outside the Data API exposure list. Any later exposure requires matching least-privilege grants, RLS policies and cross-household tests.
 - Preview creation and environment values require repository-owner access to Vercel.
 - Browser tests install Chromium separately because browsers are not npm package dependencies.

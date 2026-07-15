@@ -22,10 +22,11 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | ADR | Status | Decision |
 |---|---|---|
 | [001](001-existing-repository.md) | Accepted | Build Cooksmith v2 in the existing repository |
-| [002](002-v2-integration-branch.md) | Accepted | Use a dedicated v2 integration branch |
+| [002](002-v2-integration-branch.md) | Superseded | Use a dedicated v2 integration branch |
 | [003](003-greenfield-selective-reuse.md) | Accepted | Use greenfield architecture with selective reuse |
 | [004](004-retain-core-platform.md) | Accepted | Retain React, TypeScript, Vite, Vercel and Supabase |
 | [005](005-deterministic-logic-separate-from-ai.md) | Accepted | Keep deterministic logic separate from AI |
 | [006](006-fortnight-planning.md) | Accepted | Use fortnight planning rather than week-only planning |
 | [007](007-shopping-list-copy-export.md) | Accepted | Use shopping-list copy export before retailer API integration |
 | [008](008-isolate-v2-database-assets.md) | Accepted | Isolate v2 database assets from the prototype schema |
+| [009](009-temporary-main-mvp-workflow.md) | Accepted | Use main as the temporary MVP integration branch |

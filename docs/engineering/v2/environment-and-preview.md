@@ -2,13 +2,13 @@
 
 ## Environment model
 
-| Environment     | Frontend          | Supabase                     | Data                                      |
-| --------------- | ----------------- | ---------------------------- | ----------------------------------------- |
-| Development     | Local Vite        | Local Supabase               | Synthetic seeds                           |
-| Preview/Staging | Vercel Preview    | One free staging project     | Synthetic or controlled test data         |
-| Production      | Vercel Production | Future v2 Production project | Real customer data after release approval |
+| Environment     | Frontend          | Supabase                        | Data                                 |
+| --------------- | ----------------- | ------------------------------- | ------------------------------------ |
+| Development     | Local Vite        | Local Supabase                  | Synthetic seeds                      |
+| Feature Preview | Vercel Preview    | Approved non-production project | Synthetic or controlled test data    |
+| Private MVP     | Vercel Production | Approved MVP Supabase project   | Test data only until launch approval |
 
-The current prototype Production application and database remain untouched. Cooksmith v2 Production provisioning is outside Milestone 3.
+During the temporary MVP workflow, `main` drives the existing Vercel project's primary deployment. This does not approve public launch, real customer data, a Production database migration or changes to projects, domains or provider tiers.
 
 ## Variables
 
@@ -37,18 +37,20 @@ Vite validates environment configuration before building:
 
 The deny-list does not replace Vercel environment separation. It provides a second deterministic guard against a mistaken project assignment.
 
-## Independent Vercel preview
+## Temporary MVP deployment workflow
 
-`vercel.json` declares the Vite build, `dist` output, single-page routing and baseline headers. With Vercel Git integration enabled, each milestone branch can receive a preview without replacing the prototype on `main`.
+`vercel.json` declares the Vite build, `dist` output, single-page routing and baseline headers. Feature branches receive previews and reviewed merges to `main` update the primary deployment.
 
 Repository-owner setup:
 
-1. Keep `main` as the existing prototype Production branch.
-2. Enable branch and pull-request previews for v2 work.
-3. Provision the free staging project using the [staging setup guide](staging-supabase-setup.md).
-4. Add the four required Preview values through Vercel settings, with Preview scope only.
-5. Do not copy Production credentials or customer data into Preview.
-6. Verify `/`, `/health`, a nested deep link and the `X-Robots-Tag: noindex, nofollow` header.
+1. Keep `main` as the existing Vercel project's production branch.
+2. Enable feature-branch and pull-request previews.
+3. Configure Production-scoped public values for the private MVP separately from Preview values.
+4. Use the primary deployment URL as the canonical application URL and Supabase Auth Site URL.
+5. Do not copy secrets or real customer data between environments.
+6. Verify `/`, `/health`, a nested deep link, protected-route redirection and authentication callbacks.
+
+Before public beta, reinstate `feature branch → staging → production` and review environment, database, domain and release controls explicitly.
 
 The repository contains no deployment or database credential.
 

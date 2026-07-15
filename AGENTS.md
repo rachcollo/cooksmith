@@ -24,12 +24,12 @@ Cooksmith quietly removes the invisible work of feeding a household. Apply the P
 
 ## Repository workflow
 
-- Work from the latest accepted `v2` commit on one scoped branch.
-- Never work directly on `main` or `v2`; milestone pull requests target `v2`.
+- During the temporary MVP workflow, create one scoped feature branch from the latest accepted `main` commit and target its pull request to `main`.
+- Never work directly on `main`. The retained `v2` branch is historical and is not the active integration target.
 - Keep the user out of Terminal work while a safe local or connected GitHub route exists.
 - Do not begin later milestones, add unapproved scope, force-push or rewrite accepted history.
 - Never commit secrets, credentials, real household data or sensitive environment files.
-- Do not access or change Production without a separately approved production task and plan.
+- Treat merges to `main` as deployments to the current private MVP environment. Do not access a production database, real customer data, custom domains or public-launch configuration without separate approval.
 - Run every applicable repository check, record honest limitations and complete the handover template.
 - Obtain explicit approval before adding paid services, provider tiers or material recurring cost.
 

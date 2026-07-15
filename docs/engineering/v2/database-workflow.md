@@ -95,7 +95,7 @@ Do not edit row, insert or update definitions manually. The Milestone 3 bootstra
 
 ## CI
 
-The `v2 quality` workflow uses GitHub's Docker-enabled runner. It installs from the lockfile, validates configuration, starts local Supabase, resets from migrations and seed, lints, runs pgTAP, regenerates types, checks for a committed diff, then retains all formatting, lint, type, Vitest, build, Playwright and axe checks from Milestone 2. No hosted Supabase or repository secret is used.
+The `Cooksmith quality` workflow runs for pull requests and pushes to `main` using GitHub's Docker-enabled runner. It installs from the lockfile, validates configuration, starts local Supabase, resets from migrations and seed, lints, runs pgTAP, regenerates types, checks for a committed diff, then runs formatting, lint, types, Vitest, build, Playwright and axe checks. No hosted Supabase or repository secret is used.
 
 ## Troubleshooting
 

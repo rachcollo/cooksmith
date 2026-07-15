@@ -37,12 +37,12 @@ The user reviews in GitHub and must not be asked to perform Git or Terminal work
 
 Codex must:
 
-1. fetch and verify the latest accepted `v2` baseline;
+1. fetch and verify the latest accepted `main` baseline during the temporary MVP workflow;
 2. create the task branch itself;
-3. keep `main` unchanged;
+3. keep `main` unchanged until the reviewed pull request is merged;
 4. implement and validate the full approved scope even when publishing is unavailable;
 5. commit locally with the exact requested message;
-6. publish the branch and open a pull request targeting `v2` when credentials or the connected GitHub workflow are available;
+6. publish the branch and open a pull request targeting `main` when credentials or the connected GitHub workflow are available;
 7. verify the remote tree matches the validated local tree;
 8. monitor required GitHub Actions checks and fix in-scope failures;
 9. provide a verified patch or Git bundle when no publishing route exists.
@@ -51,13 +51,13 @@ Never force-push, rewrite shared history, expose credentials or stop solely beca
 
 ## 4. Branch, commit and milestone discipline
 
-- Work on one named branch from the latest accepted `v2` commit.
-- Never work directly on `main` or `v2`.
+- Work on one named branch from the latest accepted `main` commit during the temporary MVP workflow.
+- Never work directly on `main`.
 - Keep commits intentional and scoped. Use the requested completion message exactly.
 - Do not include unrelated cleanup, speculative refactors or later-milestone foundations.
 - Execute milestones sequentially. Do not begin the next milestone until the current pull request is accepted and merged.
 - Preserve immutable shared migrations, accepted ADRs and existing user changes.
-- Target normal milestone pull requests to `v2`. A change to `main` requires separate explicit release approval.
+- Target normal milestone pull requests to `main` while ADR 009 is active. Merging remains an explicit reviewed action and automatically deploys the private MVP.
 
 ## 5. Scope and architecture quality
 

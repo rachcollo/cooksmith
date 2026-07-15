@@ -78,7 +78,7 @@ The current MVP proved the concept and brand direction, but several foundations 
 
 **Greenfield** means the target domain model, feature structure, API contracts and data flows are designed from the Product Specification first. It does not mean discarding working infrastructure or rebuilding for sport.
 
-The target application will be built in the existing GitHub repository on a dedicated `v2` integration branch. Milestone branches merge into `v2`, receive Vercel preview deployments and do not affect the current `main` production application. Release checkpoints merge `v2` into `main` only after acceptance criteria pass.
+The target application was initially built on a dedicated `v2` integration branch. [ADR 009](../architecture/decisions/009-temporary-main-mvp-workflow.md) temporarily supersedes that delivery workflow: milestone branches now merge into `main` after review and CI while the MVP remains private. Dedicated staging will be reinstated before public beta.
 
 | Reuse selectively | Replace or redesign | Reason |
 |---|---|---|
@@ -1446,7 +1446,7 @@ Each milestone should be implemented on its own branch, include tests and leave 
 
 ## 15. Final Recommendation
 
-Use the separate Cooksmith Implementation Roadmap as the authoritative execution sequence. Build on a `v2` integration branch so the existing MVP remains available while the target application is assembled and tested.
+Use the separate Cooksmith Implementation Roadmap as the authoritative execution sequence. Follow the active delivery ADR: ADR 009 uses reviewed feature branches targeting `main` temporarily, with staging restored before public beta.
 
 Build the household, pantry and recipe foundations before AI. Cooksmith's intelligence will only be as dependable as the constraints and content supplied to it. Once recipes, ingredients, household settings and fortnight dates are structured, AI can do the useful bit: prepare a sensible answer before the user has to ask.
 

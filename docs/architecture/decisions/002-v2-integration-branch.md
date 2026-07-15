@@ -1,6 +1,6 @@
 # ADR 002: Use a dedicated v2 integration branch
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 009](009-temporary-main-mvp-workflow.md)
 - **Date:** 2026-07-13
 
 ## Context

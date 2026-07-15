@@ -40,7 +40,7 @@ main                     Current production MVP
         +-- ...
 ```
 
-Each milestone branch targets `v2`. Vercel creates a preview for review. `main` remains untouched until a release checkpoint is approved.
+While [ADR 009](../architecture/decisions/009-temporary-main-mvp-workflow.md) is active, each milestone branch targets `main` and Vercel creates a preview for review. The dedicated staging integration workflow will be reinstated before public beta.
 
 ### Selective reuse rules
 
@@ -835,7 +835,7 @@ Cooksmith_Technical_Architecture_Specification.md.
 
 Work only within Milestone 1 scope. Confirm dependencies and the Product
 Principles supported. Preserve the current main production application.
-Use a milestone branch targeting v2. Add the required tests and documentation.
+Use a milestone branch targeting `main` while ADR 009 is active. Add the required tests and documentation.
 Run lint, typecheck, test and build before handover. Do not commit credentials
 or introduce a paid provider.
 ```

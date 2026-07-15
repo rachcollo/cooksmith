@@ -4,7 +4,7 @@
 
 - Milestone:
 - Issue or work reference:
-- Target branch: `v2`
+- Target branch: `main`
 
 ## Scope summary
 

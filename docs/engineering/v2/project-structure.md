@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The v2 application is a greenfield implementation inside the existing repository. It keeps the approved React, TypeScript, Vite and Vercel stack while treating the prototype on `main` as a product-learning reference rather than an architectural foundation.
+The v2 application is a greenfield implementation inside the existing repository. It keeps the approved React, TypeScript, Vite and Vercel stack. The former prototype remains product-learning history; the accepted v2 implementation on `main` is now the active codebase.
 
 ## Dependency direction
 

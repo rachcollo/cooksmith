@@ -4,8 +4,8 @@ Use the applicable section before requesting review or release. Record actual ev
 
 ## Normal milestone pull request
 
-- [ ] Branch was created from the latest accepted `v2` commit.
-- [ ] Pull request targets `v2`; `main` is unchanged.
+- [ ] Branch was created from the latest accepted `main` commit.
+- [ ] Pull request targets `main`; `main` changes only through the reviewed merge.
 - [ ] Diff contains only the approved milestone scope and no later-milestone work.
 - [ ] Product code, tests and documentation follow the engineering standards and accepted ADRs.
 - [ ] `npm ci`, format, lint, type-check, tests and production build pass.
@@ -36,7 +36,7 @@ Complete the normal checklist plus:
 ## Production release
 
 - [ ] Production release scope and target commit have explicit approval.
-- [ ] Release branch/commit was accepted through `v2`; any change to `main` is explicitly approved.
+- [ ] The exact release commit passed review and CI before merging to `main`.
 - [ ] All required CI checks pass on the exact release commit.
 - [ ] Production environment variables, redirect URLs and public/secret boundaries are reviewed without exposing values.
 - [ ] Preview or staging verification passed against the release candidate.

@@ -23,11 +23,11 @@ Local values come from `supabase status` after `npm run db:start`. Mailpit at `h
 
 ## Supabase Auth and redirects
 
-In each hosted Supabase project:
+For the temporary private MVP, the primary Vercel deployment URL is the canonical Cooksmith origin. In each hosted Supabase project:
 
 1. Enable email/password sign-up, email confirmation, magic-link login, and password recovery.
-2. Set the Site URL to that environment's canonical Cooksmith origin.
-3. Allow exact callback origins for `/auth/confirm` and `/auth/reset-password`. Add the dedicated Vercel Preview domain to the Preview project only. Avoid a broad wildcard when an exact Preview domain is available.
+2. Set the Site URL to the primary deployment URL for the `main` environment.
+3. Allow exact primary callback URLs for `/auth/confirm` and `/auth/reset-password`. Add dedicated Preview callback URLs to the Preview project only. Avoid a broad wildcard when exact URLs are available.
 4. Keep refresh-token rotation enabled and anonymous sign-ins disabled.
 
 Local equivalents are committed in `supabase/config.toml`.
