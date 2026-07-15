@@ -2,7 +2,7 @@
 
 ## 1. Status
 
-Implemented, database validation pending
+Complete
 
 ## 2. Baseline commit
 
@@ -22,14 +22,21 @@ Privileged functions are private security-definer implementations with empty `se
 
 ## 6. Tests executed
 
-Application tests cover validation, owner controls, member read-only presentation, invitation acceptance, delivery callback construction, removal confirmation, and existing authentication/onboarding regressions. pgTAP adds owner/member/unrelated/inactive and adversarial invitation and membership coverage. Final command and CI results will be recorded after publication.
+Application tests cover validation, owner controls, member read-only presentation, invitation acceptance, delivery callback construction, removal confirmation, and existing authentication/onboarding regressions. pgTAP adds owner/member/unrelated/inactive and adversarial invitation and membership coverage.
 
 ## 7. Validation results
 
 - Clean install, formatting, lint, strict TypeScript, 51 tests, production build, database configuration, Markdown links, and whitespace checks: passed locally.
 - Local database runtime: unavailable because Docker is not installed.
 - `npm run test:e2e`: attempted locally; Playwright could not start because its Chromium executable is unavailable in this environment.
-- Fresh reset, database lint, 30 new pgTAP assertions, security suite, generated types, Playwright, and axe: pending GitHub Actions.
+- GitHub Actions fresh migration/reset and database lint: passed.
+- GitHub Actions database and security suites: passed, 171 pgTAP assertions including 30 invitation/member-management assertions.
+- GitHub Actions generated database type freshness: passed.
+- GitHub Actions formatting, lint, strict types, 51 tests, and production build: passed.
+- GitHub Actions Playwright, responsive, and axe suite: passed, 12 desktop/mobile checks.
+- Intended `cooksmith-8fao` Vercel preview: passed.
+
+The unrelated legacy `cooksmith` Vercel project continues to report its known failing deployment check; no Vercel project, domain, or provider configuration was changed.
 
 ## 8. Known limitations
 
@@ -39,8 +46,8 @@ No dependency or provider was added. Cost impact is A$0 beyond existing Supabase
 
 ## 9. Git handover
 
-Branch `m06c-household-invitations`. Commit and PR details will be added after final validation and publication.
+Branch `m06c-household-invitations`. Local implementation commit `fbd500d62501168c2641beb824a6d2ab0601eb64`; equivalent published implementation commit `0977cd7d98d676d6e1a62ba1c6d26d1f4e0e1025`. Validated remote head `923af543a675c777e26ae262e525a3a1356534cd`. Pull request: [#15](https://github.com/rachcollo/cooksmith/pull/15), targeting `main`.
 
 ## 10. Readiness for Milestone 7
 
-Ready only after this PR passes the complete remote database/browser gates, is accepted, and its migration is released through the approved process. Milestone 7 has not begun.
+Ready for Milestone 7 after PR #15 is accepted and its migration is released through the approved process. Milestone 7 has not begun.
