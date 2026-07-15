@@ -14,13 +14,13 @@ During the temporary MVP workflow, `main` drives the existing Vercel project's p
 
 Copy `.env.example` to `.env.local`. Values prefixed with `VITE_` are bundled into browser code and must never contain a secret or service-role credential.
 
-| Variable                                     | Exposure   | Requirement                          | Purpose                                                                       |
-| -------------------------------------------- | ---------- | ------------------------------------ | ----------------------------------------------------------------------------- |
-| `VITE_APP_ENV`                               | Public     | Optional locally, required in Vercel | `development`, `test`, `preview` or `production`                              |
-| `VITE_BUILD_COMMIT`                          | Public     | Optional                             | Non-sensitive build reference shown on `/health`                              |
-| `VITE_SUPABASE_URL`                          | Public     | Paired with publishable key          | Local or environment-specific Supabase URL                                    |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`              | Public     | Paired with URL                      | Supabase publishable browser key, never the secret/service-role key           |
-| `COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS` | Build-only | Required for Preview                 | Comma-separated Production project references denied to non-production builds |
+| Variable                                     | Exposure   | Requirement                                   | Purpose                                                                       |
+| -------------------------------------------- | ---------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
+| `VITE_APP_ENV`                               | Public     | Optional; Vercel derives it from `VERCEL_ENV` | `development`, `test`, `preview` or `production`                              |
+| `VITE_BUILD_COMMIT`                          | Public     | Optional                                      | Non-sensitive build reference shown on `/health`                              |
+| `VITE_SUPABASE_URL`                          | Public     | Paired with publishable key                   | Local or environment-specific Supabase URL                                    |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`              | Public     | Paired with URL                               | Supabase publishable browser key, never the secret/service-role key           |
+| `COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS` | Build-only | Required for Preview                          | Comma-separated Production project references denied to non-production builds |
 
 Development may omit both Supabase public values while working on the shell. Preview and Production require both. One value without the other is invalid.
 
@@ -28,8 +28,8 @@ Development may omit both Supabase public values while working on the shell. Pre
 
 Vite validates environment configuration before building:
 
-- Vercel Preview must set `VITE_APP_ENV=preview`.
-- Vercel Production must set `VITE_APP_ENV=production`.
+- Vercel derives the environment from its trusted `VERCEL_ENV` value when `VITE_APP_ENV` is absent.
+- An explicitly configured `VITE_APP_ENV` must match `VERCEL_ENV` or the build fails.
 - Preview requires a hosted staging URL, not localhost.
 - Preview requires the build-only Production project deny-list.
 - Development and Preview reject a hosted project whose reference appears in that deny-list.
