@@ -92,12 +92,18 @@ export function validateBuildEnv(source: EnvSource): PublicEnv {
 
   if (
     (vercelEnvironment === 'preview' || vercelEnvironment === 'production') &&
+    configuredEnvironment &&
     configuredEnvironment !== vercelEnvironment
   ) {
     throw new Error(`VITE_APP_ENV must be ${vercelEnvironment} for this Vercel deployment.`)
   }
 
-  const config = parsePublicEnv(source)
+  const resolvedSource =
+    !configuredEnvironment &&
+    (vercelEnvironment === 'preview' || vercelEnvironment === 'production')
+      ? { ...source, VITE_APP_ENV: vercelEnvironment }
+      : source
+  const config = parsePublicEnv(resolvedSource)
   const productionRefs = parseProductionProjectRefs(source)
 
   if (config.supabase && config.appEnvironment !== 'production') {

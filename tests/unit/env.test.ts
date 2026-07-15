@@ -79,4 +79,25 @@ describe('preview-to-production safety', () => {
       'VITE_APP_ENV must be preview',
     )
   })
+
+  it('uses Vercel production as the trusted environment when the public label is absent', () => {
+    expect(
+      validateBuildEnv({
+        VERCEL_ENV: 'production',
+        VITE_SUPABASE_URL: 'https://zyxwvutsrqponmlkjihg.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'synthetic-production-publishable-key',
+      }).appEnvironment,
+    ).toBe('production')
+  })
+
+  it('still rejects an explicit environment mismatch', () => {
+    expect(() =>
+      validateBuildEnv({
+        VERCEL_ENV: 'production',
+        VITE_APP_ENV: 'preview',
+        VITE_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'synthetic-staging-publishable-key',
+      }),
+    ).toThrow('VITE_APP_ENV must be production')
+  })
 })
