@@ -30,7 +30,7 @@
     "db:reset": "npm run db:prerequisites:runtime && supabase db reset --local",
     "db:lint": "npm run db:prerequisites:runtime && supabase db lint --local --schema cooksmith --level warning --fail-on error",
     "db:test": "npm run db:prerequisites:runtime && supabase test db --local",
-    "db:test:security": "npm run db:prerequisites:runtime && supabase test db --local supabase/tests/0004_tenant_isolation_matrix.test.sql supabase/tests/0005_jwt_and_helper_security.test.sql supabase/tests/0006_api_contract.test.sql supabase/tests/0007_onboarding_bootstrap.test.sql",
+    "db:test:security": "npm run db:prerequisites:runtime && supabase test db --local supabase/tests/0004_tenant_isolation_matrix.test.sql supabase/tests/0005_jwt_and_helper_security.test.sql supabase/tests/0006_api_contract.test.sql supabase/tests/0007_onboarding_bootstrap.test.sql supabase/tests/0008_household_invitations.test.sql",
     "db:types": "npm run db:prerequisites:runtime && node scripts/database-types.mjs write",
     "db:types:check": "npm run db:prerequisites:runtime && node scripts/database-types.mjs check",
     "db:migration:new": "supabase migration new",

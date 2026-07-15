@@ -140,6 +140,62 @@ export type Database = {
           },
         ]
       }
+      household_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          household_id: string
+          id: string
+          invited_by: string
+          normalised_email: string | null
+          status: Database['cooksmith']['Enums']['invitation_status']
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          household_id: string
+          id?: string
+          invited_by: string
+          normalised_email?: string | null
+          status?: Database['cooksmith']['Enums']['invitation_status']
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          household_id?: string
+          id?: string
+          invited_by?: string
+          normalised_email?: string | null
+          status?: Database['cooksmith']['Enums']['invitation_status']
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_invitations_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_members: {
         Row: {
           created_at: string
@@ -338,9 +394,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_household_invitation: {
+        Args: { p_display_name: string; p_invitation_token: string }
+        Returns: string
+      }
       bootstrap_household: {
         Args: { p_household_name: string }
         Returns: string
+      }
+      cancel_household_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
+      create_household_invitation: {
+        Args: { p_email: string; p_household_id: string }
+        Returns: {
+          invitation_expires_at: string
+          invitation_id: string
+          invitation_token: string
+          invited_email: string
+        }[]
       }
       has_application_role: {
         Args: {
@@ -359,6 +432,30 @@ export type Database = {
         Args: { target_household_id: string }
         Returns: boolean
       }
+      list_household_members: {
+        Args: { p_household_id: string }
+        Returns: {
+          display_name: string
+          joined_at: string
+          member_role: Database['cooksmith']['Enums']['household_role']
+          member_status: Database['cooksmith']['Enums']['membership_status']
+          membership_id: string
+          user_id: string
+        }[]
+      }
+      remove_household_member: {
+        Args: { p_member_id: string }
+        Returns: undefined
+      }
+      resend_household_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: {
+          invitation_expires_at: string
+          invitation_id: string
+          invitation_token: string
+          invited_email: string
+        }[]
+      }
     }
     Enums: {
       application_role: 'admin' | 'content_editor' | 'support'
@@ -368,6 +465,7 @@ export type Database = {
       cooking_skill: 'beginner' | 'confident' | 'experienced'
       household_role: 'owner' | 'member'
       household_status: 'active' | 'archived'
+      invitation_status: 'pending' | 'accepted' | 'cancelled' | 'expired'
       membership_status: 'active' | 'inactive'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
     }
@@ -498,6 +596,7 @@ export const Constants = {
       cooking_skill: ['beginner', 'confident', 'experienced'],
       household_role: ['owner', 'member'],
       household_status: ['active', 'archived'],
+      invitation_status: ['pending', 'accepted', 'cancelled', 'expired'],
       membership_status: ['active', 'inactive'],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
     },

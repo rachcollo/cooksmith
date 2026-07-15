@@ -15,6 +15,7 @@ describe('generated database API contract', () => {
       | 'app_user_roles'
       | 'household_allergies'
       | 'household_dietary_requirements'
+      | 'household_invitations'
       | 'household_members'
       | 'household_settings'
       | 'households'

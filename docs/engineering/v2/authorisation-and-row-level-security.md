@@ -35,6 +35,7 @@ No policy means default deny. `anon` has no schema usage or table privileges.
 | `household_settings`             | Active members                  | Active owners may insert, update and delete           |
 | `household_dietary_requirements` | Active members                  | Active owners may insert, update and delete           |
 | `household_allergies`            | Active members                  | Active owners may insert, update and delete           |
+| `household_invitations`          | Active owners only              | RPC-only; no direct authenticated writes              |
 
 Every update policy has both `using` and `with check`. Application roles are intentionally not referenced by household policies. An administrator without an active household membership therefore receives no household access.
 
@@ -44,6 +45,8 @@ A member cannot update their membership row because membership writes require an
 
 The schema-level `app_user_roles_no_self_grant` constraint remains defence in depth. It does not replace the browser deny rules.
 
+Milestone 6C adds database-level protection for immutable membership row/user identifiers, one active household per user, and the final active owner; existing RLS continues to reject cross-household movement. Invitation acceptance always creates or reactivates the caller as `member`; no client-supplied role or user identifier is accepted. Removing a member changes the membership to `inactive`, so every existing household policy denies access immediately.
+
 ## Data API boundary
 
 Milestone 5B granted `authenticated` the minimum table privileges required for the policies to operate. Milestone 6B is the approved client-integration point and exposes `cooksmith` through the Data API. RLS remains enabled on every private table, anonymous access remains denied, and grants must never broaden without matching policies and adversarial tests.
@@ -51,6 +54,8 @@ Milestone 5B granted `authenticated` the minimum table privileges required for t
 ## Verification
 
 `supabase/tests/0003_authorisation_and_rls.test.sql` provides the Milestone 5B smoke coverage. Milestone 5C adds the complete operation, actor, JWT, helper and API-contract suites in tests `0004` through `0006`. See [Milestone 5 security validation](milestone-5-security-validation.md) for the final evidence matrix and extension rules.
+
+Milestone 6C invitation and membership abuse cases are exercised in `0008_household_invitations.test.sql`, including owner/member/unrelated actors, application-role separation, email mismatch, invalid and expired tokens, duplicate acceptance, immediate removal, final-owner protection, identifier manipulation, and the one-household constraint.
 
 ## Extension rules
 
