@@ -193,12 +193,14 @@ select results_eq(
   array['5:true'],
   'Acceptance completes the invited member profile without household bootstrap'
 );
+select set_config('request.jwt.claim.sub', '60000000-0000-4000-8000-000000000001', true);
 select results_eq(
   $$select status::text from cooksmith.household_invitations
     where id = '63000000-0000-4000-8000-000000000001'$$,
   array['accepted'],
   'Accepted invitation has a terminal status'
 );
+select set_config('request.jwt.claim.sub', '60000000-0000-4000-8000-000000000004', true);
 select throws_ok(
   $$select cooksmith.accept_household_invitation(repeat('a', 64), 'Again')$$,
   '22023', 'This invitation is no longer active.',

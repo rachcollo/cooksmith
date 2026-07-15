@@ -59,7 +59,6 @@ declare
 begin
   if tg_op = 'UPDATE' and (
     new.id <> old.id
-    or new.household_id <> old.household_id
     or new.user_id <> old.user_id
   ) then
     raise exception 'Membership identifiers cannot be changed.' using errcode = '23514';

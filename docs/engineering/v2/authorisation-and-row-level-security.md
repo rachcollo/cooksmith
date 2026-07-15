@@ -45,7 +45,7 @@ A member cannot update their membership row because membership writes require an
 
 The schema-level `app_user_roles_no_self_grant` constraint remains defence in depth. It does not replace the browser deny rules.
 
-Milestone 6C adds database-level protection for immutable membership identifiers, one active household per user, and the final active owner. Invitation acceptance always creates or reactivates the caller as `member`; no client-supplied role or user identifier is accepted. Removing a member changes the membership to `inactive`, so every existing household policy denies access immediately.
+Milestone 6C adds database-level protection for immutable membership row/user identifiers, one active household per user, and the final active owner; existing RLS continues to reject cross-household movement. Invitation acceptance always creates or reactivates the caller as `member`; no client-supplied role or user identifier is accepted. Removing a member changes the membership to `inactive`, so every existing household policy denies access immediately.
 
 ## Data API boundary
 

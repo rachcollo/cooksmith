@@ -16,6 +16,7 @@ select results_eq(
   (array[
     'household_allergies:DELETE', 'household_allergies:INSERT', 'household_allergies:SELECT', 'household_allergies:UPDATE',
     'household_dietary_requirements:DELETE', 'household_dietary_requirements:INSERT', 'household_dietary_requirements:SELECT', 'household_dietary_requirements:UPDATE',
+    'household_invitations:SELECT',
     'household_members:DELETE', 'household_members:INSERT', 'household_members:SELECT', 'household_members:UPDATE',
     'household_settings:DELETE', 'household_settings:INSERT', 'household_settings:SELECT', 'household_settings:UPDATE',
     'households:SELECT', 'households:UPDATE',
@@ -50,7 +51,7 @@ select results_eq(
   $$select table_name::text collate "C" from information_schema.tables
     where table_schema = 'cooksmith' and table_type = 'BASE TABLE' order by table_name$$,
   (array[
-    'app_user_roles', 'household_allergies', 'household_dietary_requirements',
+    'app_user_roles', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
     'household_members', 'household_settings', 'households', 'infrastructure_health', 'profiles'
   ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );

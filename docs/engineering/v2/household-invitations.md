@@ -22,7 +22,7 @@ Privileged implementations live in `cooksmith_private`, use `security definer`, 
 
 Invitation email is a delivery and identity-matching attribute, never a general household authorisation source. The accepting identity comes from `auth.users`, not JWT user metadata or frontend state. Global application roles do not grant household invitation access.
 
-Membership identifiers cannot be changed. Acceptance always assigns `member`. Removal marks the row inactive, immediately failing existing RLS helper checks. A database trigger prevents removal or demotion of the final active owner, including direct owner-authorised writes outside the management UI.
+Membership row and user identifiers cannot be changed; existing RLS continues to reject cross-household movement. Acceptance always assigns `member`. Removal marks the row inactive, immediately failing existing RLS helper checks. A database trigger prevents removal or demotion of the final active owner, including direct owner-authorised writes outside the management UI.
 
 ## Operations
 
