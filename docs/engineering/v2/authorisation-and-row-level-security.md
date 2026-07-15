@@ -46,7 +46,7 @@ The schema-level `app_user_roles_no_self_grant` constraint remains defence in de
 
 ## Data API boundary
 
-Milestone 5B grants `authenticated` the minimum table privileges required for the policies to operate, but the local Data API configuration does not expose the `cooksmith` schema yet. Exposure and client integration belong to an approved later milestone. If the schema is exposed later, keep RLS enabled and do not broaden grants without matching policies and tests.
+Milestone 5B granted `authenticated` the minimum table privileges required for the policies to operate. Milestone 6B is the approved client-integration point and exposes `cooksmith` through the Data API. RLS remains enabled on every private table, anonymous access remains denied, and grants must never broaden without matching policies and adversarial tests.
 
 ## Verification
 

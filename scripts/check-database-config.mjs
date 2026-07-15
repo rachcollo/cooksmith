@@ -33,8 +33,8 @@ if (/project_ref|access_token|service_role|password\s*=/.test(config)) {
 }
 
 const apiSchemas = config.match(/\[api\][\s\S]*?schemas\s*=\s*\[([^\]]*)\]/)?.[1] ?? ''
-if (/['"]cooksmith['"]/.test(apiSchemas)) {
-  problems.push('The private cooksmith schema must not be exposed through the Data API.')
+if (!/['"]cooksmith['"]/.test(apiSchemas)) {
+  problems.push('The RLS-protected cooksmith schema must be exposed for the approved client API.')
 }
 
 const migrations = readdirSync(migrationPath).filter((file) => file.endsWith('.sql'))

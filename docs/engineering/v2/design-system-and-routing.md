@@ -25,18 +25,21 @@ Use `PageContainer`, `PageSection`, `Stack`, `Inline` and `ResponsiveGrid` for c
 
 ## Route map
 
-| Path        | Primary navigation | Current purpose                                     |
-| ----------- | ------------------ | --------------------------------------------------- |
-| `/`         | Home               | Introduce the foundation and direct the next action |
-| `/pantry`   | Pantry             | Placeholder for the approved pantry milestone       |
-| `/recipes`  | Recipes            | Placeholder for the approved recipe milestone       |
-| `/plan`     | Plan               | Placeholder for the approved planning milestone     |
-| `/shopping` | Shopping           | Placeholder for the approved shopping milestone     |
-| `/settings` | Settings           | Placeholder for future approved settings work       |
-| `/health`   | No                 | Non-primary environment and shell diagnostic        |
-| `*`         | No                 | Calm not-found recovery                             |
+| Path          | Primary navigation | Current purpose                                     |
+| ------------- | ------------------ | --------------------------------------------------- |
+| `/`           | Home               | Introduce the foundation and direct the next action |
+| `/pantry`     | Pantry             | Placeholder for the approved pantry milestone       |
+| `/recipes`    | Recipes            | Placeholder for the approved recipe milestone       |
+| `/plan`       | Plan               | Placeholder for the approved planning milestone     |
+| `/shopping`   | Shopping           | Placeholder for the approved shopping milestone     |
+| `/settings`   | Settings           | Placeholder for future approved settings work       |
+| `/onboarding` | No                 | Authenticated first-run profile and household setup |
+| `/health`     | No                 | Non-primary environment and shell diagnostic        |
+| `*`           | No                 | Calm not-found recovery                             |
 
 Route modules are lazy loaded. The root layout provides the loading state, route announcement and shared navigation. The route error boundary presents a safe recovery action without exposing provider errors or stack traces. `DocumentTitle` owns the consistent `Page name | Cooksmith` title pattern.
+
+Authenticated users without a completed profile and household are routed through `/onboarding` before the application frame is shown. Completion state is loaded from Supabase and is not inferred from browser storage. Returning users with a completed onboarding record bypass this route.
 
 To add a future approved route:
 

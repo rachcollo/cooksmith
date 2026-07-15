@@ -1,7 +1,10 @@
 import type { Session, User } from '@supabase/supabase-js'
 import { createContext, useContext } from 'react'
 
+import type { CooksmithSupabaseClient } from '../../infrastructure/auth/supabaseAuthClient'
+
 export interface AuthContextValue {
+  client: CooksmithSupabaseClient | null
   configured: boolean
   loading: boolean
   session: Session | null

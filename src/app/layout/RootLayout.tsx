@@ -70,7 +70,7 @@ export function RootLayout() {
 
       <footer className="site-footer">
         <PageContainer>
-          <p>Cooksmith v2 foundation. No household data is connected yet.</p>
+          <p>Cooksmith MVP foundation. Your household preferences stay private.</p>
         </PageContainer>
       </footer>
 

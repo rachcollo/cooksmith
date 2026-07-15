@@ -306,6 +306,8 @@ export type Database = {
           display_name: string
           id: string
           locale: string
+          onboarding_completed_at: string | null
+          onboarding_step: number
           timezone: string
           updated_at: string
         }
@@ -314,6 +316,8 @@ export type Database = {
           display_name: string
           id: string
           locale?: string
+          onboarding_completed_at?: string | null
+          onboarding_step?: number
           timezone?: string
           updated_at?: string
         }
@@ -322,6 +326,8 @@ export type Database = {
           display_name?: string
           id?: string
           locale?: string
+          onboarding_completed_at?: string | null
+          onboarding_step?: number
           timezone?: string
           updated_at?: string
         }
@@ -332,6 +338,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_household: {
+        Args: { p_household_name: string }
+        Returns: string
+      }
       has_application_role: {
         Args: {
           required_role: Database['cooksmith']['Enums']['application_role']

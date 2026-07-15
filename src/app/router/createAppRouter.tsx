@@ -8,6 +8,7 @@ import {
 import { RootLayout } from '../layout/RootLayout'
 import { AuthLayout } from '../layout/AuthLayout'
 import { PublicOnlyRoute, RequireAuth } from '../auth/RouteGuards'
+import { OnboardingGate } from '../onboarding/OnboardingGate'
 import { RouteErrorPage } from '../errors/RouteErrorPage'
 import { LoadingState } from '../../components/ui/LoadingState'
 import {
@@ -29,6 +30,7 @@ import {
   SignInPage,
   WelcomePage,
 } from '../../routes/auth/AuthPages'
+import { OnboardingPage } from '../../routes/onboarding/OnboardingPage'
 
 export const appRoutes: RouteObject[] = [
   {
@@ -61,16 +63,22 @@ export const appRoutes: RouteObject[] = [
         element: <RequireAuth />,
         children: [
           {
-            path: '/',
-            element: <RootLayout />,
+            element: <OnboardingGate />,
             children: [
-              { index: true, element: <HomePage /> },
-              { path: 'pantry', element: <PantryPage /> },
-              { path: 'recipes', element: <RecipesPage /> },
-              { path: 'plan', element: <PlanPage /> },
-              { path: 'shopping', element: <ShoppingPage /> },
-              { path: 'settings', element: <SettingsPage /> },
-              { path: '*', element: <NotFoundPage /> },
+              { path: 'onboarding', element: <OnboardingPage /> },
+              {
+                path: '/',
+                element: <RootLayout />,
+                children: [
+                  { index: true, element: <HomePage /> },
+                  { path: 'pantry', element: <PantryPage /> },
+                  { path: 'recipes', element: <RecipesPage /> },
+                  { path: 'plan', element: <PlanPage /> },
+                  { path: 'shopping', element: <ShoppingPage /> },
+                  { path: 'settings', element: <SettingsPage /> },
+                  { path: '*', element: <NotFoundPage /> },
+                ],
+              },
             ],
           },
         ],

@@ -49,7 +49,7 @@ The database contract has three enforced layers:
 2. `tests/unit/databaseContract.test.ts` compiles representative row, insert and enum contracts from the generated Supabase types and verifies runtime enum constants.
 3. CI regenerates `database.types.ts` from a freshly reset database and fails on any diff.
 
-The private `cooksmith` schema is intentionally absent from `[api].schemas`. `scripts/check-database-config.mjs` now rejects accidental Data API exposure. A later approved integration milestone must review exposure, grants, policies and tests together.
+Milestone 5C originally kept `cooksmith` absent from `[api].schemas`. Milestone 6B is the approved integration milestone: it exposes the schema after reviewing grants, policies and adversarial tests together. `scripts/check-database-config.mjs` now requires that approved boundary.
 
 ## Test organisation
 
