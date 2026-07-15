@@ -28,7 +28,8 @@ For the temporary private MVP, the primary Vercel deployment URL is the canonica
 1. Enable email/password sign-up, email confirmation, magic-link login, and password recovery.
 2. Set the Site URL to the primary deployment URL for the `main` environment.
 3. Allow exact primary callback URLs for `/auth/confirm` and `/auth/reset-password`. Add dedicated Preview callback URLs to the Preview project only. Avoid a broad wildcard when exact URLs are available.
-4. Keep refresh-token rotation enabled and anonymous sign-ins disabled.
+
+The browser client uses PKCE and exchanges an incoming `code` explicitly before protected route guards render. Supabase's automatic URL detection remains disabled to prevent competing exchanges. The bootstrap removes the one-time code from the address bar after the exchange and also accepts a provider fallback to the application root, while `/auth/confirm` remains the canonical callback. 4. Keep refresh-token rotation enabled and anonymous sign-ins disabled.
 
 Local equivalents are committed in `supabase/config.toml`.
 
