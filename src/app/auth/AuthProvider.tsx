@@ -1,6 +1,7 @@
 import type { AuthError, Session, User } from '@supabase/supabase-js'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
+import { resolveInitialSession } from '../../application/auth/initialSession'
 import {
   createSupabaseAuthClient,
   type CooksmithSupabaseClient,
@@ -28,6 +29,10 @@ export function AuthProvider({
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(Boolean(client))
+  const initialSession = useRef<{
+    client: CooksmithSupabaseClient
+    promise: ReturnType<typeof resolveInitialSession>
+  } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -35,9 +40,13 @@ export function AuthProvider({
       return
     }
 
-    void client.auth.getSession().then(async ({ data, error }) => {
+    if (initialSession.current?.client !== client) {
+      initialSession.current = { client, promise: resolveInitialSession(client) }
+    }
+
+    void initialSession.current.promise.then(async ({ session: restoredSession, error }) => {
       if (!active) return
-      if (error || !data.session) {
+      if (error || !restoredSession) {
         setSession(null)
         setUser(null)
         setLoading(false)
@@ -50,7 +59,7 @@ export function AuthProvider({
         setSession(null)
         setUser(null)
       } else {
-        setSession(data.session)
+        setSession(restoredSession)
         setUser(validated.data.user)
       }
       setLoading(false)

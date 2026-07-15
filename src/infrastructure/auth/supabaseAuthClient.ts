@@ -11,7 +11,8 @@ export function createSupabaseAuthClient(config: PublicEnv): CooksmithSupabaseCl
   return createClient<Database>(config.supabase.url, config.supabase.publishableKey, {
     auth: {
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // PKCE callbacks are exchanged explicitly before route guards render.
+      detectSessionInUrl: false,
       flowType: 'pkce',
       persistSession: true,
     },
