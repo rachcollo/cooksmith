@@ -31,6 +31,7 @@ import {
   WelcomePage,
 } from '../../routes/auth/AuthPages'
 import { OnboardingPage } from '../../routes/onboarding/OnboardingPage'
+import { InvitationAcceptancePage } from '../../routes/InvitationAcceptancePage'
 
 export const appRoutes: RouteObject[] = [
   {
@@ -62,6 +63,7 @@ export const appRoutes: RouteObject[] = [
       {
         element: <RequireAuth />,
         children: [
+          { path: 'invitations/accept', element: <InvitationAcceptancePage /> },
           {
             element: <OnboardingGate />,
             children: [

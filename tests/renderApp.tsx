@@ -8,6 +8,7 @@ import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
 import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
+import type { HouseholdPeopleRepository } from '../src/application/households/householdPeopleRepository'
 
 const defaultConfig: PublicEnv = { appEnvironment: 'test', buildCommit: 'test-build' }
 const user = {
@@ -47,11 +48,34 @@ export const completedOnboardingRepository: OnboardingRepository = {
   completeDietaryPreferences: async () => undefined,
 }
 
+export const ownerHouseholdPeopleRepository: HouseholdPeopleRepository = {
+  load: async (householdId) => ({
+    householdId,
+    currentUserRole: 'owner',
+    members: [
+      {
+        id: 'membership-owner',
+        userId: 'test-user',
+        displayName: 'Cook Test',
+        role: 'owner',
+        joinedAt: '2026-01-01T00:00:00Z',
+      },
+    ],
+    invitations: [],
+  }),
+  invite: async () => undefined,
+  resend: async () => undefined,
+  cancel: async () => undefined,
+  removeMember: async () => undefined,
+  accept: async () => '20000000-0000-4000-8000-000000000001',
+}
+
 export function renderApp(
   path = '/',
   config: PublicEnv = defaultConfig,
   authClient: CooksmithSupabaseClient | null = authenticatedTestClient,
   onboardingRepository: OnboardingRepository = completedOnboardingRepository,
+  householdPeopleRepository: HouseholdPeopleRepository = ownerHouseholdPeopleRepository,
 ) {
   const router = createTestRouter([path])
 
@@ -63,6 +87,7 @@ export function renderApp(
           config={config}
           authClient={authClient}
           onboardingRepository={onboardingRepository}
+          householdPeopleRepository={householdPeopleRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>
@@ -78,6 +103,7 @@ export function renderRouteError(config: PublicEnv = defaultConfig) {
         config={config}
         authClient={authenticatedTestClient}
         onboardingRepository={completedOnboardingRepository}
+        householdPeopleRepository={ownerHouseholdPeopleRepository}
       >
         <RouterProvider router={createRouteErrorTestRouter()} />
       </AppProviders>

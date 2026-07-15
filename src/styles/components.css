@@ -260,6 +260,73 @@
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
 }
 
+.people-section {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.people-section > h2,
+.people-section > p,
+.person-row h3,
+.person-row p {
+  margin: 0;
+}
+
+.invite-form {
+  align-items: end;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.people-list {
+  border: var(--border-default);
+  border-radius: var(--radius-medium);
+  overflow: hidden;
+}
+
+.person-row {
+  align-items: center;
+  background: var(--colour-surface);
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  padding: var(--space-4);
+}
+
+.person-row + .person-row {
+  border-top: var(--border-default);
+}
+
+.person-row p {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.person-actions,
+.dialog-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dialog-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 36rem) {
+  .invite-form {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .person-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .choice-grid label {
   align-items: center;
   border: var(--border-default);
