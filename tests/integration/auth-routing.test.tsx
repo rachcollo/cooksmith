@@ -44,4 +44,57 @@ describe('authentication routing', () => {
     expect(getSession).not.toHaveBeenCalled()
     expect(window.location.search).toBe('')
   })
+
+  it('ignores the initial null auth event until a delayed PKCE exchange completes', async () => {
+    const user = { id: 'delayed-pkce-user' } as User
+    const session = { user } as Session
+    let resolveExchange!: (value: {
+      data: { session: Session; user: User }
+      error: null
+    }) => void
+    const exchangeCodeForSession = vi.fn(
+      () =>
+        new Promise<{ data: { session: Session; user: User }; error: null }>((resolve) => {
+          resolveExchange = resolve
+        }),
+    )
+    const getSession = vi.fn()
+    const onAuthStateChange = vi.fn(
+      (
+        callback: (event: string, nextSession: Session | null) => void,
+      ) => {
+        callback('INITIAL_SESSION', null)
+        return { data: { subscription: { unsubscribe() {} } } }
+      },
+    )
+    const client = {
+      auth: {
+        exchangeCodeForSession,
+        getSession,
+        getUser: async () => ({ data: { user }, error: null }),
+        onAuthStateChange,
+        signOut: async () => ({ error: null }),
+      },
+    } as unknown as CooksmithSupabaseClient
+
+    window.history.replaceState(null, '', '/?code=delayed-code')
+    const { router } = renderApp('/?code=delayed-code', undefined, client)
+
+    expect(await screen.findByText('Restoring your Cooksmith session')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/')
+    expect(router.state.location.search).toBe('?code=delayed-code')
+    expect(screen.queryByRole('heading', { name: 'Welcome to Cooksmith' })).not.toBeInTheDocument()
+
+    resolveExchange({ data: { session, user }, error: null })
+
+    await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' })
+    expect(router.state.location.pathname).toBe('/')
+    expect(router.state.location.search).toBe('')
+    expect(exchangeCodeForSession).toHaveBeenCalledOnce()
+    expect(exchangeCodeForSession).toHaveBeenCalledWith('delayed-code')
+    expect(getSession).not.toHaveBeenCalled()
+    expect(window.location.search).toBe('')
+    expect(window.location.href).not.toContain('returnTo')
+    expect(screen.queryByRole('heading', { name: 'Welcome to Cooksmith' })).not.toBeInTheDocument()
+  })
 })
