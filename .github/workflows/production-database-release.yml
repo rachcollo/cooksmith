@@ -1,0 +1,82 @@
+name: Production database release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_commit:
+        description: Full main commit SHA approved for release
+        required: true
+        type: string
+      confirmation:
+        description: Type DEPLOY_PRODUCTION_DATABASE to confirm
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cooksmith-production-database
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy approved migrations
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production-database
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+    steps:
+      - name: Check release approval inputs
+        env:
+          APPROVED_COMMIT: ${{ inputs.release_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "$CONFIRMATION" = "DEPLOY_PRODUCTION_DATABASE"
+          test "$APPROVED_COMMIT" = "$GITHUB_SHA"
+          test "${#APPROVED_COMMIT}" -eq 40
+
+      - name: Check required protected secrets
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN"
+          test -n "$SUPABASE_DB_PASSWORD"
+          test -n "$SUPABASE_PROJECT_REF"
+
+      - name: Check out approved main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_commit }}
+
+      - name: Use pinned Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install pinned dependencies
+        run: npm ci
+
+      - name: Check database migration configuration
+        run: npm run db:config:check
+
+      - name: Link approved Supabase project
+        run: npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Show remote migration state
+        run: npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Dry-run pending migrations
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+
+      - name: Apply pending migrations
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Verify migration history is current
+        run: |
+          npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
+          npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
