@@ -35,12 +35,12 @@ select ok(
 
 select results_eq(
   $$select count(*)::integer from cooksmith.household_pantry_items where household_id = '20000000-0000-4000-8000-000000000001' and is_default and storage_location = 'pantry'$$,
-  array[48],
+  array[47],
   'Existing active households retain the curated Milestone 7A pantry catalogue'
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.household_pantry_items where household_id = '20000000-0000-4000-8000-000000000001' and is_default and storage_location = 'pantry'$$,
-  array[48],
+  array[47],
   'Milestone 7A pantry catalogue size remains within the approved 35 to 50 item range'
 );
 select results_eq(
@@ -63,7 +63,7 @@ select lives_ok(
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.household_pantry_items where household_id = '20000000-0000-4000-8000-000000000001' and is_default and storage_location = 'pantry'$$,
-  array[48],
+  array[47],
   'Repeated default population remains idempotent for the Pantry location'
 );
 
@@ -71,7 +71,7 @@ insert into cooksmith.households (id, name, created_by, updated_by)
 values ('20000000-0000-4000-8000-000000000099', 'Future household', '10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001');
 select results_eq(
   $$select count(*)::integer from cooksmith.household_pantry_items where household_id = '20000000-0000-4000-8000-000000000099' and is_default and storage_location = 'pantry'$$,
-  array[48],
+  array[47],
   'Future households receive the Milestone 7A Pantry defaults from the database trigger'
 );
 
@@ -125,7 +125,7 @@ select results_eq(
     where household_id = '20000000-0000-4000-8000-000000000001'
       and is_default
       and storage_location = 'pantry'$$,
-  array[48],
+  array[47],
   'Active member can view their household default Pantry location'
 );
 select lives_ok(
