@@ -6,7 +6,7 @@ Milestone 7A is implemented for review, but the local branch could not be update
 
 ## Delivered scope
 
-- Household-owned pantry table, validation and RLS.
+- Household-owned shelf-stable pantry table, validation and RLS.
 - Deterministic curated Australian defaults for existing active households.
 - Automatic default population for future households.
 - Pantry route replacing the placeholder with add, edit, availability and remove behaviour.
@@ -18,7 +18,7 @@ The migration still requires the protected Production release workflow. Do not a
 
 ## Explicitly excluded
 
-Later Pantry enhancements are not included. Expiry tracking, recipe matching, meal planning, shopping-list integration, scanning and AI have not begun.
+Later Pantry enhancements are not included. Cold-storage locations, non-shelf-stable ingredients, expiry tracking, recipe matching, meal planning, shopping-list integration, scanning and AI have not begun.
 
 ## Next recommended package
 

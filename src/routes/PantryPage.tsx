@@ -10,19 +10,13 @@ import { Panel } from '../components/ui/Panel'
 import { SelectField } from '../components/ui/SelectField'
 import { TextField } from '../components/ui/TextField'
 import { pantryItemInputSchema } from '../domain/pantry/validationSchemas'
-import {
-  pantryCategoryLabels,
-  pantryStorageLabels,
-  type PantryItem,
-  type PantryItemInput,
-} from '../domain/pantry/types'
+import { pantryCategoryLabels, type PantryItem, type PantryItemInput } from '../domain/pantry/types'
 
 const emptyInput: PantryItemInput = {
   name: '',
-  category: 'staples',
-  storageLocation: 'pantry',
-  quantity: 1,
-  unit: 'item',
+  category: 'other',
+  quantity: null,
+  unit: null,
   available: true,
 }
 
@@ -59,7 +53,7 @@ export function PantryPage() {
   const grouped = useMemo(
     () =>
       items.reduce<Record<string, PantryItem[]>>((groups, item) => {
-        const label = pantryStorageLabels[item.storageLocation]
+        const label = pantryCategoryLabels[item.category]
         groups[label] = [...(groups[label] ?? []), item]
         return groups
       }, {}),
@@ -114,7 +108,7 @@ export function PantryPage() {
       <header className="page-header">
         <p className="eyebrow">Your ingredients</p>
         <h1>Pantry</h1>
-        <p>A private household list for everyday pantry, fridge and freezer staples.</p>
+        <p>A private household list for everyday shelf-stable pantry staples.</p>
       </header>
 
       {error ? <ErrorState title="Pantry needs a quick check" message={error} /> : null}
@@ -129,12 +123,19 @@ export function PantryPage() {
           <TextField
             label="Quantity"
             inputMode="decimal"
-            value={String(draft.quantity)}
-            onChange={(event) => setDraft({ ...draft, quantity: Number(event.target.value) })}
+            optional
+            value={draft.quantity === null ? '' : String(draft.quantity)}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+              })
+            }
           />
           <TextField
             label="Unit"
-            value={draft.unit}
+            optional
+            value={draft.unit ?? ''}
             onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
           />
           <SelectField
@@ -145,22 +146,6 @@ export function PantryPage() {
             }
           >
             {Object.entries(pantryCategoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectField>
-          <SelectField
-            label="Stored in"
-            value={draft.storageLocation}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                storageLocation: event.target.value as PantryItemInput['storageLocation'],
-              })
-            }
-          >
-            {Object.entries(pantryStorageLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -180,18 +165,20 @@ export function PantryPage() {
         </form>
       </Panel>
 
-      {Object.entries(grouped).map(([location, locationItems]) => (
-        <section className="pantry-section" key={location} aria-labelledby={`pantry-${location}`}>
-          <h2 id={`pantry-${location}`}>{location}</h2>
+      {Object.entries(grouped).map(([category, categoryItems]) => (
+        <section className="pantry-section" key={category} aria-labelledby={`pantry-${category}`}>
+          <h2 id={`pantry-${category}`}>{category}</h2>
           <div className="pantry-grid">
-            {locationItems.map((item) => (
+            {categoryItems.map((item) => (
               <article className="pantry-card" key={item.id}>
                 <div>
                   <h3>{item.name}</h3>
                   <p>{pantryCategoryLabels[item.category]}</p>
                 </div>
                 <p className="pantry-quantity">
-                  {item.quantity} {item.unit}
+                  {item.quantity === null
+                    ? 'Quantity not set'
+                    : `${item.quantity} ${item.unit ?? ''}`.trim()}
                 </p>
                 <span className={item.available ? 'badge badge-positive' : 'badge badge-neutral'}>
                   {item.available ? 'Available' : 'Unavailable'}
@@ -205,7 +192,6 @@ export function PantryPage() {
                       setDraft({
                         name: item.name,
                         category: item.category,
-                        storageLocation: item.storageLocation,
                         quantity: item.quantity,
                         unit: item.unit,
                         available: item.available,

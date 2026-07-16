@@ -82,7 +82,6 @@ export const defaultPantryRepository: PantryRepository = {
       householdId,
       name: 'Plain flour',
       category: 'baking',
-      storageLocation: 'pantry',
       quantity: 1,
       unit: 'kg',
       available: true,

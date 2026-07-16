@@ -9,9 +9,8 @@ type PantryRow = {
   household_id: string
   name: string
   category: PantryItem['category']
-  storage_location: PantryItem['storageLocation']
-  quantity: number | string
-  unit: string
+  quantity: number | string | null
+  unit: string | null
   available: boolean
   is_default: boolean
   updated_at: string
@@ -23,8 +22,7 @@ function mapRow(row: PantryRow): PantryItem {
     householdId: row.household_id,
     name: row.name,
     category: row.category,
-    storageLocation: row.storage_location,
-    quantity: Number(row.quantity),
+    quantity: row.quantity === null ? null : Number(row.quantity),
     unit: row.unit,
     available: row.available,
     isDefault: row.is_default,
@@ -45,7 +43,7 @@ function pantryError(error: PostgrestError | null): void {
 export function createSupabasePantryRepository(client: CooksmithSupabaseClient): PantryRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, name, category, storage_location, quantity, unit, available, is_default, updated_at'
+    'id, household_id, name, category, quantity, unit, available, is_default, updated_at'
 
   return {
     async list(householdId) {
@@ -66,7 +64,6 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
           household_id: householdId,
           name: input.name,
           category: input.category,
-          storage_location: input.storageLocation,
           quantity: input.quantity,
           unit: input.unit,
           available: input.available,
@@ -84,7 +81,6 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
         .update({
           name: input.name,
           category: input.category,
-          storage_location: input.storageLocation,
           quantity: input.quantity,
           unit: input.unit,
           available: input.available,

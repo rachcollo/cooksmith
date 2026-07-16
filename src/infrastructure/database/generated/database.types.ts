@@ -316,9 +316,8 @@ export type Database = {
           is_default: boolean
           name: string
           normalised_name: string | null
-          quantity: number
-          storage_location: Database['cooksmith']['Enums']['pantry_storage_location']
-          unit: string
+          quantity: number | null
+          unit: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -332,9 +331,8 @@ export type Database = {
           is_default?: boolean
           name: string
           normalised_name?: string | null
-          quantity?: number
-          storage_location: Database['cooksmith']['Enums']['pantry_storage_location']
-          unit?: string
+          quantity?: number | null
+          unit?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -348,9 +346,8 @@ export type Database = {
           is_default?: boolean
           name?: string
           normalised_name?: string | null
-          quantity?: number
-          storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
-          unit?: string
+          quantity?: number | null
+          unit?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -527,16 +524,16 @@ export type Database = {
       invitation_status: 'pending' | 'accepted' | 'cancelled' | 'expired'
       membership_status: 'active' | 'inactive'
       pantry_item_category:
-        | 'staples'
         | 'baking'
-        | 'canned_goods'
-        | 'condiments'
-        | 'spices'
-        | 'fresh'
-        | 'frozen'
-        | 'drinks'
-        | 'household'
-      pantry_storage_location: 'pantry' | 'fridge' | 'freezer'
+        | 'breakfast'
+        | 'canned_and_jarred'
+        | 'condiments_and_sauces'
+        | 'grains_rice_and_pasta'
+        | 'herbs_and_spices'
+        | 'oils_and_vinegars'
+        | 'snacks'
+        | 'tea_coffee_and_drinks'
+        | 'other'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
     }
     CompositeTypes: {
@@ -669,17 +666,17 @@ export const Constants = {
       invitation_status: ['pending', 'accepted', 'cancelled', 'expired'],
       membership_status: ['active', 'inactive'],
       pantry_item_category: [
-        'staples',
         'baking',
-        'canned_goods',
-        'condiments',
-        'spices',
-        'fresh',
-        'frozen',
-        'drinks',
-        'household',
+        'breakfast',
+        'canned_and_jarred',
+        'condiments_and_sauces',
+        'grains_rice_and_pasta',
+        'herbs_and_spices',
+        'oils_and_vinegars',
+        'snacks',
+        'tea_coffee_and_drinks',
+        'other',
       ],
-      pantry_storage_location: ['pantry', 'fridge', 'freezer'],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
     },
   },

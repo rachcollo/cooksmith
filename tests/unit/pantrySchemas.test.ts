@@ -8,7 +8,6 @@ describe('pantry item validation', () => {
       pantryItemInputSchema.parse({
         name: '  Plain flour ',
         category: 'baking',
-        storageLocation: 'pantry',
         quantity: '1.5',
         unit: ' kg ',
         available: true,
@@ -16,9 +15,26 @@ describe('pantry item validation', () => {
     ).toEqual({
       name: 'Plain flour',
       category: 'baking',
-      storageLocation: 'pantry',
       quantity: 1.5,
       unit: 'kg',
+      available: true,
+    })
+  })
+
+  it('accepts unset quantity and unit', () => {
+    expect(
+      pantryItemInputSchema.parse({
+        name: 'Tea bags',
+        category: 'tea_coffee_and_drinks',
+        quantity: '',
+        unit: '',
+        available: true,
+      }),
+    ).toEqual({
+      name: 'Tea bags',
+      category: 'tea_coffee_and_drinks',
+      quantity: null,
+      unit: null,
       available: true,
     })
   })
@@ -27,8 +43,7 @@ describe('pantry item validation', () => {
     expect(
       pantryItemInputSchema.safeParse({
         name: '',
-        category: 'staples',
-        storageLocation: 'pantry',
+        category: 'other',
         quantity: -1,
         unit: 'item',
         available: true,

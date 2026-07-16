@@ -1,23 +1,22 @@
-export type PantryStorageLocation = 'pantry' | 'fridge' | 'freezer'
 export type PantryItemCategory =
-  | 'staples'
   | 'baking'
-  | 'canned_goods'
-  | 'condiments'
-  | 'spices'
-  | 'fresh'
-  | 'frozen'
-  | 'drinks'
-  | 'household'
+  | 'breakfast'
+  | 'canned_and_jarred'
+  | 'condiments_and_sauces'
+  | 'grains_rice_and_pasta'
+  | 'herbs_and_spices'
+  | 'oils_and_vinegars'
+  | 'snacks'
+  | 'tea_coffee_and_drinks'
+  | 'other'
 
 export interface PantryItem {
   id: string
   householdId: string
   name: string
   category: PantryItemCategory
-  storageLocation: PantryStorageLocation
-  quantity: number
-  unit: string
+  quantity: number | null
+  unit: string | null
   available: boolean
   isDefault: boolean
   updatedAt: string
@@ -26,26 +25,20 @@ export interface PantryItem {
 export interface PantryItemInput {
   name: string
   category: PantryItemCategory
-  storageLocation: PantryStorageLocation
-  quantity: number
-  unit: string
+  quantity: number | null
+  unit: string | null
   available: boolean
 }
 
 export const pantryCategoryLabels: Record<PantryItemCategory, string> = {
-  staples: 'Staples',
   baking: 'Baking',
-  canned_goods: 'Canned goods',
-  condiments: 'Condiments',
-  spices: 'Spices',
-  fresh: 'Fresh',
-  frozen: 'Frozen',
-  drinks: 'Drinks',
-  household: 'Household',
-}
-
-export const pantryStorageLabels: Record<PantryStorageLocation, string> = {
-  pantry: 'Pantry',
-  fridge: 'Fridge',
-  freezer: 'Freezer',
+  breakfast: 'Breakfast',
+  canned_and_jarred: 'Canned and jarred',
+  condiments_and_sauces: 'Condiments and sauces',
+  grains_rice_and_pasta: 'Grains, rice and pasta',
+  herbs_and_spices: 'Herbs and spices',
+  oils_and_vinegars: 'Oils and vinegars',
+  snacks: 'Snacks',
+  tea_coffee_and_drinks: 'Tea, coffee and drinks',
+  other: 'Other',
 }

@@ -21,7 +21,6 @@ describe('pantry foundation', () => {
           householdId,
           name: 'Plain flour',
           category: 'baking',
-          storageLocation: 'pantry',
           quantity: 1,
           unit: 'kg',
           available: true,
@@ -41,16 +40,15 @@ describe('pantry foundation', () => {
     expect(screen.getByRole('heading', { name: 'Plain flour' })).toBeVisible()
 
     await userEvent.type(screen.getByLabelText('Item name'), 'Brown rice')
-    await userEvent.clear(screen.getByLabelText('Quantity'))
-    await userEvent.type(screen.getByLabelText('Quantity'), '2')
-    await userEvent.clear(screen.getByLabelText('Unit'))
-    await userEvent.type(screen.getByLabelText('Unit'), 'kg')
+    await userEvent.clear(screen.getByLabelText(/Quantity/))
+    await userEvent.type(screen.getByLabelText(/Quantity/), '2')
+    await userEvent.clear(screen.getByLabelText(/Unit/))
+    await userEvent.type(screen.getByLabelText(/Unit/), 'kg')
     await userEvent.click(screen.getByRole('button', { name: 'Add item' }))
 
     expect(create).toHaveBeenCalledWith('20000000-0000-4000-8000-000000000001', {
       name: 'Brown rice',
-      category: 'staples',
-      storageLocation: 'pantry',
+      category: 'other',
       quantity: 2,
       unit: 'kg',
       available: true,

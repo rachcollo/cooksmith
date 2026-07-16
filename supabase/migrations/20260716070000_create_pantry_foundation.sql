@@ -1,8 +1,16 @@
 begin;
 
-create type cooksmith.pantry_storage_location as enum ('pantry', 'fridge', 'freezer');
 create type cooksmith.pantry_item_category as enum (
-  'staples', 'baking', 'canned_goods', 'condiments', 'spices', 'fresh', 'frozen', 'drinks', 'household'
+  'baking',
+  'breakfast',
+  'canned_and_jarred',
+  'condiments_and_sauces',
+  'grains_rice_and_pasta',
+  'herbs_and_spices',
+  'oils_and_vinegars',
+  'snacks',
+  'tea_coffee_and_drinks',
+  'other'
 );
 
 create table cooksmith.household_pantry_items (
@@ -11,9 +19,8 @@ create table cooksmith.household_pantry_items (
   name text not null,
   normalised_name text generated always as (lower(btrim(name))) stored,
   category cooksmith.pantry_item_category not null,
-  storage_location cooksmith.pantry_storage_location not null,
-  quantity numeric(8, 2) not null default 1,
-  unit text not null default 'item',
+  quantity numeric(8, 2),
+  unit text,
   available boolean not null default true,
   is_default boolean not null default false,
   created_by uuid references auth.users (id) on delete set null,
@@ -21,26 +28,49 @@ create table cooksmith.household_pantry_items (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint household_pantry_items_name_length check (char_length(btrim(name)) between 1 and 100),
-  constraint household_pantry_items_unit_length check (char_length(btrim(unit)) between 1 and 40),
-  constraint household_pantry_items_quantity_range check (quantity >= 0 and quantity <= 99999),
+  constraint household_pantry_items_unit_length check (
+    unit is null or char_length(btrim(unit)) between 1 and 40
+  ),
+  constraint household_pantry_items_quantity_non_negative check (
+    quantity is null or quantity >= 0
+  ),
   constraint household_pantry_items_household_name_unique unique (household_id, normalised_name)
 );
 
 create index household_pantry_items_household_category_idx
   on cooksmith.household_pantry_items (household_id, category, normalised_name);
-create index household_pantry_items_household_location_idx
-  on cooksmith.household_pantry_items (household_id, storage_location, normalised_name);
 create index household_pantry_items_created_by_idx on cooksmith.household_pantry_items (created_by);
 create index household_pantry_items_updated_by_idx on cooksmith.household_pantry_items (updated_by);
+
+create function cooksmith_private.set_pantry_item_audit_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  caller_id uuid := (select auth.uid());
+begin
+  if tg_op = 'INSERT' then
+    new.created_by = caller_id;
+  end if;
+  new.updated_by = caller_id;
+  return new;
+end;
+$$;
 
 create trigger household_pantry_items_set_updated_at
 before update on cooksmith.household_pantry_items
 for each row execute function cooksmith.set_updated_at();
 
-comment on table cooksmith.household_pantry_items is
-  'Private household-owned pantry, fridge and freezer item records for Milestone 7A.';
+create trigger household_pantry_items_set_audit_fields
+before insert or update on cooksmith.household_pantry_items
+for each row execute function cooksmith_private.set_pantry_item_audit_fields();
 
-create function cooksmith_private.populate_default_pantry(target_household_id uuid, actor_id uuid default null)
+comment on table cooksmith.household_pantry_items is
+  'Private household-owned pantry item records for Milestone 7A.';
+
+create function cooksmith_private.populate_default_pantry(target_household_id uuid)
 returns void
 language plpgsql
 volatile
@@ -53,35 +83,63 @@ begin
   end if;
 
   insert into cooksmith.household_pantry_items (
-    household_id, name, category, storage_location, quantity, unit, available, is_default, created_by, updated_by
+    household_id, name, category, quantity, unit, available, is_default
   )
   values
-    (target_household_id, 'Plain flour', 'baking', 'pantry', 1, 'kg', true, true, actor_id, actor_id),
-    (target_household_id, 'Self-raising flour', 'baking', 'pantry', 1, 'kg', true, true, actor_id, actor_id),
-    (target_household_id, 'Caster sugar', 'baking', 'pantry', 1, 'kg', true, true, actor_id, actor_id),
-    (target_household_id, 'Rolled oats', 'staples', 'pantry', 1, 'kg', true, true, actor_id, actor_id),
-    (target_household_id, 'White rice', 'staples', 'pantry', 2, 'kg', true, true, actor_id, actor_id),
-    (target_household_id, 'Pasta', 'staples', 'pantry', 1, 'kg', true, true, actor_id, actor_id),
-    (target_household_id, 'Olive oil', 'condiments', 'pantry', 1, 'bottle', true, true, actor_id, actor_id),
-    (target_household_id, 'Vegemite', 'condiments', 'pantry', 1, 'jar', true, true, actor_id, actor_id),
-    (target_household_id, 'Soy sauce', 'condiments', 'pantry', 1, 'bottle', true, true, actor_id, actor_id),
-    (target_household_id, 'Tinned tomatoes', 'canned_goods', 'pantry', 4, 'tin', true, true, actor_id, actor_id),
-    (target_household_id, 'Tinned tuna', 'canned_goods', 'pantry', 4, 'tin', true, true, actor_id, actor_id),
-    (target_household_id, 'Chickpeas', 'canned_goods', 'pantry', 2, 'tin', true, true, actor_id, actor_id),
-    (target_household_id, 'Salt', 'spices', 'pantry', 1, 'packet', true, true, actor_id, actor_id),
-    (target_household_id, 'Black pepper', 'spices', 'pantry', 1, 'jar', true, true, actor_id, actor_id),
-    (target_household_id, 'Mixed herbs', 'spices', 'pantry', 1, 'jar', true, true, actor_id, actor_id),
-    (target_household_id, 'Milk', 'fresh', 'fridge', 2, 'L', true, true, actor_id, actor_id),
-    (target_household_id, 'Eggs', 'fresh', 'fridge', 12, 'each', true, true, actor_id, actor_id),
-    (target_household_id, 'Butter', 'fresh', 'fridge', 500, 'g', true, true, actor_id, actor_id),
-    (target_household_id, 'Cheddar cheese', 'fresh', 'fridge', 500, 'g', true, true, actor_id, actor_id),
-    (target_household_id, 'Frozen peas', 'frozen', 'freezer', 1, 'kg', true, true, actor_id, actor_id)
+    (target_household_id, 'Plain flour', 'baking', null, null, true, true),
+    (target_household_id, 'Self-raising flour', 'baking', null, null, true, true),
+    (target_household_id, 'Baking powder', 'baking', null, null, true, true),
+    (target_household_id, 'Bicarbonate of soda', 'baking', null, null, true, true),
+    (target_household_id, 'Caster sugar', 'baking', null, null, true, true),
+    (target_household_id, 'Brown sugar', 'baking', null, null, true, true),
+    (target_household_id, 'Cocoa powder', 'baking', null, null, true, true),
+    (target_household_id, 'Vanilla extract', 'baking', null, null, true, true),
+    (target_household_id, 'Rolled oats', 'breakfast', null, null, true, true),
+    (target_household_id, 'Weet-Bix', 'breakfast', null, null, true, true),
+    (target_household_id, 'Corn flakes', 'breakfast', null, null, true, true),
+    (target_household_id, 'Muesli', 'breakfast', null, null, true, true),
+    (target_household_id, 'White rice', 'grains_rice_and_pasta', null, null, true, true),
+    (target_household_id, 'Brown rice', 'grains_rice_and_pasta', null, null, true, true),
+    (target_household_id, 'Pasta', 'grains_rice_and_pasta', null, null, true, true),
+    (target_household_id, 'Noodles', 'grains_rice_and_pasta', null, null, true, true),
+    (target_household_id, 'Couscous', 'grains_rice_and_pasta', null, null, true, true),
+    (target_household_id, 'Tinned tomatoes', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Tomato paste', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Tinned tuna', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Chickpeas', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Kidney beans', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Baked beans', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Lentils', 'canned_and_jarred', null, null, true, true),
+    (target_household_id, 'Vegemite', 'condiments_and_sauces', null, null, true, true),
+    (target_household_id, 'Soy sauce', 'condiments_and_sauces', null, null, true, true),
+    (target_household_id, 'Tomato sauce', 'condiments_and_sauces', null, null, true, true),
+    (target_household_id, 'Worcestershire sauce', 'condiments_and_sauces', null, null, true, true),
+    (target_household_id, 'Honey', 'condiments_and_sauces', null, null, true, true),
+    (target_household_id, 'Jam', 'condiments_and_sauces', null, null, true, true),
+    (target_household_id, 'Olive oil', 'oils_and_vinegars', null, null, true, true),
+    (target_household_id, 'Vegetable oil', 'oils_and_vinegars', null, null, true, true),
+    (target_household_id, 'White vinegar', 'oils_and_vinegars', null, null, true, true),
+    (target_household_id, 'Apple cider vinegar', 'oils_and_vinegars', null, null, true, true),
+    (target_household_id, 'Salt', 'herbs_and_spices', null, null, true, true),
+    (target_household_id, 'Black pepper', 'herbs_and_spices', null, null, true, true),
+    (target_household_id, 'Mixed herbs', 'herbs_and_spices', null, null, true, true),
+    (target_household_id, 'Paprika', 'herbs_and_spices', null, null, true, true),
+    (target_household_id, 'Ground cumin', 'herbs_and_spices', null, null, true, true),
+    (target_household_id, 'Curry powder', 'herbs_and_spices', null, null, true, true),
+    (target_household_id, 'Tea bags', 'tea_coffee_and_drinks', null, null, true, true),
+    (target_household_id, 'Instant coffee', 'tea_coffee_and_drinks', null, null, true, true),
+    (target_household_id, 'Milo', 'tea_coffee_and_drinks', null, null, true, true),
+    (target_household_id, 'Crackers', 'snacks', null, null, true, true),
+    (target_household_id, 'Popcorn kernels', 'snacks', null, null, true, true),
+    (target_household_id, 'Sultanas', 'snacks', null, null, true, true),
+    (target_household_id, 'Stock cubes', 'other', null, null, true, true),
+    (target_household_id, 'Breadcrumbs', 'other', null, null, true, true)
   on conflict (household_id, normalised_name) do nothing;
 end;
 $$;
 
-comment on function cooksmith_private.populate_default_pantry(uuid, uuid) is
-  'Deterministically and idempotently inserts the curated Australian default pantry catalogue for one household.';
+comment on function cooksmith_private.populate_default_pantry(uuid) is
+  'Deterministically and idempotently inserts the curated Australian shelf-stable pantry catalogue for one household.';
 
 create function cooksmith_private.populate_default_pantry_after_household()
 returns trigger
@@ -91,7 +149,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  perform cooksmith_private.populate_default_pantry(new.id, new.created_by);
+  perform cooksmith_private.populate_default_pantry(new.id);
   return new;
 end;
 $$;
@@ -100,7 +158,7 @@ create trigger households_populate_default_pantry
 after insert on cooksmith.households
 for each row execute function cooksmith_private.populate_default_pantry_after_household();
 
-select cooksmith_private.populate_default_pantry(household.id, household.created_by)
+select cooksmith_private.populate_default_pantry(household.id)
 from cooksmith.households as household
 where household.status = 'active';
 
@@ -132,9 +190,8 @@ for delete
 to authenticated
 using ((select cooksmith.is_active_household_member(household_id)));
 
-revoke all on function cooksmith_private.populate_default_pantry(uuid, uuid) from public, anon, authenticated;
+revoke all on function cooksmith_private.populate_default_pantry(uuid) from public, anon, authenticated;
 revoke all on function cooksmith_private.populate_default_pantry_after_household() from public, anon, authenticated;
-
-grant execute on function cooksmith_private.populate_default_pantry(uuid, uuid) to authenticated;
+revoke all on function cooksmith_private.set_pantry_item_audit_fields() from public, anon, authenticated;
 
 commit;
