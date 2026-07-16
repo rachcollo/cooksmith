@@ -1,12 +1,8 @@
 import type { AuthError, Session, User } from '@supabase/supabase-js'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 
-import { resolveInitialSession } from '../../application/auth/initialSession'
-import {
-  createSupabaseAuthClient,
-  type CooksmithSupabaseClient,
-} from '../../infrastructure/auth/supabaseAuthClient'
-import { useAppConfig } from '../providers/appConfigContext'
+import type { InitialAuthState } from '../../application/auth/bootstrapAuth'
+import type { CooksmithSupabaseClient } from '../../infrastructure/auth/supabaseAuthClient'
 import { AuthContext, type AuthContextValue } from './authContext'
 import { authErrorMessage } from './authErrors'
 
@@ -16,69 +12,26 @@ function throwIfError(error: AuthError | null) {
 
 export function AuthProvider({
   children,
-  client: suppliedClient,
+  client,
+  initialAuthState,
 }: {
   children: ReactNode
-  client?: CooksmithSupabaseClient | null
+  client: CooksmithSupabaseClient | null
+  initialAuthState: InitialAuthState
 }) {
-  const config = useAppConfig()
-  const client = useMemo(
-    () => (suppliedClient === undefined ? createSupabaseAuthClient(config) : suppliedClient),
-    [config, suppliedClient],
-  )
-  const [session, setSession] = useState<Session | null>(null)
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(Boolean(client))
-  const initialSession = useRef<{
-    client: CooksmithSupabaseClient
-    promise: ReturnType<typeof resolveInitialSession>
-  } | null>(null)
+  const [session, setSession] = useState<Session | null>(initialAuthState.session)
+  const [user, setUser] = useState<User | null>(initialAuthState.user)
 
   useEffect(() => {
-    let active = true
-    let initialSessionResolved = false
-    if (!client) {
-      return
-    }
+    if (!client) return undefined
 
-    if (initialSession.current?.client !== client) {
-      initialSession.current = { client, promise: resolveInitialSession(client) }
-    }
-
-    void initialSession.current.promise.then(async ({ session: restoredSession, error }) => {
-      if (!active) return
-      if (error || !restoredSession) {
-        initialSessionResolved = true
-        setSession(null)
-        setUser(null)
-        setLoading(false)
-        return
-      }
-      const validated = await client.auth.getUser()
-      if (!active) return
-      if (validated.error || !validated.data.user) {
-        await client.auth.signOut({ scope: 'local' })
-        if (!active) return
-        setSession(null)
-        setUser(null)
-      } else {
-        setSession(restoredSession)
-        setUser(validated.data.user)
-      }
-      initialSessionResolved = true
-      setLoading(false)
-    })
-
-    const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
-      if (!active || !initialSessionResolved) return
+    const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
+      if (event === 'INITIAL_SESSION') return
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
-      setLoading(false)
     })
-    return () => {
-      active = false
-      listener.subscription.unsubscribe()
-    }
+
+    return () => listener.subscription.unsubscribe()
   }, [client])
 
   const requireClient = useCallback(() => {
@@ -90,7 +43,7 @@ export function AuthProvider({
     () => ({
       client,
       configured: Boolean(client),
-      loading,
+      loading: false,
       session,
       user,
       async signIn({ email, password }) {
@@ -130,7 +83,7 @@ export function AuthProvider({
         throwIfError((await requireClient().auth.signOut()).error)
       },
     }),
-    [client, loading, requireClient, session, user],
+    [client, requireClient, session, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

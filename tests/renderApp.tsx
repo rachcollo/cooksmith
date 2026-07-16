@@ -9,6 +9,7 @@ import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabas
 import type { Session, User } from '@supabase/supabase-js'
 import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
 import type { HouseholdPeopleRepository } from '../src/application/households/householdPeopleRepository'
+import type { InitialAuthState } from '../src/application/auth/bootstrapAuth'
 
 const defaultConfig: PublicEnv = { appEnvironment: 'test', buildCommit: 'test-build' }
 const user = {
@@ -27,6 +28,9 @@ const session = {
   token_type: 'bearer',
   user,
 } as Session
+export const authenticatedTestAuthState: InitialAuthState = { session, user }
+export const signedOutTestAuthState: InitialAuthState = { session: null, user: null }
+
 export const authenticatedTestClient = {
   auth: {
     getSession: async () => ({ data: { session }, error: null }),
@@ -76,6 +80,9 @@ export function renderApp(
   authClient: CooksmithSupabaseClient | null = authenticatedTestClient,
   onboardingRepository: OnboardingRepository = completedOnboardingRepository,
   householdPeopleRepository: HouseholdPeopleRepository = ownerHouseholdPeopleRepository,
+  initialAuthState: InitialAuthState = authClient
+    ? authenticatedTestAuthState
+    : signedOutTestAuthState,
 ) {
   const router = createTestRouter([path])
 
@@ -86,6 +93,7 @@ export function renderApp(
         <AppProviders
           config={config}
           authClient={authClient}
+          initialAuthState={initialAuthState}
           onboardingRepository={onboardingRepository}
           householdPeopleRepository={householdPeopleRepository}
         >
@@ -102,6 +110,7 @@ export function renderRouteError(config: PublicEnv = defaultConfig) {
       <AppProviders
         config={config}
         authClient={authenticatedTestClient}
+        initialAuthState={authenticatedTestAuthState}
         onboardingRepository={completedOnboardingRepository}
         householdPeopleRepository={ownerHouseholdPeopleRepository}
       >
