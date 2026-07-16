@@ -2,7 +2,7 @@
 
 ## Status
 
-Milestone 7A is implemented for review. It is complete only after review, merge to `main`, hosted migration execution and smoke verification through the approved workflows.
+Milestone 7A is implemented for review, but the local branch could not be updated onto latest remote `main` in this container because no `origin` remote or local `main` branch is configured. It is complete only after the branch is updated onto the accepted EP004 baseline, reviewed, merged to `main`, and followed by hosted migration execution and smoke verification through the approved workflows.
 
 ## Delivered scope
 
@@ -22,4 +22,4 @@ Later Pantry enhancements are not included. Expiry tracking, recipe matching, me
 
 ## Next recommended package
 
-After review, merge, hosted migration release and smoke verification, the next recommended package is Milestone 7B. Do not begin Milestone 7B before that verification is complete.
+After updating onto the EP004 baseline, review, merge, hosted migration release and smoke verification, the next recommended package is Milestone 7B. Do not begin Milestone 7B before that verification is complete.

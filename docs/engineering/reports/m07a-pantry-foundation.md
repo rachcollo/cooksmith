@@ -2,15 +2,15 @@
 
 ## 1. Status
 
-Implemented locally for review. Completion remains subject to pull-request review, merge to `main`, and the protected Production migration release workflow.
+Implemented locally for review, with baseline integration pending because this container has no configured `origin` remote or local `main` branch. Completion remains subject to updating the branch onto latest remote `main`, pull-request review, merge to `main`, and the protected Production migration release workflow.
 
 ## 2. Baseline commit
 
-Baseline branch available in this environment: `work` at `43eb188`. The repository has no configured `origin` remote or local `main` branch in this container, so the latest accepted `main` could not be fetched locally.
+Requested latest remote `main` baseline includes EP004 commit `083a7fb98936f8b9a88ad335dca960ede6bba18c`. This container could not verify or merge that baseline because `.git/config` has no `origin` remote, there is no local `main` branch, and `git show 083a7fb98936f8b9a88ad335dca960ede6bba18c` fails with `bad object`. The pre-existing local baseline remains `work` at `43eb188`, so publication must update this branch onto remote `main` before merge.
 
 ## 3. Product outcome
 
-Cooksmith now has a simple, calm household pantry foundation. Each active household receives private pantry, fridge and freezer defaults and can maintain item availability without introducing later recipe, planning, shopping, scanning or AI scope.
+Cooksmith now has a simple, calm household pantry foundation. Each active household receives private pantry, fridge and freezer defaults and can maintain item availability without introducing later recipe, planning, shopping, scanning or AI scope. Milestone 7A initially began concurrently with EP004 and must be published only after the branch is updated onto the accepted EP004 baseline.
 
 ## 4. Database and domain model
 
@@ -30,7 +30,7 @@ Pantry RLS grants select, insert, update and delete only to active household mem
 
 ## 8. Application architecture
 
-Added domain pantry types and validation, an application repository port, a Supabase infrastructure adapter, provider wiring and a route-level Pantry UI. Domain code remains framework-independent.
+Added domain pantry types and validation, an application repository port, a Supabase infrastructure adapter, provider wiring and a route-level Pantry UI. Domain code remains framework-independent. The locally available standards were re-read after the EP004 baseline instruction; latest-main documentation conflicts could not be resolved locally because the EP004 commit is absent from this clone.
 
 ## 9. User experience delivered
 
@@ -46,8 +46,7 @@ Added unit validation coverage, integration UI coverage and pgTAP database/RLS c
 
 ## 12. Validation commands and actual results
 
-- `npm run typecheck` — passed.
-- `npm run test -- --run tests/integration/pantry.test.tsx tests/integration/app-shell.test.tsx tests/integration/auth-bootstrap.test.tsx` — passed.
+- `npm ci` — passed.
 - `npm run format` — passed.
 - `npm run format:check` — passed.
 - `npm run lint` — passed.
@@ -55,6 +54,8 @@ Added unit validation coverage, integration UI coverage and pgTAP database/RLS c
 - `npm run test -- --run` — passed, 19 files and 63 tests.
 - `npm run build` — passed; Vite reported the existing large chunk warning.
 - `npm run db:reset && npm run db:lint && npm run db:test && npm run db:types` — not run because the prerequisite check failed: Node.js 24.14.0 required but 24.15.0 found, npm 11.9.0 required but 11.4.2 found, and Docker was not running.
+- `git show 083a7fb98936f8b9a88ad335dca960ede6bba18c` — failed with `bad object`, confirming EP004 is not present in this local clone.
+- `git ls-remote https://github.com/rachcollo/cooksmith.git main` — failed with `CONNECT tunnel failed, response 403`, so remote `main` could not be fetched from this container.
 
 ## 13. Hosted/manual validation
 
@@ -62,7 +63,7 @@ No hosted Preview or Production database was accessed. Manual assistive-technolo
 
 ## 14. Known limitations
 
-No expiry dates, recipe matching, meal planning, shopping integration, scanning or AI are included. The local Git environment lacks `origin` and `main`, so publishing is represented by the connected PR metadata tool rather than a remote push from this container.
+No expiry dates, recipe matching, meal planning, shopping integration, scanning or AI are included. The local Git environment lacks `origin` and `main`, and EP004 is absent locally, so this branch still requires a connected GitHub update/rebase onto remote `main` before it can be considered ready to merge.
 
 ## 15. Migration and release handover
 
@@ -74,7 +75,7 @@ No secrets, credentials, real household data, paid provider, new dependency or r
 
 ## 17. Git branch, commit and pull-request link
 
-Branch: `m07a-pantry-foundation`. Local commit: `89f998c`. Pull request metadata was prepared with the connected `make_pr` tool; no remote URL is available in this container because no `origin` remote is configured.
+Branch: `m07a-pantry-foundation`. Local commit after this report update is recorded in the final handover. Pull request metadata was prepared with the connected `make_pr` tool; no remote URL is available in this container because no `origin` remote is configured.
 
 ## 18. Scope confirmation
 
