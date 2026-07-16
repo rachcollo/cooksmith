@@ -246,6 +246,62 @@ export type Database = {
           },
         ]
       }
+      household_pantry_items: {
+        Row: {
+          available: boolean
+          category: Database['cooksmith']['Enums']['pantry_item_category']
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          is_default: boolean
+          name: string
+          normalised_name: string | null
+          quantity: number | null
+          unit: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          available?: boolean
+          category: Database['cooksmith']['Enums']['pantry_item_category']
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          is_default?: boolean
+          name: string
+          normalised_name?: string | null
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          available?: boolean
+          category?: Database['cooksmith']['Enums']['pantry_item_category']
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          normalised_name?: string | null
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_pantry_items_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_settings: {
         Row: {
           budget_band: Database['cooksmith']['Enums']['budget_band']
@@ -300,62 +356,6 @@ export type Database = {
             foreignKeyName: 'household_settings_household_id_fkey'
             columns: ['household_id']
             isOneToOne: true
-            referencedRelation: 'households'
-            referencedColumns: ['id']
-          },
-        ]
-      }
-      household_pantry_items: {
-        Row: {
-          available: boolean
-          category: Database['cooksmith']['Enums']['pantry_item_category']
-          created_at: string
-          created_by: string | null
-          household_id: string
-          id: string
-          is_default: boolean
-          name: string
-          normalised_name: string | null
-          quantity: number | null
-          unit: string | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          available?: boolean
-          category: Database['cooksmith']['Enums']['pantry_item_category']
-          created_at?: string
-          created_by?: string | null
-          household_id: string
-          id?: string
-          is_default?: boolean
-          name: string
-          normalised_name?: string | null
-          quantity?: number | null
-          unit?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          available?: boolean
-          category?: Database['cooksmith']['Enums']['pantry_item_category']
-          created_at?: string
-          created_by?: string | null
-          household_id?: string
-          id?: string
-          is_default?: boolean
-          name?: string
-          normalised_name?: string | null
-          quantity?: number | null
-          unit?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'household_pantry_items_household_id_fkey'
-            columns: ['household_id']
-            isOneToOne: false
             referencedRelation: 'households'
             referencedColumns: ['id']
           },
