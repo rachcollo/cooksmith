@@ -15,3 +15,12 @@ export async function bootstrapAuth(
 
   const { session, error } = await resolveInitialSession(client)
   if (error || !session) return { session: null, user: null }
+
+  const validated = await client.auth.getUser()
+  if (validated.error || !validated.data.user) {
+    await client.auth.signOut({ scope: 'local' })
+    return { session: null, user: null }
+  }
+
+  return { session, user: validated.data.user }
+}
