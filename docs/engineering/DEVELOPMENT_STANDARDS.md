@@ -74,6 +74,8 @@ Do not bypass application or domain validation by calling persistence directly f
 
 ## Documentation and review
 
+For Codex-led work, the enforceable baseline, scope, pull-request truthfulness, hosted-preview and completion-report rules live in [Codex build rules](CODEX_BUILD_RULES.md). Keep this document focused on implementation standards and cross-reference rather than duplicating operational workflow rules.
+
 - Document public contracts, non-obvious constraints, security boundaries, migrations and operational steps.
 - Comments explain why, not what syntax already states.
 - Update standards, route maps, policy matrices, generated types, ADRs, handovers and reports when the implementation changes them.

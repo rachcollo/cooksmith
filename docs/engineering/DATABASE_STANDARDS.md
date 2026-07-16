@@ -4,6 +4,8 @@ These rules apply to PostgreSQL, Supabase, Auth, RLS, database functions, genera
 
 ## Environment and production protection
 
+For packages containing Supabase migrations, also follow the protected Production release discipline in [Codex build rules](CODEX_BUILD_RULES.md) and the [Production database release runbook](v2/production-database-releases.md).
+
 - Local, Preview and Production are separate environments with separate credentials and data.
 - Normal development and CI use the isolated local Supabase project. Do not link scripts to a hosted project.
 - Preview may use only approved staging resources and preview-scoped public values.
