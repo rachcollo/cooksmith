@@ -25,6 +25,7 @@ export const pantryItemInputSchema = z.object({
     'tea_coffee_and_drinks',
     'other',
   ]),
+  storageLocation: z.enum(['pantry', 'fridge', 'freezer']),
   quantity: optionalQuantity,
   unit: optionalTrimmedString,
   available: z.boolean(),
