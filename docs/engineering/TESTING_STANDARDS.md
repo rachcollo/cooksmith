@@ -51,6 +51,8 @@ Tests provide evidence for approved behaviour, security boundaries and regressio
 
 ## Organisation and CI
 
+Follow the baseline, local-validation, hosted-preview, authentication and flaky-test rules in [Codex build rules](CODEX_BUILD_RULES.md). Completion evidence must separate local automation, hosted validation, manual validation, unavailable checks and assumptions.
+
 - Name TypeScript tests `*.test.ts` or `*.test.tsx`, Playwright files `*.spec.ts` and pgTAP files `NNNN_description.test.sql`.
 - Place regression coverage beside the closest existing suite and keep setup reusable without hiding important context.
 - Pull requests targeting `main` must pass formatting, lint, strict types, Vitest, build, database reset/lint/pgTAP/types, Playwright and axe checks when applicable.

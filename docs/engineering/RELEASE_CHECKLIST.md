@@ -4,6 +4,8 @@ Use the applicable section before requesting review or release. Record actual ev
 
 ## Normal milestone pull request
 
+Apply the branch truthfulness, pull-request verification, hosted-preview and completion-report requirements in [Codex build rules](CODEX_BUILD_RULES.md) before requesting review.
+
 - [ ] Branch was created from the latest accepted `main` commit.
 - [ ] Pull request targets `main`; `main` changes only through the reviewed merge.
 - [ ] Diff contains only the approved milestone scope and no later-milestone work.
