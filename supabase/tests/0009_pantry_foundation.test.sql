@@ -3,8 +3,28 @@ begin;
 select no_plan();
 
 select has_table('cooksmith', 'household_pantry_items', 'Pantry items table exists');
-select has_function('cooksmith_private', 'populate_default_pantry', array['uuid'], 'Private default pantry population function exists');
-select has_function('cooksmith_private', 'set_pantry_item_audit_fields', array[]::name[], 'Private pantry audit trigger function exists');
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_proc
+    join pg_catalog.pg_namespace on pg_namespace.oid = pg_proc.pronamespace
+    where pg_namespace.nspname = 'cooksmith_private'
+      and pg_proc.proname = 'populate_default_pantry'
+      and pg_get_function_identity_arguments(pg_proc.oid) = 'target_household_id uuid'
+  ),
+  'Private default pantry population function exists'
+);
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_proc
+    join pg_catalog.pg_namespace on pg_namespace.oid = pg_proc.pronamespace
+    where pg_namespace.nspname = 'cooksmith_private'
+      and pg_proc.proname = 'set_pantry_item_audit_fields'
+      and pg_proc.prorettype = 'pg_catalog.trigger'::regtype
+  ),
+  'Private pantry audit trigger function exists'
+);
 
 select ok(
   not has_function_privilege('public', 'cooksmith_private.populate_default_pantry(uuid)', 'execute')
