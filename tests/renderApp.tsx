@@ -9,6 +9,7 @@ import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabas
 import type { Session, User } from '@supabase/supabase-js'
 import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
 import type { HouseholdPeopleRepository } from '../src/application/households/householdPeopleRepository'
+import type { PantryRepository } from '../src/application/pantry/pantryRepository'
 import type { InitialAuthState } from '../src/application/auth/bootstrapAuth'
 
 const defaultConfig: PublicEnv = { appEnvironment: 'test', buildCommit: 'test-build' }
@@ -74,12 +75,45 @@ export const ownerHouseholdPeopleRepository: HouseholdPeopleRepository = {
   accept: async () => '20000000-0000-4000-8000-000000000001',
 }
 
+export const defaultPantryRepository: PantryRepository = {
+  list: async (householdId) => [
+    {
+      id: 'pantry-item-1',
+      householdId,
+      name: 'Plain flour',
+      category: 'baking',
+      storageLocation: 'pantry',
+      quantity: 1,
+      unit: 'kg',
+      available: true,
+      isDefault: true,
+      updatedAt: '2026-01-01T00:00:00Z',
+    },
+  ],
+  create: async (householdId, input) => ({
+    id: 'pantry-item-created',
+    householdId,
+    ...input,
+    isDefault: false,
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  update: async (itemId, input) => ({
+    id: itemId,
+    householdId: '20000000-0000-4000-8000-000000000001',
+    ...input,
+    isDefault: false,
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  remove: async () => undefined,
+}
+
 export function renderApp(
   path = '/',
   config: PublicEnv = defaultConfig,
   authClient: CooksmithSupabaseClient | null = authenticatedTestClient,
   onboardingRepository: OnboardingRepository = completedOnboardingRepository,
   householdPeopleRepository: HouseholdPeopleRepository = ownerHouseholdPeopleRepository,
+  pantryRepository: PantryRepository = defaultPantryRepository,
   initialAuthState: InitialAuthState = authClient
     ? authenticatedTestAuthState
     : signedOutTestAuthState,
@@ -96,6 +130,7 @@ export function renderApp(
           initialAuthState={initialAuthState}
           onboardingRepository={onboardingRepository}
           householdPeopleRepository={householdPeopleRepository}
+          pantryRepository={pantryRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>
@@ -113,6 +148,7 @@ export function renderRouteError(config: PublicEnv = defaultConfig) {
         initialAuthState={authenticatedTestAuthState}
         onboardingRepository={completedOnboardingRepository}
         householdPeopleRepository={ownerHouseholdPeopleRepository}
+        pantryRepository={defaultPantryRepository}
       >
         <RouterProvider router={createRouteErrorTestRouter()} />
       </AppProviders>

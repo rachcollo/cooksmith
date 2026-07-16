@@ -17,6 +17,7 @@ describe('generated database API contract', () => {
       | 'household_dietary_requirements'
       | 'household_invitations'
       | 'household_members'
+      | 'household_pantry_items'
       | 'household_settings'
       | 'households'
       | 'infrastructure_health'
@@ -41,6 +42,11 @@ describe('generated database API contract', () => {
 
   it('exports runtime enum constants that match validation and policy inputs', () => {
     expect(Constants.cooksmith.Enums.household_role).toEqual(['owner', 'member'])
+    expect(Constants.cooksmith.Enums.pantry_storage_location).toEqual([
+      'pantry',
+      'fridge',
+      'freezer',
+    ])
     expect(Constants.cooksmith.Enums.membership_status).toEqual(['active', 'inactive'])
     expect(Constants.cooksmith.Enums.application_role).toEqual([
       'admin',
