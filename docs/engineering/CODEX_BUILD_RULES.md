@@ -81,6 +81,8 @@ npm run test
 npm run build
 ```
 
+Before committing, publishing or updating a pull request, run the repository formatter in write mode (`npm run format` when available), then rerun `npm run format:check`. Correct formatting locally rather than relying on CI to discover fixable style failures.
+
 Run browser, accessibility, database, RLS, responsive, preview-safety and other specialised suites whenever the task affects them. Tests must verify meaningful behaviour rather than snapshots alone. Fix in-scope failures and add regression coverage for defects.
 
 When a runtime is unavailable, run every remaining check, preserve the CI gate and report exactly what remains. Do not claim a manual, assistive-technology, device, provider or database check that was not performed.
