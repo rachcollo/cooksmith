@@ -589,3 +589,57 @@
     transform: translateY(0.5rem);
   }
 }
+
+.pantry-form {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.checkbox-field {
+  align-items: center;
+  display: inline-flex;
+  font-weight: 700;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+}
+
+.pantry-section {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pantry-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+.pantry-card {
+  background: var(--colour-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-large);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.pantry-card h3,
+.pantry-card p {
+  margin: 0;
+}
+
+.pantry-card h3 + p {
+  color: var(--colour-text-muted);
+}
+
+.pantry-quantity {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.pantry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

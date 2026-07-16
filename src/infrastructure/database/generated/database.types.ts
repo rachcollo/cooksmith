@@ -246,6 +246,62 @@ export type Database = {
           },
         ]
       }
+      household_pantry_items: {
+        Row: {
+          available: boolean
+          category: Database['cooksmith']['Enums']['pantry_item_category']
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          is_default: boolean
+          name: string
+          normalised_name: string | null
+          quantity: number | null
+          unit: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          available?: boolean
+          category: Database['cooksmith']['Enums']['pantry_item_category']
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          is_default?: boolean
+          name: string
+          normalised_name?: string | null
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          available?: boolean
+          category?: Database['cooksmith']['Enums']['pantry_item_category']
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          normalised_name?: string | null
+          quantity?: number | null
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_pantry_items_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_settings: {
         Row: {
           budget_band: Database['cooksmith']['Enums']['budget_band']
@@ -467,6 +523,17 @@ export type Database = {
       household_status: 'active' | 'archived'
       invitation_status: 'pending' | 'accepted' | 'cancelled' | 'expired'
       membership_status: 'active' | 'inactive'
+      pantry_item_category:
+        | 'baking'
+        | 'breakfast'
+        | 'canned_and_jarred'
+        | 'condiments_and_sauces'
+        | 'grains_rice_and_pasta'
+        | 'herbs_and_spices'
+        | 'oils_and_vinegars'
+        | 'snacks'
+        | 'tea_coffee_and_drinks'
+        | 'other'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
     }
     CompositeTypes: {
@@ -598,6 +665,18 @@ export const Constants = {
       household_status: ['active', 'archived'],
       invitation_status: ['pending', 'accepted', 'cancelled', 'expired'],
       membership_status: ['active', 'inactive'],
+      pantry_item_category: [
+        'baking',
+        'breakfast',
+        'canned_and_jarred',
+        'condiments_and_sauces',
+        'grains_rice_and_pasta',
+        'herbs_and_spices',
+        'oils_and_vinegars',
+        'snacks',
+        'tea_coffee_and_drinks',
+        'other',
+      ],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
     },
   },

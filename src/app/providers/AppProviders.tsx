@@ -10,6 +10,9 @@ import { OnboardingRepositoryContext } from '../onboarding/onboardingContext'
 import type { HouseholdPeopleRepository } from '../../application/households/householdPeopleRepository'
 import { HouseholdPeopleRepositoryContext } from '../households/householdPeopleContext'
 import { HouseholdPeopleProvider } from '../households/HouseholdPeopleProvider'
+import type { PantryRepository } from '../../application/pantry/pantryRepository'
+import { PantryProvider } from '../pantry/PantryProvider'
+import { PantryRepositoryContext } from '../pantry/pantryContext'
 
 interface AppProvidersProps {
   children: ReactNode
@@ -18,6 +21,7 @@ interface AppProvidersProps {
   initialAuthState: InitialAuthState
   onboardingRepository?: OnboardingRepository
   householdPeopleRepository?: HouseholdPeopleRepository
+  pantryRepository?: PantryRepository
 }
 
 export function AppProviders({
@@ -27,6 +31,7 @@ export function AppProviders({
   initialAuthState,
   onboardingRepository,
   householdPeopleRepository,
+  pantryRepository,
 }: AppProvidersProps) {
   return (
     <AppConfigContext.Provider value={config}>
@@ -34,7 +39,9 @@ export function AppProviders({
         <HouseholdPeopleRepositoryContext.Provider value={householdPeopleRepository}>
           <HouseholdPeopleProvider>
             <OnboardingRepositoryContext.Provider value={onboardingRepository}>
-              {children}
+              <PantryRepositoryContext.Provider value={pantryRepository}>
+                <PantryProvider>{children}</PantryProvider>
+              </PantryRepositoryContext.Provider>
             </OnboardingRepositoryContext.Provider>
           </HouseholdPeopleProvider>
         </HouseholdPeopleRepositoryContext.Provider>
