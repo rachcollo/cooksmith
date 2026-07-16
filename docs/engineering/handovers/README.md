@@ -1,5 +1,7 @@
 # Milestone handovers
 
+- [Production database release workflow](production-database-release-workflow.md)
+
 Store one completed handover per milestone in this directory using `mNN-short-title.md`. Start from the [milestone handover template](../templates/milestone-handover.md).
 
 | Milestone | Handover                                                                             | Status                      |

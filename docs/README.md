@@ -32,6 +32,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - v2 environment and preview: [Environment and preview setup](engineering/v2/environment-and-preview.md)
 - v2 dependency policy: [Dependency management](engineering/v2/dependency-management.md)
 - v2 database workflow: [Environment and migration discipline](engineering/v2/database-workflow.md)
+- Production database releases: [Protected GitHub workflow and runbook](engineering/v2/production-database-releases.md)
 - Supabase staging setup: [Staging project guide](engineering/v2/staging-supabase-setup.md)
 - v2 design system and routing: [Design, routing and navigation](engineering/v2/design-system-and-routing.md)
 - v2 core household schema: [Core household schema](engineering/v2/core-household-schema.md)
