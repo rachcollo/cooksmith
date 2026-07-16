@@ -2,9 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { App } from './app/App'
+import { AuthBootstrapError, bootstrapAuth } from './application/auth/bootstrapAuth'
+import { AuthCallbackError } from './app/errors/AuthCallbackError'
 import { BootstrapError } from './app/errors/BootstrapError'
 import { LoadingState } from './components/ui/LoadingState'
-import { bootstrapAuth } from './application/auth/bootstrapAuth'
 import { loadPublicEnv } from './config/env'
 import { createSupabaseAuthClient } from './infrastructure/auth/supabaseAuthClient'
 import './styles/global.css'
@@ -38,7 +39,11 @@ async function startCooksmith() {
 startCooksmith().catch((error: unknown) => {
   root.render(
     <StrictMode>
-      <BootstrapError error={error} />
+      {error instanceof AuthBootstrapError ? (
+        <AuthCallbackError category={error.category} />
+      ) : (
+        <BootstrapError error={error} />
+      )}
     </StrictMode>,
   )
 })

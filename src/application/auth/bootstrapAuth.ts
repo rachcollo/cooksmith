@@ -8,19 +8,46 @@ export interface InitialAuthState {
   user: User | null
 }
 
+export type AuthBootstrapErrorCategory =
+  | 'pkce_exchange_failed'
+  | 'pkce_exchange_empty'
+  | 'pkce_validation_failed'
+  | 'session_restore_failed'
+
+export class AuthBootstrapError extends Error {
+  constructor(public readonly category: AuthBootstrapErrorCategory) {
+    super('Authentication could not be completed.')
+    this.name = 'AuthBootstrapError'
+  }
+}
+
 export async function bootstrapAuth(
   client: CooksmithSupabaseClient | null,
 ): Promise<InitialAuthState> {
   if (!client) return { session: null, user: null }
 
-  const { session, error } = await resolveInitialSession(client)
-  if (error || !session) return { session: null, user: null }
+  const result = await resolveInitialSession(client)
 
-  const validated = await client.auth.getUser()
-  if (validated.error || !validated.data.user) {
-    await client.auth.signOut({ scope: 'local' })
-    return { session: null, user: null }
+  switch (result.status) {
+    case 'no-session':
+      return { session: null, user: null }
+    case 'existing-session-error':
+      throw new AuthBootstrapError('session_restore_failed')
+    case 'pkce-exchange-error':
+      throw new AuthBootstrapError('pkce_exchange_failed')
+    case 'pkce-exchange-empty':
+      throw new AuthBootstrapError('pkce_exchange_empty')
+    case 'pkce-exchange-success':
+      if (!result.session.user) throw new AuthBootstrapError('pkce_validation_failed')
+      return { session: result.session, user: result.session.user }
+    case 'existing-session': {
+      const validated = await client.auth.getUser()
+      if (validated.error || !validated.data.user) {
+        await client.auth.signOut({ scope: 'local' })
+        return { session: null, user: null }
+      }
+
+      return { session: result.session, user: validated.data.user }
+    }
   }
-
-  return { session, user: validated.data.user }
 }
