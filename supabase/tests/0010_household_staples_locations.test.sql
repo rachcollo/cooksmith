@@ -24,9 +24,16 @@ select ok(
   ),
   'new staples default to pantry'
 );
-select results_eq(
-  $$select enumlabel::text from pg_enum join pg_type on pg_type.oid = enumtypid join pg_namespace on pg_namespace.oid = pg_type.typnamespace where nspname = 'cooksmith' and typname = 'pantry_storage_location' order by enumsortorder$$,
-  $$values ('pantry'::text), ('fridge'::text), ('freezer'::text)$$,
+select is(
+  (
+    select array_agg(enumlabel::text order by enumsortorder)
+    from pg_enum
+    join pg_type on pg_type.oid = enumtypid
+    join pg_namespace on pg_namespace.oid = pg_type.typnamespace
+    where nspname = 'cooksmith'
+      and typname = 'pantry_storage_location'
+  ),
+  array['pantry','fridge','freezer']::text[],
   'only approved storage locations exist'
 );
 select ok(not has_function_privilege('authenticated', 'cooksmith_private.populate_default_pantry(uuid)', 'execute'), 'browser cannot populate defaults');
