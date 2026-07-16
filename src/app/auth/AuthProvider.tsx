@@ -36,6 +36,7 @@ export function AuthProvider({
 
   useEffect(() => {
     let active = true
+    let initialSessionResolved = false
     if (!client) {
       return
     }
@@ -47,6 +48,7 @@ export function AuthProvider({
     void initialSession.current.promise.then(async ({ session: restoredSession, error }) => {
       if (!active) return
       if (error || !restoredSession) {
+        initialSessionResolved = true
         setSession(null)
         setUser(null)
         setLoading(false)
@@ -56,17 +58,19 @@ export function AuthProvider({
       if (!active) return
       if (validated.error || !validated.data.user) {
         await client.auth.signOut({ scope: 'local' })
+        if (!active) return
         setSession(null)
         setUser(null)
       } else {
         setSession(restoredSession)
         setUser(validated.data.user)
       }
+      initialSessionResolved = true
       setLoading(false)
     })
 
     const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
-      if (!active) return
+      if (!active || !initialSessionResolved) return
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
       setLoading(false)
