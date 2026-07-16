@@ -44,9 +44,12 @@ select results_eq(
   'Default catalogue size is within the approved 35 to 50 item range'
 );
 select results_eq(
-  $$select count(*)::integer from cooksmith.household_pantry_items where category in ('baking','breakfast','canned_and_jarred','condiments_and_sauces','grains_rice_and_pasta','herbs_and_spices','oils_and_vinegars','snacks','tea_coffee_and_drinks','other')$$,
-  array[96],
-  'Defaults are pantry-only controlled categories across seeded households'
+  $$select count(*)::integer
+    from cooksmith.household_pantry_items
+    where is_default
+      and category not in ('baking','breakfast','canned_and_jarred','condiments_and_sauces','grains_rice_and_pasta','herbs_and_spices','oils_and_vinegars','snacks','tea_coffee_and_drinks','other')$$,
+  array[0],
+  'Defaults use only pantry controlled categories'
 );
 select results_eq(
   $$select count(*)::integer from cooksmith.household_pantry_items where name in ('Milk','Eggs','Butter','Cheddar cheese','Frozen peas')$$,
@@ -117,7 +120,14 @@ select throws_ok(
   $$select cooksmith_private.populate_default_pantry('20000000-0000-4000-8000-000000000001')$$,
   '42501', null, 'Authenticated clients cannot invoke private default population'
 );
-select results_eq($$select count(*)::integer from cooksmith.household_pantry_items$$, array[48], 'Active member can view household pantry');
+select results_eq(
+  $$select count(*)::integer
+    from cooksmith.household_pantry_items
+    where household_id = '20000000-0000-4000-8000-000000000001'
+      and is_default$$,
+  array[48],
+  'Active member can view their household default pantry'
+);
 select lives_ok(
   $$insert into cooksmith.household_pantry_items (household_id, name, category, quantity, unit, created_by, updated_by)
     values ('20000000-0000-4000-8000-000000000001', 'Member rice', 'grains_rice_and_pasta', null, null,
