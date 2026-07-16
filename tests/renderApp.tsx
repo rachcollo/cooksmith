@@ -4,13 +4,13 @@ import { RouterProvider } from 'react-router-dom'
 import { AppErrorBoundary } from '../src/app/errors/AppErrorBoundary'
 import { AppProviders } from '../src/app/providers/AppProviders'
 import { createRouteErrorTestRouter, createTestRouter } from '../src/app/router/createAppRouter'
+import type { InitialAuthState } from '../src/application/auth/bootstrapAuth'
+import type { HouseholdPeopleRepository } from '../src/application/households/householdPeopleRepository'
+import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
+import type { PantryRepository } from '../src/application/pantry/pantryRepository'
 import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
-import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
-import type { HouseholdPeopleRepository } from '../src/application/households/householdPeopleRepository'
-import type { PantryRepository } from '../src/application/pantry/pantryRepository'
-import type { InitialAuthState } from '../src/application/auth/bootstrapAuth'
 
 const defaultConfig: PublicEnv = { appEnvironment: 'test', buildCommit: 'test-build' }
 const user = {
@@ -82,6 +82,7 @@ export const defaultPantryRepository: PantryRepository = {
       householdId,
       name: 'Plain flour',
       category: 'baking',
+      storageLocation: 'pantry',
       quantity: 1,
       unit: 'kg',
       available: true,
