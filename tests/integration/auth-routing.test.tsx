@@ -22,14 +22,19 @@ describe('authentication routing', () => {
   it('exchanges a PKCE code before protected routing and removes it from the URL', async () => {
     const user = { id: 'pkce-user' } as User
     const session = { user } as Session
-    const exchangeCodeForSession = vi.fn(async () => ({ data: { session, user }, error: null }))
+    const exchangeCodeForSession = vi.fn(async () => ({
+      data: { session, user },
+      error: null,
+    }))
     const getSession = vi.fn()
     const client = {
       auth: {
         exchangeCodeForSession,
         getSession,
         getUser: async () => ({ data: { user }, error: null }),
-        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+        onAuthStateChange: () => ({
+          data: { subscription: { unsubscribe() {} } },
+        }),
         signOut: async () => ({ error: null }),
       },
     } as unknown as CooksmithSupabaseClient
@@ -37,7 +42,9 @@ describe('authentication routing', () => {
     window.history.replaceState(null, '', '/?code=one-time-code')
     const { router } = renderApp('/?code=one-time-code', undefined, client)
 
-    await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' })
+    await screen.findByRole('heading', {
+      name: 'Dinner decisions, made lighter.',
+    })
     expect(router.state.location.pathname).toBe('/')
     expect(exchangeCodeForSession).toHaveBeenCalledOnce()
     expect(exchangeCodeForSession).toHaveBeenCalledWith('one-time-code')
@@ -48,10 +55,7 @@ describe('authentication routing', () => {
   it('ignores the initial null auth event until a delayed PKCE exchange completes', async () => {
     const user = { id: 'delayed-pkce-user' } as User
     const session = { user } as Session
-    let resolveExchange!: (value: {
-      data: { session: Session; user: User }
-      error: null
-    }) => void
+    let resolveExchange!: (value: { data: { session: Session; user: User }; error: null }) => void
     const exchangeCodeForSession = vi.fn(
       () =>
         new Promise<{ data: { session: Session; user: User }; error: null }>((resolve) => {
@@ -60,9 +64,7 @@ describe('authentication routing', () => {
     )
     const getSession = vi.fn()
     const onAuthStateChange = vi.fn(
-      (
-        callback: (event: string, nextSession: Session | null) => void,
-      ) => {
+      (callback: (event: string, nextSession: Session | null) => void) => {
         callback('INITIAL_SESSION', null)
         return { data: { subscription: { unsubscribe() {} } } }
       },
@@ -87,7 +89,9 @@ describe('authentication routing', () => {
 
     resolveExchange({ data: { session, user }, error: null })
 
-    await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' })
+    await screen.findByRole('heading', {
+      name: 'Dinner decisions, made lighter.',
+    })
     expect(router.state.location.pathname).toBe('/')
     expect(router.state.location.search).toBe('')
     expect(exchangeCodeForSession).toHaveBeenCalledOnce()
