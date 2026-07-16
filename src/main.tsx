@@ -2,8 +2,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { App } from './app/App'
+import { AuthCallbackError } from './app/errors/AuthCallbackError'
 import { BootstrapError } from './app/errors/BootstrapError'
+import { LoadingState } from './components/ui/LoadingState'
+import { bootstrapAuth, isAuthBootstrapError } from './application/auth/bootstrapAuth'
 import { loadPublicEnv } from './config/env'
+import { createSupabaseAuthClient } from './infrastructure/auth/supabaseAuthClient'
 import './styles/global.css'
 
 const rootElement = document.getElementById('root')
@@ -14,18 +18,32 @@ if (!rootElement) {
 
 const root = createRoot(rootElement)
 
-try {
+root.render(
+  <StrictMode>
+    <LoadingState label="Getting Cooksmith ready" fullPage />
+  </StrictMode>,
+)
+
+async function startCooksmith() {
   const config = loadPublicEnv(import.meta.env)
+  const authClient = createSupabaseAuthClient(config)
+  const initialAuthState = await bootstrapAuth(authClient)
 
   root.render(
     <StrictMode>
-      <App config={config} />
-    </StrictMode>,
-  )
-} catch (error) {
-  root.render(
-    <StrictMode>
-      <BootstrapError error={error} />
+      <App authClient={authClient} config={config} initialAuthState={initialAuthState} />
     </StrictMode>,
   )
 }
+
+startCooksmith().catch((error: unknown) => {
+  root.render(
+    <StrictMode>
+      {isAuthBootstrapError(error) ? (
+        <AuthCallbackError error={error} />
+      ) : (
+        <BootstrapError error={error} />
+      )}
+    </StrictMode>,
+  )
+})
