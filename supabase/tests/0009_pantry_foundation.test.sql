@@ -159,9 +159,12 @@ select throws_ok(
     values ('20000000-0000-4000-8000-000000000002', 'Cross tenant rice', 'grains_rice_and_pasta')$$,
   '42501', null, 'Member cannot add pantry item to another household'
 );
-select results_eq(
-  $$update cooksmith.household_pantry_items set household_id = '20000000-0000-4000-8000-000000000002' where name = 'Plain flour' returning id$$,
-  array[]::uuid[],
+select throws_ok(
+  $$update cooksmith.household_pantry_items
+    set household_id = '20000000-0000-4000-8000-000000000002'
+    where name = 'Plain flour'$$,
+  '42501',
+  null,
   'Cross-household movement is denied by RLS'
 );
 
