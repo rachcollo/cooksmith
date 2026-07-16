@@ -34,15 +34,17 @@ export function AuthProvider({
     promise: ReturnType<typeof resolveInitialSession>
   } | null>(null)
 
+  // Capture and begin exchanging an incoming PKCE code before child routes render.
+  // State updates and listener lifecycle remain in the effect below.
+  if (client && initialSession.current?.client !== client) {
+    initialSession.current = { client, promise: resolveInitialSession(client) }
+  }
+
   useEffect(() => {
     let active = true
     let initialSessionResolved = false
-    if (!client) {
+    if (!client || initialSession.current?.client !== client) {
       return
-    }
-
-    if (initialSession.current?.client !== client) {
-      initialSession.current = { client, promise: resolveInitialSession(client) }
     }
 
     void initialSession.current.promise.then(async ({ session: restoredSession, error }) => {
