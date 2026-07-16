@@ -97,6 +97,10 @@ Do not edit row, insert or update definitions manually. The Milestone 3 bootstra
 
 The `Cooksmith quality` workflow runs for pull requests and pushes to `main` using GitHub's Docker-enabled runner. It installs from the lockfile, validates configuration, starts local Supabase, resets from migrations and seed, lints, runs pgTAP, regenerates types, checks for a committed diff, then runs formatting, lint, types, Vitest, build, Playwright and axe checks. No hosted Supabase or repository secret is used.
 
+Hosted releases use the separate, manually approved
+[production database release workflow](production-database-releases.md). Normal
+CI never deploys migrations merely because a pull request is merged.
+
 ## Troubleshooting
 
 ### Docker is not installed or the daemon is not running
