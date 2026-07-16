@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import { AppConfigContext } from './appConfigContext'
 import type { PublicEnv } from '../../config/env'
+import type { InitialAuthState } from '../../application/auth/bootstrapAuth'
 import { AuthProvider } from '../auth/AuthProvider'
 import type { CooksmithSupabaseClient } from '../../infrastructure/auth/supabaseAuthClient'
 import type { OnboardingRepository } from '../../application/onboarding/onboardingRepository'
@@ -13,7 +14,8 @@ import { HouseholdPeopleProvider } from '../households/HouseholdPeopleProvider'
 interface AppProvidersProps {
   children: ReactNode
   config: PublicEnv
-  authClient?: CooksmithSupabaseClient | null
+  authClient: CooksmithSupabaseClient | null
+  initialAuthState: InitialAuthState
   onboardingRepository?: OnboardingRepository
   householdPeopleRepository?: HouseholdPeopleRepository
 }
@@ -22,12 +24,13 @@ export function AppProviders({
   children,
   config,
   authClient,
+  initialAuthState,
   onboardingRepository,
   householdPeopleRepository,
 }: AppProvidersProps) {
   return (
     <AppConfigContext.Provider value={config}>
-      <AuthProvider client={authClient}>
+      <AuthProvider client={authClient} initialAuthState={initialAuthState}>
         <HouseholdPeopleRepositoryContext.Provider value={householdPeopleRepository}>
           <HouseholdPeopleProvider>
             <OnboardingRepositoryContext.Provider value={onboardingRepository}>
