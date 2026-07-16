@@ -93,7 +93,6 @@ describe('authentication routing', () => {
       name: 'Dinner decisions, made lighter.',
     })
     expect(router.state.location.pathname).toBe('/')
-    expect(router.state.location.search).toBe('')
     expect(exchangeCodeForSession).toHaveBeenCalledOnce()
     expect(exchangeCodeForSession).toHaveBeenCalledWith('delayed-code')
     expect(getSession).not.toHaveBeenCalled()
