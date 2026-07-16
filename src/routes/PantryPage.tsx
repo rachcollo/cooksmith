@@ -67,7 +67,9 @@ export function PantryPage() {
   const filteredItems = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase()
     return items
-      .filter((item) => !normalisedQuery || item.name.toLocaleLowerCase().includes(normalisedQuery))
+      .filter(
+        (item) => !normalisedQuery || item.name.toLocaleLowerCase().includes(normalisedQuery),
+      )
       .filter((item) => location === 'all' || item.storageLocation === location)
       .filter((item) => category === 'all' || item.category === category)
       .filter((item) => {
@@ -104,12 +106,16 @@ export function PantryPage() {
         ? await repository.update(editingId, result.data)
         : await repository.create(householdId, result.data)
       setItems((current) =>
-        editingId ? current.map((item) => (item.id === saved.id ? saved : item)) : [...current, saved],
+        editingId
+          ? current.map((item) => (item.id === saved.id ? saved : item))
+          : [...current, saved],
       )
       setDraft(emptyInput)
       setEditingId(null)
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Cooksmith could not save that item.')
+      setError(
+        saveError instanceof Error ? saveError.message : 'Cooksmith could not save that item.',
+      )
     } finally {
       setSaving(false)
     }
@@ -125,13 +131,23 @@ export function PantryPage() {
       unit: item.unit,
       available: !item.available,
     }
-    setItems((current) => current.map((candidate) => (candidate.id === item.id ? { ...candidate, available: !item.available } : candidate)))
+    setItems((current) =>
+      current.map((candidate) =>
+        candidate.id === item.id ? { ...candidate, available: !item.available } : candidate,
+      ),
+    )
     try {
       const saved = await repository.update(item.id, input)
-      setItems((current) => current.map((candidate) => (candidate.id === item.id ? saved : candidate)))
+      setItems((current) =>
+        current.map((candidate) => (candidate.id === item.id ? saved : candidate)),
+      )
     } catch (updateError) {
       setItems(previous)
-      setError(updateError instanceof Error ? updateError.message : 'Cooksmith could not update availability.')
+      setError(
+        updateError instanceof Error
+          ? updateError.message
+          : 'Cooksmith could not update availability.',
+      )
     }
   }
 
@@ -145,7 +161,11 @@ export function PantryPage() {
         setDraft(emptyInput)
       }
     } catch (removeError) {
-      setError(removeError instanceof Error ? removeError.message : 'Cooksmith could not remove that item.')
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : 'Cooksmith could not remove that item.',
+      )
     }
   }
 
@@ -170,61 +190,189 @@ export function PantryPage() {
 
       <Panel className="pantry-form-panel">
         <form className="pantry-form" onSubmit={(event) => void submit(event)}>
-          <TextField label="Item name" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-          <SelectField label="Location" value={draft.storageLocation} onChange={(event) => setDraft({ ...draft, storageLocation: event.target.value as PantryStorageLocation })}>
-            {Object.entries(pantryStorageLocationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <TextField
+            label="Item name"
+            value={draft.name}
+            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+          />
+          <SelectField
+            label="Location"
+            value={draft.storageLocation}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                storageLocation: event.target.value as PantryStorageLocation,
+              })
+            }
+          >
+            {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </SelectField>
-          <SelectField label="Category" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value as PantryItemInput['category'] })}>
-            {Object.entries(pantryCategoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <SelectField
+            label="Category"
+            value={draft.category}
+            onChange={(event) =>
+              setDraft({ ...draft, category: event.target.value as PantryItemInput['category'] })
+            }
+          >
+            {Object.entries(pantryCategoryLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </SelectField>
-          <TextField label="Quantity" inputMode="decimal" optional value={draft.quantity === null ? '' : String(draft.quantity)} onChange={(event) => setDraft({ ...draft, quantity: event.target.value.trim() === '' ? null : Number(event.target.value) })} />
-          <TextField label="Unit" optional value={draft.unit ?? ''} onChange={(event) => setDraft({ ...draft, unit: event.target.value })} />
-          <label className="checkbox-field"><input type="checkbox" checked={draft.available} onChange={(event) => setDraft({ ...draft, available: event.target.checked })} />Available now</label>
-          <Button type="submit" busy={saving}>{editingId ? 'Save item' : 'Add item'}</Button>
+          <TextField
+            label="Quantity"
+            inputMode="decimal"
+            optional
+            value={draft.quantity === null ? '' : String(draft.quantity)}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+              })
+            }
+          />
+          <TextField
+            label="Unit"
+            optional
+            value={draft.unit ?? ''}
+            onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
+          />
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={draft.available}
+              onChange={(event) => setDraft({ ...draft, available: event.target.checked })}
+            />
+            Available now
+          </label>
+          <Button type="submit" busy={saving}>
+            {editingId ? 'Save item' : 'Add item'}
+          </Button>
         </form>
       </Panel>
 
       <Panel>
         <div className="pantry-filters">
-          <TextField label="Search staples" value={query} onChange={(event) => setQuery(event.target.value)} />
-          <SelectField label="Location filter" value={location} onChange={(event) => setLocation(event.target.value as LocationFilter)}>
+          <TextField
+            label="Search staples"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <SelectField
+            label="Location filter"
+            value={location}
+            onChange={(event) => setLocation(event.target.value as LocationFilter)}
+          >
             <option value="all">All locations</option>
-            {Object.entries(pantryStorageLocationLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </SelectField>
-          <SelectField label="Availability filter" value={availability} onChange={(event) => setAvailability(event.target.value as AvailabilityFilter)}>
-            <option value="all">All items</option><option value="available">Available</option><option value="unavailable">Out of stock</option>
+          <SelectField
+            label="Availability filter"
+            value={availability}
+            onChange={(event) => setAvailability(event.target.value as AvailabilityFilter)}
+          >
+            <option value="all">All items</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Out of stock</option>
           </SelectField>
-          <SelectField label="Category filter" value={category} onChange={(event) => setCategory(event.target.value as typeof category)}>
+          <SelectField
+            label="Category filter"
+            value={category}
+            onChange={(event) => setCategory(event.target.value as typeof category)}
+          >
             <option value="all">All categories</option>
-            {Object.entries(pantryCategoryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            {Object.entries(pantryCategoryLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </SelectField>
         </div>
       </Panel>
 
-      {filteredItems.length === 0 ? <Panel><p>{items.length === 0 ? 'Add your first household staple.' : 'No staples match those filters.'}</p></Panel> : null}
+      {filteredItems.length === 0 ? (
+        <Panel>
+          <p>
+            {items.length === 0
+              ? 'Add your first household staple.'
+              : 'No staples match those filters.'}
+          </p>
+        </Panel>
+      ) : null}
 
-      {(Object.keys(pantryStorageLocationLabels) as PantryStorageLocation[]).map((storageLocation) => {
-        const locationItems = grouped[storageLocation] ?? []
-        if (locationItems.length === 0) return null
-        return (
-          <section className="pantry-section" key={storageLocation} aria-labelledby={`pantry-${storageLocation}`}>
-            <h2 id={`pantry-${storageLocation}`}>{pantryStorageLocationLabels[storageLocation]}</h2>
-            <div className="pantry-grid">
-              {locationItems.map((item) => (
-                <article className="pantry-card" key={item.id}>
-                  <div><h3>{item.name}</h3><p>{pantryCategoryLabels[item.category]} · {pantryStorageLocationLabels[item.storageLocation]}</p></div>
-                  <p className="pantry-quantity">{item.quantity === null ? 'Quantity not set' : `${item.quantity} ${item.unit ?? ''}`.trim()}</p>
-                  <Button variant="secondary" type="button" onClick={() => void toggleAvailability(item)}>{item.available ? 'Mark out of stock' : 'Mark available'}</Button>
-                  <div className="pantry-actions">
-                    <Button variant="secondary" type="button" onClick={() => { setEditingId(item.id); setDraft({ name: item.name, category: item.category, storageLocation: item.storageLocation, quantity: item.quantity, unit: item.unit, available: item.available }) }}>Edit</Button>
-                    <Button variant="quiet" type="button" onClick={() => void remove(item)}>Remove</Button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )
-      })}
+      {(Object.keys(pantryStorageLocationLabels) as PantryStorageLocation[]).map(
+        (storageLocation) => {
+          const locationItems = grouped[storageLocation] ?? []
+          if (locationItems.length === 0) return null
+          return (
+            <section
+              className="pantry-section"
+              key={storageLocation}
+              aria-labelledby={`pantry-${storageLocation}`}
+            >
+              <h2 id={`pantry-${storageLocation}`}>
+                {pantryStorageLocationLabels[storageLocation]}
+              </h2>
+              <div className="pantry-grid">
+                {locationItems.map((item) => (
+                  <article className="pantry-card" key={item.id}>
+                    <div>
+                      <h3>{item.name}</h3>
+                      <p>
+                        {pantryCategoryLabels[item.category]} ·{' '}
+                        {pantryStorageLocationLabels[item.storageLocation]}
+                      </p>
+                    </div>
+                    <p className="pantry-quantity">
+                      {item.quantity === null
+                        ? 'Quantity not set'
+                        : `${item.quantity} ${item.unit ?? ''}`.trim()}
+                    </p>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => void toggleAvailability(item)}
+                    >
+                      {item.available ? 'Mark out of stock' : 'Mark available'}
+                    </Button>
+                    <div className="pantry-actions">
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() => {
+                          setEditingId(item.id)
+                          setDraft({
+                            name: item.name,
+                            category: item.category,
+                            storageLocation: item.storageLocation,
+                            quantity: item.quantity,
+                            unit: item.unit,
+                            available: item.available,
+                          })
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button variant="quiet" type="button" onClick={() => void remove(item)}>
+                        Remove
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )
+        },
+      )}
     </main>
   )
 }
