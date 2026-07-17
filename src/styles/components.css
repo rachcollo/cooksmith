@@ -648,6 +648,33 @@
   color: var(--colour-text-muted);
 }
 
+.recipe-card {
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.recipe-card:hover {
+  border-color: var(--colour-brand);
+}
+
+.recipe-card:focus-visible {
+  outline: 3px solid var(--colour-focus);
+  outline-offset: 3px;
+}
+
+.recipe-card-heading {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.recipe-card-summary {
+  color: var(--colour-text-muted);
+}
+
 .pantry-quantity {
   font-size: 1.1rem;
   font-weight: 800;
