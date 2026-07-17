@@ -17,6 +17,7 @@ export interface Recipe {
 
 export interface RecipeInput {
   name: string
+  ingredients: string | null
   description: string | null
   sourceNote: string | null
   sourceUrl: string | null
