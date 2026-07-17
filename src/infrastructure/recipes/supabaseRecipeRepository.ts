@@ -8,6 +8,7 @@ type RecipeRow = {
   id: string
   household_id: string
   name: string
+  ingredients: string | null
   description: string | null
   source_note: string | null
   source_url: string | null
@@ -25,6 +26,7 @@ function mapRow(row: RecipeRow): Recipe {
     id: row.id,
     householdId: row.household_id,
     name: row.name,
+    ingredients: row.ingredients,
     description: row.description,
     sourceNote: row.source_note,
     sourceUrl: row.source_url,
@@ -57,7 +59,7 @@ function recipeError(error: PostgrestError | null): void {
 export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient): RecipeRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, name, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, archived_at, created_at, updated_at'
+    'id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, archived_at, created_at, updated_at'
 
   return {
     async list(householdId) {
@@ -76,6 +78,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .insert({
           household_id: householdId,
           name: input.name,
+          ingredients: input.ingredients,
           description: input.description,
           source_note: input.sourceNote,
           source_url: input.sourceUrl,
@@ -95,6 +98,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .from('household_recipes')
         .update({
           name: input.name,
+          ingredients: input.ingredients,
           description: input.description,
           source_note: input.sourceNote,
           source_url: input.sourceUrl,
