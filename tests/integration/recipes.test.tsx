@@ -67,10 +67,10 @@ describe('recipe library experience', () => {
   })
 
   it('searches, clears no-result state, edits, cancels and archives recipes', async () => {
-    const update = vi.fn(async (id, input) =>
+    const update = vi.fn(async (_householdId, id, input) =>
       recipe({ id, ...input }),
     ) satisfies RecipeRepository['update']
-    const archive = vi.fn(async (id) =>
+    const archive = vi.fn(async (_householdId, id) =>
       recipe({ id, archivedAt: '2026-01-02T00:00:00Z' }),
     ) satisfies RecipeRepository['archive']
     vi.spyOn(window, 'confirm').mockReturnValue(true)
@@ -115,13 +115,14 @@ describe('recipe library experience', () => {
     await user.type(within(secondDialog).getByLabelText('Recipe name'), 'Apple crumble tray')
     await user.click(within(secondDialog).getByRole('button', { name: 'Save changes' }))
     expect(update).toHaveBeenCalledWith(
+      householdId,
       'recipe-2',
       expect.objectContaining({ name: 'Apple crumble tray' }),
     )
     expect((await screen.findAllByRole('heading', { name: 'Apple crumble tray' }))[0]).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Archive recipe' }))
-    expect(archive).toHaveBeenCalledWith('recipe-2')
+    expect(archive).toHaveBeenCalledWith(householdId, 'recipe-2')
     expect(screen.queryByRole('heading', { name: 'Apple crumble tray' })).not.toBeInTheDocument()
   })
 
