@@ -86,7 +86,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
       if (!result.data) throw new Error('Cooksmith could not save the recipe.')
       return mapRow(result.data as unknown as RecipeRow)
     },
-    async update(recipeId, input) {
+    async update(householdId, recipeId, input) {
       const result = await database
         .from('household_recipes')
         .update({
@@ -100,17 +100,19 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
           image_url: input.imageUrl,
         } as never)
         .eq('id', recipeId)
+        .eq('household_id', householdId)
         .select(selection)
         .single()
       recipeError(result.error)
       if (!result.data) throw new Error('Cooksmith could not update the recipe.')
       return mapRow(result.data as unknown as RecipeRow)
     },
-    async archive(recipeId) {
+    async archive(householdId, recipeId) {
       const result = await database
         .from('household_recipes')
         .update({ archived_at: new Date().toISOString() } as never)
         .eq('id', recipeId)
+        .eq('household_id', householdId)
         .select(selection)
         .single()
       recipeError(result.error)
