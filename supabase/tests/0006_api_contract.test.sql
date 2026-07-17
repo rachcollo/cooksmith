@@ -19,6 +19,7 @@ select results_eq(
     'household_invitations:SELECT',
     'household_members:DELETE', 'household_members:INSERT', 'household_members:SELECT', 'household_members:UPDATE',
     'household_pantry_items:DELETE', 'household_pantry_items:INSERT', 'household_pantry_items:SELECT', 'household_pantry_items:UPDATE',
+    'household_recipes:INSERT', 'household_recipes:SELECT', 'household_recipes:UPDATE',
     'household_settings:DELETE', 'household_settings:INSERT', 'household_settings:SELECT', 'household_settings:UPDATE',
     'households:SELECT', 'households:UPDATE',
     'profiles:INSERT', 'profiles:SELECT', 'profiles:UPDATE'
@@ -53,7 +54,7 @@ select results_eq(
     where table_schema = 'cooksmith' and table_type = 'BASE TABLE' order by table_name$$,
   (array[
     'app_user_roles', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
-    'household_members', 'household_pantry_items', 'household_settings', 'households', 'infrastructure_health', 'profiles'
+    'household_members', 'household_pantry_items', 'household_recipes', 'household_settings', 'households', 'infrastructure_health', 'profiles'
   ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );
 
@@ -69,7 +70,9 @@ select ok(
   and has_table_privilege('authenticated', 'cooksmith.household_settings', 'select,insert,update,delete')
   and has_table_privilege('authenticated', 'cooksmith.household_dietary_requirements', 'select,insert,update,delete')
   and has_table_privilege('authenticated', 'cooksmith.household_allergies', 'select,insert,update,delete')
-  and has_table_privilege('authenticated', 'cooksmith.household_pantry_items', 'select,insert,update,delete'),
+  and has_table_privilege('authenticated', 'cooksmith.household_pantry_items', 'select,insert,update,delete')
+  and has_table_privilege('authenticated', 'cooksmith.household_recipes', 'select,insert,update')
+  and not has_table_privilege('authenticated', 'cooksmith.household_recipes', 'delete'),
   'Owner-managed table grants allow RLS to enforce the operation contract'
 );
 select ok(
