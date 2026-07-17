@@ -13,73 +13,154 @@ concurrency:
   group: cooksmith-quality-${{ github.ref }}
   cancel-in-progress: true
 
-jobs:
-  validate:
-    name: Validate Cooksmith
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+env:
+  NODE_VERSION: 24.14.0
 
+jobs:
+  preflight:
+    name: Environment preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Use pinned Node.js runtime
         uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
-
       - name: Install pinned dependencies
         run: npm ci
+      - name: Install Chromium for preflight check
+        run: npx playwright install --with-deps chromium
+      - name: Run CI preflight
+        env:
+          VITE_APP_ENV: test
+          VITE_BUILD_COMMIT: ${{ github.sha }}
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+          COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS: production-placeholder
+        run: npm run preflight:all
 
+  database:
+    name: Database validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Use pinned Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci
       - name: Check database configuration
         run: npm run db:config:check
-
       - name: Confirm local database runtime
         run: npm run db:prerequisites:runtime
-
       - name: Start isolated local Supabase
         run: npm run db:start
-
       - name: Rebuild database from migrations and synthetic seed
         run: npm run db:reset
-
       - name: Lint local database
         run: npm run db:lint
-
       - name: Run database tests
         run: npm run db:test
-
-      - name: Enforce Milestone 5 security contracts
+      - name: Enforce security contracts
         run: npm run db:test:security
-
       - name: Generate local database types
         run: npm run db:types
-
       - name: Detect stale generated database types
         run: git diff --exit-code -- src/infrastructure/database/generated/database.types.ts
+      - name: Stop local Supabase
+        if: always()
+        run: npm run db:stop
 
+  format:
+    name: Format and docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
       - name: Check formatting
         run: npm run format:check
+      - name: Audit documented npm scripts
+        run: npm run docs:commands:check
 
-      - name: Lint
-        run: npm run lint
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
 
-      - name: Type-check
-        run: npm run typecheck
+  typecheck:
+    name: Type-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
 
-      - name: Run unit and integration tests
-        run: npm run test
+  test:
+    name: Unit and integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test
 
-      - name: Build production assets
-        run: npm run build
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
 
+  e2e:
+    name: Playwright smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
       - name: Install Chromium for smoke tests
         run: npx playwright install --with-deps chromium
-
       - name: Run end-to-end smoke tests
         run: npm run test:e2e
-
       - name: Upload smoke-test diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -88,7 +169,3 @@ jobs:
           path: playwright-report/
           if-no-files-found: ignore
           retention-days: 7
-
-      - name: Stop local Supabase
-        if: always()
-        run: npm run db:stop

@@ -124,3 +124,20 @@ Start local Supabase, reset the database, run `npm run db:types`, review the gen
 - Docker-dependent validation was unavailable during Milestone 3 implementation.
 - The staging and future v2 Production projects are not provisioned by repository code.
 - Product tables, authentication flows and business RLS policies are intentionally absent.
+
+## Staging migration release rehearsal
+
+Local validation and remote deployment are separate activities. `npm run db:validate` proves that migrations rebuild an isolated local database. It does not apply migrations to any hosted project.
+
+For an approved staging release only:
+
+1. Confirm the branch has merged or the exact reviewed commit is approved for staging.
+2. Start from a clean shell and set Supabase credentials only as session-scoped environment variables or Codespaces secrets. Never commit personal access tokens, database passwords or linked project files.
+3. Link intentionally to the approved staging project for this shell session only, then verify the project reference without printing secrets.
+4. Review remote migration history with `npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"`.
+5. Dry-run pending migrations with `npx supabase db push --linked --dry-run --password "$SUPABASE_DB_PASSWORD"` and review every pending file before continuing.
+6. Apply only after the dry-run is approved: `npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD"`.
+7. Verify with `npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"`, the relevant smoke tests and any package-specific SQL checks.
+8. Unset session credentials and record migration evidence in the pull request or release handover.
+
+Never target Production from a developer workstation or normal pull-request CI. Production uses the protected release workflow and explicit approval described in `docs/engineering/v2/production-database-releases.md`.

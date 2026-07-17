@@ -56,7 +56,7 @@ Milestone 7C completes MVP pantry management by making every visible pantry acti
 | `npm run db:validate`                                                                                             | Environment-limited | Failed at local runtime prerequisites: Node.js 24.14.0 required but 24.15.0 found; npm 11.9.0 required but 11.4.2 found; Docker runtime is not running.   |
 | `npm run test:e2e:install`                                                                                        | Environment-limited | Playwright Chromium download failed with HTTP 403 from the managed network, so a local browser screenshot could not be captured.                          |
 | `npm run test:e2e`                                                                                                | Environment-limited | Failed because Playwright Chromium is not installed at `/root/.cache/ms-playwright/chromium_headless_shell-1228/...`.                                     |
-| `npm run db:check`                                                                                                | Agent error         | This script does not exist; `db:config:check` and `db:validate` were run afterwards.                                                                      |
+| `npm run db:config:check`                                                                                         | Passed              | Correct canonical database configuration check; supersedes the earlier local typo in notes.                                                               |
 
 ## Hosted preview and manual validation
 
