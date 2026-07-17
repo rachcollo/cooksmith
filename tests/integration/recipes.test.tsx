@@ -53,11 +53,23 @@ describe('recipe library experience', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
     const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
-    await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Pumpkin pasta')
-    await userEvent.type(within(createDialog).getByLabelText(/Description/), 'Fast pantry dinner')
+    await userEvent.type(
+      within(createDialog).getByLabelText('Recipe name'),
+      'Pumpkin pasta',
+    )
+    await userEvent.type(
+      within(createDialog).getByLabelText(/Description/),
+      'Fast pantry dinner',
+    )
     await userEvent.type(within(createDialog).getByLabelText(/Servings/), '4')
-    await userEvent.type(within(createDialog).getByLabelText(/Preparation time in minutes/), '15')
-    await userEvent.type(within(createDialog).getByLabelText(/Cooking time in minutes/), '20')
+    await userEvent.type(
+      within(createDialog).getByLabelText(/Preparation time in minutes/),
+      '15',
+    )
+    await userEvent.type(
+      within(createDialog).getByLabelText(/Cooking time in minutes/),
+      '20',
+    )
     await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
 
     expect(create).toHaveBeenCalledWith(
@@ -153,7 +165,10 @@ describe('recipe library experience', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
     const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
     await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Broken')
-    await userEvent.type(within(createDialog).getByLabelText(/Source or website/), 'ftp://example.invalid/recipe')
+    await userEvent.type(
+      within(createDialog).getByLabelText(/Source or website/),
+      'ftp://example.invalid/recipe',
+    )
     await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
     expect(await screen.findByText('Source URL must start with http:// or https://.')).toBeVisible()
 
