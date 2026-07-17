@@ -4,6 +4,7 @@ import { recipeInputSchema } from '../../src/domain/recipes/validationSchemas'
 
 const baseRecipe = {
   name: 'Lentil soup',
+  ingredients: '',
   description: '',
   sourceNote: '',
   sourceUrl: '',
@@ -19,6 +20,7 @@ describe('recipe input validation', () => {
     expect(result.success).toBe(true)
     if (result.success) {
       expect(result.data.name).toBe('Lentil soup')
+      expect(result.data.ingredients).toBeNull()
       expect(result.data.description).toBeNull()
       expect(result.data.sourceUrl).toBeNull()
     }
