@@ -321,17 +321,20 @@ export function RecipesPage() {
       ) : (
         <div className="pantry-grid">
           {filteredRecipes.map((recipe) => (
-            <article className="pantry-card" key={recipe.id}>
-              <h2>{recipe.name}</h2>
-              <p>
+            <button
+              aria-label={`Open ${recipe.name} recipe`}
+              className="pantry-card recipe-card"
+              key={recipe.id}
+              type="button"
+              onClick={() => setSelectedId(recipe.id)}
+            >
+              <span className="recipe-card-heading">{recipe.name}</span>
+              <span className="recipe-card-summary">
                 {[minutesLabel(recipe), recipe.servings ? `${recipe.servings} servings` : null]
                   .filter(Boolean)
                   .join(' · ') || 'Summary details not set'}
-              </p>
-              <Button type="button" variant="secondary" onClick={() => setSelectedId(recipe.id)}>
-                Open details
-              </Button>
-            </article>
+              </span>
+            </button>
           ))}
         </div>
       )}
