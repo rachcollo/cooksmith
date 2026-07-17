@@ -67,9 +67,7 @@ export function PantryPage() {
   const filteredItems = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase()
     return items
-      .filter(
-        (item) => !normalisedQuery || item.name.toLocaleLowerCase().includes(normalisedQuery),
-      )
+      .filter((item) => !normalisedQuery || item.name.toLocaleLowerCase().includes(normalisedQuery))
       .filter((item) => location === 'all' || item.storageLocation === location)
       .filter((item) => category === 'all' || item.category === category)
       .filter((item) => {
