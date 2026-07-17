@@ -55,21 +55,22 @@ export function PlanPage() {
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const days = useMemo(() => weekDays(weekStart), [weekStart])
+  const visibleMeals = useMemo(
+    () => meals.filter((meal) => meal.householdId === householdId),
+    [householdId, meals],
+  )
   const weekEnd = addDays(weekStart, 6)
 
   useEffect(() => {
     let active = true
-    setMeals([])
-    setError(null)
-    if (!householdId) {
-      setLoading(false)
-      return
-    }
-    setLoading(true)
+    if (!householdId) return
     repository
       .listWeek(householdId, weekStart, weekEnd)
       .then((next) => {
-        if (active) setMeals(next)
+        if (active) {
+          setMeals(next)
+          setError(null)
+        }
       })
       .catch(() => {
         if (active) setError('We could not load this week’s meal plan. Try refreshing Cooksmith.')
@@ -206,7 +207,7 @@ export function PlanPage() {
         <LoadingState label="Loading this week’s meal plan" />
       ) : (
         <section className="meal-week" aria-label="Weekly meal planner">
-          {meals.length === 0 ? (
+          {visibleMeals.length === 0 ? (
             <Panel>
               <div className="empty-state">
                 <h2>No planned meals yet</h2>
@@ -226,7 +227,7 @@ export function PlanPage() {
                 {day === today ? <span className="meal-today-badge">Today</span> : null}
               </header>
               {mealTypes.map((mealType) => {
-                const slotMeals = meals.filter(
+                const slotMeals = visibleMeals.filter(
                   (meal) => meal.mealDate === day && meal.mealType === mealType,
                 )
                 return (
