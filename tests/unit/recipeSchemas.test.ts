@@ -51,4 +51,14 @@ describe('recipe input validation', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('adds https to a website entered without a protocol', () => {
+    const result = recipeInputSchema.safeParse({
+      ...baseRecipe,
+      sourceUrl: 'www.food.com',
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.sourceUrl).toBe('https://www.food.com')
+  })
 })
