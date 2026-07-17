@@ -16,6 +16,37 @@ alter table cooksmith.household_pantry_items
 create index household_pantry_items_household_location_name_idx
   on cooksmith.household_pantry_items (household_id, storage_location, normalised_name);
 
+create function cooksmith_private.populate_new_household_staples(target_household_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+begin
+  if target_household_id is null then
+    raise exception 'Household is required.' using errcode = '22023';
+  end if;
+
+  insert into cooksmith.household_pantry_items (
+    household_id, name, category, storage_location, quantity, unit, available, is_default
+  )
+  values
+    (target_household_id, 'Milk', 'tea_coffee_and_drinks', 'fridge', null, null, true, true),
+    (target_household_id, 'Eggs', 'breakfast', 'fridge', null, null, true, true),
+    (target_household_id, 'Butter', 'baking', 'fridge', null, null, true, true),
+    (target_household_id, 'Cheddar cheese', 'other', 'fridge', null, null, true, true),
+    (target_household_id, 'Yoghurt', 'breakfast', 'fridge', null, null, true, true),
+    (target_household_id, 'Mayonnaise', 'condiments_and_sauces', 'fridge', null, null, true, true),
+    (target_household_id, 'Mustard', 'condiments_and_sauces', 'fridge', null, null, true, true),
+    (target_household_id, 'Frozen peas', 'other', 'freezer', null, null, true, true),
+    (target_household_id, 'Frozen mixed vegetables', 'other', 'freezer', null, null, true, true),
+    (target_household_id, 'Bread', 'other', 'freezer', null, null, true, true),
+    (target_household_id, 'Frozen berries', 'breakfast', 'freezer', null, null, true, true)
+  on conflict (household_id, normalised_name) do nothing;
+end;
+$$;
+
 create or replace function cooksmith_private.populate_default_pantry(target_household_id uuid)
 returns void
 language plpgsql
@@ -79,32 +110,27 @@ begin
     (target_household_id, 'Popcorn kernels', 'snacks', 'pantry', null, null, true, true),
     (target_household_id, 'Sultanas', 'snacks', 'pantry', null, null, true, true),
     (target_household_id, 'Stock cubes', 'other', 'pantry', null, null, true, true),
-    (target_household_id, 'Breadcrumbs', 'other', 'pantry', null, null, true, true),
-    (target_household_id, 'Milk', 'tea_coffee_and_drinks', 'fridge', null, null, true, true),
-    (target_household_id, 'Eggs', 'breakfast', 'fridge', null, null, true, true),
-    (target_household_id, 'Butter', 'baking', 'fridge', null, null, true, true),
-    (target_household_id, 'Cheddar cheese', 'other', 'fridge', null, null, true, true),
-    (target_household_id, 'Yoghurt', 'breakfast', 'fridge', null, null, true, true),
-    (target_household_id, 'Mayonnaise', 'condiments_and_sauces', 'fridge', null, null, true, true),
-    (target_household_id, 'Mustard', 'condiments_and_sauces', 'fridge', null, null, true, true),
-    (target_household_id, 'Frozen peas', 'other', 'freezer', null, null, true, true),
-    (target_household_id, 'Frozen mixed vegetables', 'other', 'freezer', null, null, true, true),
-    (target_household_id, 'Bread', 'other', 'freezer', null, null, true, true),
-    (target_household_id, 'Frozen berries', 'breakfast', 'freezer', null, null, true, true)
+    (target_household_id, 'Breadcrumbs', 'other', 'pantry', null, null, true, true)
   on conflict (household_id, normalised_name) do nothing;
+
+  perform cooksmith_private.populate_new_household_staples(target_household_id);
 end;
 $$;
 
 comment on column cooksmith.household_pantry_items.storage_location is
   'Simple organisational location for a household staple; not an inventory or food-safety signal.';
 
+comment on function cooksmith_private.populate_new_household_staples(uuid) is
+  'Idempotently inserts only the refrigerated and frozen staples introduced by Milestone 7B.';
+
 comment on function cooksmith_private.populate_default_pantry(uuid) is
   'Deterministically inserts the curated Australian household staples catalogue across Pantry, Fridge and Freezer.';
 
-select cooksmith_private.populate_default_pantry(household.id)
+select cooksmith_private.populate_new_household_staples(household.id)
 from cooksmith.households as household
 where household.status = 'active';
 
+revoke all on function cooksmith_private.populate_new_household_staples(uuid) from public, anon, authenticated;
 revoke all on function cooksmith_private.populate_default_pantry(uuid) from public, anon, authenticated;
 
 commit;
