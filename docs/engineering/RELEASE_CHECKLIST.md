@@ -10,7 +10,7 @@ Apply the branch truthfulness, pull-request verification, hosted-preview and com
 - [ ] Pull request targets `main`; `main` changes only through the reviewed merge.
 - [ ] Diff contains only the approved milestone scope and no later-milestone work.
 - [ ] Product code, tests and documentation follow the engineering standards and accepted ADRs.
-- [ ] `npm ci`, format, lint, type-check, tests and production build pass.
+- [ ] `npm run preflight`, `npm ci`, format, documented-command audit, lint, type-check, tests and production build pass.
 - [ ] Changed journeys have appropriate component, integration, end-to-end, accessibility and responsive evidence.
 - [ ] Preview opens safely and changed behaviour is verified where applicable.
 - [ ] No fake actions, dead code, debug output, real customer data or secrets remain.

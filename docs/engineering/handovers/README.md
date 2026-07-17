@@ -19,3 +19,5 @@ Store one completed handover per milestone in this directory using `mNN-short-ti
 |        9A | [Recipe Library Foundation](m09a-recipe-library-foundation.md)                       | Validation pending          |
 | Standards | [Engineering standards foundation](engineering-standards-foundation.md)              | Complete                    |
 |     EP004 | [Engineering standards update](ep004-engineering-standards-update.md)                | Ready for review            |
+
+- [Milestone 8A — Weekly Meal Planner Foundation](m08a-weekly-meal-planner-foundation.md)

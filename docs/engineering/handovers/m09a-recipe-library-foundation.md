@@ -26,7 +26,7 @@ Added recipe schema, RLS, validation, repository, provider wiring, library UI, f
 
 | File or component                                              | Purpose                                                                 |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `supabase/migrations/20260717090000_create_recipe_library.sql` | Creates recipe table, constraints, RLS and audit trigger.               |
+| `supabase/migrations/20260717130000_create_recipe_library.sql` | Creates recipe table, constraints, RLS and audit trigger.               |
 | `src/routes/RecipesPage.tsx`                                   | Implements recipe library, create, detail, edit, search and archive UI. |
 | `src/domain/recipes/*`                                         | Adds recipe types and validation.                                       |
 | `src/application/recipes/recipeRepository.ts`                  | Defines recipe persistence port.                                        |
@@ -36,7 +36,7 @@ Added recipe schema, RLS, validation, repository, provider wiring, library UI, f
 
 ## Migrations
 
-`20260717090000_create_recipe_library.sql` after existing household, authorisation and pantry migrations.
+`20260717130000_create_recipe_library.sql` after existing household, authorisation and pantry migrations.
 
 ## Setup instructions
 
@@ -71,11 +71,11 @@ Open `/recipes`, create a recipe, verify detail display, edit and cancel an edit
 
 ## Known limitations
 
-Structured ingredients, method steps, imports, meal-plan integration, restoration UI and image upload are intentionally deferred. Hosted preview and database validation remain pending in a suitable environment.
+Structured ingredient rows, ordered method steps, imports, meal-plan integration, restoration UI and image upload are intentionally deferred. Hosted preview and database validation remain pending in a suitable environment.
 
 ## Deferred work
 
-Recipe ingredients and method steps (9B), meal-plan recipe selection (10A), shopping-list generation, AI/imports, nutrition and public sharing.
+Structured recipe ingredients and ordered method steps (9B), meal-plan recipe selection (10A), shopping-list generation, AI/imports, nutrition and public sharing.
 
 ## Rollback approach
 

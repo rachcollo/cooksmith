@@ -55,7 +55,7 @@ Follow the baseline, local-validation, hosted-preview, authentication and flaky-
 
 - Name TypeScript tests `*.test.ts` or `*.test.tsx`, Playwright files `*.spec.ts` and pgTAP files `NNNN_description.test.sql`.
 - Place regression coverage beside the closest existing suite and keep setup reusable without hiding important context.
-- Pull requests targeting `main` must pass formatting, lint, strict types, Vitest, build, database reset/lint/pgTAP/types, Playwright and axe checks when applicable.
+- Pull requests targeting `main` must pass preflight, documented-command audit, formatting, lint, strict types, Vitest, build, database reset/lint/pgTAP/types, Playwright and axe checks when applicable.
 - Do not weaken, bypass or remove a gate to land a feature.
 
 ## Unavailable local runtimes

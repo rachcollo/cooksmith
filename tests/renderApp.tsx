@@ -9,6 +9,7 @@ import type { HouseholdPeopleRepository } from '../src/application/households/ho
 import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
 import type { PantryRepository } from '../src/application/pantry/pantryRepository'
 import type { RecipeRepository } from '../src/application/recipes/recipeRepository'
+import type { PlannedMealRepository } from '../src/application/meal-plans/plannedMealRepository'
 import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
@@ -161,6 +162,25 @@ export const defaultPantryRepository: PantryRepository = {
   remove: async () => undefined,
 }
 
+export const defaultPlannedMealRepository: PlannedMealRepository = {
+  listWeek: async () => [],
+  create: async (householdId, input) => ({
+    id: 'meal-created',
+    householdId,
+    ...input,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  update: async (mealId, input) => ({
+    id: mealId,
+    householdId: '20000000-0000-4000-8000-000000000001',
+    ...input,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-02T00:00:00Z',
+  }),
+  remove: async () => undefined,
+}
+
 export function renderApp(
   path = '/',
   config: PublicEnv = defaultConfig,
@@ -168,6 +188,7 @@ export function renderApp(
   onboardingRepository: OnboardingRepository = completedOnboardingRepository,
   householdPeopleRepository: HouseholdPeopleRepository = ownerHouseholdPeopleRepository,
   pantryRepository: PantryRepository = defaultPantryRepository,
+  plannedMealRepository: PlannedMealRepository = defaultPlannedMealRepository,
   initialAuthState: InitialAuthState = authClient
     ? authenticatedTestAuthState
     : signedOutTestAuthState,
@@ -187,6 +208,7 @@ export function renderApp(
           householdPeopleRepository={householdPeopleRepository}
           pantryRepository={pantryRepository}
           recipeRepository={recipeRepository}
+          plannedMealRepository={plannedMealRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>
@@ -205,6 +227,7 @@ export function renderRouteError(config: PublicEnv = defaultConfig) {
         onboardingRepository={completedOnboardingRepository}
         householdPeopleRepository={ownerHouseholdPeopleRepository}
         pantryRepository={defaultPantryRepository}
+        plannedMealRepository={defaultPlannedMealRepository}
         recipeRepository={defaultRecipeRepository}
       >
         <RouterProvider router={createRouteErrorTestRouter()} />

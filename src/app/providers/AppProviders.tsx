@@ -16,6 +16,9 @@ import { PantryProvider } from '../pantry/PantryProvider'
 import { PantryRepositoryContext } from '../pantry/pantryContext'
 import { RecipeProvider } from '../recipes/RecipeProvider'
 import { RecipeRepositoryContext } from '../recipes/recipeContext'
+import type { PlannedMealRepository } from '../../application/meal-plans/plannedMealRepository'
+import { PlannedMealProvider } from '../meal-plans/PlannedMealProvider'
+import { PlannedMealRepositoryContext } from '../meal-plans/plannedMealContext'
 
 interface AppProvidersProps {
   children: ReactNode
@@ -26,6 +29,7 @@ interface AppProvidersProps {
   householdPeopleRepository?: HouseholdPeopleRepository
   pantryRepository?: PantryRepository
   recipeRepository?: RecipeRepository
+  plannedMealRepository?: PlannedMealRepository
 }
 
 export function AppProviders({
@@ -37,6 +41,7 @@ export function AppProviders({
   householdPeopleRepository,
   pantryRepository,
   recipeRepository,
+  plannedMealRepository,
 }: AppProvidersProps) {
   return (
     <AppConfigContext.Provider value={config}>
@@ -46,9 +51,13 @@ export function AppProviders({
             <OnboardingRepositoryContext.Provider value={onboardingRepository}>
               <PantryRepositoryContext.Provider value={pantryRepository}>
                 <PantryProvider>
-                  <RecipeRepositoryContext.Provider value={recipeRepository}>
-                    <RecipeProvider>{children}</RecipeProvider>
-                  </RecipeRepositoryContext.Provider>
+                  <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
+                    <PlannedMealProvider>
+                      <RecipeRepositoryContext.Provider value={recipeRepository}>
+                        <RecipeProvider>{children}</RecipeProvider>
+                      </RecipeRepositoryContext.Provider>
+                    </PlannedMealProvider>
+                  </PlannedMealRepositoryContext.Provider>
                 </PantryProvider>
               </PantryRepositoryContext.Provider>
             </OnboardingRepositoryContext.Provider>

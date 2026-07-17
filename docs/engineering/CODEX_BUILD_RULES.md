@@ -71,7 +71,7 @@ Never force-push, rewrite shared history, expose credentials or stop solely beca
 
 ## 6. Local validation before publishing
 
-Before committing, pushing, opening or updating a pull request, run the repository's required local validation. At minimum run:
+Before committing, pushing, opening or updating a pull request, run `npm run preflight` to verify local tool, environment-name and Git readiness, then run the repository's required local validation. At minimum run:
 
 ```text
 npm ci
@@ -85,7 +85,7 @@ npm run build
 
 Run the formatter in write mode before `format:check`; do not rely on CI to discover fixable formatting issues. After any fix, rerun the complete affected validation, and rerun the full minimum suite before final handover unless a runtime is unavailable.
 
-Where relevant, also run database configuration checks, local Supabase reset, database lint, pgTAP and RLS suites, generated type freshness, Playwright, responsive checks, accessibility checks, Markdown link checks, whitespace checks, and secret or credential scans. Report unavailable runtimes exactly. Do not claim a check passed if it was not run.
+Where relevant, also run `npm run docs:commands:check`, database configuration checks, local Supabase reset, database lint, pgTAP and RLS suites, generated type freshness, Playwright, responsive checks, accessibility checks, Markdown link checks, whitespace checks, and secret or credential scans. Report unavailable runtimes exactly. Do not claim a check passed if it was not run.
 
 Tests must assert user-visible and domain behaviour, avoid coupling to implementation timing where possible, use the real browser URL as the source of truth for `history.replaceState()` cleanup, distinguish in-memory router state from browser history state, avoid arbitrary sleeps, and use bounded deterministic retries only when justified. Investigate flaky tests instead of treating a rerun as sufficient evidence; document transient failures and the root cause when known.
 

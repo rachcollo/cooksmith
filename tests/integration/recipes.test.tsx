@@ -48,6 +48,7 @@ describe('recipe library experience', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
       repository,
     )
     expect(await screen.findByRole('heading', { name: 'Start your recipe library' })).toBeVisible()
@@ -105,6 +106,7 @@ describe('recipe library experience', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
       repository,
     )
     expect((await screen.findAllByRole('heading', { name: 'Lentil soup' }))[0]).toBeVisible()
@@ -153,6 +155,7 @@ describe('recipe library experience', () => {
 
     renderApp(
       '/recipes',
+      undefined,
       undefined,
       undefined,
       undefined,
