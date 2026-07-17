@@ -55,6 +55,7 @@ function collectErrors(input: RecipeInput) {
       if (typeof key === 'string' && !(key in errors))
         errors[key as keyof RecipeInput] = issue.message
     }
+    errors.form = 'Check the highlighted field and try saving again.'
   }
   return { parsed: result.success ? result.data : null, errors }
 }
@@ -273,6 +274,7 @@ export function RecipesPage() {
           <TextField
             label="Source or website"
             optional
+            hint="You can enter a website with or without https://."
             value={draft.sourceUrl ?? ''}
             error={fieldErrors.sourceUrl}
             onChange={(event) => updateDraft('sourceUrl', event.target.value)}

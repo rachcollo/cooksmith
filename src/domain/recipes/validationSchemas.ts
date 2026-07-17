@@ -23,7 +23,12 @@ const optionalWholeNumber = (label: string, max: number) =>
 
 const safeWebUrl = (label: string) =>
   z.preprocess(
-    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    (value) => {
+      if (typeof value !== 'string') return value
+      const trimmed = value.trim()
+      if (trimmed === '') return null
+      return /^[a-z][a-z\d+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`
+    },
     z
       .string()
       .trim()
