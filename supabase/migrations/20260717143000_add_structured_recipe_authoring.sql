@@ -45,11 +45,11 @@ create index recipe_steps_recipe_id_idx on cooksmith.recipe_steps (recipe_id);
 
 create trigger recipe_ingredients_set_updated_at
 before update on cooksmith.recipe_ingredients
-for each row execute function cooksmith_private.set_updated_at();
+for each row execute function cooksmith.set_updated_at();
 
 create trigger recipe_steps_set_updated_at
 before update on cooksmith.recipe_steps
-for each row execute function cooksmith_private.set_updated_at();
+for each row execute function cooksmith.set_updated_at();
 
 alter table cooksmith.recipe_ingredients enable row level security;
 alter table cooksmith.recipe_steps enable row level security;
@@ -64,12 +64,12 @@ to authenticated
 using (exists (
   select 1 from cooksmith.household_recipes recipes
   where recipes.id = recipe_ingredients.recipe_id
-    and cooksmith_private.is_active_household_member(recipes.household_id, auth.uid())
+    and cooksmith.is_active_household_member(recipes.household_id)
 ))
 with check (exists (
   select 1 from cooksmith.household_recipes recipes
   where recipes.id = recipe_ingredients.recipe_id
-    and cooksmith_private.is_active_household_member(recipes.household_id, auth.uid())
+    and cooksmith.is_active_household_member(recipes.household_id)
 ));
 
 create policy recipe_steps_active_member_all
@@ -79,12 +79,12 @@ to authenticated
 using (exists (
   select 1 from cooksmith.household_recipes recipes
   where recipes.id = recipe_steps.recipe_id
-    and cooksmith_private.is_active_household_member(recipes.household_id, auth.uid())
+    and cooksmith.is_active_household_member(recipes.household_id)
 ))
 with check (exists (
   select 1 from cooksmith.household_recipes recipes
   where recipes.id = recipe_steps.recipe_id
-    and cooksmith_private.is_active_household_member(recipes.household_id, auth.uid())
+    and cooksmith.is_active_household_member(recipes.household_id)
 ));
 
 insert into cooksmith.recipe_ingredients (recipe_id, ingredient_name, position)
