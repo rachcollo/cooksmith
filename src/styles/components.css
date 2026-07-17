@@ -673,6 +673,23 @@
   grid-template-columns: 1fr;
 }
 
+.recipe-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.recipe-form-compact {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 36rem) {
+  .recipe-form-compact {
+    grid-template-columns: 1fr;
+  }
+}
+
 .meal-planner-page {
   gap: var(--space-5);
 }

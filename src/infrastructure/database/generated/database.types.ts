@@ -305,6 +305,74 @@ export type Database = {
           },
         ]
       }
+      household_recipes: {
+        Row: {
+          archived_at: string | null
+          cook_time_minutes: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          household_id: string
+          id: string
+          image_url: string | null
+          ingredients: string | null
+          name: string
+          normalised_name: string | null
+          prep_time_minutes: number | null
+          servings: number | null
+          source_note: string | null
+          source_url: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          cook_time_minutes?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          household_id: string
+          id?: string
+          image_url?: string | null
+          ingredients?: string | null
+          name: string
+          normalised_name?: string | null
+          prep_time_minutes?: number | null
+          servings?: number | null
+          source_note?: string | null
+          source_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          cook_time_minutes?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          household_id?: string
+          id?: string
+          image_url?: string | null
+          ingredients?: string | null
+          name?: string
+          normalised_name?: string | null
+          prep_time_minutes?: number | null
+          servings?: number | null
+          source_note?: string | null
+          source_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_recipes_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_settings: {
         Row: {
           budget_band: Database['cooksmith']['Enums']['budget_band']

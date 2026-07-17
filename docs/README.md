@@ -44,6 +44,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - Milestone 5C completion report: [Adversarial RLS and API contracts](engineering/reports/m05c-database-validation.md)
 - Milestone 6B completion report: [User onboarding and household bootstrap](engineering/reports/m06b-user-onboarding.md)
 - Milestone 7A completion report: [Pantry foundation](engineering/reports/m07a-pantry-foundation.md)
+- Milestone 9A completion report: [Recipe Library Foundation](engineering/reports/m09a-recipe-library-foundation.md)
 - Milestone 6C completion report: [Household invitations and member management](engineering/reports/m06c-household-invitations.md)
 - Milestone 5B completion report: [Authorisation helpers and row level security](engineering/reports/m05b-rls-authorisation.md)
 - Engineering standards foundation report: [Completion report](engineering/reports/engineering-standards-foundation.md)
