@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -96,10 +96,11 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
     expect(await screen.findByText('Updated pasta')).toBeVisible()
 
-    await user.selectOptions(
-      screen.getByRole('combobox', { name: 'Move Updated pasta to another day' }),
-      '2026-07-18',
-    )
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Updated pasta' }), {
+      altKey: true,
+      key: 'ArrowRight',
+    })
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith(
         'existing-dinner',
