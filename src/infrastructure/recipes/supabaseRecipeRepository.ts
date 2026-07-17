@@ -44,6 +44,10 @@ function recipeError(error: PostgrestError | null): void {
     '23505': 'That recipe name already exists in this household.',
     '23514': 'Check the recipe details and try again.',
     '42501': 'You do not have permission to change this recipe.',
+    '42P01':
+      'Recipe saving is not available in this preview because its database update has not been released yet.',
+    PGRST205:
+      'Recipe saving is not available in this preview because its database update has not been released yet.',
   }
   throw new Error(
     messages[error.code] ?? 'Cooksmith could not update the recipe library. Try again.',
