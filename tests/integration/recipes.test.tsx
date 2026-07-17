@@ -13,7 +13,8 @@ function recipe(overrides: Partial<Recipe>): Recipe {
     id: "recipe-1",
     householdId,
     name: "Lentil soup",
-    description: "Comforting dinner.",
+    ingredients: "1 cup lentils",
+    description: "Simmer until tender.",
     sourceNote: null,
     sourceUrl: null,
     servings: 4,
@@ -60,7 +61,11 @@ describe("recipe library experience", () => {
       "Pumpkin pasta",
     );
     await userEvent.type(
-      within(createDialog).getByLabelText(/Description/),
+      within(createDialog).getByLabelText(/Ingredients/),
+      "Pumpkin, pasta and feta",
+    );
+    await userEvent.type(
+      within(createDialog).getByLabelText(/Instructions/),
       "Fast pantry dinner",
     );
     await userEvent.type(within(createDialog).getByLabelText(/Servings/), "4");
@@ -78,7 +83,12 @@ describe("recipe library experience", () => {
 
     expect(create).toHaveBeenCalledWith(
       householdId,
-      expect.objectContaining({ name: "Pumpkin pasta", servings: 4 }),
+      expect.objectContaining({
+        name: "Pumpkin pasta",
+        ingredients: "Pumpkin, pasta and feta",
+        description: "Fast pantry dinner",
+        servings: 4,
+      }),
     );
     expect(
       (await screen.findAllByRole("heading", { name: "Pumpkin pasta" }))[0],
