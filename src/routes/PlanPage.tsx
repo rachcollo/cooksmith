@@ -225,7 +225,9 @@ export function PlanPage() {
       targetDate: meal.mealDate,
       active: false,
     }
-    event.currentTarget.setPointerCapture(event.pointerId)
+    if (typeof event.currentTarget.setPointerCapture === 'function') {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }
   }
 
   function continueDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -245,7 +247,10 @@ export function PlanPage() {
   function finishDrag(event: ReactPointerEvent<HTMLDivElement>) {
     const details = dragDetails.current
     dragDetails.current = null
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (
+      typeof event.currentTarget.hasPointerCapture === 'function' &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     setDraggingMealId(null)
