@@ -11,6 +11,7 @@ import {
   nextWeek,
   previousWeek,
   startOfWeek,
+  toLocalIsoDate,
   weekDays,
 } from '../../src/domain/meal-plans/week'
 
@@ -31,7 +32,13 @@ describe('meal plan date helpers', () => {
   it('moves between previous, current and next weeks deterministically', () => {
     expect(previousWeek('2026-07-13')).toBe('2026-07-06')
     expect(nextWeek('2026-07-13')).toBe('2026-07-20')
-    expect(currentWeek(new Date(Date.UTC(2026, 6, 17)))).toBe('2026-07-13')
+    expect(currentWeek(new Date(2026, 6, 17))).toBe('2026-07-13')
+  })
+
+  it('uses the browser-local calendar date rather than the UTC date', () => {
+    const localMonday = new Date(2026, 6, 20, 0, 30)
+    expect(toLocalIsoDate(localMonday)).toBe('2026-07-20')
+    expect(currentWeek(localMonday)).toBe('2026-07-20')
   })
 
   it('formats dates for Australian readers', () => {
