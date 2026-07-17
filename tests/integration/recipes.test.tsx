@@ -51,12 +51,14 @@ describe('recipe library experience', () => {
     )
     expect(await screen.findByRole('heading', { name: 'Start your recipe library' })).toBeVisible()
 
-    await userEvent.type(screen.getByLabelText('Recipe name'), 'Pumpkin pasta')
-    await userEvent.type(screen.getByLabelText(/Description/), 'Fast pantry dinner')
-    await userEvent.type(screen.getByLabelText(/Servings/), '4')
-    await userEvent.type(screen.getByLabelText(/Preparation time in minutes/), '15')
-    await userEvent.type(screen.getByLabelText(/Cooking time in minutes/), '20')
-    await userEvent.click(screen.getByRole('button', { name: 'Save recipe' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
+    const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
+    await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Pumpkin pasta')
+    await userEvent.type(within(createDialog).getByLabelText(/Description/), 'Fast pantry dinner')
+    await userEvent.type(within(createDialog).getByLabelText(/Servings/), '4')
+    await userEvent.type(within(createDialog).getByLabelText(/Preparation time in minutes/), '15')
+    await userEvent.type(within(createDialog).getByLabelText(/Cooking time in minutes/), '20')
+    await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
 
     expect(create).toHaveBeenCalledWith(
       householdId,
@@ -148,13 +150,15 @@ describe('recipe library experience', () => {
       repository,
     )
     await screen.findAllByRole('heading', { name: 'Lentil soup' })
-    await userEvent.type(screen.getByLabelText('Recipe name'), 'Broken')
-    await userEvent.type(screen.getByLabelText(/Source URL/), 'ftp://example.invalid/recipe')
-    await userEvent.click(screen.getByRole('button', { name: 'Save recipe' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
+    const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
+    await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Broken')
+    await userEvent.type(within(createDialog).getByLabelText(/Source or website/), 'ftp://example.invalid/recipe')
+    await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
     expect(await screen.findByText('Source URL must start with http:// or https://.')).toBeVisible()
 
-    await userEvent.clear(screen.getByLabelText(/Source URL/))
-    await userEvent.click(screen.getByRole('button', { name: 'Save recipe' }))
+    await userEvent.clear(within(createDialog).getByLabelText(/Source or website/))
+    await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
     expect(await screen.findByText('Friendly save failure.')).toBeVisible()
     expect(list).toHaveBeenCalledWith(householdId)
   })
