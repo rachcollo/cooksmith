@@ -313,9 +313,9 @@ export type Database = {
           created_by: string | null
           description: string | null
           household_id: string
-          ingredients: string | null
           id: string
           image_url: string | null
+          ingredients: string | null
           name: string
           normalised_name: string | null
           prep_time_minutes: number | null
@@ -353,6 +353,7 @@ export type Database = {
           household_id?: string
           id?: string
           image_url?: string | null
+          ingredients?: string | null
           name?: string
           normalised_name?: string | null
           prep_time_minutes?: number | null
