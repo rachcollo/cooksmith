@@ -16,5 +16,6 @@ Store one completed handover per milestone in this directory using `mNN-short-ti
 |        6A | [Authentication foundation](m06a-authentication-foundation.md)                       | Complete                    |
 |        6B | [User onboarding and household bootstrap](m06b-user-onboarding.md)                   | Complete                    |
 |        6C | [Household invitations and member management](m06c-household-invitations.md)         | Complete                    |
+|        9A | [Recipe Library Foundation](m09a-recipe-library-foundation.md)                       | Validation pending          |
 | Standards | [Engineering standards foundation](engineering-standards-foundation.md)              | Complete                    |
 |     EP004 | [Engineering standards update](ep004-engineering-standards-update.md)                | Ready for review            |

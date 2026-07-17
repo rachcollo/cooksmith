@@ -18,6 +18,7 @@ describe('generated database API contract', () => {
       | 'household_invitations'
       | 'household_members'
       | 'household_pantry_items'
+      | 'household_recipes'
       | 'household_settings'
       | 'households'
       | 'infrastructure_health'
