@@ -672,3 +672,270 @@
 .pantry-edit-form {
   grid-template-columns: 1fr;
 }
+
+.meal-planner-page {
+  gap: var(--space-5);
+}
+
+.page-header.meal-planner-header {
+  display: block;
+  max-width: 54rem;
+}
+
+.meal-planner-header .eyebrow {
+  margin-bottom: var(--space-3);
+}
+
+.meal-planner-header h1 {
+  font-size: clamp(2.75rem, 7vw, 5rem);
+  line-height: 0.98;
+  margin: 0 0 var(--space-4);
+  max-width: 15ch;
+}
+
+.meal-planner-header > p:last-child {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-lead);
+  margin: 0;
+  max-width: 36rem;
+}
+
+.meal-week-toolbar {
+  align-items: center;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
+  margin-inline: auto;
+  max-width: 42rem;
+  text-align: center;
+  width: 100%;
+}
+
+.meal-week-toolbar > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.meal-week-toolbar strong {
+  font-family: var(--font-heading);
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+}
+
+.meal-week-toolbar > div button {
+  background: transparent;
+  border: 0;
+  color: var(--colour-brand-hover);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-small);
+  text-decoration: underline;
+}
+
+.meal-planner-error {
+  background: var(--colour-error-soft);
+  border-left: 0.25rem solid var(--colour-error);
+  border-radius: var(--radius-small);
+  color: var(--colour-error);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.meal-week {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.meal-day {
+  background: var(--colour-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-large);
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
+}
+
+.meal-day-today {
+  border-color: var(--colour-brand);
+}
+
+.meal-day-drop-target {
+  border-color: var(--colour-brand);
+  box-shadow: inset 0 0 0 2px var(--colour-brand-soft);
+}
+
+.meal-day-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.meal-day-heading p,
+.meal-day-heading h2 {
+  margin: 0;
+}
+
+.meal-day-heading p {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.meal-day-heading h2 {
+  font-size: 1.15rem;
+  margin-top: var(--space-1);
+}
+
+.meal-today-badge {
+  border: 1px solid currentcolor;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-caption);
+  font-weight: 750;
+  padding: 0.15rem 0.5rem;
+}
+
+.meal-day > .button {
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.planned-meal {
+  align-items: center;
+  background: var(--colour-brand-soft);
+  border-radius: var(--radius-medium);
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: var(--space-3);
+  touch-action: none;
+  transition:
+    opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+}
+
+.planned-meal.dragging {
+  opacity: 0.7;
+  transform: scale(1.02);
+}
+
+.meal-drag-handle {
+  color: var(--colour-text-muted);
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.planned-meal-title,
+.meal-remove {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.planned-meal-title {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.planned-meal-title strong,
+.planned-meal-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planned-meal-title span {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.meal-remove {
+  align-items: center;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  justify-content: center;
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  padding: var(--space-2);
+}
+
+.meal-remove:hover {
+  background: var(--colour-surface);
+}
+
+.meal-remove svg {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.meal-drag-instructions {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.meal-planner-permission {
+  align-items: flex-start;
+  background: var(--colour-brand-soft);
+  border-radius: var(--radius-large);
+  display: flex;
+  gap: var(--space-3);
+  margin-inline: auto;
+  max-width: 42rem;
+  padding: var(--space-4);
+  width: 100%;
+}
+
+.meal-planner-permission > span {
+  font-size: 1.5rem;
+}
+
+.meal-planner-permission strong,
+.meal-planner-permission p {
+  margin: 0;
+}
+
+.meal-planner-permission p {
+  color: var(--colour-text-muted);
+  margin-top: var(--space-1);
+}
+
+@media (min-width: 44rem) {
+  .meal-week {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .meal-day {
+    align-content: start;
+    padding: var(--space-3);
+  }
+
+  .meal-day-heading {
+    align-items: flex-start;
+    min-height: 4.5rem;
+  }
+
+  .meal-day-heading h2 {
+    font-size: 1rem;
+  }
+
+  .planned-meal {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 5.25rem;
+    padding: var(--space-3);
+  }
+
+  .meal-drag-handle {
+    display: none;
+  }
+}

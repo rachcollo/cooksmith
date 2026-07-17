@@ -415,6 +415,53 @@ export type Database = {
         }
         Relationships: []
       }
+      planned_meals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          meal_date: string
+          meal_type: Database['cooksmith']['Enums']['meal_type']
+          notes: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          meal_date: string
+          meal_type: Database['cooksmith']['Enums']['meal_type']
+          notes?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          meal_date?: string
+          meal_type?: Database['cooksmith']['Enums']['meal_type']
+          notes?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'planned_meals_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -525,6 +572,7 @@ export type Database = {
       household_role: 'owner' | 'member'
       household_status: 'active' | 'archived'
       invitation_status: 'pending' | 'accepted' | 'cancelled' | 'expired'
+      meal_type: 'breakfast' | 'lunch' | 'dinner'
       membership_status: 'active' | 'inactive'
       pantry_item_category:
         | 'baking'
@@ -668,6 +716,7 @@ export const Constants = {
       household_role: ['owner', 'member'],
       household_status: ['active', 'archived'],
       invitation_status: ['pending', 'accepted', 'cancelled', 'expired'],
+      meal_type: ['breakfast', 'lunch', 'dinner'],
       membership_status: ['active', 'inactive'],
       pantry_item_category: [
         'baking',

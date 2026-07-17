@@ -8,6 +8,7 @@ import type { InitialAuthState } from '../src/application/auth/bootstrapAuth'
 import type { HouseholdPeopleRepository } from '../src/application/households/householdPeopleRepository'
 import type { OnboardingRepository } from '../src/application/onboarding/onboardingRepository'
 import type { PantryRepository } from '../src/application/pantry/pantryRepository'
+import type { PlannedMealRepository } from '../src/application/meal-plans/plannedMealRepository'
 import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
@@ -107,6 +108,25 @@ export const defaultPantryRepository: PantryRepository = {
   remove: async () => undefined,
 }
 
+export const defaultPlannedMealRepository: PlannedMealRepository = {
+  listWeek: async () => [],
+  create: async (householdId, input) => ({
+    id: 'meal-created',
+    householdId,
+    ...input,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  update: async (mealId, input) => ({
+    id: mealId,
+    householdId: '20000000-0000-4000-8000-000000000001',
+    ...input,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-02T00:00:00Z',
+  }),
+  remove: async () => undefined,
+}
+
 export function renderApp(
   path = '/',
   config: PublicEnv = defaultConfig,
@@ -114,6 +134,7 @@ export function renderApp(
   onboardingRepository: OnboardingRepository = completedOnboardingRepository,
   householdPeopleRepository: HouseholdPeopleRepository = ownerHouseholdPeopleRepository,
   pantryRepository: PantryRepository = defaultPantryRepository,
+  plannedMealRepository: PlannedMealRepository = defaultPlannedMealRepository,
   initialAuthState: InitialAuthState = authClient
     ? authenticatedTestAuthState
     : signedOutTestAuthState,
@@ -131,6 +152,7 @@ export function renderApp(
           onboardingRepository={onboardingRepository}
           householdPeopleRepository={householdPeopleRepository}
           pantryRepository={pantryRepository}
+          plannedMealRepository={plannedMealRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>
