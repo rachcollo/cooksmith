@@ -189,7 +189,7 @@ export function RecipesPage() {
         <p className="eyebrow">Things worth cooking</p>
         <h1>Recipe Library</h1>
         <p>
-          Save the meals your household returns to, with ingredients and method steps coming later.
+          Save the recipes your household returns to, with ingredients and instructions together.
         </p>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
@@ -201,7 +201,7 @@ export function RecipesPage() {
       <Dialog
         open={creating}
         title="Add a recipe"
-        description="Save the essential details now. You can add more later."
+        description="Add the ingredients and instructions you need to cook it again."
         onOpenChange={setCreating}
       >
         <form className="recipe-form" onSubmit={(event) => void submit(event)}>
