@@ -677,12 +677,27 @@
   gap: var(--space-5);
 }
 
-.meal-planner-header {
-  max-width: 44rem;
+.page-header.meal-planner-header {
+  display: block;
+  max-width: 54rem;
+}
+
+.meal-planner-header .eyebrow {
+  margin-bottom: var(--space-3);
 }
 
 .meal-planner-header h1 {
-  max-width: 18ch;
+  font-size: clamp(2.75rem, 7vw, 5rem);
+  line-height: 0.98;
+  margin: 0 0 var(--space-4);
+  max-width: 15ch;
+}
+
+.meal-planner-header > p:last-child {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-lead);
+  margin: 0;
+  max-width: 36rem;
 }
 
 .meal-week-toolbar {
@@ -861,25 +876,12 @@
   width: 1.1rem;
 }
 
-.meal-move-control {
-  grid-column: 2 / -1;
-}
-
-.meal-move-control > span {
+.meal-drag-instructions {
   height: 1px;
+  margin: -1px;
   overflow: hidden;
   position: absolute;
   width: 1px;
-}
-
-.meal-move-control select {
-  background: var(--colour-surface);
-  border: 1px solid var(--colour-border);
-  border-radius: var(--radius-small);
-  color: var(--colour-text);
-  min-height: 2.25rem;
-  padding-inline: var(--space-2);
-  width: 100%;
 }
 
 .meal-planner-permission {
@@ -929,14 +931,11 @@
 
   .planned-meal {
     grid-template-columns: minmax(0, 1fr) auto;
-    padding: var(--space-2);
+    min-height: 5.25rem;
+    padding: var(--space-3);
   }
 
   .meal-drag-handle {
     display: none;
-  }
-
-  .meal-move-control {
-    grid-column: 1 / -1;
   }
 }
