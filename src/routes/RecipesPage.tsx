@@ -141,13 +141,13 @@ export function RecipesPage() {
 
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!selectedRecipe) return
+    if (!householdId || !selectedRecipe) return
     const { parsed, errors } = collectErrors(editDraft)
     setEditErrors(errors)
     if (!parsed) return
     setSaving(true)
     try {
-      const saved = await repository.update(selectedRecipe.id, parsed)
+      const saved = await repository.update(householdId, selectedRecipe.id, parsed)
       setRecipes((current) => current.map((recipe) => (recipe.id === saved.id ? saved : recipe)))
       setEditing(false)
     } catch (saveError) {
@@ -163,7 +163,8 @@ export function RecipesPage() {
   async function archive(recipe: Recipe) {
     if (!window.confirm(`Archive ${recipe.name}?`)) return
     try {
-      await repository.archive(recipe.id)
+      if (!householdId) return
+      await repository.archive(householdId, recipe.id)
       setRecipes((current) => current.filter((candidate) => candidate.id !== recipe.id))
       setSelectedId(null)
     } catch (archiveError) {
@@ -326,13 +327,13 @@ export function RecipesPage() {
             <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
             <dt>Preparation time</dt>
             <dd>
-              {selectedRecipe.prepTimeMinutes
+              {selectedRecipe.prepTimeMinutes !== null
                 ? `${selectedRecipe.prepTimeMinutes} minutes`
                 : 'Not set'}
             </dd>
             <dt>Cooking time</dt>
             <dd>
-              {selectedRecipe.cookTimeMinutes
+              {selectedRecipe.cookTimeMinutes !== null
                 ? `${selectedRecipe.cookTimeMinutes} minutes`
                 : 'Not set'}
             </dd>
