@@ -1,52 +1,41 @@
-# Milestone pull request
+# Pull request readiness
 
-## Milestone and issue
+## Scope
 
-- Milestone:
-- Issue or work reference:
-- Target branch: `main`
-
-## Scope summary
-
-Describe the approved scope and confirm anything intentionally unchanged.
-
-## Product outcome
-
-- Product Principles supported:
-- User effort or decisions removed:
-- Primary next action created or improved:
-- New complexity introduced:
+- Work package or milestone:
+- Branch verified:
+- Base branch verified: `main`
+- Scope confirmation and intentionally unchanged behaviour:
 
 ## Evidence
 
-- Screenshots or preview URL where applicable:
-- Migrations and database impact:
-- Setup or environment changes:
+- Local commands run and result:
+- Environment-limited commands and reason:
+- GitHub Actions result:
+- Hosted preview URL:
+- Preview smoke-test result:
+- Mobile and desktop checks:
 
-## Validation
+## Database and release
 
-- [ ] Applicable installation check completed
-- [ ] Lint completed
-- [ ] Typecheck completed
-- [ ] Tests completed
-- [ ] Production build completed
-- [ ] Changed mobile journey verified where applicable
+- Migrations in this PR: yes/no
+- Local database validation result:
+- Hosted migration required after merge: yes/no
+- Dry-run or release evidence required:
 
-List commands, results and any quality command that does not yet exist.
+## Safety
 
-## Review considerations
-
-- Accessibility:
-- Security and privacy:
+- Security and privacy notes:
 - Cost impact, including monthly and annual estimate:
-- Known limitations:
-- Deferred work:
-- Rollback approach:
+- Known issues or rollback/forward-fix approach:
 
 ## Contributor confirmation
 
-- [ ] The change stays within the named milestone.
-- [ ] No unrelated product behaviour was changed.
-- [ ] No unapproved provider, hosted service, tier change or recurring cost was introduced.
-- [ ] No credentials, secrets, tokens, real household data or sensitive environment files were committed.
-- [ ] A milestone handover has been completed or updated.
+- [ ] Branch and base are verified and recorded.
+- [ ] The change stays within the approved scope and changes no unrelated product behaviour.
+- [ ] Test evidence and limitations are recorded honestly.
+- [ ] Preview URL and smoke-test result are recorded where applicable.
+- [ ] Migration deployment requirements are clear and non-production validation is separated from remote release.
+- [ ] No credentials, secrets, tokens, real household data or sensitive environment files are committed.
+- [ ] No unapproved provider, hosted service, tier change or recurring cost is introduced.
+- [ ] Handover and completion report are completed or updated.

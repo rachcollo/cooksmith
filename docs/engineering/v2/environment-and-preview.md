@@ -66,3 +66,17 @@ Playwright starts this preview server automatically for `npm run test:e2e`. The 
 ## Failure behaviour
 
 Invalid public configuration stops normal bootstrap and renders a controlled error. Invalid build configuration fails before Vite creates deployable assets. Cooksmith never converts an unknown or missing environment into Production.
+
+## Hosted preview validation checklist
+
+Record evidence in the pull request before requesting review.
+
+1. Retrieve the exact Vercel preview URL from the pull request deployment checks or Vercel dashboard.
+2. Confirm the preview uses approved non-production Supabase public values and that Supabase Auth permits the preview callback URL, preferably through the approved wildcard redirect pattern for branch previews.
+3. For PKCE flows, start on the preview URL, complete any Vercel Deployment Protection first, request a fresh magic link, and open it in the same browser context so the verifier remains on the same origin.
+4. Run an authentication smoke test with a synthetic account: sign in, confirm the callback remains on the preview hostname, confirm the PKCE code is removed from the visible URL, refresh once, and sign out.
+5. Run the feature-specific smoke test for the changed journey and record the account, route and expected outcome without storing credentials.
+6. Check one mobile viewport and one desktop viewport for the changed journey, including keyboard-reachable controls and absence of horizontal overflow.
+7. Record the preview URL, smoke-test result, unverified items, screenshots where useful, and any environment limitation in the pull request evidence section.
+
+Do not automate real user credentials, magic-link inbox access or Production project changes for preview validation.

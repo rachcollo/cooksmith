@@ -26,33 +26,35 @@ The application starts safely without an environment file. See [environment and 
 
 ## Commands
 
-| Command                    | Purpose                                        |
-| -------------------------- | ---------------------------------------------- |
-| `npm run dev`              | Start the v2 development server                |
-| `npm run build`            | Type-check and create production assets        |
-| `npm run preview`          | Serve the production build locally             |
-| `npm run format`           | Format maintained v2 source and documentation  |
-| `npm run format:check`     | Verify formatting without changing files       |
-| `npm run lint`             | Run ESLint with zero warnings allowed          |
-| `npm run typecheck`        | Run all TypeScript project checks              |
-| `npm run test:unit`        | Run focused unit tests                         |
-| `npm run test:integration` | Run application integration tests              |
-| `npm run test`             | Run all Vitest tests                           |
-| `npm run test:e2e:install` | Install the local Chromium test browser        |
-| `npm run test:e2e`         | Run Playwright shell smoke tests               |
-| `npm run validate:static`  | Run formatting, lint, types, Vitest and build  |
-| `npm run validate`         | Run the complete local quality baseline        |
-| `npm run db:config:check`  | Check v2 database files and local-only scripts |
-| `npm run db:start`         | Start repository-pinned local Supabase         |
-| `npm run db:status`        | Show local Supabase status                     |
-| `npm run db:reset`         | Rebuild from v2 migrations and synthetic seed  |
-| `npm run db:lint`          | Lint the local v2 schema                       |
-| `npm run db:test`          | Run local pgTAP database tests                 |
-| `npm run db:test:security` | Run focused adversarial RLS and contract tests |
-| `npm run db:types`         | Generate types from local Supabase             |
-| `npm run db:types:check`   | Detect stale generated database types          |
-| `npm run db:validate`      | Run the complete local database gate           |
-| `npm run db:stop`          | Stop local Supabase                            |
+| Command                    | Purpose                                            |
+| -------------------------- | -------------------------------------------------- |
+| `npm run preflight`        | Check local tools, environment names and Git state |
+| `npm run preflight:all`    | Include Docker and Playwright readiness checks     |
+| `npm run dev`              | Start the v2 development server                    |
+| `npm run build`            | Type-check and create production assets            |
+| `npm run preview`          | Serve the production build locally                 |
+| `npm run format`           | Format maintained v2 source and documentation      |
+| `npm run format:check`     | Verify formatting without changing files           |
+| `npm run lint`             | Run ESLint with zero warnings allowed              |
+| `npm run typecheck`        | Run all TypeScript project checks                  |
+| `npm run test:unit`        | Run focused unit tests                             |
+| `npm run test:integration` | Run application integration tests                  |
+| `npm run test`             | Run all Vitest tests                               |
+| `npm run test:e2e:install` | Install the local Chromium test browser            |
+| `npm run test:e2e`         | Run Playwright shell smoke tests                   |
+| `npm run validate:static`  | Run formatting, lint, types, Vitest and build      |
+| `npm run validate`         | Run the complete local quality baseline            |
+| `npm run db:config:check`  | Check v2 database files and local-only scripts     |
+| `npm run db:start`         | Start repository-pinned local Supabase             |
+| `npm run db:status`        | Show local Supabase status                         |
+| `npm run db:reset`         | Rebuild from v2 migrations and synthetic seed      |
+| `npm run db:lint`          | Lint the local v2 schema                           |
+| `npm run db:test`          | Run local pgTAP database tests                     |
+| `npm run db:test:security` | Run focused adversarial RLS and contract tests     |
+| `npm run db:types`         | Generate types from local Supabase                 |
+| `npm run db:types:check`   | Detect stale generated database types              |
+| `npm run db:validate`      | Run the complete local database gate               |
+| `npm run db:stop`          | Stop local Supabase                                |
 
 ## Structure
 
@@ -92,7 +94,7 @@ Temporary MVP delivery is `feature branch → main → automatic Vercel deployme
 
 ## Contributing
 
-Follow [AGENTS.md](AGENTS.md), the authoritative [documentation index](docs/README.md), and the milestone branch and handover process. Run `npm run validate` before requesting review. Keep changes within the active roadmap milestone and record material decisions in an ADR.
+Follow [AGENTS.md](AGENTS.md), the authoritative [documentation index](docs/README.md), and the milestone branch and handover process. Run `npm run preflight`, `npm run docs:commands:check` and `npm run validate` before requesting review. Keep changes within the active roadmap milestone and record material decisions in an ADR.
 
 Dependency changes must be intentional, exact-versioned and accompanied by a regenerated lockfile. See [dependency management](docs/engineering/v2/dependency-management.md).
 
