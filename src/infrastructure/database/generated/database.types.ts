@@ -308,58 +308,70 @@ export type Database = {
       household_recipes: {
         Row: {
           archived_at: string | null
+          category: string | null
           cook_time_minutes: number | null
           created_at: string
           created_by: string | null
           description: string | null
+          favourite: boolean
           household_id: string
           id: string
           image_url: string | null
           ingredients: string | null
           name: string
           normalised_name: string | null
+          notes: string | null
           prep_time_minutes: number | null
           servings: number | null
           source_note: string | null
           source_url: string | null
+          tags: string[]
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           archived_at?: string | null
+          category?: string | null
           cook_time_minutes?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          favourite?: boolean
           household_id: string
           id?: string
           image_url?: string | null
           ingredients?: string | null
           name: string
           normalised_name?: string | null
+          notes?: string | null
           prep_time_minutes?: number | null
           servings?: number | null
           source_note?: string | null
           source_url?: string | null
+          tags?: string[]
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           archived_at?: string | null
+          category?: string | null
           cook_time_minutes?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          favourite?: boolean
           household_id?: string
           id?: string
           image_url?: string | null
           ingredients?: string | null
           name?: string
           normalised_name?: string | null
+          notes?: string | null
           prep_time_minutes?: number | null
           servings?: number | null
           source_note?: string | null
           source_url?: string | null
+          tags?: string[]
           updated_at?: string
           updated_by?: string | null
         }
@@ -562,6 +574,85 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      recipe_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_name: string
+          position: number
+          preparation: string | null
+          quantity_text: string | null
+          recipe_id: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_name: string
+          position: number
+          preparation?: string | null
+          quantity_text?: string | null
+          recipe_id: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_name?: string
+          position?: number
+          preparation?: string | null
+          quantity_text?: string | null
+          recipe_id?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_ingredients_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      recipe_steps: {
+        Row: {
+          created_at: string
+          id: string
+          instruction: string
+          position: number
+          recipe_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instruction: string
+          position: number
+          recipe_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instruction?: string
+          position?: number
+          recipe_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_steps_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {

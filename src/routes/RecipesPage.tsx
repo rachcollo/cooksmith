@@ -23,6 +23,12 @@ const emptyInput: RecipeInput = {
   prepTimeMinutes: null,
   cookTimeMinutes: null,
   imageUrl: null,
+  notes: null,
+  category: null,
+  tags: [],
+  favourite: false,
+  ingredientRows: [{ name: '', quantity: null, unit: null, preparation: null }],
+  steps: [{ instruction: '' }],
 }
 
 type RecipeFieldErrors = Partial<Record<keyof RecipeInput | 'form', string>>
@@ -43,11 +49,60 @@ function toInput(recipe: Recipe): RecipeInput {
     prepTimeMinutes: recipe.prepTimeMinutes,
     cookTimeMinutes: recipe.cookTimeMinutes,
     imageUrl: recipe.imageUrl,
+    notes: recipe.notes,
+    category: recipe.category,
+    tags: recipe.tags,
+    favourite: recipe.favourite,
+    ingredientRows:
+      recipe.ingredientRows.length > 0
+        ? recipe.ingredientRows.map(({ name, quantity, unit, preparation }) => ({
+            name,
+            quantity,
+            unit,
+            preparation,
+          }))
+        : [{ name: recipe.ingredients ?? '', quantity: null, unit: null, preparation: null }],
+    steps:
+      recipe.steps.length > 0
+        ? recipe.steps.map(({ instruction }) => ({ instruction }))
+        : [{ instruction: recipe.description ?? '' }],
   }
 }
 
+function prepareInput(input: RecipeInput): RecipeInput {
+  const ingredientRows = input.ingredientRows.filter((row) => row.name.trim() !== '')
+  const steps = input.steps.filter((step) => step.instruction.trim() !== '')
+  return {
+    ...input,
+    tags: input.tags.map((tag) => tag.trim()).filter(Boolean),
+    ingredientRows,
+    steps,
+    ingredients:
+      ingredientRows.length > 0
+        ? ingredientRows
+            .map((row) =>
+              [row.quantity, row.unit, row.name, row.preparation].filter(Boolean).join(' '),
+            )
+            .join('\n')
+        : input.ingredients,
+    description:
+      steps.length > 0 ? steps.map((step) => step.instruction).join('\n') : input.description,
+  }
+}
+
+function tagsText(tags: string[]) {
+  return tags.join(', ')
+}
+
+function tagsFromText(value: string) {
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+}
+
 function collectErrors(input: RecipeInput) {
-  const result = recipeInputSchema.safeParse(input)
+  const result = recipeInputSchema.safeParse(prepareInput(input))
   const errors: RecipeFieldErrors = {}
   if (!result.success) {
     for (const issue of result.error.issues) {
@@ -58,6 +113,189 @@ function collectErrors(input: RecipeInput) {
     errors.form = 'Check the highlighted field and try saving again.'
   }
   return { parsed: result.success ? result.data : null, errors }
+}
+
+function RecipeRowsEditor({
+  draft,
+  setDraft,
+}: {
+  draft: RecipeInput
+  setDraft: (next: RecipeInput) => void
+}) {
+  function update(index: number, key: keyof RecipeInput['ingredientRows'][number], value: string) {
+    const ingredientRows = draft.ingredientRows.map((row, candidate) =>
+      candidate === index ? { ...row, [key]: value.trim() === '' ? null : value } : row,
+    )
+    setDraft({ ...draft, ingredientRows })
+  }
+  function move(index: number, direction: -1 | 1) {
+    const next = [...draft.ingredientRows]
+    const target = index + direction
+    if (target < 0 || target >= next.length) return
+    const current = next[index]
+    const targetRow = next[target]
+    if (!current || !targetRow) return
+    next[index] = targetRow
+    next[target] = current
+    setDraft({ ...draft, ingredientRows: next })
+  }
+  return (
+    <fieldset className="recipe-rows">
+      <legend>Ingredients</legend>
+      {draft.ingredientRows.map((row, index) => (
+        <div className="recipe-row" key={index}>
+          <TextField
+            label={index === 0 ? 'Ingredients' : `Ingredient ${index + 1} name`}
+            value={row.name}
+            onChange={(event) => update(index, 'name', event.target.value)}
+          />
+          <TextField
+            label={`Ingredient ${index + 1} quantity`}
+            optional
+            value={row.quantity ?? ''}
+            onChange={(event) => update(index, 'quantity', event.target.value)}
+          />
+          <TextField
+            label={`Ingredient ${index + 1} unit`}
+            optional
+            value={row.unit ?? ''}
+            onChange={(event) => update(index, 'unit', event.target.value)}
+          />
+          <TextField
+            label={`Ingredient ${index + 1} preparation`}
+            optional
+            value={row.preparation ?? ''}
+            onChange={(event) => update(index, 'preparation', event.target.value)}
+          />
+          <div className="recipe-row-actions">
+            <Button
+              type="button"
+              variant="quiet"
+              disabled={index === 0}
+              onClick={() => move(index, -1)}
+            >
+              Move ingredient up
+            </Button>
+            <Button
+              type="button"
+              variant="quiet"
+              disabled={index === draft.ingredientRows.length - 1}
+              onClick={() => move(index, 1)}
+            >
+              Move ingredient down
+            </Button>
+            <Button
+              type="button"
+              variant="quiet"
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  ingredientRows: draft.ingredientRows.filter(
+                    (_, candidate) => candidate !== index,
+                  ),
+                })
+              }
+            >
+              Remove ingredient
+            </Button>
+          </div>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() =>
+          setDraft({
+            ...draft,
+            ingredientRows: [
+              ...draft.ingredientRows,
+              { name: '', quantity: null, unit: null, preparation: null },
+            ],
+          })
+        }
+      >
+        Add ingredient
+      </Button>
+    </fieldset>
+  )
+}
+
+function RecipeStepsEditor({
+  draft,
+  setDraft,
+}: {
+  draft: RecipeInput
+  setDraft: (next: RecipeInput) => void
+}) {
+  function move(index: number, direction: -1 | 1) {
+    const next = [...draft.steps]
+    const target = index + direction
+    if (target < 0 || target >= next.length) return
+    const current = next[index]
+    const targetRow = next[target]
+    if (!current || !targetRow) return
+    next[index] = targetRow
+    next[target] = current
+    setDraft({ ...draft, steps: next })
+  }
+  return (
+    <fieldset className="recipe-rows">
+      <legend>Instructions</legend>
+      {draft.steps.map((step, index) => (
+        <div className="recipe-row" key={index}>
+          <TextArea
+            label={index === 0 ? 'Instructions' : `Step ${index + 1}`}
+            value={step.instruction}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                steps: draft.steps.map((row, candidate) =>
+                  candidate === index ? { instruction: event.target.value } : row,
+                ),
+              })
+            }
+          />
+          <div className="recipe-row-actions">
+            <Button
+              type="button"
+              variant="quiet"
+              disabled={index === 0}
+              onClick={() => move(index, -1)}
+            >
+              Move step up
+            </Button>
+            <Button
+              type="button"
+              variant="quiet"
+              disabled={index === draft.steps.length - 1}
+              onClick={() => move(index, 1)}
+            >
+              Move step down
+            </Button>
+            <Button
+              type="button"
+              variant="quiet"
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  steps: draft.steps.filter((_, candidate) => candidate !== index),
+                })
+              }
+            >
+              Remove step
+            </Button>
+          </div>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => setDraft({ ...draft, steps: [...draft.steps, { instruction: '' }] })}
+      >
+        Add step
+      </Button>
+    </fieldset>
+  )
 }
 
 export function RecipesPage() {
@@ -214,20 +452,8 @@ export function RecipesPage() {
             error={fieldErrors.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
-          <TextArea
-            label="Ingredients"
-            optional
-            value={draft.ingredients ?? ''}
-            error={fieldErrors.ingredients}
-            onChange={(event) => updateDraft('ingredients', event.target.value)}
-          />
-          <TextArea
-            label="Instructions"
-            optional
-            value={draft.description ?? ''}
-            error={fieldErrors.description}
-            onChange={(event) => updateDraft('description', event.target.value)}
-          />
+          <RecipeRowsEditor draft={draft} setDraft={setDraft} />
+          <RecipeStepsEditor draft={draft} setDraft={setDraft} />
           <TextField
             label="Servings"
             inputMode="numeric"
@@ -271,6 +497,34 @@ export function RecipesPage() {
               }
             />
           </div>
+          <TextArea
+            label="Recipe notes"
+            optional
+            value={draft.notes ?? ''}
+            error={fieldErrors.notes}
+            onChange={(event) => updateDraft('notes', event.target.value)}
+          />
+          <TextField
+            label="Category"
+            optional
+            value={draft.category ?? ''}
+            error={fieldErrors.category}
+            onChange={(event) => updateDraft('category', event.target.value)}
+          />
+          <TextField
+            label="Tags, separated by commas"
+            optional
+            value={tagsText(draft.tags)}
+            onChange={(event) => setDraft({ ...draft, tags: tagsFromText(event.target.value) })}
+          />
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={draft.favourite}
+              onChange={(event) => setDraft({ ...draft, favourite: event.target.checked })}
+            />
+            Favourite recipe
+          </label>
           <TextField
             label="Source or website"
             optional
@@ -342,9 +596,27 @@ export function RecipesPage() {
         <Panel>
           <h2>{selectedRecipe.name}</h2>
           <h3>Ingredients</h3>
-          <p>{selectedRecipe.ingredients ?? 'No ingredients added yet.'}</p>
+          {selectedRecipe.ingredientRows.length > 0 ? (
+            <ul>
+              {selectedRecipe.ingredientRows.map((row) => (
+                <li key={row.id}>
+                  {[row.quantity, row.unit, row.name, row.preparation].filter(Boolean).join(' ')}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>{selectedRecipe.ingredients ?? 'No ingredients added yet.'}</p>
+          )}
           <h3>Instructions</h3>
-          <p>{selectedRecipe.description ?? 'No instructions added yet.'}</p>
+          {selectedRecipe.steps.length > 0 ? (
+            <ol>
+              {selectedRecipe.steps.map((step) => (
+                <li key={step.id}>{step.instruction}</li>
+              ))}
+            </ol>
+          ) : (
+            <p>{selectedRecipe.description ?? 'No instructions added yet.'}</p>
+          )}
           <dl>
             <dt>Servings</dt>
             <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
@@ -361,6 +633,10 @@ export function RecipesPage() {
                 : 'Not set'}
             </dd>
           </dl>
+          {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
+          {selectedRecipe.category ? <p>Category: {selectedRecipe.category}</p> : null}
+          {selectedRecipe.tags.length > 0 ? <p>Tags: {selectedRecipe.tags.join(', ')}</p> : null}
+          {selectedRecipe.favourite ? <p>Favourite recipe</p> : null}
           {selectedRecipe.sourceNote ? <p>Source: {selectedRecipe.sourceNote}</p> : null}
           {selectedRecipe.sourceUrl ? (
             <p>
@@ -397,20 +673,8 @@ export function RecipesPage() {
               error={editErrors.name}
               onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
             />
-            <TextArea
-              label="Ingredients"
-              optional
-              value={editDraft.ingredients ?? ''}
-              error={editErrors.ingredients}
-              onChange={(event) => updateEditDraft('ingredients', event.target.value)}
-            />
-            <TextArea
-              label="Instructions"
-              optional
-              value={editDraft.description ?? ''}
-              error={editErrors.description}
-              onChange={(event) => updateEditDraft('description', event.target.value)}
-            />
+            <RecipeRowsEditor draft={editDraft} setDraft={setEditDraft} />
+            <RecipeStepsEditor draft={editDraft} setDraft={setEditDraft} />
             <TextField
               label="Source note"
               optional

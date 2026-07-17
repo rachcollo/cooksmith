@@ -40,6 +40,47 @@ const safeWebUrl = (label: string) =>
       .nullable(),
   )
 
+const optionalString = (max: number, message: string) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.string().trim().max(max, message).nullable(),
+  )
+
+export const quantitySchema = z
+  .string()
+  .trim()
+  .max(24, 'Use 24 characters or fewer.')
+  .refine(
+    (value) =>
+      value === '' ||
+      /^\d+(\.\d+)?$/.test(value) ||
+      /^\d+\/\d+$/.test(value) ||
+      /^\d+\s+\d+\/\d+$/.test(value),
+    'Use a number or fraction such as 1/2 or 1 1/2.',
+  )
+
+export const recipeIngredientInputSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Enter an ingredient name.')
+    .max(160, 'Use 160 characters or fewer.'),
+  quantity: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    quantitySchema.nullable(),
+  ),
+  unit: optionalString(40, 'Use 40 characters or fewer.'),
+  preparation: optionalString(120, 'Use 120 characters or fewer.'),
+})
+
+export const recipeStepInputSchema = z.object({
+  instruction: z
+    .string()
+    .trim()
+    .min(1, 'Enter an instruction step.')
+    .max(1200, 'Use 1200 characters or fewer.'),
+})
+
 export const recipeInputSchema = z.object({
   name: z.string().trim().min(1, 'Enter a recipe name.').max(120, 'Use 120 characters or fewer.'),
   ingredients: optionalTrimmedText(4000, 'Use 4000 characters or fewer.'),
@@ -50,4 +91,17 @@ export const recipeInputSchema = z.object({
   prepTimeMinutes: optionalWholeNumber('Preparation time', 1440),
   cookTimeMinutes: optionalWholeNumber('Cooking time', 1440),
   imageUrl: safeWebUrl('Image URL'),
+  notes: optionalTrimmedText(4000, 'Use 4000 characters or fewer.').default(null),
+  category: optionalTrimmedText(80, 'Use 80 characters or fewer.').default(null),
+  tags: z
+    .array(z.string().trim().min(1).max(40))
+    .max(12, 'Use 12 tags or fewer.')
+    .transform((tags) => Array.from(new Set(tags.map((tag) => tag.toLocaleLowerCase()))))
+    .default([]),
+  favourite: z.boolean().default(false),
+  ingredientRows: z
+    .array(recipeIngredientInputSchema)
+    .max(80, 'Use 80 ingredients or fewer.')
+    .default([]),
+  steps: z.array(recipeStepInputSchema).max(60, 'Use 60 steps or fewer.').default([]),
 })
