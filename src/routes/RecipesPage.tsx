@@ -15,6 +15,7 @@ import { recipeInputSchema } from '../domain/recipes/validationSchemas'
 
 const emptyInput: RecipeInput = {
   name: '',
+  ingredients: null,
   description: null,
   sourceNote: null,
   sourceUrl: null,
@@ -34,6 +35,7 @@ function minutesLabel(recipe: Recipe) {
 function toInput(recipe: Recipe): RecipeInput {
   return {
     name: recipe.name,
+    ingredients: recipe.ingredients,
     description: recipe.description,
     sourceNote: recipe.sourceNote,
     sourceUrl: recipe.sourceUrl,
@@ -202,7 +204,7 @@ export function RecipesPage() {
         description="Save the essential details now. You can add more later."
         onOpenChange={setCreating}
       >
-        <form className="pantry-form" onSubmit={(event) => void submit(event)}>
+        <form className="recipe-form" onSubmit={(event) => void submit(event)}>
           <TextField
             data-autofocus
             label="Recipe name"
@@ -212,7 +214,14 @@ export function RecipesPage() {
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
           <TextArea
-            label="Description"
+            label="Ingredients"
+            optional
+            value={draft.ingredients ?? ''}
+            error={fieldErrors.ingredients}
+            onChange={(event) => updateDraft('ingredients', event.target.value)}
+          />
+          <TextArea
+            label="Instructions"
             optional
             value={draft.description ?? ''}
             error={fieldErrors.description}
@@ -231,7 +240,7 @@ export function RecipesPage() {
               })
             }
           />
-          <div className="pantry-grid">
+          <div className="recipe-form-compact">
             <TextField
               label="Preparation time in minutes"
               inputMode="numeric"
@@ -327,11 +336,10 @@ export function RecipesPage() {
       {selectedRecipe ? (
         <Panel>
           <h2>{selectedRecipe.name}</h2>
-          {selectedRecipe.description ? (
-            <p>{selectedRecipe.description}</p>
-          ) : (
-            <p>Ingredients and method steps will be added in a later milestone.</p>
-          )}
+          <h3>Ingredients</h3>
+          <p>{selectedRecipe.ingredients ?? 'No ingredients added yet.'}</p>
+          <h3>Instructions</h3>
+          <p>{selectedRecipe.description ?? 'No instructions added yet.'}</p>
           <dl>
             <dt>Servings</dt>
             <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
@@ -375,7 +383,7 @@ export function RecipesPage() {
             if (!open) setEditing(false)
           }}
         >
-          <form className="pantry-form" onSubmit={(event) => void submitEdit(event)}>
+          <form className="recipe-form" onSubmit={(event) => void submitEdit(event)}>
             <TextField
               data-autofocus
               label="Recipe name"
@@ -385,7 +393,14 @@ export function RecipesPage() {
               onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
             />
             <TextArea
-              label="Description"
+              label="Ingredients"
+              optional
+              value={editDraft.ingredients ?? ''}
+              error={editErrors.ingredients}
+              onChange={(event) => updateEditDraft('ingredients', event.target.value)}
+            />
+            <TextArea
+              label="Instructions"
               optional
               value={editDraft.description ?? ''}
               error={editErrors.description}
