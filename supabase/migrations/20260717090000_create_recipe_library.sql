@@ -58,7 +58,7 @@ before insert or update on cooksmith.household_recipes
 for each row execute function cooksmith_private.set_recipe_audit_fields();
 
 alter table cooksmith.household_recipes enable row level security;
-grant select, insert, update, delete on cooksmith.household_recipes to authenticated;
+grant select, insert, update on cooksmith.household_recipes to authenticated;
 
 create policy recipes_select_active_member
 on cooksmith.household_recipes
@@ -79,11 +79,6 @@ to authenticated
 using ((select cooksmith.is_active_household_member(household_id)))
 with check ((select cooksmith.is_active_household_member(household_id)));
 
-create policy recipes_delete_active_member
-on cooksmith.household_recipes
-for delete
-to authenticated
-using ((select cooksmith.is_active_household_member(household_id)));
 
 revoke all on function cooksmith_private.set_recipe_audit_fields() from public, anon, authenticated;
 
