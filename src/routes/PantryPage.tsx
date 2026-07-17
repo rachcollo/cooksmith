@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
+import { Dialog } from '../components/ui/Dialog'
+
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePantryRepository } from '../app/pantry/pantryContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
@@ -27,6 +29,8 @@ const emptyInput: PantryItemInput = {
   available: true,
 }
 
+type PantryFieldErrors = Partial<Record<keyof PantryItemInput | 'duplicate', string>>
+
 type AvailabilityFilter = 'all' | 'available' | 'unavailable'
 type LocationFilter = 'all' | PantryStorageLocation
 
@@ -36,7 +40,11 @@ export function PantryPage() {
   const householdId = state.householdId
   const [items, setItems] = useState<PantryItem[]>([])
   const [draft, setDraft] = useState<PantryItemInput>(emptyInput)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [itemError, setItemError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<PantryFieldErrors>({})
+  const [editingItem, setEditingItem] = useState<PantryItem | null>(null)
+  const [editDraft, setEditDraft] = useState<PantryItemInput>(emptyInput)
+  const [editErrors, setEditErrors] = useState<PantryFieldErrors>({})
   const [query, setQuery] = useState('')
   const [location, setLocation] = useState<LocationFilter>('all')
   const [availability, setAvailability] = useState<AvailabilityFilter>('all')
@@ -44,6 +52,7 @@ export function PantryPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editingSaving, setEditingSaving] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -89,33 +98,101 @@ export function PantryPage() {
 
   const availableCount = items.filter((item) => item.available).length
 
+  const filtersActive =
+    query.trim() !== '' || location !== 'all' || category !== 'all' || availability !== 'all'
+
+  function validateDraft(input: PantryItemInput, currentItemId?: string): PantryItemInput | null {
+    const result = pantryItemInputSchema.safeParse(input)
+    const nextErrors: PantryFieldErrors = {}
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const key = issue.path[0]
+        if (typeof key === 'string' && !(key in nextErrors)) {
+          nextErrors[key as keyof PantryItemInput] = issue.message
+        }
+      }
+    }
+    const parsedName = result.success ? result.data.name : input.name.trim()
+    const duplicate = items.some(
+      (item) =>
+        item.id !== currentItemId &&
+        item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
+    )
+    if (duplicate) {
+      nextErrors.duplicate = 'That item is already in your household pantry.'
+      nextErrors.name = nextErrors.name ?? 'Use a different item name.'
+    }
+    if (currentItemId) setEditErrors(nextErrors)
+    else setFieldErrors(nextErrors)
+    return result.success && !duplicate ? result.data : null
+  }
+
+  function openEdit(item: PantryItem) {
+    setEditingItem(item)
+    setEditDraft({
+      name: item.name,
+      category: item.category,
+      storageLocation: item.storageLocation,
+      quantity: item.quantity,
+      unit: item.unit,
+      available: item.available,
+    })
+    setEditErrors({})
+    setItemError(null)
+  }
+
+  function closeEdit() {
+    if (editingSaving) return
+    setEditingItem(null)
+    setEditDraft(emptyInput)
+    setEditErrors({})
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!householdId) return
-    const result = pantryItemInputSchema.safeParse(draft)
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? 'Check the household staple.')
+    const result = validateDraft(draft)
+    if (!result) {
+      setItemError('Check the highlighted pantry item details.')
       return
     }
     setSaving(true)
     setError(null)
+    setItemError(null)
     try {
-      const saved = editingId
-        ? await repository.update(editingId, result.data)
-        : await repository.create(householdId, result.data)
-      setItems((current) =>
-        editingId
-          ? current.map((item) => (item.id === saved.id ? saved : item))
-          : [...current, saved],
-      )
+      const saved = await repository.create(householdId, result)
+      setItems((current) => [...current, saved])
       setDraft(emptyInput)
-      setEditingId(null)
+      setFieldErrors({})
     } catch (saveError) {
-      setError(
+      setItemError(
         saveError instanceof Error ? saveError.message : 'Cooksmith could not save that item.',
       )
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function submitEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!editingItem) return
+    const result = validateDraft(editDraft, editingItem.id)
+    if (!result) return
+    setEditingSaving(true)
+    setItemError(null)
+    try {
+      const saved = await repository.update(editingItem.id, result)
+      setItems((current) => current.map((item) => (item.id === saved.id ? saved : item)))
+      setEditingItem(null)
+      setEditDraft(emptyInput)
+      setEditErrors({})
+    } catch (saveError) {
+      setEditErrors({
+        duplicate:
+          saveError instanceof Error ? saveError.message : 'Cooksmith could not save that item.',
+      })
+    } finally {
+      setEditingSaving(false)
     }
   }
 
@@ -154,9 +231,8 @@ export function PantryPage() {
     try {
       await repository.remove(item.id)
       setItems((current) => current.filter((candidate) => candidate.id !== item.id))
-      if (editingId === item.id) {
-        setEditingId(null)
-        setDraft(emptyInput)
+      if (editingItem?.id === item.id) {
+        closeEdit()
       }
     } catch (removeError) {
       setError(
@@ -187,13 +263,20 @@ export function PantryPage() {
       {error ? <ErrorState title="Pantry needs a quick check" message={error} /> : null}
 
       <Panel className="pantry-form-panel">
+        <div className="pantry-panel-heading">
+          <h2>Add a pantry item</h2>
+          <p>Track the staples your household expects to have on hand.</p>
+        </div>
         <form className="pantry-form" onSubmit={(event) => void submit(event)}>
           <TextField
+            error={fieldErrors.name}
             label="Item name"
+            required
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
           <SelectField
+            error={fieldErrors.storageLocation}
             label="Location"
             value={draft.storageLocation}
             onChange={(event) =>
@@ -210,6 +293,7 @@ export function PantryPage() {
             ))}
           </SelectField>
           <SelectField
+            error={fieldErrors.category}
             label="Category"
             value={draft.category}
             onChange={(event) =>
@@ -223,6 +307,7 @@ export function PantryPage() {
             ))}
           </SelectField>
           <TextField
+            error={fieldErrors.quantity}
             label="Quantity"
             inputMode="decimal"
             optional
@@ -235,6 +320,7 @@ export function PantryPage() {
             }
           />
           <TextField
+            error={fieldErrors.unit}
             label="Unit"
             optional
             value={draft.unit ?? ''}
@@ -248,8 +334,9 @@ export function PantryPage() {
             />
             Available now
           </label>
-          <Button type="submit" busy={saving}>
-            {editingId ? 'Save item' : 'Add item'}
+          {itemError ? <p className="form-error">{itemError}</p> : null}
+          <Button type="submit" busy={saving} disabled={draft.name.trim() === ''}>
+            Add item
           </Button>
         </form>
       </Panel>
@@ -299,11 +386,30 @@ export function PantryPage() {
 
       {filteredItems.length === 0 ? (
         <Panel>
-          <p>
-            {items.length === 0
-              ? 'Add your first household staple.'
-              : 'No staples match those filters.'}
-          </p>
+          <div className="empty-state">
+            <h2>{items.length === 0 ? 'Start your pantry' : 'No matching pantry items'}</h2>
+            <p>
+              {items.length === 0
+                ? 'Add everyday staples so everyone can see what is available before cooking or shopping.'
+                : filtersActive
+                  ? 'Try clearing search or changing filters to see more of your household pantry.'
+                  : 'Add a pantry item to begin.'}
+            </p>
+            {items.length > 0 && filtersActive ? (
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  setQuery('')
+                  setLocation('all')
+                  setCategory('all')
+                  setAvailability('all')
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : null}
+          </div>
         </Panel>
       ) : null}
 
@@ -343,21 +449,7 @@ export function PantryPage() {
                       {item.available ? 'Mark out of stock' : 'Mark available'}
                     </Button>
                     <div className="pantry-actions">
-                      <Button
-                        variant="secondary"
-                        type="button"
-                        onClick={() => {
-                          setEditingId(item.id)
-                          setDraft({
-                            name: item.name,
-                            category: item.category,
-                            storageLocation: item.storageLocation,
-                            quantity: item.quantity,
-                            unit: item.unit,
-                            available: item.available,
-                          })
-                        }}
-                      >
+                      <Button variant="secondary" type="button" onClick={() => openEdit(item)}>
                         Edit
                       </Button>
                       <Button variant="quiet" type="button" onClick={() => void remove(item)}>
@@ -371,6 +463,109 @@ export function PantryPage() {
           )
         },
       )}
+
+      {editingItem ? (
+        <Dialog
+          description="Update the pantry details for this household item."
+          onOpenChange={(open) => {
+            if (!open) closeEdit()
+          }}
+          open={Boolean(editingItem)}
+          title={`Edit ${editingItem.name}`}
+        >
+          <form
+            className="pantry-form pantry-edit-form"
+            onSubmit={(event) => void submitEdit(event)}
+          >
+            <TextField
+              data-autofocus
+              error={editErrors.name}
+              label="Item name"
+              required
+              value={editDraft.name}
+              onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
+            />
+            <SelectField
+              error={editErrors.storageLocation}
+              label="Location"
+              value={editDraft.storageLocation}
+              onChange={(event) =>
+                setEditDraft({
+                  ...editDraft,
+                  storageLocation: event.target.value as PantryStorageLocation,
+                })
+              }
+            >
+              {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              error={editErrors.category}
+              label="Category"
+              value={editDraft.category}
+              onChange={(event) =>
+                setEditDraft({
+                  ...editDraft,
+                  category: event.target.value as PantryItemInput['category'],
+                })
+              }
+            >
+              {Object.entries(pantryCategoryLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SelectField>
+            <TextField
+              error={editErrors.quantity}
+              label="Quantity"
+              inputMode="decimal"
+              optional
+              value={editDraft.quantity === null ? '' : String(editDraft.quantity)}
+              onChange={(event) =>
+                setEditDraft({
+                  ...editDraft,
+                  quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+                })
+              }
+            />
+            <TextField
+              error={editErrors.unit}
+              label="Unit"
+              optional
+              value={editDraft.unit ?? ''}
+              onChange={(event) => setEditDraft({ ...editDraft, unit: event.target.value })}
+            />
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                checked={editDraft.available}
+                onChange={(event) =>
+                  setEditDraft({ ...editDraft, available: event.target.checked })
+                }
+              />
+              Available now
+            </label>
+            {editErrors.duplicate ? <p className="form-error">{editErrors.duplicate}</p> : null}
+            <div className="dialog-actions">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={closeEdit}
+                disabled={editingSaving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" busy={editingSaving} disabled={editDraft.name.trim() === ''}>
+                Save changes
+              </Button>
+            </div>
+          </form>
+        </Dialog>
+      ) : null}
     </main>
   )
 }
