@@ -40,7 +40,7 @@ describe('weekly dinner planner', () => {
         name: 'Seven days. Let’s not overthink it.',
       }),
     ).toBeVisible()
-    expect(screen.getAllByRole('button', { name: 'Add dinner' })).toHaveLength(7)
+    expect(await screen.findAllByRole('button', { name: 'Add dinner' })).toHaveLength(7)
     expect(screen.queryByText('Nothing planned.')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Next week' }))
