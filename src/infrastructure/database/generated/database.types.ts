@@ -397,6 +397,24 @@ export type Database = {
         }
         Relationships: []
       }
+      infrastructure_health: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       planned_meals: {
         Row: {
           created_at: string
@@ -443,24 +461,6 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
-      }
-      infrastructure_health: {
-        Row: {
-          key: string
-          updated_at: string
-          value: string
-        }
-        Insert: {
-          key: string
-          updated_at?: string
-          value: string
-        }
-        Update: {
-          key?: string
-          updated_at?: string
-          value?: string
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
