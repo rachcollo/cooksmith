@@ -113,9 +113,9 @@ describe('recipe library experience', () => {
     await user.type(screen.getByLabelText('Search recipes'), 'xyz')
     expect(screen.getByRole('heading', { name: 'No matching recipes' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
-    expect(screen.getByRole('heading', { name: 'Apple crumble' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Open Apple crumble recipe' })).toBeVisible()
 
-    await user.click(screen.getAllByRole('button', { name: 'Open details' })[1])
+    await user.click(screen.getByRole('button', { name: 'Open Apple crumble recipe' }))
     await user.click(screen.getByRole('button', { name: 'Edit recipe' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Apple crumble' })
     await user.clear(within(dialog).getByLabelText('Recipe name'))
