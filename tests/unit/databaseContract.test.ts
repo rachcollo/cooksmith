@@ -24,6 +24,8 @@ describe('generated database API contract', () => {
       | 'infrastructure_health'
       | 'planned_meals'
       | 'profiles'
+      | 'recipe_ingredients'
+      | 'recipe_steps'
     >()
   })
 
