@@ -1,4 +1,4 @@
-# Engineering Package — Milestone 8B: Meal Planner UX & Drag and Drop
+# Engineering Package — Milestone 8B: Meal Planner UX & Drag & Drop
 
 **Status:** Ready for Build  
 **Branch:** `m08b-meal-planner-ux-drag-drop`  
