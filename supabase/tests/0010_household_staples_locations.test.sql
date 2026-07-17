@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(11);
 
 select has_type('cooksmith', 'pantry_storage_location', 'storage location enum exists');
 select ok(
@@ -36,10 +36,42 @@ select is(
   array['pantry','fridge','freezer']::text[],
   'only approved storage locations exist'
 );
-select ok(not has_function_privilege('authenticated', 'cooksmith_private.populate_default_pantry(uuid)', 'execute'), 'browser cannot populate defaults');
+select ok(
+  not has_function_privilege('authenticated', 'cooksmith_private.populate_default_pantry(uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'cooksmith_private.populate_new_household_staples(uuid)', 'execute'),
+  'browser cannot populate defaults'
+);
 select ok((select count(*) > 0 from cooksmith.household_pantry_items where storage_location = 'pantry'), 'existing/default pantry staples exist');
 select ok((select count(*) > 0 from cooksmith.household_pantry_items where storage_location = 'fridge'), 'fridge defaults exist');
 select ok((select count(*) > 0 from cooksmith.household_pantry_items where storage_location = 'freezer'), 'freezer defaults exist');
+
+delete from cooksmith.household_pantry_items
+where household_id = '20000000-0000-4000-8000-000000000001'
+  and name = 'Plain flour';
+
+select lives_ok(
+  $$select cooksmith_private.populate_new_household_staples('20000000-0000-4000-8000-000000000001')$$,
+  'Milestone 7B backfill can be rerun safely'
+);
+select results_eq(
+  $$select count(*)::integer
+    from cooksmith.household_pantry_items
+    where household_id = '20000000-0000-4000-8000-000000000001'
+      and name = 'Plain flour'$$,
+  array[0],
+  'Milestone 7B backfill does not recreate a deliberately removed Milestone 7A default'
+);
+select results_eq(
+  $$select count(*)::integer
+    from cooksmith.household_pantry_items
+    where household_id = '20000000-0000-4000-8000-000000000001'
+      and name in (
+        'Milk', 'Eggs', 'Butter', 'Cheddar cheese', 'Yoghurt', 'Mayonnaise', 'Mustard',
+        'Frozen peas', 'Frozen mixed vegetables', 'Bread', 'Frozen berries'
+      )$$,
+  array[11],
+  'Milestone 7B backfill remains idempotent for the newly introduced staples'
+);
 
 select * from finish();
 rollback;
