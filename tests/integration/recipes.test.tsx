@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
-import type { Recipe } from '../../src/domain/recipes/types'
+import type { Recipe, RecipeIngredientInput, RecipeStepInput } from '../../src/domain/recipes/types'
 import { renderApp } from '../renderApp'
 
 const householdId = '20000000-0000-4000-8000-000000000001'
@@ -21,6 +21,12 @@ function recipe(overrides: Partial<Recipe>): Recipe {
     prepTimeMinutes: 10,
     cookTimeMinutes: 30,
     imageUrl: null,
+    notes: null,
+    category: null,
+    tags: [],
+    favourite: false,
+    ingredientRows: [],
+    steps: [],
     archivedAt: null,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
@@ -31,7 +37,21 @@ function recipe(overrides: Partial<Recipe>): Recipe {
 describe('recipe library experience', () => {
   it('loads an empty library and creates a recipe that opens in detail', async () => {
     const create = vi.fn(async (householdId, input) =>
-      recipe({ id: 'created', householdId, ...input }),
+      recipe({
+        id: 'created',
+        householdId,
+        ...input,
+        ingredientRows: input.ingredientRows.map((row: RecipeIngredientInput, index: number) => ({
+          id: `ingredient-${index + 1}`,
+          position: index + 1,
+          ...row,
+        })),
+        steps: input.steps.map((step: RecipeStepInput, index: number) => ({
+          id: `step-${index + 1}`,
+          position: index + 1,
+          ...step,
+        })),
+      }),
     ) satisfies RecipeRepository['create']
     const repository: RecipeRepository = {
       list: async () => [],
@@ -81,7 +101,20 @@ describe('recipe library experience', () => {
 
   it('searches, clears no-result state, edits, cancels and archives recipes', async () => {
     const update = vi.fn(async (_householdId, id, input) =>
-      recipe({ id, ...input }),
+      recipe({
+        id,
+        ...input,
+        ingredientRows: input.ingredientRows.map((row: RecipeIngredientInput, index: number) => ({
+          id: `ingredient-${index + 1}`,
+          position: index + 1,
+          ...row,
+        })),
+        steps: input.steps.map((step: RecipeStepInput, index: number) => ({
+          id: `step-${index + 1}`,
+          position: index + 1,
+          ...step,
+        })),
+      }),
     ) satisfies RecipeRepository['update']
     const archive = vi.fn(async (_householdId, id) =>
       recipe({ id, archivedAt: '2026-01-02T00:00:00Z' }),
