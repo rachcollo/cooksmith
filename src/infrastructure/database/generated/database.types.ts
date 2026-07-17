@@ -258,6 +258,7 @@ export type Database = {
           name: string
           normalised_name: string | null
           quantity: number | null
+          storage_location: Database['cooksmith']['Enums']['pantry_storage_location']
           unit: string | null
           updated_at: string
           updated_by: string | null
@@ -273,6 +274,7 @@ export type Database = {
           name: string
           normalised_name?: string | null
           quantity?: number | null
+          storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
           unit?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           name?: string
           normalised_name?: string | null
           quantity?: number | null
+          storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
           unit?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -534,6 +537,7 @@ export type Database = {
         | 'snacks'
         | 'tea_coffee_and_drinks'
         | 'other'
+      pantry_storage_location: 'pantry' | 'fridge' | 'freezer'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
     }
     CompositeTypes: {
@@ -677,6 +681,7 @@ export const Constants = {
         'tea_coffee_and_drinks',
         'other',
       ],
+      pantry_storage_location: ['pantry', 'fridge', 'freezer'],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
     },
   },

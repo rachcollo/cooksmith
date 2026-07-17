@@ -2,21 +2,23 @@ import { describe, expect, it } from 'vitest'
 
 import { pantryItemInputSchema } from '../../src/domain/pantry/validationSchemas'
 
-describe('pantry item validation', () => {
-  it('normalises calm household pantry input', () => {
+describe('household staple validation', () => {
+  it('normalises calm household staple input with a storage location', () => {
     expect(
       pantryItemInputSchema.parse({
-        name: '  Plain flour ',
-        category: 'baking',
+        name: '  Milk ',
+        category: 'tea_coffee_and_drinks',
+        storageLocation: 'fridge',
         quantity: '1.5',
-        unit: ' kg ',
+        unit: ' L ',
         available: true,
       }),
     ).toEqual({
-      name: 'Plain flour',
-      category: 'baking',
+      name: 'Milk',
+      category: 'tea_coffee_and_drinks',
+      storageLocation: 'fridge',
       quantity: 1.5,
-      unit: 'kg',
+      unit: 'L',
       available: true,
     })
   })
@@ -24,26 +26,29 @@ describe('pantry item validation', () => {
   it('accepts unset quantity and unit', () => {
     expect(
       pantryItemInputSchema.parse({
-        name: 'Tea bags',
-        category: 'tea_coffee_and_drinks',
+        name: 'Frozen peas',
+        category: 'other',
+        storageLocation: 'freezer',
         quantity: '',
         unit: '',
         available: true,
       }),
     ).toEqual({
-      name: 'Tea bags',
-      category: 'tea_coffee_and_drinks',
+      name: 'Frozen peas',
+      category: 'other',
+      storageLocation: 'freezer',
       quantity: null,
       unit: null,
       available: true,
     })
   })
 
-  it('rejects invalid quantities and empty names', () => {
+  it('rejects invalid locations, quantities and empty names', () => {
     expect(
       pantryItemInputSchema.safeParse({
         name: '',
         category: 'other',
+        storageLocation: 'garage',
         quantity: -1,
         unit: 'item',
         available: true,

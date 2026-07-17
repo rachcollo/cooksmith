@@ -10,11 +10,14 @@ export type PantryItemCategory =
   | 'tea_coffee_and_drinks'
   | 'other'
 
+export type PantryStorageLocation = 'pantry' | 'fridge' | 'freezer'
+
 export interface PantryItem {
   id: string
   householdId: string
   name: string
   category: PantryItemCategory
+  storageLocation: PantryStorageLocation
   quantity: number | null
   unit: string | null
   available: boolean
@@ -25,6 +28,7 @@ export interface PantryItem {
 export interface PantryItemInput {
   name: string
   category: PantryItemCategory
+  storageLocation: PantryStorageLocation
   quantity: number | null
   unit: string | null
   available: boolean
@@ -41,4 +45,10 @@ export const pantryCategoryLabels: Record<PantryItemCategory, string> = {
   snacks: 'Snacks',
   tea_coffee_and_drinks: 'Tea, coffee and drinks',
   other: 'Other',
+}
+
+export const pantryStorageLocationLabels: Record<PantryStorageLocation, string> = {
+  pantry: 'Pantry',
+  fridge: 'Fridge',
+  freezer: 'Freezer',
 }
