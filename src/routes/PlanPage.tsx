@@ -27,7 +27,7 @@ import {
   formatWeekRange,
   nextWeek,
   previousWeek,
-  toIsoDate,
+  toLocalIsoDate,
   weekDays,
 } from '../domain/meal-plans/week'
 
@@ -44,7 +44,7 @@ export function PlanPage() {
   const { state } = useOnboarding()
   const repository = usePlannedMealRepository()
   const householdId = state.householdId
-  const today = toIsoDate(new Date())
+  const today = toLocalIsoDate(new Date())
   const thisWeek = currentWeek(new Date())
   const [weekStart, setWeekStart] = useState(thisWeek)
   const [meals, setMeals] = useState<PlannedMeal[]>([])
@@ -59,7 +59,13 @@ export function PlanPage() {
 
   useEffect(() => {
     let active = true
-    if (!householdId) return
+    setMeals([])
+    setError(null)
+    if (!householdId) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
     repository
       .listWeek(householdId, weekStart, weekEnd)
       .then((next) => {
