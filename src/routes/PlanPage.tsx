@@ -67,6 +67,7 @@ export function PlanPage() {
   const [draggingMealId, setDraggingMealId] = useState<string | null>(null)
   const [dropTargetDate, setDropTargetDate] = useState<string | null>(null)
   const dragDetails = useRef<DragDetails | null>(null)
+  const suppressMealClick = useRef(false)
   const days = useMemo(() => weekDays(weekStart), [weekStart])
   const visibleMeals = useMemo(
     () => meals.filter((meal) => meal.householdId === householdId && meal.mealType === 'dinner'),
@@ -249,7 +250,10 @@ export function PlanPage() {
     }
     setDraggingMealId(null)
     setDropTargetDate(null)
-    if (details?.active) void moveMeal(details.meal, details.targetDate)
+    if (details?.active) {
+      suppressMealClick.current = true
+      void moveMeal(details.meal, details.targetDate)
+    }
   }
 
   return (
@@ -334,7 +338,11 @@ export function PlanPage() {
                       className="planned-meal-title"
                       type="button"
                       onClick={() => {
-                        if (!dragDetails.current?.active) openEdit(meal)
+                        if (suppressMealClick.current) {
+                          suppressMealClick.current = false
+                          return
+                        }
+                        openEdit(meal)
                       }}
                     >
                       <strong>{meal.title}</strong>
