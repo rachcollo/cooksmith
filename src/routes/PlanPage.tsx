@@ -69,10 +69,7 @@ export function PlanPage() {
   const dragDetails = useRef<DragDetails | null>(null)
   const days = useMemo(() => weekDays(weekStart), [weekStart])
   const visibleMeals = useMemo(
-    () =>
-      meals.filter(
-        (meal) => meal.householdId === householdId && meal.mealType === 'dinner',
-      ),
+    () => meals.filter((meal) => meal.householdId === householdId && meal.mealType === 'dinner'),
     [householdId, meals],
   )
   const weekEnd = addDays(weekStart, 6)
@@ -140,9 +137,7 @@ export function PlanPage() {
   function updateDialog(input: PlannedMealInput) {
     if (!dialog) return
     setDialog(
-      dialog.mode === 'add'
-        ? { mode: 'add', input }
-        : { mode: 'edit', meal: dialog.meal, input },
+      dialog.mode === 'add' ? { mode: 'add', input } : { mode: 'edit', meal: dialog.meal, input },
     )
   }
 
@@ -371,7 +366,12 @@ export function PlanPage() {
                     </label>
                   </div>
                 ) : (
-                  <Button variant="secondary" type="button" onClick={() => openAdd(day)}>
+                  <Button
+                    aria-label="Add dinner"
+                    variant="secondary"
+                    type="button"
+                    onClick={() => openAdd(day)}
+                  >
                     + Add dinner
                   </Button>
                 )}
