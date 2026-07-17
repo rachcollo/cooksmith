@@ -1,11 +1,13 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { resolve } from 'node:path'
+import { parseEnv } from 'node:util'
 
 const require = createRequire(import.meta.url)
 const pkg = require('../package.json')
 
-export const requiredEnvironmentVariables = [
+export const environmentVariableNames = [
   'VITE_APP_ENV',
   'VITE_BUILD_COMMIT',
   'VITE_SUPABASE_URL',
@@ -34,6 +36,10 @@ export function collectPreflight({
   nodeVersion = process.versions.node,
 } = {}) {
   const checks = []
+  const environmentFile = resolve(cwd, '.env.local')
+  const effectiveEnv = existsSync(environmentFile)
+    ? { ...parseEnv(readFileSync(environmentFile, 'utf8')), ...env }
+    : env
   const requireDatabase = argv.includes('--database') || argv.includes('--all')
   const requireE2e = argv.includes('--e2e') || argv.includes('--all')
   const expectedNode = pkg.engines.node
@@ -44,14 +50,40 @@ export function collectPreflight({
   const npm = runner('npm', ['--version'], { cwd })
   checks.push(checkVersion('npm', npm.status === 0 ? npm.stdout.trim() : '', expectedNpm))
 
-  const missingEnv = requiredEnvironmentVariables.filter((name) => !env[name])
+  const appEnvironment =
+    effectiveEnv.VITE_APP_ENV ||
+    (effectiveEnv.VERCEL_ENV === 'preview' || effectiveEnv.VERCEL_ENV === 'production'
+      ? effectiveEnv.VERCEL_ENV
+      : 'development')
+  const requiredEnvironmentVariables =
+    appEnvironment === 'preview'
+      ? [
+          'VITE_SUPABASE_URL',
+          'VITE_SUPABASE_PUBLISHABLE_KEY',
+          'COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS',
+        ]
+      : appEnvironment === 'production'
+        ? ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY']
+        : []
+  const missingEnv = requiredEnvironmentVariables.filter((name) => !effectiveEnv[name])
+  const hasSupabaseUrl = Boolean(effectiveEnv.VITE_SUPABASE_URL)
+  const hasSupabaseKey = Boolean(effectiveEnv.VITE_SUPABASE_PUBLISHABLE_KEY)
   checks.push(
-    missingEnv.length === 0
-      ? { ok: true, message: 'Required environment variable names are present.' }
-      : {
+    missingEnv.length > 0
+      ? {
           ok: false,
           message: `Missing environment variable names: ${missingEnv.join(', ')}. Add them to the relevant local shell, Codespaces secret or hosted environment without printing values.`,
-        },
+        }
+      : hasSupabaseUrl !== hasSupabaseKey
+        ? {
+            ok: false,
+            message:
+              'VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must either both be present or both be omitted.',
+          }
+        : {
+            ok: true,
+            message: `Environment variables are valid for ${appEnvironment}.`,
+          },
   )
 
   const remotes = runner('git', ['remote'], { cwd })
@@ -70,8 +102,8 @@ export function collectPreflight({
 
   const branch = runner('git', ['branch', '--show-current'], { cwd })
   const branchName = branch.status === 0 ? branch.stdout.trim() : ''
-  const isGitHubActions = env.GITHUB_ACTIONS === 'true'
-  const githubRef = env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || ''
+  const isGitHubActions = effectiveEnv.GITHUB_ACTIONS === 'true'
+  const githubRef = effectiveEnv.GITHUB_HEAD_REF || effectiveEnv.GITHUB_REF_NAME || ''
   const effectiveBranch = branchName || (isGitHubActions ? githubRef : '')
   const expectedCiRef = isGitHubActions && effectiveBranch.length > 0
   checks.push(
@@ -113,7 +145,7 @@ export function collectPreflight({
 
   if (requireE2e) {
     const chromium = runner('npx', ['playwright', 'install', '--dry-run', 'chromium'], { cwd })
-    const browserPath = chromium.stdout.match(/browser:\s+([^\n]+)/)?.[1]?.trim()
+    const browserPath = chromium.stdout.match(/Install location:\s+([^\n]+)/)?.[1]?.trim()
     checks.push(
       browserPath && existsSync(browserPath)
         ? { ok: true, message: `Playwright Chromium available: ${browserPath}` }

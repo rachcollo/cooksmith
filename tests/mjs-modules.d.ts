@@ -6,5 +6,5 @@ declare module '*.mjs' {
     ok: boolean
     text: string
   }
-  export const requiredEnvironmentVariables: string[]
+  export const environmentVariableNames: string[]
 }
