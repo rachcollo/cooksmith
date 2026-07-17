@@ -18,3 +18,5 @@ Store one completed handover per milestone in this directory using `mNN-short-ti
 |        6C | [Household invitations and member management](m06c-household-invitations.md)         | Complete                    |
 | Standards | [Engineering standards foundation](engineering-standards-foundation.md)              | Complete                    |
 |     EP004 | [Engineering standards update](ep004-engineering-standards-update.md)                | Ready for review            |
+
+- [Milestone 8A — Weekly Meal Planner Foundation](m08a-weekly-meal-planner-foundation.md)

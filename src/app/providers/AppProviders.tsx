@@ -13,6 +13,9 @@ import { HouseholdPeopleProvider } from '../households/HouseholdPeopleProvider'
 import type { PantryRepository } from '../../application/pantry/pantryRepository'
 import { PantryProvider } from '../pantry/PantryProvider'
 import { PantryRepositoryContext } from '../pantry/pantryContext'
+import type { PlannedMealRepository } from '../../application/meal-plans/plannedMealRepository'
+import { PlannedMealProvider } from '../meal-plans/PlannedMealProvider'
+import { PlannedMealRepositoryContext } from '../meal-plans/plannedMealContext'
 
 interface AppProvidersProps {
   children: ReactNode
@@ -22,6 +25,7 @@ interface AppProvidersProps {
   onboardingRepository?: OnboardingRepository
   householdPeopleRepository?: HouseholdPeopleRepository
   pantryRepository?: PantryRepository
+  plannedMealRepository?: PlannedMealRepository
 }
 
 export function AppProviders({
@@ -32,6 +36,7 @@ export function AppProviders({
   onboardingRepository,
   householdPeopleRepository,
   pantryRepository,
+  plannedMealRepository,
 }: AppProvidersProps) {
   return (
     <AppConfigContext.Provider value={config}>
@@ -40,7 +45,11 @@ export function AppProviders({
           <HouseholdPeopleProvider>
             <OnboardingRepositoryContext.Provider value={onboardingRepository}>
               <PantryRepositoryContext.Provider value={pantryRepository}>
-                <PantryProvider>{children}</PantryProvider>
+                <PantryProvider>
+                  <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
+                    <PlannedMealProvider>{children}</PlannedMealProvider>
+                  </PlannedMealRepositoryContext.Provider>
+                </PantryProvider>
               </PantryRepositoryContext.Provider>
             </OnboardingRepositoryContext.Provider>
           </HouseholdPeopleProvider>

@@ -21,6 +21,7 @@ describe('generated database API contract', () => {
       | 'household_settings'
       | 'households'
       | 'infrastructure_health'
+      | 'planned_meals'
       | 'profiles'
     >()
   })
@@ -44,6 +45,7 @@ describe('generated database API contract', () => {
     expect(Constants.cooksmith.Enums.household_role).toEqual(['owner', 'member'])
     expect(Constants.cooksmith.Enums.pantry_item_category).toContain('grains_rice_and_pasta')
     expect(Constants.cooksmith.Enums.membership_status).toEqual(['active', 'inactive'])
+    expect(Constants.cooksmith.Enums.meal_type).toEqual(['breakfast', 'lunch', 'dinner'])
     expect(Constants.cooksmith.Enums.application_role).toEqual([
       'admin',
       'content_editor',

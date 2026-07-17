@@ -25,6 +25,7 @@ describe('authentication routing', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
       signedOutTestAuthState,
     )
 
