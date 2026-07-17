@@ -102,17 +102,17 @@ export const defaultRecipeRepository: RecipeRepository = {
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
   }),
-  update: async (recipeId, input) => ({
+  update: async (householdId, recipeId, input) => ({
     id: recipeId,
-    householdId: '20000000-0000-4000-8000-000000000001',
+    householdId,
     ...input,
     archivedAt: null,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-02T00:00:00Z',
   }),
-  archive: async (recipeId) => ({
+  archive: async (householdId, recipeId) => ({
     id: recipeId,
-    householdId: '20000000-0000-4000-8000-000000000001',
+    householdId,
     name: 'Lentil soup',
     description: null,
     sourceNote: null,
