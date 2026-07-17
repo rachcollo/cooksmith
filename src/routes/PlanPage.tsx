@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { ChevronLeft, ChevronRight, GripVertical, X } from 'lucide-react'
@@ -244,6 +245,14 @@ export function PlanPage() {
     setDropTargetDate(details.targetDate)
   }
 
+  function moveWithKeyboard(meal: PlannedMeal, event: ReactKeyboardEvent<HTMLButtonElement>) {
+    if (!event.altKey || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return
+    const targetDate = addDays(meal.mealDate, event.key === 'ArrowLeft' ? -1 : 1)
+    if (!days.includes(targetDate)) return
+    event.preventDefault()
+    void moveMeal(meal, targetDate)
+  }
+
   function finishDrag(event: ReactPointerEvent<HTMLDivElement>) {
     const details = dragDetails.current
     dragDetails.current = null
@@ -303,6 +312,11 @@ export function PlanPage() {
         </p>
       ) : null}
 
+      <span className="meal-drag-instructions" id="meal-drag-instructions">
+        To move a dinner without dragging, focus its name and press Alt with the left or right
+        arrow.
+      </span>
+
       {loading ? (
         <LoadingState label="Loading this week’s dinners" />
       ) : (
@@ -342,6 +356,8 @@ export function PlanPage() {
                     <button
                       className="planned-meal-title"
                       type="button"
+                      aria-describedby="meal-drag-instructions"
+                      onKeyDown={(event) => moveWithKeyboard(meal, event)}
                       onClick={() => {
                         if (suppressMealClick.current) {
                           suppressMealClick.current = false
@@ -362,21 +378,6 @@ export function PlanPage() {
                     >
                       <X aria-hidden="true" />
                     </button>
-                    <label className="meal-move-control">
-                      <span>Move {meal.title}</span>
-                      <select
-                        aria-label={`Move ${meal.title} to another day`}
-                        value={meal.mealDate}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onChange={(event) => void moveMeal(meal, event.target.value)}
-                      >
-                        {days.map((date) => (
-                          <option value={date} key={date}>
-                            {formatDayLabel(date)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
                   </div>
                 ) : (
                   <Button
@@ -398,7 +399,7 @@ export function PlanPage() {
         <span aria-hidden="true">🍕</span>
         <div>
           <strong>Plans change. That’s the plan.</strong>
-          <p>Press and drag a dinner to move it, or use its Move control.</p>
+          <p>Press and drag a dinner to move it to another day.</p>
         </div>
       </aside>
 
