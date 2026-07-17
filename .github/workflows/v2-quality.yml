@@ -31,6 +31,8 @@ jobs:
           cache: npm
       - name: Install pinned dependencies
         run: npm ci
+      - name: Install Chromium for preflight check
+        run: npx playwright install --with-deps chromium
       - name: Run CI preflight
         env:
           VITE_APP_ENV: test

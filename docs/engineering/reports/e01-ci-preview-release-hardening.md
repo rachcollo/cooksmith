@@ -32,7 +32,7 @@ Passed locally:
 - `npm run format:check`
 - `npm run lint`
 - `npm run typecheck`
-- `npm run test`
+- `npm run test` (20 files, 71 tests)
 - `npm run build`, with the existing non-blocking Vite chunk-size advisory.
 - `npm run db:config:check`
 - `npm run docs:commands:check`
@@ -48,7 +48,7 @@ Environment-limited locally:
 
 A hosted preview was not available from this container because there is no configured Git remote or publishable GitHub pull request. The new checklist documents the exact hosted-preview evidence required on the package pull request.
 
-GitHub Actions could not be observed locally for the same reason. Workflow YAML parsed successfully, and the workflow now separates preflight, database, format/docs, lint, typecheck, Vitest, build and Playwright jobs.
+GitHub Actions could not be observed locally for the same reason. Workflow YAML parsed successfully, and the workflow now separates preflight, database, format/docs, lint, typecheck, Vitest, build and Playwright jobs. The preflight accepts GitHub Actions PR refs when checkout is detached and installs Chromium before the CI `preflight:all` browser availability check.
 
 ## Security, privacy, production and cost
 

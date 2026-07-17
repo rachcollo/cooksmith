@@ -70,15 +70,21 @@ export function collectPreflight({
 
   const branch = runner('git', ['branch', '--show-current'], { cwd })
   const branchName = branch.status === 0 ? branch.stdout.trim() : ''
+  const isGitHubActions = env.GITHUB_ACTIONS === 'true'
+  const githubRef = env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || ''
+  const effectiveBranch = branchName || (isGitHubActions ? githubRef : '')
+  const expectedCiRef = isGitHubActions && effectiveBranch.length > 0
   checks.push(
-    branchName && branchName !== 'main' && branchName !== 'v2'
-      ? { ok: true, message: `Working branch: ${branchName}` }
-      : {
-          ok: false,
-          message: branchName
-            ? `Unexpected baseline branch ${branchName}. Create a scoped feature branch from the verified main baseline before editing.`
-            : 'Detached HEAD or unreadable branch state. Check out a scoped feature branch from the verified main baseline before editing.',
-        },
+    expectedCiRef
+      ? { ok: true, message: `GitHub Actions ref: ${effectiveBranch}` }
+      : effectiveBranch && effectiveBranch !== 'main' && effectiveBranch !== 'v2'
+        ? { ok: true, message: `Working branch: ${effectiveBranch}` }
+        : {
+            ok: false,
+            message: effectiveBranch
+              ? `Unexpected baseline branch ${effectiveBranch}. Create a scoped feature branch from the verified main baseline before editing.`
+              : 'Detached HEAD or unreadable branch state. Check out a scoped feature branch from the verified main baseline before editing.',
+          },
   )
 
   const supabase = runner('npx', ['supabase', '--version'], { cwd })
