@@ -23,7 +23,8 @@ select results_eq(
     'household_settings:DELETE', 'household_settings:INSERT', 'household_settings:SELECT', 'household_settings:UPDATE',
     'households:SELECT', 'households:UPDATE',
     'planned_meals:DELETE', 'planned_meals:INSERT', 'planned_meals:SELECT', 'planned_meals:UPDATE',
-    'profiles:INSERT', 'profiles:SELECT', 'profiles:UPDATE'
+    'profiles:INSERT', 'profiles:SELECT', 'profiles:UPDATE',
+    'recipe_ingredients:ALL', 'recipe_steps:ALL'
   ]::text[]) collate "C", 'Policy operation matrix matches the approved API contract'
 );
 
@@ -56,7 +57,7 @@ select results_eq(
   (array[
     'app_user_roles', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
     'household_members', 'household_pantry_items', 'household_recipes', 'household_settings', 'households',
-    'infrastructure_health', 'planned_meals', 'profiles'
+    'infrastructure_health', 'planned_meals', 'profiles', 'recipe_ingredients', 'recipe_steps'
   ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );
 
@@ -75,7 +76,9 @@ select ok(
   and has_table_privilege('authenticated', 'cooksmith.household_pantry_items', 'select,insert,update,delete')
   and has_table_privilege('authenticated', 'cooksmith.household_recipes', 'select,insert,update')
   and not has_table_privilege('authenticated', 'cooksmith.household_recipes', 'delete')
-  and has_table_privilege('authenticated', 'cooksmith.planned_meals', 'select,insert,update,delete'),
+  and has_table_privilege('authenticated', 'cooksmith.planned_meals', 'select,insert,update,delete')
+  and has_table_privilege('authenticated', 'cooksmith.recipe_ingredients', 'select,insert,update,delete')
+  and has_table_privilege('authenticated', 'cooksmith.recipe_steps', 'select,insert,update,delete'),
   'Owner-managed table grants allow RLS to enforce the operation contract'
 );
 select ok(
