@@ -27,6 +27,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - AI review: [AI implementation checklist](engineering/checklists/ai-implementation.md)
 - Pull requests: [Pull request template](../.github/pull_request_template.md)
 - Milestone handovers: [Handover index](engineering/handovers/README.md)
+- Build-ready engineering packages: [Engineering package index](engineering/packages/README.md)
 - Handover template: [Milestone handover template](engineering/templates/milestone-handover.md)
 - v2 project conventions: [Project structure](engineering/v2/project-structure.md)
 - v2 environment and preview: [Environment and preview setup](engineering/v2/environment-and-preview.md)
