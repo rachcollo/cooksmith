@@ -37,7 +37,8 @@ const safeWebUrl = (label: string) =>
 
 export const recipeInputSchema = z.object({
   name: z.string().trim().min(1, 'Enter a recipe name.').max(120, 'Use 120 characters or fewer.'),
-  description: optionalTrimmedText(1000, 'Use 1000 characters or fewer.'),
+  ingredients: optionalTrimmedText(4000, 'Use 4000 characters or fewer.'),
+  description: optionalTrimmedText(5000, 'Use 5000 characters or fewer.'),
   sourceNote: optionalTrimmedText(240, 'Use 240 characters or fewer.'),
   sourceUrl: safeWebUrl('Source URL'),
   servings: optionalWholeNumber('Servings', 100),
