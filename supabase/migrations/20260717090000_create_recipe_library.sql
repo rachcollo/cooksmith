@@ -5,6 +5,7 @@ create table cooksmith.household_recipes (
   household_id uuid not null references cooksmith.households (id) on delete cascade,
   name text not null,
   normalised_name text generated always as (lower(btrim(name))) stored,
+  ingredients text,
   description text,
   source_note text,
   source_url text,
@@ -18,7 +19,8 @@ create table cooksmith.household_recipes (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint household_recipes_name_length check (char_length(btrim(name)) between 1 and 120),
-  constraint household_recipes_description_length check (description is null or char_length(btrim(description)) <= 1000),
+  constraint household_recipes_ingredients_length check (ingredients is null or char_length(btrim(ingredients)) <= 4000),
+  constraint household_recipes_description_length check (description is null or char_length(btrim(description)) <= 5000),
   constraint household_recipes_source_note_length check (source_note is null or char_length(btrim(source_note)) <= 240),
   constraint household_recipes_servings_non_negative check (servings is null or servings >= 0),
   constraint household_recipes_prep_time_non_negative check (prep_time_minutes is null or prep_time_minutes >= 0),
@@ -78,7 +80,6 @@ for update
 to authenticated
 using ((select cooksmith.is_active_household_member(household_id)))
 with check ((select cooksmith.is_active_household_member(household_id)));
-
 
 revoke all on function cooksmith_private.set_recipe_audit_fields() from public, anon, authenticated;
 
