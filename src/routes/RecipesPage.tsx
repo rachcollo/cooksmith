@@ -10,6 +10,11 @@ import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
+import {
+  prepareMultilineRecipeInput,
+  recipeToMultilineInput,
+  splitMeaningfulLines,
+} from '../domain/recipes/multilineContent'
 import type { Recipe, RecipeInput } from '../domain/recipes/types'
 import { recipeInputSchema } from '../domain/recipes/validationSchemas'
 
@@ -27,8 +32,8 @@ const emptyInput: RecipeInput = {
   category: null,
   tags: [],
   favourite: false,
-  ingredientRows: [{ name: '', quantity: null, unit: null, preparation: null }],
-  steps: [{ instruction: '' }],
+  ingredientRows: [],
+  steps: [],
 }
 
 type RecipeFieldErrors = Partial<Record<keyof RecipeInput | 'form', string>>
@@ -38,56 +43,8 @@ function minutesLabel(recipe: Recipe) {
   return total > 0 ? `${total} min total` : null
 }
 
-function toInput(recipe: Recipe): RecipeInput {
-  return {
-    name: recipe.name,
-    ingredients: recipe.ingredients,
-    description: recipe.description,
-    sourceNote: recipe.sourceNote,
-    sourceUrl: recipe.sourceUrl,
-    servings: recipe.servings,
-    prepTimeMinutes: recipe.prepTimeMinutes,
-    cookTimeMinutes: recipe.cookTimeMinutes,
-    imageUrl: recipe.imageUrl,
-    notes: recipe.notes,
-    category: recipe.category,
-    tags: recipe.tags,
-    favourite: recipe.favourite,
-    ingredientRows:
-      recipe.ingredientRows.length > 0
-        ? recipe.ingredientRows.map(({ name, quantity, unit, preparation }) => ({
-            name,
-            quantity,
-            unit,
-            preparation,
-          }))
-        : [{ name: recipe.ingredients ?? '', quantity: null, unit: null, preparation: null }],
-    steps:
-      recipe.steps.length > 0
-        ? recipe.steps.map(({ instruction }) => ({ instruction }))
-        : [{ instruction: recipe.description ?? '' }],
-  }
-}
-
 function prepareInput(input: RecipeInput): RecipeInput {
-  const ingredientRows = input.ingredientRows.filter((row) => row.name.trim() !== '')
-  const steps = input.steps.filter((step) => step.instruction.trim() !== '')
-  return {
-    ...input,
-    tags: input.tags.map((tag) => tag.trim()).filter(Boolean),
-    ingredientRows,
-    steps,
-    ingredients:
-      ingredientRows.length > 0
-        ? ingredientRows
-            .map((row) =>
-              [row.quantity, row.unit, row.name, row.preparation].filter(Boolean).join(' '),
-            )
-            .join('\n')
-        : input.ingredients,
-    description:
-      steps.length > 0 ? steps.map((step) => step.instruction).join('\n') : input.description,
-  }
+  return prepareMultilineRecipeInput(input)
 }
 
 function tagsText(tags: string[]) {
@@ -99,6 +56,14 @@ function tagsFromText(value: string) {
     .split(',')
     .map((tag) => tag.trim())
     .filter(Boolean)
+}
+
+function recipesEqual(left: RecipeInput, right: RecipeInput): boolean {
+  return JSON.stringify(prepareInput(left)) === JSON.stringify(prepareInput(right))
+}
+
+function confirmDiscard(hasChanges: boolean): boolean {
+  return !hasChanges || window.confirm('Discard your unsaved recipe changes?')
 }
 
 function collectErrors(input: RecipeInput) {
@@ -115,186 +80,44 @@ function collectErrors(input: RecipeInput) {
   return { parsed: result.success ? result.data : null, errors }
 }
 
-function RecipeRowsEditor({
+function RecipeMultilineEditor({
   draft,
+  errors,
   setDraft,
 }: {
   draft: RecipeInput
+  errors: RecipeFieldErrors
   setDraft: (next: RecipeInput) => void
 }) {
-  function update(index: number, key: keyof RecipeInput['ingredientRows'][number], value: string) {
-    const ingredientRows = draft.ingredientRows.map((row, candidate) =>
-      candidate === index ? { ...row, [key]: value.trim() === '' ? null : value } : row,
-    )
-    setDraft({ ...draft, ingredientRows })
-  }
-  function move(index: number, direction: -1 | 1) {
-    const next = [...draft.ingredientRows]
-    const target = index + direction
-    if (target < 0 || target >= next.length) return
-    const current = next[index]
-    const targetRow = next[target]
-    if (!current || !targetRow) return
-    next[index] = targetRow
-    next[target] = current
-    setDraft({ ...draft, ingredientRows: next })
-  }
   return (
-    <fieldset className="recipe-rows">
-      <legend>Ingredients</legend>
-      {draft.ingredientRows.map((row, index) => (
-        <div className="recipe-row" key={index}>
-          <TextField
-            label={index === 0 ? 'Ingredients' : `Ingredient ${index + 1} name`}
-            value={row.name}
-            onChange={(event) => update(index, 'name', event.target.value)}
-          />
-          <TextField
-            label={`Ingredient ${index + 1} quantity`}
-            optional
-            value={row.quantity ?? ''}
-            onChange={(event) => update(index, 'quantity', event.target.value)}
-          />
-          <TextField
-            label={`Ingredient ${index + 1} unit`}
-            optional
-            value={row.unit ?? ''}
-            onChange={(event) => update(index, 'unit', event.target.value)}
-          />
-          <TextField
-            label={`Ingredient ${index + 1} preparation`}
-            optional
-            value={row.preparation ?? ''}
-            onChange={(event) => update(index, 'preparation', event.target.value)}
-          />
-          <div className="recipe-row-actions">
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={index === 0}
-              onClick={() => move(index, -1)}
-            >
-              Move ingredient up
-            </Button>
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={index === draft.ingredientRows.length - 1}
-              onClick={() => move(index, 1)}
-            >
-              Move ingredient down
-            </Button>
-            <Button
-              type="button"
-              variant="quiet"
-              onClick={() =>
-                setDraft({
-                  ...draft,
-                  ingredientRows: draft.ingredientRows.filter(
-                    (_, candidate) => candidate !== index,
-                  ),
-                })
-              }
-            >
-              Remove ingredient
-            </Button>
-          </div>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() =>
+    <>
+      <TextArea
+        label="Ingredients"
+        hint="Paste or type one ingredient per line, for example: 1 cup lentils."
+        value={draft.ingredients ?? ''}
+        error={errors.ingredients}
+        rows={8}
+        onChange={(event) =>
           setDraft({
             ...draft,
-            ingredientRows: [
-              ...draft.ingredientRows,
-              { name: '', quantity: null, unit: null, preparation: null },
-            ],
+            ingredients: event.target.value.trim() === '' ? null : event.target.value,
           })
         }
-      >
-        Add ingredient
-      </Button>
-    </fieldset>
-  )
-}
-
-function RecipeStepsEditor({
-  draft,
-  setDraft,
-}: {
-  draft: RecipeInput
-  setDraft: (next: RecipeInput) => void
-}) {
-  function move(index: number, direction: -1 | 1) {
-    const next = [...draft.steps]
-    const target = index + direction
-    if (target < 0 || target >= next.length) return
-    const current = next[index]
-    const targetRow = next[target]
-    if (!current || !targetRow) return
-    next[index] = targetRow
-    next[target] = current
-    setDraft({ ...draft, steps: next })
-  }
-  return (
-    <fieldset className="recipe-rows">
-      <legend>Instructions</legend>
-      {draft.steps.map((step, index) => (
-        <div className="recipe-row" key={index}>
-          <TextArea
-            label={index === 0 ? 'Instructions' : `Step ${index + 1}`}
-            value={step.instruction}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                steps: draft.steps.map((row, candidate) =>
-                  candidate === index ? { instruction: event.target.value } : row,
-                ),
-              })
-            }
-          />
-          <div className="recipe-row-actions">
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={index === 0}
-              onClick={() => move(index, -1)}
-            >
-              Move step up
-            </Button>
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={index === draft.steps.length - 1}
-              onClick={() => move(index, 1)}
-            >
-              Move step down
-            </Button>
-            <Button
-              type="button"
-              variant="quiet"
-              onClick={() =>
-                setDraft({
-                  ...draft,
-                  steps: draft.steps.filter((_, candidate) => candidate !== index),
-                })
-              }
-            >
-              Remove step
-            </Button>
-          </div>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() => setDraft({ ...draft, steps: [...draft.steps, { instruction: '' }] })}
-      >
-        Add step
-      </Button>
-    </fieldset>
+      />
+      <TextArea
+        label="Instructions"
+        hint="Paste or type the method as natural steps. Blank lines are fine while drafting."
+        value={draft.description ?? ''}
+        error={errors.description}
+        rows={10}
+        onChange={(event) =>
+          setDraft({
+            ...draft,
+            description: event.target.value.trim() === '' ? null : event.target.value,
+          })
+        }
+      />
+    </>
   )
 }
 
@@ -353,7 +176,7 @@ export function RecipesPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!householdId) return
+    if (!householdId || saving) return
     const { parsed, errors } = collectErrors(draft)
     setFieldErrors(errors)
     if (!parsed) return
@@ -377,14 +200,14 @@ export function RecipesPage() {
   }
 
   function openEdit(recipe: Recipe) {
-    setEditDraft(toInput(recipe))
+    setEditDraft(recipeToMultilineInput(recipe))
     setEditErrors({})
     setEditing(true)
   }
 
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!householdId || !selectedRecipe) return
+    if (!householdId || !selectedRecipe || saving) return
     const { parsed, errors } = collectErrors(editDraft)
     setEditErrors(errors)
     if (!parsed) return
@@ -441,7 +264,9 @@ export function RecipesPage() {
         open={creating}
         title="Add a recipe"
         description="Add the ingredients and instructions you need to cook it again."
-        onOpenChange={setCreating}
+        onOpenChange={(open) => {
+          if (open || confirmDiscard(!recipesEqual(draft, emptyInput))) setCreating(open)
+        }}
       >
         <form className="recipe-form" onSubmit={(event) => void submit(event)}>
           <TextField
@@ -452,8 +277,7 @@ export function RecipesPage() {
             error={fieldErrors.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
-          <RecipeRowsEditor draft={draft} setDraft={setDraft} />
-          <RecipeStepsEditor draft={draft} setDraft={setDraft} />
+          <RecipeMultilineEditor draft={draft} errors={fieldErrors} setDraft={setDraft} />
           <TextField
             label="Servings"
             inputMode="numeric"
@@ -539,7 +363,9 @@ export function RecipesPage() {
               type="button"
               variant="secondary"
               disabled={saving}
-              onClick={() => setCreating(false)}
+              onClick={() => {
+                if (confirmDiscard(!recipesEqual(draft, emptyInput))) setCreating(false)
+              }}
             >
               Cancel
             </Button>
@@ -596,26 +422,28 @@ export function RecipesPage() {
         <Panel>
           <h2>{selectedRecipe.name}</h2>
           <h3>Ingredients</h3>
-          {selectedRecipe.ingredientRows.length > 0 ? (
+          {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
             <ul>
-              {selectedRecipe.ingredientRows.map((row) => (
-                <li key={row.id}>
-                  {[row.quantity, row.unit, row.name, row.preparation].filter(Boolean).join(' ')}
-                </li>
-              ))}
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).map(
+                (line, index) => (
+                  <li key={`${index}-${line}`}>{line}</li>
+                ),
+              )}
             </ul>
           ) : (
-            <p>{selectedRecipe.ingredients ?? 'No ingredients added yet.'}</p>
+            <p>No ingredients added yet.</p>
           )}
           <h3>Instructions</h3>
-          {selectedRecipe.steps.length > 0 ? (
+          {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length > 0 ? (
             <ol>
-              {selectedRecipe.steps.map((step) => (
-                <li key={step.id}>{step.instruction}</li>
-              ))}
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).map(
+                (line, index) => (
+                  <li key={`${index}-${line}`}>{line}</li>
+                ),
+              )}
             </ol>
           ) : (
-            <p>{selectedRecipe.description ?? 'No instructions added yet.'}</p>
+            <p>No instructions added yet.</p>
           )}
           <dl>
             <dt>Servings</dt>
@@ -661,7 +489,11 @@ export function RecipesPage() {
           title={`Edit ${selectedRecipe.name}`}
           description="Update this recipe summary."
           onOpenChange={(open) => {
-            if (!open) setEditing(false)
+            if (
+              open ||
+              confirmDiscard(!recipesEqual(editDraft, recipeToMultilineInput(selectedRecipe)))
+            )
+              setEditing(open)
           }}
         >
           <form className="recipe-form" onSubmit={(event) => void submitEdit(event)}>
@@ -673,8 +505,39 @@ export function RecipesPage() {
               error={editErrors.name}
               onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
             />
-            <RecipeRowsEditor draft={editDraft} setDraft={setEditDraft} />
-            <RecipeStepsEditor draft={editDraft} setDraft={setEditDraft} />
+            <RecipeMultilineEditor draft={editDraft} errors={editErrors} setDraft={setEditDraft} />
+            <TextArea
+              label="Recipe notes"
+              optional
+              value={editDraft.notes ?? ''}
+              error={editErrors.notes}
+              onChange={(event) => updateEditDraft('notes', event.target.value)}
+            />
+            <TextField
+              label="Category"
+              optional
+              value={editDraft.category ?? ''}
+              error={editErrors.category}
+              onChange={(event) => updateEditDraft('category', event.target.value)}
+            />
+            <TextField
+              label="Tags, separated by commas"
+              optional
+              value={tagsText(editDraft.tags)}
+              onChange={(event) =>
+                setEditDraft({ ...editDraft, tags: tagsFromText(event.target.value) })
+              }
+            />
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={editDraft.favourite}
+                onChange={(event) =>
+                  setEditDraft({ ...editDraft, favourite: event.target.checked })
+                }
+              />
+              Favourite recipe
+            </label>
             <TextField
               label="Source note"
               optional
@@ -743,7 +606,12 @@ export function RecipesPage() {
                 type="button"
                 variant="secondary"
                 disabled={saving}
-                onClick={() => setEditing(false)}
+                onClick={() => {
+                  if (
+                    confirmDiscard(!recipesEqual(editDraft, recipeToMultilineInput(selectedRecipe)))
+                  )
+                    setEditing(false)
+                }}
               >
                 Cancel
               </Button>
