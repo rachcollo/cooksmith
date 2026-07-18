@@ -58,7 +58,6 @@ history. After release, verify onboarding, owner invitation creation,
 invitation acceptance, duplicate prevention, cancellation, member removal, and
 immediate access revocation with synthetic accounts.
 
-
 ## Production Edge Function releases
 
 Cooksmith deploys production Edge Functions separately from database migrations through
