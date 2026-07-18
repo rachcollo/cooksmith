@@ -15,7 +15,12 @@ import {
   recipeToMultilineInput,
   splitMeaningfulLines,
 } from '../domain/recipes/multilineContent'
-import type { Recipe, RecipeInput } from '../domain/recipes/types'
+import type {
+  ImportedRecipeVisibility,
+  Recipe,
+  RecipeImportDraft,
+  RecipeInput,
+} from '../domain/recipes/types'
 import { recipeInputSchema } from '../domain/recipes/validationSchemas'
 
 const emptyInput: RecipeInput = {
@@ -24,6 +29,8 @@ const emptyInput: RecipeInput = {
   description: null,
   sourceNote: null,
   sourceUrl: null,
+  authorName: null,
+  publisherName: null,
   servings: null,
   prepTimeMinutes: null,
   cookTimeMinutes: null,
@@ -122,6 +129,12 @@ export function RecipesPage() {
   const [editDraft, setEditDraft] = useState<RecipeInput>(emptyInput)
   const [editErrors, setEditErrors] = useState<RecipeFieldErrors>({})
   const [creating, setCreating] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importUrl, setImportUrl] = useState('')
+  const [importDraft, setImportDraft] = useState<RecipeImportDraft | null>(null)
+  const [importVisibility, setImportVisibility] = useState<ImportedRecipeVisibility>('public')
+  const [importError, setImportError] = useState<string | null>(null)
+  const [loadingImport, setLoadingImport] = useState(false)
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -173,6 +186,70 @@ export function RecipesPage() {
         form:
           saveError instanceof Error ? saveError.message : 'Cooksmith could not save the recipe.',
       })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function requestImport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (loadingImport) return
+    setLoadingImport(true)
+    setImportError(null)
+    try {
+      if (!repository.importFromUrl) throw new Error('Recipe importing is not configured yet.')
+      setImportDraft(await repository.importFromUrl(importUrl))
+    } catch (requestError) {
+      setImportError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Cooksmith could not import that page. Try another URL.',
+      )
+    } finally {
+      setLoadingImport(false)
+    }
+  }
+
+  function updateImportedDraft(changes: Partial<RecipeImportDraft>) {
+    setImportDraft((current) => (current ? { ...current, ...changes } : current))
+  }
+
+  async function saveImport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!importDraft || saving) return
+    const input: RecipeInput = {
+      ...emptyInput,
+      name: importDraft.name,
+      ingredients: importDraft.ingredients,
+      description: importDraft.description,
+      sourceUrl: importDraft.sourceUrl,
+      authorName: importDraft.authorName,
+      publisherName: importDraft.publisherName,
+      servings: importDraft.servings,
+      prepTimeMinutes: importDraft.prepTimeMinutes,
+      cookTimeMinutes: importDraft.cookTimeMinutes,
+      imageUrl: importDraft.imageUrl,
+    }
+    const { parsed, errors } = collectErrors(input)
+    if (!parsed) {
+      setImportError(errors.form ?? 'Check the imported recipe and try again.')
+      return
+    }
+    setSaving(true)
+    setImportError(null)
+    try {
+      if (!repository.createImported) throw new Error('Recipe importing is not configured yet.')
+      const saved = await repository.createImported(parsed, importVisibility)
+      setRecipes((current) => [...current, saved].sort((a, b) => a.name.localeCompare(b.name)))
+      setSelectedId(saved.id)
+      setImporting(false)
+      setImportDraft(null)
+      setImportUrl('')
+      setImportVisibility('public')
+    } catch (saveError) {
+      setImportError(
+        saveError instanceof Error ? saveError.message : 'Cooksmith could not save the import.',
+      )
     } finally {
       setSaving(false)
     }
@@ -321,6 +398,122 @@ export function RecipesPage() {
           </div>
         </form>
       </Dialog>
+      <Dialog
+        open={importing}
+        title={importDraft ? 'Review imported recipe' : 'Import a recipe'}
+        description={
+          importDraft
+            ? 'Check and correct the recipe before saving. Nothing has been saved yet.'
+            : 'Paste a public recipe page URL. Some websites may not support importing.'
+        }
+        onOpenChange={(open) => {
+          if (!open && importDraft && !window.confirm('Discard this imported recipe draft?')) return
+          setImporting(open)
+          if (!open) {
+            setImportDraft(null)
+            setImportError(null)
+          }
+        }}
+      >
+        {!importDraft ? (
+          <form className="recipe-form" onSubmit={(event) => void requestImport(event)}>
+            <TextField
+              data-autofocus
+              label="Recipe URL"
+              type="url"
+              required
+              placeholder="https://example.com/recipe"
+              value={importUrl}
+              onChange={(event) => setImportUrl(event.target.value)}
+            />
+            {importError ? <p className="form-error">{importError}</p> : null}
+            <div className="dialog-actions">
+              <Button type="button" variant="secondary" onClick={() => setImporting(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" busy={loadingImport} disabled={importUrl.trim() === ''}>
+                Import recipe
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form className="recipe-form" onSubmit={(event) => void saveImport(event)}>
+            <TextField
+              data-autofocus
+              label="Recipe name"
+              required
+              value={importDraft.name}
+              onChange={(event) => updateImportedDraft({ name: event.target.value })}
+            />
+            <TextField
+              label="Author"
+              optional
+              value={importDraft.authorName ?? ''}
+              onChange={(event) => updateImportedDraft({ authorName: event.target.value || null })}
+            />
+            <RecipeMultilineEditor
+              draft={{
+                ...emptyInput,
+                name: importDraft.name,
+                ingredients: importDraft.ingredients,
+                description: importDraft.description,
+              }}
+              errors={{}}
+              setDraft={(next) =>
+                updateImportedDraft({
+                  ingredients: next.ingredients,
+                  description: next.description,
+                })
+              }
+            />
+            <fieldset className="visibility-choice">
+              <legend>Who can see this recipe?</legend>
+              <label>
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="public"
+                  checked={importVisibility === 'public'}
+                  onChange={() => setImportVisibility('public')}
+                />
+                <span>
+                  <strong>Public</strong> — adds it to Cooksmith’s shared recipe bank.
+                </span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="private"
+                  checked={importVisibility === 'private'}
+                  onChange={() => setImportVisibility('private')}
+                />
+                <span>
+                  <strong>Private</strong> — only you can see it.
+                </span>
+              </label>
+            </fieldset>
+            <p className="recipe-import-source">Source: {importDraft.sourceUrl}</p>
+            {importDraft.warnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+            {importError ? <p className="form-error">{importError}</p> : null}
+            <div className="dialog-actions">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={saving}
+                onClick={() => setImportDraft(null)}
+              >
+                Back
+              </Button>
+              <Button type="submit" busy={saving} disabled={importDraft.name.trim() === ''}>
+                Save imported recipe
+              </Button>
+            </div>
+          </form>
+        )}
+      </Dialog>
       <div className="recipe-library-toolbar">
         <TextField
           label="Search recipes"
@@ -331,6 +524,9 @@ export function RecipesPage() {
         />
         <Button type="button" onClick={() => setCreating(true)}>
           Add recipe
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setImporting(true)}>
+          Import
         </Button>
       </div>
       {filteredRecipes.length === 0 ? (
@@ -427,13 +623,20 @@ export function RecipesPage() {
               </dd>
             </dl>
             {selectedRecipe.favourite ? <p>Favourite recipe</p> : null}
+            {selectedRecipe.authorName ? <p>By {selectedRecipe.authorName}</p> : null}
+            {selectedRecipe.scope === 'public' ? <p>Shared Cooksmith recipe</p> : null}
+            {selectedRecipe.scope === 'private' ? <p>Private recipe</p> : null}
             <div className="pantry-actions">
-              <Button type="button" variant="secondary" onClick={() => openEdit(selectedRecipe)}>
-                Edit recipe
-              </Button>
-              <Button type="button" variant="quiet" onClick={() => void archive(selectedRecipe)}>
-                Archive recipe
-              </Button>
+              {selectedRecipe.scope === 'household' || selectedRecipe.scope === undefined ? (
+                <Button type="button" variant="secondary" onClick={() => openEdit(selectedRecipe)}>
+                  Edit recipe
+                </Button>
+              ) : null}
+              {selectedRecipe.scope === 'household' || selectedRecipe.scope === undefined ? (
+                <Button type="button" variant="quiet" onClick={() => void archive(selectedRecipe)}>
+                  Archive recipe
+                </Button>
+              ) : null}
             </div>
           </div>
         </Dialog>

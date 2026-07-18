@@ -33,6 +33,8 @@ export function recipeToMultilineInput(recipe: Recipe): RecipeInput {
     description,
     sourceNote: recipe.sourceNote,
     sourceUrl: recipe.sourceUrl,
+    authorName: recipe.authorName,
+    publisherName: recipe.publisherName,
     servings: recipe.servings,
     prepTimeMinutes: recipe.prepTimeMinutes,
     cookTimeMinutes: recipe.cookTimeMinutes,
