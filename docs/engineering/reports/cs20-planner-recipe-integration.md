@@ -21,7 +21,7 @@ Week loading still queries only the active household and displayed dates. The pl
 
 | File                                                                           | Purpose                                                                                           |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `supabase/migrations/20260718150000_link_planned_meals_to_recipes.sql`         | Additive nullable recipe link, same-household trigger and lifecycle comments.                     |
+| `supabase/migrations/20260718024110_link_planned_meals_to_recipes.sql`         | Additive nullable recipe link, same-household trigger and lifecycle comments.                     |
 | `supabase/tests/0011_planned_meals.test.sql`                                   | pgTAP coverage for optional links, cross-household rejection, archive preservation and unlinking. |
 | `src/domain/meal-plans/types.ts`                                               | Planned-meal recipe summary and state types.                                                      |
 | `src/domain/meal-plans/validationSchemas.ts`                                   | Nullable recipe identifier validation.                                                            |

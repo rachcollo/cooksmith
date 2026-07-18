@@ -11,7 +11,7 @@ Planned meals can now optionally reference a household recipe. Free-text dinners
 
 ## Lifecycle and database release notes
 
-Migration `20260718150000_link_planned_meals_to_recipes.sql` is additive. It adds nullable `cooksmith.planned_meals.recipe_id`, indexes the link, uses `ON DELETE SET NULL`, and adds a trigger that rejects cross-household links. Recipe archive preserves planned meals and the title snapshot. Production deployment must occur only after merge through the protected Production database release workflow using the approved `main` SHA, dry-run and migration-history verification. Released migrations are immutable; fixes require forward migrations.
+Migration `20260718024110_link_planned_meals_to_recipes.sql` is additive. It adds nullable `cooksmith.planned_meals.recipe_id`, indexes the link, uses `ON DELETE SET NULL`, and adds a trigger that rejects cross-household links. Recipe archive preserves planned meals and the title snapshot. Production deployment must occur only after merge through the protected Production database release workflow using the approved `main` SHA, dry-run and migration-history verification. Released migrations are immutable; fixes require forward migrations.
 
 ## Validation summary
 
