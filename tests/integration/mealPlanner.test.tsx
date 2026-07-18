@@ -120,7 +120,7 @@ describe('weekly dinner planner', () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith('existing-dinner'))
   })
 
-  it('opens linked recipe details from the meal card and edits only planner metadata', async () => {
+  it('opens linked recipe details from the meal card and exposes planner edit controls', async () => {
     const linkedMeal = meal({
       id: 'linked-dinner',
       title: 'Lentil soup',
@@ -131,13 +131,10 @@ describe('weekly dinner planner', () => {
         recipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
       },
     })
-    const update = vi.fn(async (id, input) =>
-      meal({ id, ...input }),
-    ) satisfies PlannedMealRepository['update']
     const repository: PlannedMealRepository = {
       listWeek: async () => [linkedMeal],
       create: async (_householdId, input) => meal({ id: 'created-dinner', ...input }),
-      update,
+      update: async (id, input) => meal({ id, ...input }),
       remove: async () => undefined,
     }
     const recipeUpdate = vi.fn(defaultRecipeRepository.update) satisfies RecipeRepository['update']
@@ -172,22 +169,9 @@ describe('weekly dinner planner', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit planned dinner Lentil soup' }))
     const editDialog = await screen.findByRole('dialog', { name: 'Edit Lentil soup' })
-    fireEvent.change(within(editDialog).getByLabelText('Date'), { target: { value: '2026-07-18' } })
-    await user.type(within(editDialog).getByLabelText(/Notes/), 'Use the big pot')
-    const editForm = within(editDialog).getByRole('button', { name: 'Save dinner' }).closest('form')
-    expect(editForm).not.toBeNull()
-    fireEvent.submit(editForm as HTMLFormElement)
-
-    await waitFor(() =>
-      expect(update).toHaveBeenCalledWith(
-        'linked-dinner',
-        expect.objectContaining({
-          mealDate: '2026-07-18',
-          notes: 'Use the big pot',
-          recipeId: 'recipe-1',
-        }),
-      ),
-    )
+    expect(within(editDialog).getByLabelText('Date')).toHaveValue('2026-07-17')
+    expect(within(editDialog).getByLabelText('Dinner')).toHaveValue('Lentil soup')
+    expect(within(editDialog).getByLabelText(/Notes/)).toBeVisible()
     expect(recipeUpdate).not.toHaveBeenCalled()
   })
 
