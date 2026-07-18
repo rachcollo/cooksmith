@@ -537,17 +537,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'planned_meals_recipe_id_fkey'
-            columns: ['recipe_id']
-            isOneToOne: false
-            referencedRelation: 'household_recipes'
-            referencedColumns: ['id']
-          },
-          {
             foreignKeyName: 'planned_meals_household_id_fkey'
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'planned_meals_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
             referencedColumns: ['id']
           },
         ]
