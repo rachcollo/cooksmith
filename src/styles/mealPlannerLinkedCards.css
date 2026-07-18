@@ -1,0 +1,58 @@
+.recipe-detail-dialog {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.recipe-detail-dialog h3,
+.recipe-detail-dialog p {
+  margin: 0;
+}
+
+.recipe-detail-dialog ul,
+.recipe-detail-dialog ol {
+  margin-block: var(--space-2) 0;
+  padding-left: 1.4rem;
+}
+
+.planned-meal {
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+}
+
+.planned-meal-title strong,
+.planned-meal-title span {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.planned-meal-title strong {
+  overflow-wrap: anywhere;
+}
+
+.planned-meal-title span {
+  overflow-wrap: anywhere;
+}
+
+.meal-recipe-status {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.meal-recipe-status svg {
+  flex: 0 0 auto;
+  height: 1rem;
+  width: 1rem;
+}
+
+@media (min-width: 44rem) {
+  .planned-meal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .meal-remove {
+    justify-self: start;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+  }
+}
