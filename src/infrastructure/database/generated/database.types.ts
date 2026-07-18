@@ -578,8 +578,12 @@ export type Database = {
       recipe_ingredients: {
         Row: {
           created_at: string
+          derivation_status: string
+          derived_at: string
           id: string
           ingredient_name: string
+          original_line_text: string
+          parser_version: string
           position: number
           preparation: string | null
           quantity_text: string | null
@@ -589,8 +593,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          derivation_status?: string
+          derived_at?: string
           id?: string
           ingredient_name: string
+          original_line_text: string
+          parser_version?: string
           position: number
           preparation?: string | null
           quantity_text?: string | null
@@ -600,8 +608,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          derivation_status?: string
+          derived_at?: string
           id?: string
           ingredient_name?: string
+          original_line_text?: string
+          parser_version?: string
           position?: number
           preparation?: string | null
           quantity_text?: string | null
@@ -622,24 +634,36 @@ export type Database = {
       recipe_steps: {
         Row: {
           created_at: string
+          derivation_status: string
+          derived_at: string
           id: string
           instruction: string
+          original_line_text: string
+          parser_version: string
           position: number
           recipe_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          derivation_status?: string
+          derived_at?: string
           id?: string
           instruction: string
+          original_line_text: string
+          parser_version?: string
           position: number
           recipe_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          derivation_status?: string
+          derived_at?: string
           id?: string
           instruction?: string
+          original_line_text?: string
+          parser_version?: string
           position?: number
           recipe_id?: string
           updated_at?: string

@@ -1,6 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 
 import type { RecipeRepository } from '../../application/recipes/recipeRepository'
+import { deriveRecipeContent } from '../../domain/recipes/contentDerivation'
 import type { Recipe, RecipeIngredient, RecipeInput, RecipeStep } from '../../domain/recipes/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
@@ -10,12 +11,18 @@ type RecipeIngredientRow = {
   quantity_text: string | null
   unit: string | null
   preparation: string | null
+  original_line_text: string | null
+  parser_version: string | null
+  derivation_status: string | null
   position: number
 }
 
 type RecipeStepRow = {
   id: string
   instruction: string
+  original_line_text: string | null
+  parser_version: string | null
+  derivation_status: string | null
   position: number
 }
 
@@ -49,12 +56,22 @@ function mapIngredient(row: RecipeIngredientRow): RecipeIngredient {
     quantity: row.quantity_text,
     unit: row.unit,
     preparation: row.preparation,
+    originalLineText: row.original_line_text ?? row.ingredient_name,
+    parserVersion: row.parser_version ?? 'legacy',
+    derivationStatus: row.derivation_status ?? 'derived',
     position: row.position,
   }
 }
 
 function mapStep(row: RecipeStepRow): RecipeStep {
-  return { id: row.id, instruction: row.instruction, position: row.position }
+  return {
+    id: row.id,
+    instruction: row.instruction,
+    originalLineText: row.original_line_text ?? row.instruction,
+    parserVersion: row.parser_version ?? 'legacy',
+    derivationStatus: row.derivation_status ?? 'derived',
+    position: row.position,
+  }
 }
 
 function mapRow(row: RecipeRow): Recipe {
@@ -100,33 +117,41 @@ async function replaceStructuredRows(
   const stepDelete = await recipeTables.from('recipe_steps').delete().eq('recipe_id', recipeId)
   recipeError(stepDelete.error)
 
-  if (input.ingredientRows.length > 0) {
+  const derivedContent = deriveRecipeContent(input.ingredients, input.description)
+
+  if (derivedContent.ingredients.length > 0) {
     const ingredientInsert = await (
       database as never as { from: (table: string) => ReturnType<typeof database.from> }
     )
       .from('recipe_ingredients')
       .insert(
-        input.ingredientRows.map((ingredient, index) => ({
+        derivedContent.ingredients.map((ingredient, index) => ({
           recipe_id: recipeId,
           ingredient_name: ingredient.name,
           quantity_text: ingredient.quantity,
           unit: ingredient.unit,
           preparation: ingredient.preparation,
+          original_line_text: ingredient.originalLineText,
+          parser_version: ingredient.parserVersion,
+          derivation_status: ingredient.derivationStatus,
           position: index + 1,
         })) as never,
       )
     recipeError(ingredientInsert.error)
   }
 
-  if (input.steps.length > 0) {
+  if (derivedContent.steps.length > 0) {
     const stepInsert = await (
       database as never as { from: (table: string) => ReturnType<typeof database.from> }
     )
       .from('recipe_steps')
       .insert(
-        input.steps.map((step, index) => ({
+        derivedContent.steps.map((step, index) => ({
           recipe_id: recipeId,
           instruction: step.instruction,
+          original_line_text: step.originalLineText,
+          parser_version: step.parserVersion,
+          derivation_status: step.derivationStatus,
           position: index + 1,
         })) as never,
       )
@@ -153,7 +178,7 @@ function recipeError(error: PostgrestError | null): void {
 export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient): RecipeRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_name, quantity_text, unit, preparation, position), recipe_steps(id, instruction, position)'
+    'id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_name, quantity_text, unit, preparation, original_line_text, parser_version, derivation_status, position), recipe_steps(id, instruction, original_line_text, parser_version, derivation_status, position)'
 
   return {
     async list(householdId) {
