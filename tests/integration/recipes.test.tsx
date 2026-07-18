@@ -101,8 +101,8 @@ describe('recipe library experience', () => {
         servings: 4,
       }),
     )
-    expect((await screen.findAllByRole('heading', { name: 'Pumpkin pasta' }))[0]).toBeVisible()
-    expect(screen.getByText('Fast pantry dinner')).toBeVisible()
+    const createdDialog = await screen.findByRole('dialog', { name: 'Pumpkin pasta' })
+    expect(within(createdDialog).getByText('Fast pantry dinner')).toBeVisible()
   })
 
   it('searches, clears no-result state, edits, cancels and archives recipes', async () => {
@@ -154,14 +154,16 @@ describe('recipe library experience', () => {
       undefined,
       repository,
     )
-    expect((await screen.findAllByRole('heading', { name: 'Lentil soup' }))[0]).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Open Lentil soup recipe' })).toBeVisible()
     await user.type(screen.getByLabelText('Search recipes'), 'xyz')
     expect(screen.getByRole('heading', { name: 'No matching recipes' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
     expect(screen.getByRole('button', { name: 'Open Apple crumble recipe' })).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Open Apple crumble recipe' }))
-    await user.click(screen.getByRole('button', { name: 'Edit recipe' }))
+    const detailDialog = screen.getByRole('dialog', { name: 'Apple crumble' })
+    expect(within(detailDialog).getByText('No instructions added yet.')).toBeVisible()
+    await user.click(within(detailDialog).getByRole('button', { name: 'Edit recipe' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Apple crumble' })
     await user.clear(within(dialog).getByLabelText('Recipe name'))
     await user.type(within(dialog).getByLabelText('Recipe name'), 'Apple crumble tray')
@@ -209,7 +211,7 @@ describe('recipe library experience', () => {
       undefined,
       repository,
     )
-    await screen.findAllByRole('heading', { name: 'Lentil soup' })
+    await screen.findByRole('button', { name: 'Open Lentil soup recipe' })
     await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
     const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
     await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Broken')
