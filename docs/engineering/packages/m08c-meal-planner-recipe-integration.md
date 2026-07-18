@@ -1,10 +1,10 @@
 # Engineering Package — Milestone 8C: Meal Planner ↔ Recipe Integration
 
-**Status:** Ready for Build after dependencies merge  
+**Status:** Ready for Build after CS-27 and CS-28 merge  
 **Branch:** `m08c-meal-planner-recipe-integration`  
 **Base branch:** Latest `main`  
-**Can run concurrently with:** E01 only after dependency verification  
-**Depends on:** Milestones 8A, 8B, 9A, and 9B  
+**Can run concurrently with:** CS-30 after dependency verification  
+**Depends on:** Milestones 8A, 8B, 9A, and 9B; CS-27 and CS-28  
 **Blocks:** Future shopping-list generation from planned meals
 
 ---
@@ -125,7 +125,7 @@ Users must be able to move from planning to cooking information without losing c
 
 Requirements:
 
-- opening a linked card shows the existing Recipe detail experience with structured ingredients and instructions;
+- opening a linked card shows the existing Recipe detail experience with multiline-authored ingredients and derived ordered instructions;
 - browser back, close, or equivalent returns the user to the same displayed planner week;
 - direct URLs or route state follow existing routing conventions;
 - unavailable, archived, or deleted recipe states do not produce a blank or broken dialog;
@@ -382,15 +382,15 @@ Milestone 8C is complete when:
 
 ## 12. Concurrency Boundaries
 
-This milestone integrates the Meal Planner and Recipe Library and should begin only after Milestones 8B and 9B are accepted and merged.
+This milestone integrates the Meal Planner and Recipe Library and should begin only after Milestones 8B and 9B plus CS-27 and CS-28 are accepted and merged. Once those shared contracts are stable, CS-20 may run concurrently with CS-30.
 
 To minimise conflicts, this workstream must not:
 
 - redesign the Meal Planner interaction model established in Milestone 8B;
-- redesign structured recipe authoring established in Milestone 9B;
+- redesign multiline recipe authoring or lossless derivation established by CS-27 and CS-28;
 - implement shopping-list generation or ingredient aggregation;
 - modify Pantry files or add Pantry deduction;
-- add AI, imports, nutrition, or public sharing;
+- implement CS-30 URL import, AI, nutrition, or public sharing;
 - modify shared components unless reuse is clearly preferable and the change is backward compatible.
 
 Likely shared-file conflicts include planned-meal and recipe repositories, providers, generated database types, route/dialog state, integration test harnesses, global styles, and documentation indexes. Rebase or merge latest `main` before starting and again before final validation if another PR merges during delivery.
