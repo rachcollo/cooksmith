@@ -81,7 +81,11 @@ describe('weekly dinner planner', () => {
     const mondayCard = monday.closest('article')
     expect(mondayCard).not.toBeNull()
 
-    await user.click(within(mondayCard as HTMLElement).getByRole('button', { name: 'Add dinner' }))
+    await user.click(
+      within(mondayCard as HTMLElement).getByRole('button', {
+        name: 'Add dinner',
+      }),
+    )
     await user.type(screen.getByLabelText('Dinner'), 'Tacos')
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
     expect(create).toHaveBeenCalledWith(
@@ -122,7 +126,10 @@ describe('weekly dinner planner', () => {
       title: 'Lentil soup',
       recipeId: 'recipe-1',
       linkedRecipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
-      recipeState: { kind: 'active', recipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null } },
+      recipeState: {
+        kind: 'active',
+        recipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
+      },
     })
     const update = vi.fn(async (id, input) =>
       meal({ id, ...input }),
@@ -152,8 +159,14 @@ describe('weekly dinner planner', () => {
       recipeRepository,
     )
 
-    await user.click(await screen.findByRole('button', { name: /Lentil soup/ }))
-    const recipeDialog = await screen.findByRole('dialog', { name: 'Lentil soup' })
+    const linkedMealButton = (await screen.findAllByRole('button', { name: /Lentil soup/ })).find(
+      (button) => button.classList.contains('planned-meal-title'),
+    )
+    expect(linkedMealButton).toBeDefined()
+    await user.click(linkedMealButton as HTMLElement)
+    const recipeDialog = await screen.findByRole('dialog', {
+      name: 'Lentil soup',
+    })
     expect(within(recipeDialog).getByText('1 cup lentils')).toBeVisible()
     await user.click(within(recipeDialog).getByRole('button', { name: 'Back to planner' }))
 
