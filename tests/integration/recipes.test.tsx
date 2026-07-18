@@ -155,6 +155,7 @@ describe('recipe library experience', () => {
       repository,
     )
     expect(await screen.findByRole('button', { name: 'Open Lentil soup recipe' })).toBeVisible()
+    expect(screen.queryByRole('dialog', { name: 'Lentil soup' })).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('Search recipes'), 'xyz')
     expect(screen.getByRole('heading', { name: 'No matching recipes' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
