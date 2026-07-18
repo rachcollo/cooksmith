@@ -1,4 +1,14 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner'
+export interface LinkedRecipeSummary {
+  id: string
+  name: string | null
+  archivedAt: string | null
+}
+export type PlannedMealRecipeState =
+  | { kind: 'free-text' }
+  | { kind: 'active'; recipe: LinkedRecipeSummary }
+  | { kind: 'archived'; recipe: LinkedRecipeSummary }
+  | { kind: 'unavailable'; recipeId: string }
 export interface PlannedMeal {
   id: string
   householdId: string
@@ -6,6 +16,9 @@ export interface PlannedMeal {
   mealType: MealType
   title: string
   notes: string | null
+  recipeId: string | null
+  linkedRecipe: LinkedRecipeSummary | null
+  recipeState: PlannedMealRecipeState
   createdAt: string
   updatedAt: string
 }
@@ -14,6 +27,7 @@ export interface PlannedMealInput {
   mealType: MealType
   title: string
   notes: string | null
+  recipeId: string | null
 }
 export const mealTypeLabels: Record<MealType, string> = {
   breakfast: 'Breakfast',

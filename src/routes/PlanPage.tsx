@@ -7,17 +7,24 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { ChevronLeft, ChevronRight, GripVertical, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
+import { useRecipeRepository } from '../app/recipes/recipeContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
 import { LoadingState } from '../components/ui/LoadingState'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
+import {
+  displayTitleForPlannedMeal,
+  snapshotTitleForRecipe,
+  unlinkPlannedMeal,
+} from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal, PlannedMealInput } from '../domain/meal-plans/types'
+import type { Recipe } from '../domain/recipes/types'
 import { plannedMealInputSchema } from '../domain/meal-plans/validationSchemas'
 import {
   addDays,
@@ -34,7 +41,7 @@ import {
 type MealDialog =
   | { mode: 'add'; input: PlannedMealInput }
   | { mode: 'edit'; meal: PlannedMeal; input: PlannedMealInput }
-type MealFieldErrors = Partial<Record<'title' | 'notes', string>>
+type MealFieldErrors = Partial<Record<'title' | 'notes' | 'recipeId', string>>
 type DragDetails = {
   meal: PlannedMeal
   startX: number
@@ -44,7 +51,7 @@ type DragDetails = {
 }
 
 function inputFor(mealDate: string): PlannedMealInput {
-  return { mealDate, mealType: 'dinner', title: '', notes: null }
+  return { mealDate, mealType: 'dinner', title: '', notes: null, recipeId: null }
 }
 
 function compactDate(isoDate: string) {
@@ -54,16 +61,19 @@ function compactDate(isoDate: string) {
 export function PlanPage() {
   const { state } = useOnboarding()
   const repository = usePlannedMealRepository()
+  const recipeRepository = useRecipeRepository()
   const householdId = state.householdId
   const today = toLocalIsoDate(new Date())
   const thisWeek = currentWeek(new Date())
   const [weekStart, setWeekStart] = useState(thisWeek)
   const [meals, setMeals] = useState<PlannedMeal[]>([])
+  const [recipes, setRecipes] = useState<Recipe[]>([])
   const [dialog, setDialog] = useState<MealDialog | null>(null)
   const [fieldErrors, setFieldErrors] = useState<MealFieldErrors>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [recipeError, setRecipeError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [draggingMealId, setDraggingMealId] = useState<string | null>(null)
   const [dropTargetDate, setDropTargetDate] = useState<string | null>(null)
@@ -75,6 +85,7 @@ export function PlanPage() {
     [householdId, meals],
   )
   const weekEnd = addDays(weekStart, 6)
+  const activeRecipes = useMemo(() => recipes.filter((recipe) => !recipe.archivedAt), [recipes])
 
   useEffect(() => {
     let active = true
@@ -98,6 +109,26 @@ export function PlanPage() {
     }
   }, [householdId, repository, weekEnd, weekStart])
 
+  useEffect(() => {
+    let active = true
+    if (!householdId) return
+    recipeRepository
+      .list(householdId)
+      .then((next) => {
+        if (active) {
+          setRecipes(next.filter((recipe) => !recipe.archivedAt))
+          setRecipeError(null)
+        }
+      })
+      .catch(() => {
+        if (active)
+          setRecipeError('Recipe selection is unavailable right now. Free-text dinners still work.')
+      })
+    return () => {
+      active = false
+    }
+  }, [householdId, recipeRepository])
+
   function validate(input: PlannedMealInput): PlannedMealInput | null {
     const result = plannedMealInputSchema.safeParse(input)
     if (result.success) {
@@ -107,7 +138,7 @@ export function PlanPage() {
     const nextErrors: MealFieldErrors = {}
     for (const issue of result.error.issues) {
       const key = issue.path[0]
-      if ((key === 'title' || key === 'notes') && !(key in nextErrors)) {
+      if ((key === 'title' || key === 'notes' || key === 'recipeId') && !(key in nextErrors)) {
         nextErrors[key] = issue.message
       }
     }
@@ -130,10 +161,20 @@ export function PlanPage() {
         mealType: 'dinner',
         title: meal.title,
         notes: meal.notes,
+        recipeId: meal.recipeId,
       },
     })
     setFieldErrors({})
     setFormError(null)
+  }
+
+  function selectRecipe(recipeId: string) {
+    if (!dialog) return
+    const recipe = activeRecipes.find((candidate) => candidate.id === recipeId) ?? null
+    const nextInput = recipe
+      ? { ...dialog.input, recipeId: recipe.id, title: snapshotTitleForRecipe(recipe) }
+      : { ...dialog.input, recipeId: null }
+    updateDialog(nextInput)
   }
 
   function updateDialog(input: PlannedMealInput) {
@@ -173,8 +214,23 @@ export function PlanPage() {
     }
   }
 
+  async function unlink(meal: PlannedMeal) {
+    try {
+      const saved = await repository.update(meal.id, unlinkPlannedMeal(meal))
+      setMeals((current) =>
+        current.map((candidate) => (candidate.id === saved.id ? saved : candidate)),
+      )
+    } catch (unlinkError) {
+      setError(
+        unlinkError instanceof Error
+          ? unlinkError.message
+          : 'Cooksmith could not unlink that recipe.',
+      )
+    }
+  }
+
   async function remove(meal: PlannedMeal) {
-    if (!window.confirm(`Remove ${meal.title} from the plan?`)) return
+    if (!window.confirm(`Remove ${displayTitleForPlannedMeal(meal)} from the plan?`)) return
     try {
       await repository.remove(meal.id)
       setMeals((current) => current.filter((candidate) => candidate.id !== meal.id))
@@ -366,13 +422,34 @@ export function PlanPage() {
                         openEdit(meal)
                       }}
                     >
-                      <strong>{meal.title}</strong>
+                      <strong>{displayTitleForPlannedMeal(meal)}</strong>
+                      {meal.recipeState.kind !== 'free-text' ? (
+                        <span className="meal-recipe-status">
+                          <BookOpen aria-hidden="true" />
+                          {meal.recipeState.kind === 'archived'
+                            ? 'Linked archived recipe'
+                            : meal.recipeState.kind === 'unavailable'
+                              ? `Recipe unavailable — ${meal.title}`
+                              : `Linked recipe — planned as ${meal.title}`}
+                        </span>
+                      ) : null}
                       {meal.notes ? <span>{meal.notes}</span> : null}
                     </button>
+                    {meal.recipeId ? (
+                      <button
+                        className="meal-remove"
+                        type="button"
+                        aria-label={`Unlink recipe from ${displayTitleForPlannedMeal(meal)}`}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={() => void unlink(meal)}
+                      >
+                        <Pencil aria-hidden="true" />
+                      </button>
+                    ) : null}
                     <button
                       className="meal-remove"
                       type="button"
-                      aria-label={`Remove ${meal.title}`}
+                      aria-label={`Remove ${displayTitleForPlannedMeal(meal)}`}
                       onPointerDown={(event) => event.stopPropagation()}
                       onClick={() => void remove(meal)}
                     >
@@ -413,6 +490,27 @@ export function PlanPage() {
           }}
         >
           <form className="pantry-form pantry-edit-form" onSubmit={(event) => void submit(event)}>
+            <label className="field">
+              <span>Start with</span>
+              <select
+                value={dialog.input.recipeId ?? ''}
+                onChange={(event) => selectRecipe(event.target.value)}
+                disabled={saving || activeRecipes.length === 0}
+              >
+                <option value="">Free-text dinner</option>
+                {activeRecipes.map((recipe) => (
+                  <option key={recipe.id} value={recipe.id}>
+                    {recipe.name}
+                    {recipe.prepTimeMinutes || recipe.cookTimeMinutes
+                      ? ` — ${[recipe.prepTimeMinutes, recipe.cookTimeMinutes]
+                          .filter((value) => value !== null)
+                          .reduce((total, value) => total + (value ?? 0), 0)} min`
+                      : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {recipeError ? <p className="form-hint">{recipeError}</p> : null}
             <TextField
               data-autofocus
               error={fieldErrors.title}
