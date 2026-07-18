@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Unlink, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
@@ -24,7 +24,6 @@ import {
   unlinkPlannedMeal,
 } from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal, PlannedMealInput } from '../domain/meal-plans/types'
-import type { Recipe } from '../domain/recipes/types'
 import { plannedMealInputSchema } from '../domain/meal-plans/validationSchemas'
 import {
   addDays,
@@ -37,11 +36,13 @@ import {
   toLocalIsoDate,
   weekDays,
 } from '../domain/meal-plans/week'
+import { recipeToMultilineInput, splitMeaningfulLines } from '../domain/recipes/multilineContent'
+import type { Recipe } from '../domain/recipes/types'
 
 type MealDialog =
   | { mode: 'add'; input: PlannedMealInput }
   | { mode: 'edit'; meal: PlannedMeal; input: PlannedMealInput }
-type MealFieldErrors = Partial<Record<'title' | 'notes' | 'recipeId', string>>
+type MealFieldErrors = Partial<Record<'mealDate' | 'title' | 'notes' | 'recipeId', string>>
 type DragDetails = {
   meal: PlannedMeal
   startX: number
@@ -58,6 +59,11 @@ function compactDate(isoDate: string) {
   return formatDisplayDate(isoDate).replace(/\s+\d{4}$/, '')
 }
 
+function recipeMinutesLabel(recipe: Recipe) {
+  const total = (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0)
+  return total > 0 ? `${total} min total` : null
+}
+
 export function PlanPage() {
   const { state } = useOnboarding()
   const repository = usePlannedMealRepository()
@@ -69,6 +75,7 @@ export function PlanPage() {
   const [meals, setMeals] = useState<PlannedMeal[]>([])
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [dialog, setDialog] = useState<MealDialog | null>(null)
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<MealFieldErrors>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -86,6 +93,7 @@ export function PlanPage() {
   )
   const weekEnd = addDays(weekStart, 6)
   const activeRecipes = useMemo(() => recipes.filter((recipe) => !recipe.archivedAt), [recipes])
+  const selectedRecipe = recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null
 
   useEffect(() => {
     let active = true
@@ -138,7 +146,10 @@ export function PlanPage() {
     const nextErrors: MealFieldErrors = {}
     for (const issue of result.error.issues) {
       const key = issue.path[0]
-      if ((key === 'title' || key === 'notes' || key === 'recipeId') && !(key in nextErrors)) {
+      if (
+        (key === 'mealDate' || key === 'title' || key === 'notes' || key === 'recipeId') &&
+        !(key in nextErrors)
+      ) {
         nextErrors[key] = issue.message
       }
     }
@@ -182,6 +193,18 @@ export function PlanPage() {
     setDialog(
       dialog.mode === 'add' ? { mode: 'add', input } : { mode: 'edit', meal: dialog.meal, input },
     )
+  }
+
+  function openPlannedMeal(meal: PlannedMeal) {
+    if (suppressMealClick.current) {
+      suppressMealClick.current = false
+      return
+    }
+    if (meal.recipeState.kind === 'active') {
+      setSelectedRecipeId(meal.recipeState.recipe.id)
+      return
+    }
+    openEdit(meal)
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -414,26 +437,29 @@ export function PlanPage() {
                       type="button"
                       aria-describedby="meal-drag-instructions"
                       onKeyDown={(event) => moveWithKeyboard(meal, event)}
-                      onClick={() => {
-                        if (suppressMealClick.current) {
-                          suppressMealClick.current = false
-                          return
-                        }
-                        openEdit(meal)
-                      }}
+                      onClick={() => openPlannedMeal(meal)}
                     >
                       <strong>{displayTitleForPlannedMeal(meal)}</strong>
                       {meal.recipeState.kind !== 'free-text' ? (
                         <span className="meal-recipe-status">
                           <BookOpen aria-hidden="true" />
                           {meal.recipeState.kind === 'archived'
-                            ? 'Linked archived recipe'
+                            ? 'Archived recipe'
                             : meal.recipeState.kind === 'unavailable'
                               ? `Recipe unavailable — ${meal.title}`
-                              : `Linked recipe — planned as ${meal.title}`}
+                              : 'Recipe'}
                         </span>
                       ) : null}
                       {meal.notes ? <span>{meal.notes}</span> : null}
+                    </button>
+                    <button
+                      className="meal-remove"
+                      type="button"
+                      aria-label={`Edit planned dinner ${displayTitleForPlannedMeal(meal)}`}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => openEdit(meal)}
+                    >
+                      <Pencil aria-hidden="true" />
                     </button>
                     {meal.recipeId ? (
                       <button
@@ -443,7 +469,7 @@ export function PlanPage() {
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => void unlink(meal)}
                       >
-                        <Pencil aria-hidden="true" />
+                        <Unlink aria-hidden="true" />
                       </button>
                     ) : null}
                     <button
@@ -480,6 +506,63 @@ export function PlanPage() {
         </div>
       </aside>
 
+      {selectedRecipe ? (
+        <Dialog
+          open
+          title={selectedRecipe.name}
+          description={[recipeMinutesLabel(selectedRecipe), selectedRecipe.servings ? `${selectedRecipe.servings} servings` : null]
+            .filter(Boolean)
+            .join(' · ')}
+          onOpenChange={(open) => {
+            if (!open) setSelectedRecipeId(null)
+          }}
+        >
+          <div className="recipe-detail-dialog">
+            <section>
+              <h3>Ingredients</h3>
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
+                <ul>
+                  {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).map(
+                    (line, index) => (
+                      <li key={`${index}-${line}`}>{line}</li>
+                    ),
+                  )}
+                </ul>
+              ) : (
+                <p>No ingredients added yet.</p>
+              )}
+            </section>
+            <section>
+              <h3>Instructions</h3>
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length > 0 ? (
+                <ol>
+                  {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).map(
+                    (line, index) => (
+                      <li key={`${index}-${line}`}>{line}</li>
+                    ),
+                  )}
+                </ol>
+              ) : (
+                <p>No instructions added yet.</p>
+              )}
+            </section>
+            {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
+            {selectedRecipe.sourceUrl ? (
+              <p>
+                <a href={selectedRecipe.sourceUrl} target="_blank" rel="noreferrer">
+                  Open source link
+                </a>
+              </p>
+            ) : null}
+            <div className="dialog-actions">
+              <Button type="button" variant="secondary" onClick={() => setSelectedRecipeId(null)}>
+                Back to planner
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
+
       {dialog ? (
         <Dialog
           open
@@ -511,6 +594,14 @@ export function PlanPage() {
               </select>
             </label>
             {recipeError ? <p className="form-hint">{recipeError}</p> : null}
+            <TextField
+              error={fieldErrors.mealDate}
+              label="Date"
+              required
+              type="date"
+              value={dialog.input.mealDate}
+              onChange={(event) => updateDialog({ ...dialog.input, mealDate: event.target.value })}
+            />
             <TextField
               data-autofocus
               error={fieldErrors.title}
