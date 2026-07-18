@@ -238,9 +238,9 @@ describe('recipe library experience', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
     const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
     await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Broken')
-    await userEvent.type(within(createDialog).getByLabelText(/Servings/), '-1')
+    await userEvent.type(within(createDialog).getByLabelText(/Servings/), '101')
     await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
-    expect(await screen.findByText('Servings cannot be negative.')).toBeVisible()
+    expect(await screen.findByText('Use a smaller servings.')).toBeVisible()
 
     await userEvent.clear(within(createDialog).getByLabelText(/Servings/))
     await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
