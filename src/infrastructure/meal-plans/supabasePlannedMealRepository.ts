@@ -1,6 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 import type { PlannedMealRepository } from '../../application/meal-plans/plannedMealRepository'
-import type { MealType, PlannedMeal } from '../../domain/meal-plans/types'
+import { recipeStateForLink } from '../../domain/meal-plans/recipeLinks'
+import type { LinkedRecipeSummary, MealType, PlannedMeal } from '../../domain/meal-plans/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 type PlannedMealRow = {
   id: string
@@ -9,11 +10,23 @@ type PlannedMealRow = {
   meal_type: MealType
   title: string
   notes: string | null
+  recipe_id: string | null
+  household_recipes: { id: string; name: string | null; archived_at: string | null } | null
   created_at: string
   updated_at: string
 }
-const selection = 'id, household_id, meal_date, meal_type, title, notes, created_at, updated_at'
+const selection =
+  'id, household_id, meal_date, meal_type, title, notes, recipe_id, created_at, updated_at, household_recipes(id, name, archived_at)'
+function mapRecipe(row: PlannedMealRow): LinkedRecipeSummary | null {
+  if (!row.household_recipes) return null
+  return {
+    id: row.household_recipes.id,
+    name: row.household_recipes.name,
+    archivedAt: row.household_recipes.archived_at,
+  }
+}
 function mapRow(row: PlannedMealRow): PlannedMeal {
+  const linkedRecipe = mapRecipe(row)
   return {
     id: row.id,
     householdId: row.household_id,
@@ -21,6 +34,9 @@ function mapRow(row: PlannedMealRow): PlannedMeal {
     mealType: row.meal_type,
     title: row.title,
     notes: row.notes,
+    recipeId: row.recipe_id,
+    linkedRecipe,
+    recipeState: recipeStateForLink(row.recipe_id, linkedRecipe),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -29,7 +45,7 @@ function mealPlanError(error: PostgrestError | null): void {
   if (!error) return
   const messages: Record<string, string> = {
     '23503': 'Choose a household you belong to before saving a meal.',
-    '23514': 'Check the meal title, date and meal type.',
+    '23514': 'Check the meal title, date, meal type and recipe link.',
     '42501': 'You do not have permission to change this meal plan.',
   }
   throw new Error(messages[error.code] ?? 'Cooksmith could not update the meal plan. Try again.')
@@ -61,6 +77,7 @@ export function createSupabasePlannedMealRepository(
           meal_type: input.mealType,
           title: input.title,
           notes: input.notes,
+          recipe_id: input.recipeId,
         } as never)
         .select(selection)
         .single()
@@ -76,6 +93,7 @@ export function createSupabasePlannedMealRepository(
           meal_type: input.mealType,
           title: input.title,
           notes: input.notes,
+          recipe_id: input.recipeId,
         } as never)
         .eq('id', mealId)
         .select(selection)

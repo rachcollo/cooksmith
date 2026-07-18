@@ -61,7 +61,13 @@ describe('planned meal validation', () => {
         title: '  Pasta  ',
         notes: '',
       }),
-    ).toEqual({ mealDate: '2026-07-17', mealType: 'dinner', title: 'Pasta', notes: null })
+    ).toEqual({
+      mealDate: '2026-07-17',
+      mealType: 'dinner',
+      title: 'Pasta',
+      notes: null,
+      recipeId: null,
+    })
     expect(
       plannedMealInputSchema.safeParse({
         mealDate: '2026-07-17',
@@ -71,4 +77,25 @@ describe('planned meal validation', () => {
       }).success,
     ).toBe(false)
   })
+})
+
+it('accepts optional recipe links for linked and free-text planned meals', () => {
+  expect(
+    plannedMealInputSchema.parse({
+      mealDate: '2026-07-17',
+      mealType: 'dinner',
+      title: 'Soup',
+      notes: null,
+      recipeId: '30000000-0000-4000-8000-000000000001',
+    }).recipeId,
+  ).toBe('30000000-0000-4000-8000-000000000001')
+  expect(
+    plannedMealInputSchema.parse({
+      mealDate: '2026-07-17',
+      mealType: 'dinner',
+      title: 'Toasties',
+      notes: null,
+      recipeId: '',
+    }).recipeId,
+  ).toBeNull()
 })

@@ -75,6 +75,43 @@ select results_eq(
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true);
 select results_eq($$select count(*)::integer from cooksmith.planned_meals$$, array[0], 'Inactive member cannot read planned meals');
 
+
+reset role;
+insert into cooksmith.household_recipes (id, household_id, name)
+values
+  ('70000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', 'Lentil soup'),
+  ('70000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'Fish pie')
+on conflict (household_id, normalised_name) do nothing;
+
+select col_is_fk('cooksmith', 'planned_meals', 'recipe_id', 'Planned meal recipe link is a foreign key');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select lives_ok(
+  $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, recipe_id)
+    values ('20000000-0000-4000-8000-000000000001', '2026-07-19', 'dinner', 'Soup snapshot', '70000000-0000-4000-8000-000000000001')$$,
+  'Owner can link a household recipe to a planned meal'
+);
+select throws_ok(
+  $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, recipe_id)
+    values ('20000000-0000-4000-8000-000000000001', '2026-07-20', 'dinner', 'Cross-household fish pie', '70000000-0000-4000-8000-000000000002')$$,
+  '23514', null, 'Cross-household recipe links are rejected by the database'
+);
+select results_eq(
+  $$update cooksmith.household_recipes set archived_at = now() where id = '70000000-0000-4000-8000-000000000001' returning id$$,
+  array['70000000-0000-4000-8000-000000000001'::uuid],
+  'Recipe archive does not remove existing planned meals'
+);
+select results_eq(
+  $$select title from cooksmith.planned_meals where recipe_id = '70000000-0000-4000-8000-000000000001'$$,
+  array['Soup snapshot'::text],
+  'Linked planned meal keeps its title snapshot after recipe archive'
+);
+select lives_ok(
+  $$update cooksmith.planned_meals set recipe_id = null where title = 'Soup snapshot'$$,
+  'Unlinking a recipe keeps the free-text planned meal valid'
+);
+
 reset role;
 select * from finish();
 rollback;

@@ -9,4 +9,8 @@ export const plannedMealInputSchema = z.object({
     (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
     z.string().trim().max(500, 'Use 500 characters or fewer.').nullable(),
   ),
+  recipeId: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.uuid('Choose a valid recipe.').nullable().default(null),
+  ),
 })
