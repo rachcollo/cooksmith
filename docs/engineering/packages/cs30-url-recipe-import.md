@@ -1,6 +1,6 @@
 # Engineering Package — CS-30: Import and Review a Recipe from a URL
 
-**Status:** Ready for Build after CS-27 and CS-28  
+**Status:** Implemented; validation pending
 **Branch:** `cs30-url-recipe-import`  
 **Base branch:** Latest `main`  
 **Release requirement:** First release  
