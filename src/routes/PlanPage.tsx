@@ -53,7 +53,13 @@ type DragDetails = {
 }
 
 function inputFor(mealDate: string): PlannedMealInput {
-  return { mealDate, mealType: 'dinner', title: '', notes: null, recipeId: null }
+  return {
+    mealDate,
+    mealType: 'dinner',
+    title: '',
+    notes: null,
+    recipeId: null,
+  }
 }
 
 function compactDate(isoDate: string) {
@@ -184,7 +190,11 @@ export function PlanPage() {
     if (!dialog) return
     const recipe = activeRecipes.find((candidate) => candidate.id === recipeId) ?? null
     const nextInput = recipe
-      ? { ...dialog.input, recipeId: recipe.id, title: snapshotTitleForRecipe(recipe) }
+      ? {
+          ...dialog.input,
+          recipeId: recipe.id,
+          title: snapshotTitleForRecipe(recipe),
+        }
       : { ...dialog.input, recipeId: null }
     updateDialog(nextInput)
   }
@@ -524,7 +534,8 @@ export function PlanPage() {
           <div className="recipe-detail-dialog">
             <section>
               <h3>Ingredients</h3>
-              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length >
+              0 ? (
                 <ul>
                   {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).map(
                     (line, index) => (
@@ -538,7 +549,8 @@ export function PlanPage() {
             </section>
             <section>
               <h3>Instructions</h3>
-              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length > 0 ? (
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length >
+              0 ? (
                 <ol>
                   {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).map(
                     (line, index) => (
