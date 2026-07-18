@@ -3,6 +3,7 @@ import type { PlannedMealRepository } from '../../application/meal-plans/planned
 import { recipeStateForLink } from '../../domain/meal-plans/recipeLinks'
 import type { LinkedRecipeSummary, MealType, PlannedMeal } from '../../domain/meal-plans/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
+
 type PlannedMealRow = {
   id: string
   household_id: string
@@ -15,8 +16,14 @@ type PlannedMealRow = {
   created_at: string
   updated_at: string
 }
+
+type LegacyPlannedMealRow = Omit<PlannedMealRow, 'recipe_id' | 'household_recipes'>
+
 const selection =
   'id, household_id, meal_date, meal_type, title, notes, recipe_id, created_at, updated_at, household_recipes(id, name, archived_at)'
+const legacySelection =
+  'id, household_id, meal_date, meal_type, title, notes, created_at, updated_at'
+
 function mapRecipe(row: PlannedMealRow): LinkedRecipeSummary | null {
   if (!row.household_recipes) return null
   return {
@@ -25,6 +32,7 @@ function mapRecipe(row: PlannedMealRow): LinkedRecipeSummary | null {
     archivedAt: row.household_recipes.archived_at,
   }
 }
+
 function mapRow(row: PlannedMealRow): PlannedMeal {
   const linkedRecipe = mapRecipe(row)
   return {
@@ -41,6 +49,23 @@ function mapRow(row: PlannedMealRow): PlannedMeal {
     updatedAt: row.updated_at,
   }
 }
+
+function mapLegacyRow(row: LegacyPlannedMealRow): PlannedMeal {
+  return mapRow({ ...row, recipe_id: null, household_recipes: null })
+}
+
+function isMissingRecipeLinkSchema(error: PostgrestError | null): boolean {
+  if (!error) return false
+  const haystack = `${error.message} ${error.details ?? ''} ${error.hint ?? ''}`.toLowerCase()
+  return (
+    error.code === '42703' ||
+    error.code === 'PGRST200' ||
+    error.code === 'PGRST204' ||
+    haystack.includes('recipe_id') ||
+    haystack.includes('household_recipes')
+  )
+}
+
 function mealPlanError(error: PostgrestError | null): void {
   if (!error) return
   const messages: Record<string, string> = {
@@ -50,6 +75,7 @@ function mealPlanError(error: PostgrestError | null): void {
   }
   throw new Error(messages[error.code] ?? 'Cooksmith could not update the meal plan. Try again.')
 }
+
 export function createSupabasePlannedMealRepository(
   client: CooksmithSupabaseClient,
 ): PlannedMealRepository {
@@ -65,39 +91,92 @@ export function createSupabasePlannedMealRepository(
         .order('meal_date')
         .order('meal_type')
         .order('created_at')
+
+      if (isMissingRecipeLinkSchema(result.error)) {
+        const legacyResult = await database
+          .from('planned_meals')
+          .select(legacySelection)
+          .eq('household_id', householdId)
+          .gte('meal_date', weekStart)
+          .lte('meal_date', weekEnd)
+          .order('meal_date')
+          .order('meal_type')
+          .order('created_at')
+        mealPlanError(legacyResult.error)
+        return ((legacyResult.data ?? []) as unknown as LegacyPlannedMealRow[]).map(mapLegacyRow)
+      }
+
       mealPlanError(result.error)
       return ((result.data ?? []) as unknown as PlannedMealRow[]).map(mapRow)
     },
     async create(householdId, input) {
+      const insert = {
+        household_id: householdId,
+        meal_date: input.mealDate,
+        meal_type: input.mealType,
+        title: input.title,
+        notes: input.notes,
+        recipe_id: input.recipeId,
+      }
       const result = await database
         .from('planned_meals')
-        .insert({
-          household_id: householdId,
-          meal_date: input.mealDate,
-          meal_type: input.mealType,
-          title: input.title,
-          notes: input.notes,
-          recipe_id: input.recipeId,
-        } as never)
+        .insert(insert as never)
         .select(selection)
         .single()
+
+      if (isMissingRecipeLinkSchema(result.error) && !input.recipeId) {
+        const legacyResult = await database
+          .from('planned_meals')
+          .insert({
+            household_id: householdId,
+            meal_date: input.mealDate,
+            meal_type: input.mealType,
+            title: input.title,
+            notes: input.notes,
+          } as never)
+          .select(legacySelection)
+          .single()
+        mealPlanError(legacyResult.error)
+        if (!legacyResult.data) throw new Error('Cooksmith could not save that planned meal.')
+        return mapLegacyRow(legacyResult.data as unknown as LegacyPlannedMealRow)
+      }
+
       mealPlanError(result.error)
       if (!result.data) throw new Error('Cooksmith could not save that planned meal.')
       return mapRow(result.data as unknown as PlannedMealRow)
     },
     async update(mealId, input) {
+      const update = {
+        meal_date: input.mealDate,
+        meal_type: input.mealType,
+        title: input.title,
+        notes: input.notes,
+        recipe_id: input.recipeId,
+      }
       const result = await database
         .from('planned_meals')
-        .update({
-          meal_date: input.mealDate,
-          meal_type: input.mealType,
-          title: input.title,
-          notes: input.notes,
-          recipe_id: input.recipeId,
-        } as never)
+        .update(update as never)
         .eq('id', mealId)
         .select(selection)
         .single()
+
+      if (isMissingRecipeLinkSchema(result.error) && !input.recipeId) {
+        const legacyResult = await database
+          .from('planned_meals')
+          .update({
+            meal_date: input.mealDate,
+            meal_type: input.mealType,
+            title: input.title,
+            notes: input.notes,
+          } as never)
+          .eq('id', mealId)
+          .select(legacySelection)
+          .single()
+        mealPlanError(legacyResult.error)
+        if (!legacyResult.data) throw new Error('Cooksmith could not save that planned meal.')
+        return mapLegacyRow(legacyResult.data as unknown as LegacyPlannedMealRow)
+      }
+
       mealPlanError(result.error)
       if (!result.data) throw new Error('Cooksmith could not save that planned meal.')
       return mapRow(result.data as unknown as PlannedMealRow)
