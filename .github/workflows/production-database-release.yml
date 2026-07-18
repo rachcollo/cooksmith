@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_commit:
-        description: Full main commit SHA approved for release
+        description: Paste the full 40-character commit SHA currently at the tip of main
         required: true
         type: string
       confirmation:
@@ -37,9 +37,18 @@ jobs:
           APPROVED_COMMIT: ${{ inputs.release_commit }}
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
-          test "$CONFIRMATION" = "DEPLOY_PRODUCTION_DATABASE"
-          test "$APPROVED_COMMIT" = "$GITHUB_SHA"
-          test "${#APPROVED_COMMIT}" -eq 40
+          if [[ ! "$APPROVED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::release_commit must be an actual 40-character lowercase Git commit SHA, not the example text."
+            exit 1
+          fi
+          if [ "$APPROVED_COMMIT" != "$GITHUB_SHA" ]; then
+            echo "::error::release_commit must match the current main commit: $GITHUB_SHA"
+            exit 1
+          fi
+          if [ "$CONFIRMATION" != "DEPLOY_PRODUCTION_DATABASE" ]; then
+            echo "::error::confirmation must be DEPLOY_PRODUCTION_DATABASE"
+            exit 1
+          fi
 
       - name: Check required protected secrets
         run: |
