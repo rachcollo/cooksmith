@@ -146,7 +146,6 @@ export function RecipesPage() {
       .then((next) => {
         if (!active) return
         setRecipes(next)
-        setSelectedId((current) => current ?? next[0]?.id ?? null)
       })
       .catch(() => {
         if (active) setError('We could not load your recipe library. Try refreshing Cooksmith.')
@@ -247,19 +246,14 @@ export function RecipesPage() {
   return (
     <main className="page-stack">
       <DocumentTitle title="Recipe Library" />
-      <header className="page-header">
-        <p className="eyebrow">Things worth cooking</p>
+      <header className="page-header recipe-library-header">
         <h1>Recipe Library</h1>
         <p>
           Save the recipes your household returns to, with ingredients and instructions together.
         </p>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
-      <div className="pantry-actions">
-        <Button type="button" onClick={() => setCreating(true)}>
-          Add recipe
-        </Button>
-      </div>
+
       <Dialog
         open={creating}
         title="Add a recipe"
@@ -375,13 +369,18 @@ export function RecipesPage() {
           </div>
         </form>
       </Dialog>
-      <Panel>
+      <div className="recipe-library-toolbar">
         <TextField
           label="Search recipes"
+          placeholder="Search recipes"
+          type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-      </Panel>
+        <Button type="button" onClick={() => setCreating(true)}>
+          Add recipe
+        </Button>
+      </div>
       {filteredRecipes.length === 0 ? (
         <Panel>
           <div className="empty-state">
@@ -418,9 +417,20 @@ export function RecipesPage() {
           ))}
         </div>
       )}
-      {selectedRecipe ? (
-        <Panel>
-          <h2>{selectedRecipe.name}</h2>
+      {selectedRecipe && !editing ? (
+        <Dialog
+          open
+          title={selectedRecipe.name}
+          description={
+            [minutesLabel(selectedRecipe), selectedRecipe.servings ? `${selectedRecipe.servings} servings` : null]
+              .filter(Boolean)
+              .join(' · ') || 'Recipe details'
+          }
+          onOpenChange={(open) => {
+            if (!open) setSelectedId(null)
+          }}
+        >
+          <div className="recipe-detail-dialog">
           <h3>Ingredients</h3>
           {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
             <ul>
@@ -481,7 +491,8 @@ export function RecipesPage() {
               Archive recipe
             </Button>
           </div>
-        </Panel>
+          </div>
+        </Dialog>
       ) : null}
       {editing && selectedRecipe ? (
         <Dialog
