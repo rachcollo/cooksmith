@@ -4,12 +4,18 @@ export interface RecipeIngredient {
   quantity: string | null
   unit: string | null
   preparation: string | null
+  originalLineText: string
+  parserVersion: string
+  derivationStatus: string
   position: number
 }
 
 export interface RecipeStep {
   id: string
   instruction: string
+  originalLineText: string
+  parserVersion: string
+  derivationStatus: string
   position: number
 }
 

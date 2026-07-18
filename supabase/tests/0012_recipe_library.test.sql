@@ -25,6 +25,16 @@ select throws_ok(
   '23505', null, 'Duplicate recipe names are prevented case-insensitively per household'
 );
 
+select has_column('cooksmith', 'recipe_ingredients', 'original_line_text', 'Ingredient derivation keeps original source line');
+select has_column('cooksmith', 'recipe_ingredients', 'parser_version', 'Ingredient derivation records parser version');
+select has_column('cooksmith', 'recipe_steps', 'original_line_text', 'Instruction derivation keeps original source line');
+select has_column('cooksmith', 'recipe_steps', 'derivation_status', 'Instruction derivation records status');
+select throws_ok(
+  $$insert into cooksmith.recipe_ingredients (recipe_id, ingredient_name, original_line_text, derivation_status, position) values ((select id from cooksmith.household_recipes where name = 'Lentil soup'), 'lentils', '1 cup lentils', 'invented', 1)$$,
+  '23514', null, 'Unsupported ingredient derivation states are rejected'
+);
+
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select results_eq($$select count(*)::integer from cooksmith.household_recipes where household_id = '20000000-0000-4000-8000-000000000001'$$, array[1], 'Owner can read household recipes');
