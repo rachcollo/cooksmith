@@ -1,4 +1,3 @@
- 1 file changed, 4 insertions(+), 1 deletion(-)
 begin;
 
 select no_plan();
