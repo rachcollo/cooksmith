@@ -146,7 +146,6 @@ export function RecipesPage() {
       .then((next) => {
         if (!active) return
         setRecipes(next)
-        setSelectedId((current) => current ?? next[0]?.id ?? null)
       })
       .catch(() => {
         if (active) setError('We could not load your recipe library. Try refreshing Cooksmith.')
@@ -247,19 +246,14 @@ export function RecipesPage() {
   return (
     <main className="page-stack">
       <DocumentTitle title="Recipe Library" />
-      <header className="page-header">
-        <p className="eyebrow">Things worth cooking</p>
+      <header className="page-header recipe-library-header">
         <h1>Recipe Library</h1>
         <p>
           Save the recipes your household returns to, with ingredients and instructions together.
         </p>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
-      <div className="pantry-actions">
-        <Button type="button" onClick={() => setCreating(true)}>
-          Add recipe
-        </Button>
-      </div>
+
       <Dialog
         open={creating}
         title="Add a recipe"
@@ -375,13 +369,18 @@ export function RecipesPage() {
           </div>
         </form>
       </Dialog>
-      <Panel>
+      <div className="recipe-library-toolbar">
         <TextField
           label="Search recipes"
+          placeholder="Search recipes"
+          type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-      </Panel>
+        <Button type="button" onClick={() => setCreating(true)}>
+          Add recipe
+        </Button>
+      </div>
       {filteredRecipes.length === 0 ? (
         <Panel>
           <div className="empty-state">
@@ -418,70 +417,85 @@ export function RecipesPage() {
           ))}
         </div>
       )}
-      {selectedRecipe ? (
-        <Panel>
-          <h2>{selectedRecipe.name}</h2>
-          <h3>Ingredients</h3>
-          {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
-            <ul>
-              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).map(
-                (line, index) => (
-                  <li key={`${index}-${line}`}>{line}</li>
-                ),
-              )}
-            </ul>
-          ) : (
-            <p>No ingredients added yet.</p>
-          )}
-          <h3>Instructions</h3>
-          {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length > 0 ? (
-            <ol>
-              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).map(
-                (line, index) => (
-                  <li key={`${index}-${line}`}>{line}</li>
-                ),
-              )}
-            </ol>
-          ) : (
-            <p>No instructions added yet.</p>
-          )}
-          <dl>
-            <dt>Servings</dt>
-            <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
-            <dt>Preparation time</dt>
-            <dd>
-              {selectedRecipe.prepTimeMinutes !== null
-                ? `${selectedRecipe.prepTimeMinutes} minutes`
-                : 'Not set'}
-            </dd>
-            <dt>Cooking time</dt>
-            <dd>
-              {selectedRecipe.cookTimeMinutes !== null
-                ? `${selectedRecipe.cookTimeMinutes} minutes`
-                : 'Not set'}
-            </dd>
-          </dl>
-          {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
-          {selectedRecipe.category ? <p>Category: {selectedRecipe.category}</p> : null}
-          {selectedRecipe.tags.length > 0 ? <p>Tags: {selectedRecipe.tags.join(', ')}</p> : null}
-          {selectedRecipe.favourite ? <p>Favourite recipe</p> : null}
-          {selectedRecipe.sourceNote ? <p>Source: {selectedRecipe.sourceNote}</p> : null}
-          {selectedRecipe.sourceUrl ? (
-            <p>
-              <a href={selectedRecipe.sourceUrl} target="_blank" rel="noreferrer">
-                Open source link
-              </a>
-            </p>
-          ) : null}
-          <div className="pantry-actions">
-            <Button type="button" variant="secondary" onClick={() => openEdit(selectedRecipe)}>
-              Edit recipe
-            </Button>
-            <Button type="button" variant="quiet" onClick={() => void archive(selectedRecipe)}>
-              Archive recipe
-            </Button>
+      {selectedRecipe && !editing ? (
+        <Dialog
+          open
+          title={selectedRecipe.name}
+          description={
+            [
+              minutesLabel(selectedRecipe),
+              selectedRecipe.servings ? `${selectedRecipe.servings} servings` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || 'Recipe details'
+          }
+          onOpenChange={(open) => {
+            if (!open) setSelectedId(null)
+          }}
+        >
+          <div className="recipe-detail-dialog">
+            <h3>Ingredients</h3>
+            {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
+              <ul>
+                {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).map(
+                  (line, index) => (
+                    <li key={`${index}-${line}`}>{line}</li>
+                  ),
+                )}
+              </ul>
+            ) : (
+              <p>No ingredients added yet.</p>
+            )}
+            <h3>Instructions</h3>
+            {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length > 0 ? (
+              <ol>
+                {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).map(
+                  (line, index) => (
+                    <li key={`${index}-${line}`}>{line}</li>
+                  ),
+                )}
+              </ol>
+            ) : (
+              <p>No instructions added yet.</p>
+            )}
+            <dl>
+              <dt>Servings</dt>
+              <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
+              <dt>Preparation time</dt>
+              <dd>
+                {selectedRecipe.prepTimeMinutes !== null
+                  ? `${selectedRecipe.prepTimeMinutes} minutes`
+                  : 'Not set'}
+              </dd>
+              <dt>Cooking time</dt>
+              <dd>
+                {selectedRecipe.cookTimeMinutes !== null
+                  ? `${selectedRecipe.cookTimeMinutes} minutes`
+                  : 'Not set'}
+              </dd>
+            </dl>
+            {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
+            {selectedRecipe.category ? <p>Category: {selectedRecipe.category}</p> : null}
+            {selectedRecipe.tags.length > 0 ? <p>Tags: {selectedRecipe.tags.join(', ')}</p> : null}
+            {selectedRecipe.favourite ? <p>Favourite recipe</p> : null}
+            {selectedRecipe.sourceNote ? <p>Source: {selectedRecipe.sourceNote}</p> : null}
+            {selectedRecipe.sourceUrl ? (
+              <p>
+                <a href={selectedRecipe.sourceUrl} target="_blank" rel="noreferrer">
+                  Open source link
+                </a>
+              </p>
+            ) : null}
+            <div className="pantry-actions">
+              <Button type="button" variant="secondary" onClick={() => openEdit(selectedRecipe)}>
+                Edit recipe
+              </Button>
+              <Button type="button" variant="quiet" onClick={() => void archive(selectedRecipe)}>
+                Archive recipe
+              </Button>
+            </div>
           </div>
-        </Panel>
+        </Dialog>
       ) : null}
       {editing && selectedRecipe ? (
         <Dialog
@@ -525,7 +539,10 @@ export function RecipesPage() {
               optional
               value={tagsText(editDraft.tags)}
               onChange={(event) =>
-                setEditDraft({ ...editDraft, tags: tagsFromText(event.target.value) })
+                setEditDraft({
+                  ...editDraft,
+                  tags: tagsFromText(event.target.value),
+                })
               }
             />
             <label className="checkbox-row">
@@ -533,7 +550,10 @@ export function RecipesPage() {
                 type="checkbox"
                 checked={editDraft.favourite}
                 onChange={(event) =>
-                  setEditDraft({ ...editDraft, favourite: event.target.checked })
+                  setEditDraft({
+                    ...editDraft,
+                    favourite: event.target.checked,
+                  })
                 }
               />
               Favourite recipe

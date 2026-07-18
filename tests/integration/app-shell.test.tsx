@@ -18,7 +18,7 @@ describe('v2 application shell', () => {
     expect(
       screen.getByRole('navigation', { name: 'Primary mobile navigation' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('v2 test preview')).toBeVisible()
+    expect(screen.queryByText('v2 test preview')).not.toBeInTheDocument()
     expect(document.title).toBe('Home | Cooksmith')
   })
 
