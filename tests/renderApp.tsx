@@ -10,6 +10,7 @@ import type { OnboardingRepository } from '../src/application/onboarding/onboard
 import type { PantryRepository } from '../src/application/pantry/pantryRepository'
 import type { RecipeRepository } from '../src/application/recipes/recipeRepository'
 import type { PlannedMealRepository } from '../src/application/meal-plans/plannedMealRepository'
+import type { ShoppingRepository } from '../src/application/shopping/shoppingRepository'
 import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
@@ -229,6 +230,38 @@ export const defaultPlannedMealRepository: PlannedMealRepository = {
   remove: async () => undefined,
 }
 
+export const defaultShoppingRepository: ShoppingRepository = {
+  list: async () => [],
+  create: async (householdId, input) => ({
+    id: 'shopping-created',
+    householdId,
+    ...input,
+    completed: false,
+    position: 0,
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  update: async (itemId, input) => ({
+    id: itemId,
+    householdId: '20000000-0000-4000-8000-000000000001',
+    ...input,
+    completed: false,
+    position: 0,
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  setCompleted: async (itemId, completed) => ({
+    id: itemId,
+    householdId: '20000000-0000-4000-8000-000000000001',
+    name: 'Milk',
+    quantity: 2,
+    unit: 'L',
+    category: 'dairy_and_eggs',
+    completed,
+    position: 0,
+    updatedAt: '2026-01-01T00:00:00Z',
+  }),
+  remove: async () => undefined,
+}
+
 export function renderApp(
   path = '/',
   config: PublicEnv = defaultConfig,
@@ -241,6 +274,7 @@ export function renderApp(
     ? authenticatedTestAuthState
     : signedOutTestAuthState,
   recipeRepository: RecipeRepository = defaultRecipeRepository,
+  shoppingRepository: ShoppingRepository = defaultShoppingRepository,
 ) {
   const router = createTestRouter([path])
 
@@ -257,6 +291,7 @@ export function renderApp(
           pantryRepository={pantryRepository}
           recipeRepository={recipeRepository}
           plannedMealRepository={plannedMealRepository}
+          shoppingRepository={shoppingRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>
@@ -277,6 +312,7 @@ export function renderRouteError(config: PublicEnv = defaultConfig) {
         pantryRepository={defaultPantryRepository}
         plannedMealRepository={defaultPlannedMealRepository}
         recipeRepository={defaultRecipeRepository}
+        shoppingRepository={defaultShoppingRepository}
       >
         <RouterProvider router={createRouteErrorTestRouter()} />
       </AppProviders>
