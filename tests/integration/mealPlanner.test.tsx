@@ -173,7 +173,7 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Edit planned dinner Lentil soup' }))
     await user.clear(screen.getByLabelText('Date'))
     await user.type(screen.getByLabelText('Date'), '2026-07-18')
-    await user.type(screen.getByLabelText('Notes'), 'Use the big pot')
+    await user.type(screen.getByLabelText(/Notes/), 'Use the big pot')
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
 
     await waitFor(() =>
