@@ -57,3 +57,28 @@ earlier repository migration that is genuinely absent from hosted migration
 history. After release, verify onboarding, owner invitation creation,
 invitation acceptance, duplicate prevention, cancellation, member removal, and
 immediate access revocation with synthetic accounts.
+
+
+## Production Edge Function releases
+
+Cooksmith deploys production Edge Functions separately from database migrations through
+the manually triggered `Production Edge Function release` workflow. The workflow uses
+the existing protected `production-database` environment, its required reviewer, and
+the existing `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` secrets. It does not
+require or expose the database password.
+
+After the matching database migration succeeds:
+
+1. Open **Actions → Production Edge Function release → Run workflow**.
+2. Select `main`.
+3. Paste the full 40-character commit SHA currently at the tip of `main`.
+4. Enter `DEPLOY_PRODUCTION_EDGE_FUNCTION` as confirmation.
+5. Approve the protected environment deployment when prompted.
+6. Confirm the workflow deploys `import-recipe` and verifies that JWT validation remains
+   enabled.
+7. Smoke-test a supported public URL, an invalid URL, and private/public save behaviour
+   with synthetic accounts.
+
+The workflow deploys only the named `import-recipe` function. It does not prune other
+hosted functions. Release database changes first, then the Edge Function, and finally
+perform the production application smoke test.
