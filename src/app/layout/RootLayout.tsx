@@ -4,14 +4,12 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 
 import { PrimaryNavigation } from '../navigation/PrimaryNavigation'
 import { RouteAnnouncer } from '../navigation/RouteAnnouncer'
-import { useAppConfig } from '../providers/appConfigContext'
 import { PageContainer } from '../../components/layout/LayoutPrimitives'
 import { LoadingState } from '../../components/ui/LoadingState'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../auth/authContext'
 
 export function RootLayout() {
-  const { appEnvironment } = useAppConfig()
   const { signOut } = useAuth()
 
   return (
@@ -57,11 +55,6 @@ export function RootLayout() {
 
       <main id="main-content" className="page-content" tabIndex={-1}>
         <PageContainer>
-          {appEnvironment !== 'production' ? (
-            <p className="environment-badge">
-              {appEnvironment === 'preview' ? 'v2 preview' : `v2 ${appEnvironment} preview`}
-            </p>
-          ) : null}
           <Suspense fallback={<LoadingState label="Opening page" />}>
             <Outlet />
           </Suspense>
