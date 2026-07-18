@@ -171,9 +171,12 @@ describe('weekly dinner planner', () => {
     await user.click(within(recipeDialog).getByRole('button', { name: 'Back to planner' }))
 
     await user.click(screen.getByRole('button', { name: 'Edit planned dinner Lentil soup' }))
-    fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-07-18' } })
-    await user.type(screen.getByLabelText(/Notes/), 'Use the big pot')
-    await user.click(screen.getByRole('button', { name: 'Save dinner' }))
+    const editDialog = await screen.findByRole('dialog', { name: 'Edit Lentil soup' })
+    fireEvent.change(within(editDialog).getByLabelText('Date'), { target: { value: '2026-07-18' } })
+    await user.type(within(editDialog).getByLabelText(/Notes/), 'Use the big pot')
+    const editForm = within(editDialog).getByRole('button', { name: 'Save dinner' }).closest('form')
+    expect(editForm).not.toBeNull()
+    fireEvent.submit(editForm as HTMLFormElement)
 
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith(
