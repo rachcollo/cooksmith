@@ -1,11 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 import type { PlannedMealRepository } from '../../application/meal-plans/plannedMealRepository'
 import { recipeStateForLink } from '../../domain/meal-plans/recipeLinks'
-import type {
-  LinkedRecipeSummary,
-  MealType,
-  PlannedMeal,
-} from '../../domain/meal-plans/types'
+import type { LinkedRecipeSummary, MealType, PlannedMeal } from '../../domain/meal-plans/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
 type PlannedMealRow = {
@@ -16,19 +12,12 @@ type PlannedMealRow = {
   title: string
   notes: string | null
   recipe_id: string | null
-  household_recipes: {
-    id: string
-    name: string | null
-    archived_at: string | null
-  } | null
+  household_recipes: { id: string; name: string | null; archived_at: string | null } | null
   created_at: string
   updated_at: string
 }
 
-type LegacyPlannedMealRow = Omit<
-  PlannedMealRow,
-  'recipe_id' | 'household_recipes'
->
+type LegacyPlannedMealRow = Omit<PlannedMealRow, 'recipe_id' | 'household_recipes'>
 
 const selection =
   'id, household_id, meal_date, meal_type, title, notes, recipe_id, created_at, updated_at, household_recipes(id, name, archived_at)'
@@ -67,8 +56,7 @@ function mapLegacyRow(row: LegacyPlannedMealRow): PlannedMeal {
 
 function isMissingRecipeLinkSchema(error: PostgrestError | null): boolean {
   if (!error) return false
-  const haystack =
-    `${error.message} ${error.details ?? ''} ${error.hint ?? ''}`.toLowerCase()
+  const haystack = `${error.message} ${error.details ?? ''} ${error.hint ?? ''}`.toLowerCase()
   return (
     error.code === '42703' ||
     error.code === 'PGRST200' ||
@@ -85,10 +73,7 @@ function mealPlanError(error: PostgrestError | null): void {
     '23514': 'Check the meal title, date, meal type and recipe link.',
     '42501': 'You do not have permission to change this meal plan.',
   }
-  throw new Error(
-    messages[error.code] ??
-      'Cooksmith could not update the meal plan. Try again.',
-  )
+  throw new Error(messages[error.code] ?? 'Cooksmith could not update the meal plan. Try again.')
 }
 
 export function createSupabasePlannedMealRepository(
@@ -118,9 +103,7 @@ export function createSupabasePlannedMealRepository(
           .order('meal_type')
           .order('created_at')
         mealPlanError(legacyResult.error)
-        return (
-          (legacyResult.data ?? []) as unknown as LegacyPlannedMealRow[]
-        ).map(mapLegacyRow)
+        return ((legacyResult.data ?? []) as unknown as LegacyPlannedMealRow[]).map(mapLegacyRow)
       }
 
       mealPlanError(result.error)
@@ -154,16 +137,12 @@ export function createSupabasePlannedMealRepository(
           .select(legacySelection)
           .single()
         mealPlanError(legacyResult.error)
-        if (!legacyResult.data)
-          throw new Error('Cooksmith could not save that planned meal.')
-        return mapLegacyRow(
-          legacyResult.data as unknown as LegacyPlannedMealRow,
-        )
+        if (!legacyResult.data) throw new Error('Cooksmith could not save that planned meal.')
+        return mapLegacyRow(legacyResult.data as unknown as LegacyPlannedMealRow)
       }
 
       mealPlanError(result.error)
-      if (!result.data)
-        throw new Error('Cooksmith could not save that planned meal.')
+      if (!result.data) throw new Error('Cooksmith could not save that planned meal.')
       return mapRow(result.data as unknown as PlannedMealRow)
     },
     async update(mealId, input) {
@@ -194,23 +173,16 @@ export function createSupabasePlannedMealRepository(
           .select(legacySelection)
           .single()
         mealPlanError(legacyResult.error)
-        if (!legacyResult.data)
-          throw new Error('Cooksmith could not save that planned meal.')
-        return mapLegacyRow(
-          legacyResult.data as unknown as LegacyPlannedMealRow,
-        )
+        if (!legacyResult.data) throw new Error('Cooksmith could not save that planned meal.')
+        return mapLegacyRow(legacyResult.data as unknown as LegacyPlannedMealRow)
       }
 
       mealPlanError(result.error)
-      if (!result.data)
-        throw new Error('Cooksmith could not save that planned meal.')
+      if (!result.data) throw new Error('Cooksmith could not save that planned meal.')
       return mapRow(result.data as unknown as PlannedMealRow)
     },
     async remove(mealId) {
-      const result = await database
-        .from('planned_meals')
-        .delete()
-        .eq('id', mealId)
+      const result = await database.from('planned_meals').delete().eq('id', mealId)
       mealPlanError(result.error)
     },
   }
