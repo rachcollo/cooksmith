@@ -87,6 +87,8 @@ export const recipeInputSchema = z.object({
   description: optionalTrimmedText(5000, 'Use 5000 characters or fewer.'),
   sourceNote: optionalTrimmedText(240, 'Use 240 characters or fewer.'),
   sourceUrl: safeWebUrl('Source URL'),
+  authorName: optionalTrimmedText(160, 'Use 160 characters or fewer.').optional().default(null),
+  publisherName: optionalTrimmedText(160, 'Use 160 characters or fewer.').optional().default(null),
   servings: optionalWholeNumber('Servings', 100),
   prepTimeMinutes: optionalWholeNumber('Preparation time', 1440),
   cookTimeMinutes: optionalWholeNumber('Cooking time', 1440),
