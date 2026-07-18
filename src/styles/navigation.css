@@ -148,6 +148,12 @@
   margin: 0;
 }
 
+@media (max-width: 63.999rem) {
+  .site-footer {
+    display: none;
+  }
+}
+
 @media (min-width: 64rem) {
   .site-header,
   .navigation-mobile {

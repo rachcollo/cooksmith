@@ -81,6 +81,9 @@ describe('recipe library experience', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
     const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
+    expect(within(createDialog).queryByLabelText('Recipe notes')).not.toBeInTheDocument()
+    expect(within(createDialog).queryByLabelText('Category')).not.toBeInTheDocument()
+    expect(within(createDialog).queryByLabelText('Source or website')).not.toBeInTheDocument()
     await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Pumpkin pasta')
     await userEvent.type(
       within(createDialog).getByLabelText(/Ingredients/),
@@ -135,7 +138,17 @@ describe('recipe library experience', () => {
     const repository: RecipeRepository = {
       list: async () => [
         recipe({}),
-        recipe({ id: 'recipe-2', name: 'Apple crumble', description: null }),
+        recipe({
+          id: 'recipe-2',
+          name: 'Apple crumble',
+          description: null,
+          notes: 'Family note',
+          category: 'Dessert',
+          tags: ['sweet'],
+          sourceNote: 'Family recipe',
+          sourceUrl: 'https://example.com/apple-crumble',
+          imageUrl: 'https://example.com/apple-crumble.jpg',
+        }),
       ],
       create: async () => recipe({ id: 'new' }),
       update,
@@ -155,6 +168,7 @@ describe('recipe library experience', () => {
       repository,
     )
     expect(await screen.findByRole('button', { name: 'Open Lentil soup recipe' })).toBeVisible()
+    expect(screen.queryByRole('dialog', { name: 'Lentil soup' })).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('Search recipes'), 'xyz')
     expect(screen.getByRole('heading', { name: 'No matching recipes' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
@@ -163,8 +177,17 @@ describe('recipe library experience', () => {
     await user.click(screen.getByRole('button', { name: 'Open Apple crumble recipe' }))
     const detailDialog = screen.getByRole('dialog', { name: 'Apple crumble' })
     expect(within(detailDialog).getByText('No instructions added yet.')).toBeVisible()
+    expect(within(detailDialog).queryByText('Family note')).not.toBeInTheDocument()
+    expect(within(detailDialog).queryByText('Dessert')).not.toBeInTheDocument()
+    expect(within(detailDialog).queryByText('Family recipe')).not.toBeInTheDocument()
     await user.click(within(detailDialog).getByRole('button', { name: 'Edit recipe' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Apple crumble' })
+    expect(within(dialog).queryByLabelText('Recipe notes')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Category')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Tags, separated by commas')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Source note')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Source URL')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Image URL')).not.toBeInTheDocument()
     await user.clear(within(dialog).getByLabelText('Recipe name'))
     await user.type(within(dialog).getByLabelText('Recipe name'), 'Apple crumble tray')
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
@@ -215,14 +238,11 @@ describe('recipe library experience', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add recipe' }))
     const createDialog = screen.getByRole('dialog', { name: 'Add a recipe' })
     await userEvent.type(within(createDialog).getByLabelText('Recipe name'), 'Broken')
-    await userEvent.type(
-      within(createDialog).getByLabelText(/Source or website/),
-      'ftp://example.invalid/recipe',
-    )
+    await userEvent.type(within(createDialog).getByLabelText(/Servings/), '101')
     await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
-    expect(await screen.findByText('Source URL must start with http:// or https://.')).toBeVisible()
+    expect(await screen.findByText('Use a smaller servings.')).toBeVisible()
 
-    await userEvent.clear(within(createDialog).getByLabelText(/Source or website/))
+    await userEvent.clear(within(createDialog).getByLabelText(/Servings/))
     await userEvent.click(within(createDialog).getByRole('button', { name: 'Save recipe' }))
     expect(await screen.findByText('Friendly save failure.')).toBeVisible()
     expect(list).toHaveBeenCalledWith(householdId)

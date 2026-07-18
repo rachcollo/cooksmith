@@ -47,17 +47,6 @@ function prepareInput(input: RecipeInput): RecipeInput {
   return prepareMultilineRecipeInput(input)
 }
 
-function tagsText(tags: string[]) {
-  return tags.join(', ')
-}
-
-function tagsFromText(value: string) {
-  return value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-}
-
 function recipesEqual(left: RecipeInput, right: RecipeInput): boolean {
   return JSON.stringify(prepareInput(left)) === JSON.stringify(prepareInput(right))
 }
@@ -162,16 +151,7 @@ export function RecipesPage() {
     const normalisedQuery = query.trim().toLocaleLowerCase()
     return recipes.filter((recipe) => recipe.name.toLocaleLowerCase().includes(normalisedQuery))
   }, [query, recipes])
-  const selectedRecipe =
-    recipes.find((recipe) => recipe.id === selectedId) ?? filteredRecipes[0] ?? null
-
-  function updateDraft(key: keyof RecipeInput, value: string) {
-    setDraft({ ...draft, [key]: value.trim() === '' ? null : value })
-  }
-
-  function updateEditDraft(key: keyof RecipeInput, value: string) {
-    setEditDraft({ ...editDraft, [key]: value.trim() === '' ? null : value })
-  }
+  const selectedRecipe = recipes.find((recipe) => recipe.id === selectedId) ?? null
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -315,26 +295,6 @@ export function RecipesPage() {
               }
             />
           </div>
-          <TextArea
-            label="Recipe notes"
-            optional
-            value={draft.notes ?? ''}
-            error={fieldErrors.notes}
-            onChange={(event) => updateDraft('notes', event.target.value)}
-          />
-          <TextField
-            label="Category"
-            optional
-            value={draft.category ?? ''}
-            error={fieldErrors.category}
-            onChange={(event) => updateDraft('category', event.target.value)}
-          />
-          <TextField
-            label="Tags, separated by commas"
-            optional
-            value={tagsText(draft.tags)}
-            onChange={(event) => setDraft({ ...draft, tags: tagsFromText(event.target.value) })}
-          />
           <label className="checkbox-row">
             <input
               type="checkbox"
@@ -343,14 +303,6 @@ export function RecipesPage() {
             />
             Favourite recipe
           </label>
-          <TextField
-            label="Source or website"
-            optional
-            hint="You can enter a website with or without https://."
-            value={draft.sourceUrl ?? ''}
-            error={fieldErrors.sourceUrl}
-            onChange={(event) => updateDraft('sourceUrl', event.target.value)}
-          />
           {fieldErrors.form ? <p className="form-error">{fieldErrors.form}</p> : null}
           <div className="dialog-actions">
             <Button
@@ -398,7 +350,7 @@ export function RecipesPage() {
           </div>
         </Panel>
       ) : (
-        <div className="pantry-grid">
+        <div className="pantry-grid recipe-library-grid">
           {filteredRecipes.map((recipe) => (
             <button
               aria-label={`Open ${recipe.name} recipe`}
@@ -474,18 +426,7 @@ export function RecipesPage() {
                   : 'Not set'}
               </dd>
             </dl>
-            {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
-            {selectedRecipe.category ? <p>Category: {selectedRecipe.category}</p> : null}
-            {selectedRecipe.tags.length > 0 ? <p>Tags: {selectedRecipe.tags.join(', ')}</p> : null}
             {selectedRecipe.favourite ? <p>Favourite recipe</p> : null}
-            {selectedRecipe.sourceNote ? <p>Source: {selectedRecipe.sourceNote}</p> : null}
-            {selectedRecipe.sourceUrl ? (
-              <p>
-                <a href={selectedRecipe.sourceUrl} target="_blank" rel="noreferrer">
-                  Open source link
-                </a>
-              </p>
-            ) : null}
             <div className="pantry-actions">
               <Button type="button" variant="secondary" onClick={() => openEdit(selectedRecipe)}>
                 Edit recipe
@@ -520,31 +461,6 @@ export function RecipesPage() {
               onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
             />
             <RecipeMultilineEditor draft={editDraft} errors={editErrors} setDraft={setEditDraft} />
-            <TextArea
-              label="Recipe notes"
-              optional
-              value={editDraft.notes ?? ''}
-              error={editErrors.notes}
-              onChange={(event) => updateEditDraft('notes', event.target.value)}
-            />
-            <TextField
-              label="Category"
-              optional
-              value={editDraft.category ?? ''}
-              error={editErrors.category}
-              onChange={(event) => updateEditDraft('category', event.target.value)}
-            />
-            <TextField
-              label="Tags, separated by commas"
-              optional
-              value={tagsText(editDraft.tags)}
-              onChange={(event) =>
-                setEditDraft({
-                  ...editDraft,
-                  tags: tagsFromText(event.target.value),
-                })
-              }
-            />
             <label className="checkbox-row">
               <input
                 type="checkbox"
@@ -558,20 +474,6 @@ export function RecipesPage() {
               />
               Favourite recipe
             </label>
-            <TextField
-              label="Source note"
-              optional
-              value={editDraft.sourceNote ?? ''}
-              error={editErrors.sourceNote}
-              onChange={(event) => updateEditDraft('sourceNote', event.target.value)}
-            />
-            <TextField
-              label="Source URL"
-              optional
-              value={editDraft.sourceUrl ?? ''}
-              error={editErrors.sourceUrl}
-              onChange={(event) => updateEditDraft('sourceUrl', event.target.value)}
-            />
             <TextField
               label="Servings"
               inputMode="numeric"
@@ -612,13 +514,6 @@ export function RecipesPage() {
                     event.target.value.trim() === '' ? null : Number(event.target.value),
                 })
               }
-            />
-            <TextField
-              label="Image URL"
-              optional
-              value={editDraft.imageUrl ?? ''}
-              error={editErrors.imageUrl}
-              onChange={(event) => updateEditDraft('imageUrl', event.target.value)}
             />
             {editErrors.form ? <p className="form-error">{editErrors.form}</p> : null}
             <div className="dialog-actions">
