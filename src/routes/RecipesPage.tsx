@@ -162,8 +162,7 @@ export function RecipesPage() {
     const normalisedQuery = query.trim().toLocaleLowerCase()
     return recipes.filter((recipe) => recipe.name.toLocaleLowerCase().includes(normalisedQuery))
   }, [query, recipes])
-  const selectedRecipe =
-    recipes.find((recipe) => recipe.id === selectedId) ?? filteredRecipes[0] ?? null
+  const selectedRecipe = recipes.find((recipe) => recipe.id === selectedId) ?? null
 
   function updateDraft(key: keyof RecipeInput, value: string) {
     setDraft({ ...draft, [key]: value.trim() === '' ? null : value })
@@ -398,7 +397,7 @@ export function RecipesPage() {
           </div>
         </Panel>
       ) : (
-        <div className="pantry-grid">
+        <div className="pantry-grid recipe-library-grid">
           {filteredRecipes.map((recipe) => (
             <button
               aria-label={`Open ${recipe.name} recipe`}
