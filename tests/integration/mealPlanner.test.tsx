@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
+import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
 import type { PlannedMeal } from '../../src/domain/meal-plans/types'
-import { renderApp } from '../renderApp'
+import { defaultRecipeRepository, renderApp } from '../renderApp'
 
 const householdId = '20000000-0000-4000-8000-000000000001'
 
@@ -113,6 +114,66 @@ describe('weekly dinner planner', () => {
 
     await user.click(screen.getByRole('button', { name: 'Remove Updated pasta' }))
     await waitFor(() => expect(remove).toHaveBeenCalledWith('existing-dinner'))
+  })
+
+  it('opens linked recipe details from the meal card and edits only planner metadata', async () => {
+    const linkedMeal = meal({
+      id: 'linked-dinner',
+      title: 'Lentil soup',
+      recipeId: 'recipe-1',
+      linkedRecipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
+      recipeState: { kind: 'active', recipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null } },
+    })
+    const update = vi.fn(async (id, input) =>
+      meal({ id, ...input }),
+    ) satisfies PlannedMealRepository['update']
+    const repository: PlannedMealRepository = {
+      listWeek: async () => [linkedMeal],
+      create: async (_householdId, input) => meal({ id: 'created-dinner', ...input }),
+      update,
+      remove: async () => undefined,
+    }
+    const recipeUpdate = vi.fn(defaultRecipeRepository.update) satisfies RecipeRepository['update']
+    const recipeRepository: RecipeRepository = {
+      ...defaultRecipeRepository,
+      update: recipeUpdate,
+    }
+    const user = userEvent.setup()
+
+    renderApp(
+      '/plan',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      recipeRepository,
+    )
+
+    await user.click(await screen.findByRole('button', { name: /Lentil soup/ }))
+    const recipeDialog = await screen.findByRole('dialog', { name: 'Lentil soup' })
+    expect(within(recipeDialog).getByText('1 cup lentils')).toBeVisible()
+    await user.click(within(recipeDialog).getByRole('button', { name: 'Back to planner' }))
+
+    await user.click(screen.getByRole('button', { name: 'Edit planned dinner Lentil soup' }))
+    await user.clear(screen.getByLabelText('Date'))
+    await user.type(screen.getByLabelText('Date'), '2026-07-18')
+    await user.type(screen.getByLabelText('Notes'), 'Use the big pot')
+    await user.click(screen.getByRole('button', { name: 'Save dinner' }))
+
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(
+        'linked-dinner',
+        expect.objectContaining({
+          mealDate: '2026-07-18',
+          notes: 'Use the big pot',
+          recipeId: 'recipe-1',
+        }),
+      ),
+    )
+    expect(recipeUpdate).not.toHaveBeenCalled()
   })
 
   it('shows loading and a compact failure message', async () => {
