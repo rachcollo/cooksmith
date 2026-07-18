@@ -1,0 +1,127 @@
+name: Jira sync
+
+# Best-effort Jira evidence and status sync. Never required to pass and never
+# blocks a merge: Jira availability is not a build-validity signal. Requires
+# JIRA_BASE_URL, JIRA_EMAIL and JIRA_API_TOKEN repository secrets; the sync
+# script skips cleanly when they are absent.
+
+on:
+  create:
+  pull_request:
+    types: [opened, ready_for_review, closed]
+    branches: [main]
+  workflow_run:
+    workflows: [Cooksmith quality]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  branch-created:
+    name: Branch created
+    if: github.event_name == 'create' && github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Sync branch creation to Jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          BRANCH="${{ github.event.ref }}"
+          KEY=$(echo "$BRANCH" | grep -ioE 'cs-[0-9]+' | head -n1 | tr '[:lower:]' '[:upper:]')
+          if [ -z "$KEY" ]; then
+            echo "No Jira key found in branch name '$BRANCH'; skipping."
+            exit 0
+          fi
+          node scripts/engineering/jira-sync.mjs branch-created \
+            --key "$KEY" \
+            --branch "$BRANCH" \
+            --actor "${{ github.actor }}" \
+            --sha "${{ github.sha }}"
+
+  pr-opened:
+    name: Pull request opened
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Sync PR opened to Jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          KEY=$(echo "$TITLE" | grep -ioE 'cs-[0-9]+' | head -n1 | tr '[:lower:]' '[:upper:]')
+          if [ -z "$KEY" ]; then
+            echo "No Jira key found in PR title '$TITLE'; skipping."
+            exit 0
+          fi
+          node scripts/engineering/jira-sync.mjs pr-opened \
+            --key "$KEY" \
+            --pr-url "${{ github.event.pull_request.html_url }}"
+
+  pr-merged:
+    name: Pull request merged
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Sync PR merge evidence to Jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          KEY=$(echo "$TITLE" | grep -ioE 'cs-[0-9]+' | head -n1 | tr '[:lower:]' '[:upper:]')
+          if [ -z "$KEY" ]; then
+            echo "No Jira key found in PR title '$TITLE'; skipping."
+            exit 0
+          fi
+          node scripts/engineering/jira-sync.mjs pr-merged \
+            --key "$KEY" \
+            --pr-url "${{ github.event.pull_request.html_url }}" \
+            --merge-commit "${{ github.event.pull_request.merge_commit_sha }}"
+
+  ci-failure:
+    name: Required checks failed
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Sync CI failure to Jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          TITLE="${{ github.event.workflow_run.display_title }}"
+          KEY=$(echo "$TITLE" | grep -ioE 'cs-[0-9]+' | head -n1 | tr '[:lower:]' '[:upper:]')
+          if [ -z "$KEY" ]; then
+            echo "No Jira key found in workflow run title '$TITLE'; skipping."
+            exit 0
+          fi
+          node scripts/engineering/jira-sync.mjs ci-failure \
+            --key "$KEY" \
+            --workflow-name "${{ github.event.workflow_run.name }}" \
+            --run-url "${{ github.event.workflow_run.html_url }}"

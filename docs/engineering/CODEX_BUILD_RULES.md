@@ -27,7 +27,8 @@ Before every task, read:
 - [Testing standards](TESTING_STANDARDS.md);
 - [Release checklist](RELEASE_CHECKLIST.md);
 - [Database standards](DATABASE_STANDARDS.md) for any database, Supabase, Auth, RLS or generated-type work;
-- the active milestone dependencies, accepted reports and relevant ADRs.
+- the active milestone dependencies, accepted reports and relevant ADRs;
+- the [AI engineering operating system](../operations/AI_ENGINEERING_OPERATING_SYSTEM.md) for how Jira, GitHub, CI, Vercel and Supabase releases coordinate.
 
 Inspect the repository before coding. Reuse current conventions where they satisfy the approved architecture. Do not copy prototype code merely because it exists.
 
@@ -124,7 +125,7 @@ Missing GitHub CLI, publishing credentials, Docker, VoiceOver or a physical devi
 
 Codex must not claim that a branch was pushed, a remote was updated, a pull request was opened, a pull request is conflict-free, a pull request targets `main`, or checks are running or passed unless those facts are verified. A `make_pr` or equivalent metadata tool does not count as a real pull request unless it returns a public GitHub pull-request URL or PR number. If the environment lacks a Git remote, `gh` context, connector write access or network access, report the limitation precisely and do not imply the remote action occurred.
 
-Every package pull request must target `main` unless explicitly instructed otherwise, use a branch created from the verified baseline, remain draft until required automated and hosted validation is complete, avoid unrelated files, include the exact scope, include actual validation results, identify unrun checks, and avoid merging automatically unless explicitly requested. Before handover, verify base branch, head branch, draft state, mergeability, changed files, CI status, Vercel status and PR URL when the remote is accessible.
+Every package pull request must target `main` unless explicitly instructed otherwise, use a branch created from the verified baseline, remain draft until required automated and hosted validation is complete, avoid unrelated files, include the exact scope, include actual validation results, identify unrun checks, and avoid merging automatically unless explicitly requested. The **PR governance** check enforces a `CS-###` Jira key in the PR title matching the branch name, a matching engineering package, and explicit migration/Edge Function declarations; do not open a pull request that would fail it. Before handover, verify base branch, head branch, draft state, mergeability, changed files, CI status, Vercel status and PR URL when the remote is accessible.
 
 Every task must finish with an evidence-based completion report containing:
 

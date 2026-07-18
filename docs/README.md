@@ -12,6 +12,11 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 |        4 | [Technical Architecture Specification](engineering/Cooksmith_Technical_Architecture_Specification.md)                       | Defines the approved target architecture      | Available         |
 |        5 | [Implementation Roadmap](engineering/Cooksmith_Implementation_Roadmap.md)                                                   | Defines milestone sequence and delivery scope | Available         |
 
+## Operations
+
+- AI engineering operating system: [Lifecycle, automation and evidence model](operations/AI_ENGINEERING_OPERATING_SYSTEM.md)
+- Operator guide: [Plain-language delivery guide](operations/OPERATOR_GUIDE.md)
+
 ## Engineering governance
 
 - Contributor rules: [`AGENTS.md`](../AGENTS.md)
