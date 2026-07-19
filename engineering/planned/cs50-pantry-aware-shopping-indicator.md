@@ -14,7 +14,7 @@
 
 ## Product Outcome
 
-While reviewing the household shopping list, a user can see a small **May already have** label when an active pantry item is a strong, explainable match for something on the list. This prompts a quick check before buying without pretending Cooksmith knows the pantry quantity or suitability with certainty.
+While reviewing the household shopping list, a user can recognise a possible pantry match through a subtly different card background and a compact **?** control, without adding persistent explanatory text to every row. Hovering, focusing or pressing the **?** reveals **“Check your pantry — you might already have this item, and we hate wasting food and money!”** This prompts a quick check before buying without pretending Cooksmith knows the pantry quantity or suitability with certainty.
 
 The feature supports **Reduce food waste**, **Reduce grocery spend**, **Reduce mental load** and **AI works quietly in the background** without requiring AI. It removes the effort of manually cross-checking two screens while protecting household trust: the indicator offers guidance only and never mutates the shopping list or pantry.
 
@@ -38,10 +38,10 @@ If the package, Jira or current `main` materially disagree, stop and align the c
 
 - Compare active shopping-list items with active pantry items in the same household.
 - Use deterministic, versioned and explainable name matching.
-- Show an unobtrusive **May already have** label only for strong matches.
+- For strong matches, give the shopping-item card a subtle alternate background and show a compact visible **?** control; do not add a persistent **May already have** label.
 - Apply the same guidance to manual and meal-generated shopping items.
 - Refresh the indicator after relevant shopping or pantry mutations.
-- Provide progressively disclosed match context sufficient for the user to verify the suggestion.
+- Reveal the approved pantry-check message from the **?** on pointer hover, keyboard focus and press/tap.
 - Preserve existing shopping and pantry behaviour, authorisation and mobile layout.
 - Cover positive, negative, ambiguous and cross-household cases.
 
@@ -86,31 +86,33 @@ Initial matching must favour precision over recall so uncertain similarities do 
 - [ ] Matching returns an explicit state such as `match`, `no-match` or `ambiguous`, rather than a hidden confidence number.
 - [ ] The same inputs and normalisation version always produce the same result.
 
-### FR-3 — Present guidance without overstating certainty
+### FR-3 — Present compact guidance without overstating certainty
 
-A strong pantry match adds a small **May already have** label to the shopping item.
+A strong pantry match gives the shopping-item card a subtle alternate background and adds a compact visible **?** control. It does not add persistent explanatory text to the row.
 
 **Acceptance criteria**
 
-- [ ] The visible wording is exactly **May already have** unless product review approves a clearer equivalent.
-- [ ] The label does not state “In pantry”, “Enough in pantry” or another definitive claim.
-- [ ] No-match and ambiguous results add no label or unnecessary placeholder.
-- [ ] The label is textually available to screen readers and does not rely on colour or an icon.
+- [ ] The matched card uses a calm, subtly different background that preserves text and control contrast in all supported themes and states.
+- [ ] A visible **?** control appears on the matched card; no persistent **May already have** label is shown.
+- [ ] No-match and ambiguous results leave the existing card background unchanged and add no **?** control.
+- [ ] The background is a secondary cue only; match meaning does not rely on colour.
 - [ ] The shopping item's primary name, quantity, source and completion state remain visually dominant.
-- [ ] The label does not obstruct edit, complete, restore or remove actions.
+- [ ] The treatment does not obstruct edit, complete, restore or remove actions and creates no horizontal overflow.
 
-### FR-4 — Let the user verify the suggestion
+### FR-4 — Explain the suggestion on hover, focus and press
 
-The user must be able to inspect why Cooksmith suggested a pantry check without navigating through a complex workflow.
+The user can reveal a short explanation from the **?** without navigating away or permanently expanding the row.
 
 **Acceptance criteria**
 
-- [ ] Activating or focusing the guidance reveals the matched pantry item name and available quantity/unit only when those fields are already present and authorised.
-- [ ] Missing quantity is described honestly, without inventing “1” or implying sufficient stock.
-- [ ] Multiple strong pantry candidates are disclosed without selecting an arbitrary quantity as authoritative.
-- [ ] Match detail is progressively disclosed and does not permanently expand every shopping row on mobile.
-- [ ] Closing the detail returns focus predictably to the initiating control.
-- [ ] Match context does not expose private notes or unrelated pantry metadata.
+- [ ] Pointer hover, keyboard focus and press/tap on the **?** reveal exactly: **“Check your pantry — you might already have this item, and we hate wasting food and money!”**
+- [ ] The **?** is a semantic interactive control with an item-specific accessible name such as **“Why should I check my pantry for milk?”**
+- [ ] The explanatory message is programmatically associated with the control and available to assistive technology.
+- [ ] Touch users can open and dismiss the message; implementation is not hover-only.
+- [ ] Escape and outside press dismiss the message where consistent with the chosen accessible popover/tooltip pattern.
+- [ ] Closing a press/tap-opened message returns focus predictably to the initiating control when focus moved.
+- [ ] Only one message is open at a time, it layers above adjacent rows, and it remains readable without viewport overflow at 320 CSS pixels.
+- [ ] Opening or closing the message does not expose pantry notes, quantities or unrelated metadata.
 
 ### FR-5 — Preserve all shopping and pantry state
 
@@ -153,11 +155,11 @@ Pantry matching is helpful enhancement, not a prerequisite for shopping-list use
 ## UX and Interaction Requirements
 
 - Keep the shopping item name and quantity as the primary content.
-- Use a quiet secondary badge or text treatment that fits the compact mobile row.
-- If the label opens detail, use an existing accessible popover, disclosure or dialog pattern appropriate to mobile; do not create a hover-only tooltip.
+- Use a quiet alternate card background plus compact **?** control that fits the mobile row; do not add persistent explanatory copy.
+- Use an existing accessible tooltip/popover pattern that supports pointer hover and keyboard focus as well as press/tap on touch devices; do not create a hover-only tooltip.
 - Maintain at least a 44 by 44 CSS-pixel target for any interactive disclosure control.
 - Do not add a confirmation, mandatory pantry check or extra field to shopping quick-add.
-- Announce match availability at most once when a row meaningfully changes; avoid repeated live-region noise during list refresh.
+- Give the **?** an item-specific accessible name and programmatically associate the explanatory message; avoid repeated live-region noise during list refresh.
 - Preserve visible focus, keyboard order, reduced-motion preferences and layouts without horizontal overflow at 320 CSS pixels.
 - Completed shopping items may retain the label if existing completed-row design can present it calmly; do not alter completion semantics solely for this feature.
 
@@ -231,9 +233,9 @@ The product owner may refine this table before Ready. The build agent must not l
 
 ## Accessibility
 
-- **May already have** is exposed as meaningful text associated with the correct shopping item.
-- Any disclosure control has a contextual accessible name such as “Check pantry match for milk”.
-- The label and match state do not rely on colour, position or an icon.
+- The visible **?** is a semantic control with a contextual accessible name such as “Why should I check my pantry for milk?”.
+- The explanatory message is programmatically associated with the correct control and available to screen readers.
+- The card background is not the sole match cue; meaning does not rely on colour, position or the **?** glyph alone.
 - Keyboard users can open and close details, and focus returns predictably.
 - Screen readers receive a concise update only when match state changes.
 - Zoom, text resizing and 320 CSS-pixel layouts do not clip the label or shopping controls.
@@ -253,10 +255,11 @@ The product owner may refine this table before Ready. The build agent must not l
 
 ### Component tests
 
-- Label shown for a strong match and absent for no-match/ambiguous.
-- Accessible association with the correct shopping item.
-- Match detail shows only approved context.
-- Missing quantity language remains uncertain.
+- Alternate card background and **?** shown for a strong match and absent for no-match/ambiguous.
+- No persistent **May already have** text appears in the shopping row.
+- Pointer hover, keyboard focus and press/tap reveal the exact approved message.
+- Accessible name and message association identify the correct shopping item.
+- Escape/outside-press dismissal, focus behaviour and single-open-message behaviour are correct.
 - Existing edit, complete, restore and remove controls remain functional.
 - Loading and matching failure leave the row usable.
 - Keyboard focus and live-region behaviour.
@@ -281,10 +284,10 @@ The product owner may refine this table before Ready. The build agent must not l
 
 ### End-to-end and responsive tests
 
-- Strong match label on a manual item.
-- Strong match label on a generated item.
-- Ambiguous and unrelated items remain unlabelled.
-- Inspect match context and continue normal shopping actions.
+- Strong-match card treatment and **?** on a manual item.
+- Strong-match card treatment and **?** on a generated item.
+- Ambiguous and unrelated items retain their normal card treatment and have no **?**.
+- Reveal and dismiss the exact message using pointer, keyboard and touch, then continue normal shopping actions.
 - Pantry mutation updates the shopping screen without refresh.
 - Switch between two synthetic households without leakage.
 - Keyboard-only operation, axe scan and no overflow at 320, 375 and desktop widths.
@@ -294,8 +297,8 @@ The product owner may refine this table before Ready. The build agent must not l
 Using two synthetic households with deliberately overlapping item names:
 
 1. Open the exact Vercel Preview URL on mobile and desktop.
-2. Add “Milk” to Household A's pantry and shopping list; confirm **May already have**.
-3. Inspect the match and confirm only approved name/quantity context appears.
+2. Add “Milk” to Household A's pantry and shopping list; confirm the subtle alternate card background and visible **?**, with no persistent explanatory label.
+3. Hover, focus and press/tap the **?**; confirm the exact approved message appears, dismisses correctly and is available to assistive technology.
 4. Add ambiguous examples and verify they receive no label.
 5. Verify manual and CS-22-generated items behave consistently.
 6. Edit, archive, restore and remove the pantry match; confirm indicators refresh.
@@ -324,8 +327,9 @@ Record the Preview URL, browser/device, synthetic scenarios and actual results i
 
 ## Definition of Done
 
-- [ ] Deterministic strong matches show **May already have**.
-- [ ] No-match and ambiguous items remain unlabelled.
+- [ ] Deterministic strong matches use the alternate card background and visible **?**, without persistent explanatory text.
+- [ ] Hover, focus and press/tap reveal the exact approved pantry-check message accessibly.
+- [ ] No-match and ambiguous items retain the normal card treatment and have no **?**.
 - [ ] Guidance is read-only and never mutates shopping or pantry state.
 - [ ] Manual and CS-22-generated items share one matching contract.
 - [ ] Refresh, failure and household-switch behaviour are protected by tests.
@@ -342,7 +346,7 @@ Record the Preview URL, browser/device, synthetic scenarios and actual results i
 - **Expected migration impact:** None.
 - **Expected Edge Function impact:** None.
 - **Production deployment:** Merging implementation to `main` deploys the private MVP application. No Production database release is expected.
-- **Rollback:** Revert or disable the derived label/query path. Because the feature writes no match state, rollback does not require data repair.
+- **Rollback:** Revert or disable the derived card-treatment, **?** and matching-query path. Because the feature writes no match state, rollback does not require data repair.
 - **Dependencies:** No new dependency is expected.
 - **Recurring cost:** A$0 per month / A$0 per year.
 
