@@ -43,6 +43,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - v2 design system and routing: [Design, routing and navigation](engineering/v2/design-system-and-routing.md)
 - v2 core household schema: [Core household schema](engineering/v2/core-household-schema.md)
 - v2 authorisation and RLS: [Authorisation and row level security](engineering/v2/authorisation-and-row-level-security.md)
+- v2 shopping list foundation: [Shopping list foundation](engineering/v2/shopping-list-foundation.md)
 - v2 onboarding: [User onboarding and household bootstrap](engineering/v2/onboarding.md)
 - v2 household invitations: [Household invitations and member management](engineering/v2/household-invitations.md)
 - v2 pantry foundation: [Pantry foundation](engineering/v2/pantry-foundation.md)

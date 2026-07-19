@@ -19,6 +19,9 @@ import { RecipeRepositoryContext } from '../recipes/recipeContext'
 import type { PlannedMealRepository } from '../../application/meal-plans/plannedMealRepository'
 import { PlannedMealProvider } from '../meal-plans/PlannedMealProvider'
 import { PlannedMealRepositoryContext } from '../meal-plans/plannedMealContext'
+import type { ShoppingRepository } from '../../application/shopping/shoppingRepository'
+import { ShoppingProvider } from '../shopping/ShoppingProvider'
+import { ShoppingRepositoryContext } from '../shopping/shoppingContext'
 
 interface AppProvidersProps {
   children: ReactNode
@@ -30,6 +33,7 @@ interface AppProvidersProps {
   pantryRepository?: PantryRepository
   recipeRepository?: RecipeRepository
   plannedMealRepository?: PlannedMealRepository
+  shoppingRepository?: ShoppingRepository
 }
 
 export function AppProviders({
@@ -42,6 +46,7 @@ export function AppProviders({
   pantryRepository,
   recipeRepository,
   plannedMealRepository,
+  shoppingRepository,
 }: AppProvidersProps) {
   return (
     <AppConfigContext.Provider value={config}>
@@ -54,7 +59,11 @@ export function AppProviders({
                   <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
                     <PlannedMealProvider>
                       <RecipeRepositoryContext.Provider value={recipeRepository}>
-                        <RecipeProvider>{children}</RecipeProvider>
+                        <RecipeProvider>
+                          <ShoppingRepositoryContext.Provider value={shoppingRepository}>
+                            <ShoppingProvider>{children}</ShoppingProvider>
+                          </ShoppingRepositoryContext.Provider>
+                        </RecipeProvider>
                       </RecipeRepositoryContext.Provider>
                     </PlannedMealProvider>
                   </PlannedMealRepositoryContext.Provider>

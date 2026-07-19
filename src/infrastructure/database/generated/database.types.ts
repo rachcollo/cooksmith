@@ -769,6 +769,110 @@ export type Database = {
           },
         ]
       }
+      shopping_list_items: {
+        Row: {
+          category: Database['cooksmith']['Enums']['shopping_item_category']
+          completed: boolean
+          created_at: string
+          created_by: string | null
+          display_name: string
+          household_id: string
+          id: string
+          manual: boolean
+          normalised_name: string | null
+          position: number
+          quantity: number | null
+          shopping_list_id: string
+          unit: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: Database['cooksmith']['Enums']['shopping_item_category']
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          household_id: string
+          id?: string
+          manual?: boolean
+          normalised_name?: string | null
+          position?: number
+          quantity?: number | null
+          shopping_list_id: string
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: Database['cooksmith']['Enums']['shopping_item_category']
+          completed?: boolean
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          household_id?: string
+          id?: string
+          manual?: boolean
+          normalised_name?: string | null
+          position?: number
+          quantity?: number | null
+          shopping_list_id?: string
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_list_items_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'shopping_list_items_list_household_fkey'
+            columns: ['shopping_list_id', 'household_id']
+            isOneToOne: false
+            referencedRelation: 'shopping_lists'
+            referencedColumns: ['id', 'household_id']
+          },
+        ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_lists_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -862,6 +966,15 @@ export type Database = {
         | 'other'
       pantry_storage_location: 'pantry' | 'fridge' | 'freezer'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
+      shopping_item_category:
+        | 'produce'
+        | 'meat_and_seafood'
+        | 'dairy_and_eggs'
+        | 'bakery'
+        | 'pantry'
+        | 'frozen'
+        | 'household'
+        | 'other'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1008,6 +1121,16 @@ export const Constants = {
       ],
       pantry_storage_location: ['pantry', 'fridge', 'freezer'],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
+      shopping_item_category: [
+        'produce',
+        'meat_and_seafood',
+        'dairy_and_eggs',
+        'bakery',
+        'pantry',
+        'frozen',
+        'household',
+        'other',
+      ],
     },
   },
 } as const

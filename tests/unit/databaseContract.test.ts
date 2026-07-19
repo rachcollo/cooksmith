@@ -27,6 +27,8 @@ describe('generated database API contract', () => {
       | 'profiles'
       | 'recipe_ingredients'
       | 'recipe_steps'
+      | 'shopping_list_items'
+      | 'shopping_lists'
     >()
   })
 
@@ -50,6 +52,7 @@ describe('generated database API contract', () => {
     expect(Constants.cooksmith.Enums.pantry_item_category).toContain('grains_rice_and_pasta')
     expect(Constants.cooksmith.Enums.membership_status).toEqual(['active', 'inactive'])
     expect(Constants.cooksmith.Enums.meal_type).toEqual(['breakfast', 'lunch', 'dinner'])
+    expect(Constants.cooksmith.Enums.shopping_item_category).toContain('produce')
     expect(Constants.cooksmith.Enums.imported_recipe_visibility).toEqual(['public', 'private'])
     expect(Constants.cooksmith.Enums.application_role).toEqual([
       'admin',
