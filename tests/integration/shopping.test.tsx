@@ -48,7 +48,7 @@ function renderShopping(repository: ShoppingRepository) {
 }
 
 describe('shopping list foundation', () => {
-  it('adds a household item and groups it by grocery category', async () => {
+  it('quickly adds a household item with safe defaults for hidden fields', async () => {
     const create = vi.fn(async (nextHouseholdId, input) => ({
       id: 'shopping-apples',
       householdId: nextHouseholdId,
@@ -68,19 +68,20 @@ describe('shopping list foundation', () => {
     renderShopping(repository)
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Shopping' })).toBeVisible()
+    expect(screen.queryByLabelText('Unit')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Category')).not.toBeInTheDocument()
     await user.type(screen.getByLabelText('Item name'), 'Apples')
     await user.type(screen.getByLabelText(/^Quantity/), '6')
-    await user.selectOptions(screen.getByLabelText('Category'), 'produce')
     await user.click(screen.getByRole('button', { name: 'Add item' }))
 
     expect(create).toHaveBeenCalledWith(householdId, {
       name: 'Apples',
       quantity: 6,
       unit: null,
-      category: 'produce',
+      category: 'other',
     })
     expect(await screen.findByText('Apples')).toBeVisible()
-    expect(screen.getByRole('heading', { name: 'Fruit and vegetables' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Other' })).toBeVisible()
   })
 
   it('persists completion and lets a household member restore an item', async () => {
