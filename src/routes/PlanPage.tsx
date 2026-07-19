@@ -246,7 +246,7 @@ export function PlanPage() {
         if (linkedRecipe) {
           const existingItems = await shoppingRepository.list(householdId)
           const additions = buildPlanAdditions([saved], [linkedRecipe], existingItems).additions
-          await shoppingRepository.createFromPlan(householdId, additions)
+          await shoppingRepository.createFromPlan?.(householdId, additions)
         }
       }
 
