@@ -8,4 +8,8 @@ RLS grants list-container reads and item CRUD only to active household members. 
 
 The UI groups needed items by grocery category and moves completed items to a separate section. Completion is reversible. Duplicate names are rejected case-insensitively within a household.
 
-This foundation excludes ingredient aggregation, Pantry reconciliation, multiple lists, retailer export, reminders, scanning and AI.
+This foundation excludes Pantry reconciliation, multiple lists, retailer export, reminders, scanning and AI.
+
+## Generation from the meal plan (CS-22)
+
+The Shopping page offers "Add this week's meals". It reads this week's planned meals and the recipe library through the existing repositories, flattens ingredients from linked recipes (structured rows first, multiline text as fallback), merges duplicate names case-insensitively (summing numeric quantities only when units match), skips names already on the list, and assigns a deterministic keyword-based grocery category. A preview dialog names every addition and requires confirmation before a single batch insert records the items with `manual = false` provenance. Generated items behave exactly like manual items afterwards. There is no schema change: the CS-21 constraints, triggers and RLS govern the insert path. Unit conversion, pantry-aware subtraction, fortnight ranges and AI proposals remain out of scope.

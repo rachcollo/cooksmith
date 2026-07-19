@@ -2,8 +2,10 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
+import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
+import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
 import type { ShoppingRepository } from '../../src/application/shopping/shoppingRepository'
-import type { ShoppingItem } from '../../src/domain/shopping/types'
+import type { ShoppingItem, ShoppingItemInput } from '../../src/domain/shopping/types'
 import {
   authenticatedTestAuthState,
   authenticatedTestClient,
@@ -11,6 +13,7 @@ import {
   defaultPantryRepository,
   defaultPlannedMealRepository,
   defaultRecipeRepository,
+  defaultShoppingRepository,
   ownerHouseholdPeopleRepository,
   renderApp,
 } from '../renderApp'
@@ -32,7 +35,11 @@ function item(overrides: Partial<ShoppingItem> = {}): ShoppingItem {
   }
 }
 
-function renderShopping(repository: ShoppingRepository) {
+function renderShopping(
+  repository: ShoppingRepository,
+  plannedMealRepository: PlannedMealRepository = defaultPlannedMealRepository,
+  recipeRepository: RecipeRepository = defaultRecipeRepository,
+) {
   return renderApp(
     '/shopping',
     undefined,
@@ -40,9 +47,9 @@ function renderShopping(repository: ShoppingRepository) {
     completedOnboardingRepository,
     ownerHouseholdPeopleRepository,
     defaultPantryRepository,
-    defaultPlannedMealRepository,
+    plannedMealRepository,
     authenticatedTestAuthState,
-    defaultRecipeRepository,
+    recipeRepository,
     repository,
   )
 }
@@ -60,6 +67,7 @@ describe('shopping list foundation', () => {
     const repository: ShoppingRepository = {
       list: async () => [item()],
       create,
+      createFromPlan: defaultShoppingRepository.createFromPlan,
       update: async () => item(),
       setCompleted: async () => item(),
       remove: async () => undefined,
@@ -88,6 +96,7 @@ describe('shopping list foundation', () => {
     const repository: ShoppingRepository = {
       list: async () => [item()],
       create: async () => item(),
+      createFromPlan: defaultShoppingRepository.createFromPlan,
       update: async () => item(),
       setCompleted,
       remove: async () => undefined,
@@ -110,6 +119,7 @@ describe('shopping list foundation', () => {
     const repository: ShoppingRepository = {
       list: async () => [item()],
       create: async () => item(),
+      createFromPlan: defaultShoppingRepository.createFromPlan,
       update,
       setCompleted: async () => item(),
       remove,
@@ -131,5 +141,112 @@ describe('shopping list foundation', () => {
     await user.click(screen.getByRole('button', { name: 'Remove Oat milk' }))
     expect(remove).toHaveBeenCalledWith('shopping-milk')
     expect(await screen.findByRole('heading', { name: 'Your list is ready' })).toBeVisible()
+  })
+
+  it("previews and adds this week's linked recipe ingredients to the list", async () => {
+    const createFromPlan = vi.fn(async (nextHouseholdId: string, inputs: ShoppingItemInput[]) =>
+      inputs.map((input, index) => ({
+        id: `generated-${index + 1}`,
+        householdId: nextHouseholdId,
+        ...input,
+        completed: false,
+        position: index + 1,
+        updatedAt: '2026-01-01T00:00:00Z',
+      })),
+    ) satisfies ShoppingRepository['createFromPlan']
+    const repository: ShoppingRepository = {
+      list: async () => [item()],
+      create: async () => item(),
+      createFromPlan,
+      update: async () => item(),
+      setCompleted: async () => item(),
+      remove: async () => undefined,
+    }
+    const plannedMealRepository: PlannedMealRepository = {
+      ...defaultPlannedMealRepository,
+      listWeek: async (nextHouseholdId, weekStart) => [
+        {
+          id: 'meal-1',
+          householdId: nextHouseholdId,
+          mealDate: weekStart,
+          mealType: 'dinner',
+          title: 'Lentil soup',
+          notes: null,
+          recipeId: 'recipe-1',
+          linkedRecipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
+          recipeState: {
+            kind: 'active',
+            recipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
+          },
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+    }
+    const recipeRepository: RecipeRepository = {
+      ...defaultRecipeRepository,
+      list: async (nextHouseholdId) => [
+        {
+          id: 'recipe-1',
+          householdId: nextHouseholdId,
+          name: 'Lentil soup',
+          ingredients: null,
+          description: null,
+          sourceNote: null,
+          sourceUrl: null,
+          servings: 4,
+          prepTimeMinutes: 10,
+          cookTimeMinutes: 30,
+          imageUrl: null,
+          notes: null,
+          category: null,
+          tags: [],
+          favourite: false,
+          ingredientRows: [
+            {
+              id: 'ingredient-1',
+              name: 'Brown lentils',
+              quantity: '1',
+              unit: 'cup',
+              preparation: null,
+              originalLineText: '1 cup brown lentils',
+              parserVersion: 'recipe-content-v1',
+              derivationStatus: 'derived',
+              position: 1,
+            },
+            {
+              id: 'ingredient-2',
+              name: 'Milk',
+              quantity: null,
+              unit: null,
+              preparation: null,
+              originalLineText: 'Milk',
+              parserVersion: 'recipe-content-v1',
+              derivationStatus: 'derived',
+              position: 2,
+            },
+          ],
+          steps: [],
+          archivedAt: null,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+    }
+    const user = userEvent.setup()
+    renderShopping(repository, plannedMealRepository, recipeRepository)
+
+    await user.click(await screen.findByRole('button', { name: "Add this week's meals" }))
+    const dialog = await screen.findByRole('dialog', { name: "Add this week's meals" })
+    expect(within(dialog).getByText('Brown lentils')).toBeVisible()
+    expect(within(dialog).getByText(/Already on your list: Milk/)).toBeVisible()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Add 1 item' }))
+    expect(createFromPlan).toHaveBeenCalledWith(householdId, [
+      { name: 'Brown lentils', quantity: 1, unit: 'cup', category: 'pantry' },
+    ])
+    expect(await screen.findByText("Added 1 item from this week's meals.")).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Pantry' })).toBeVisible()
+    expect(screen.getByText('Brown lentils')).toBeVisible()
   })
 })

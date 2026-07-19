@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Check, Pencil, Plus, Trash2 } from 'lucide-react'
+import { CalendarPlus, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 
+import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useOnboarding } from '../app/onboarding/onboardingContext'
+import { useRecipeRepository } from '../app/recipes/recipeContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { Button } from '../components/ui/Button'
@@ -11,6 +13,8 @@ import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
 import { SelectField } from '../components/ui/SelectField'
 import { TextField } from '../components/ui/TextField'
+import { addDays, currentWeek } from '../domain/meal-plans/week'
+import { buildPlanAdditions, type PlanAdditions } from '../domain/shopping/planGeneration'
 import {
   shoppingCategoryLabels,
   type ShoppingCategory,
@@ -32,7 +36,13 @@ export function ShoppingPage() {
   const { state } = useOnboarding()
   const householdId = state.householdId
   const repository = useShoppingRepository()
+  const plannedMealRepository = usePlannedMealRepository()
+  const recipeRepository = useRecipeRepository()
   const [items, setItems] = useState<ShoppingItem[]>([])
+  const [planPreview, setPlanPreview] = useState<PlanAdditions | null>(null)
+  const [planBusy, setPlanBusy] = useState(false)
+  const [planError, setPlanError] = useState<string | null>(null)
+  const [planNotice, setPlanNotice] = useState<string | null>(null)
   const [draft, setDraft] = useState<ShoppingItemInput>(emptyInput)
   const [editing, setEditing] = useState<ShoppingItem | null>(null)
   const [editDraft, setEditDraft] = useState<ShoppingItemInput>(emptyInput)
@@ -149,6 +159,51 @@ export function ShoppingPage() {
     }
   }
 
+  async function previewPlanAdditions() {
+    if (!householdId) return
+    setPlanBusy(true)
+    setPlanError(null)
+    setPlanNotice(null)
+    try {
+      const weekStart = currentWeek(new Date())
+      const meals = await plannedMealRepository.listWeek(
+        householdId,
+        weekStart,
+        addDays(weekStart, 6),
+      )
+      const recipes = await recipeRepository.list(householdId)
+      setPlanPreview(buildPlanAdditions(meals, recipes, items))
+    } catch {
+      setError("We could not read this week's plan. Try again.")
+    } finally {
+      setPlanBusy(false)
+    }
+  }
+
+  async function confirmPlanAdditions() {
+    if (!householdId || !planPreview) return
+    setSaving(true)
+    setPlanError(null)
+    try {
+      const saved = await repository.createFromPlan(householdId, planPreview.additions)
+      setItems((current) => [...current, ...saved])
+      setPlanNotice(
+        saved.length === 1
+          ? "Added 1 item from this week's meals."
+          : `Added ${saved.length} items from this week's meals.`,
+      )
+      setPlanPreview(null)
+    } catch (saveError) {
+      setPlanError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Cooksmith could not add those items. Try again.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function toggleCompleted(item: ShoppingItem) {
     const previous = items
     setItems((current) =>
@@ -199,7 +254,21 @@ export function ShoppingPage() {
       <div className="shopping-summary" aria-label="Shopping list summary">
         <strong>{outstanding.length}</strong> left to buy
         {completed.length > 0 ? <span>{completed.length} done</span> : null}
+        <Button
+          busy={planBusy}
+          type="button"
+          variant="secondary"
+          onClick={() => void previewPlanAdditions()}
+        >
+          <CalendarPlus aria-hidden="true" /> Add this week&apos;s meals
+        </Button>
       </div>
+
+      {planNotice ? (
+        <p className="shopping-plan-notice" role="status">
+          {planNotice}
+        </p>
+      ) : null}
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
 
@@ -309,6 +378,79 @@ export function ShoppingPage() {
             ))}
           </ul>
         </section>
+      ) : null}
+
+      {planPreview ? (
+        <Dialog
+          description="Ingredients from this week's linked recipes, ready to add to your list."
+          onOpenChange={(open) => {
+            if (!open && !saving) setPlanPreview(null)
+          }}
+          open
+          title="Add this week's meals"
+        >
+          {planPreview.additions.length === 0 ? (
+            <div className="shopping-plan-preview">
+              <p>
+                {planPreview.linkedMealCount === 0
+                  ? 'No meals this week are linked to a recipe yet. Link recipes on the Plan page, then try again.'
+                  : "Everything from this week's linked recipes is already on your list."}
+              </p>
+              {planPreview.unlinkedMealCount > 0 && planPreview.linkedMealCount > 0 ? (
+                <p>
+                  {planPreview.unlinkedMealCount === 1
+                    ? '1 planned meal has no linked recipe and was skipped.'
+                    : `${planPreview.unlinkedMealCount} planned meals have no linked recipe and were skipped.`}
+                </p>
+              ) : null}
+              <div className="dialog-actions">
+                <Button type="button" onClick={() => setPlanPreview(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="shopping-plan-preview">
+              <ul className="shopping-plan-preview-list">
+                {planPreview.additions.map((addition) => (
+                  <li key={addition.name}>
+                    <strong>{addition.name}</strong>
+                    {addition.quantity !== null ? (
+                      <span>
+                        {addition.quantity}
+                        {addition.unit ? ` ${addition.unit}` : ''}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              {planPreview.alreadyListedNames.length > 0 ? (
+                <p>
+                  Already on your list: {planPreview.alreadyListedNames.slice(0, 6).join(', ')}
+                  {planPreview.alreadyListedNames.length > 6 ? ' and more' : ''}.
+                </p>
+              ) : null}
+              {planPreview.unlinkedMealCount > 0 ? (
+                <p>
+                  {planPreview.unlinkedMealCount === 1
+                    ? '1 planned meal has no linked recipe and was skipped.'
+                    : `${planPreview.unlinkedMealCount} planned meals have no linked recipe and were skipped.`}
+                </p>
+              ) : null}
+              {planError ? <p className="form-error">{planError}</p> : null}
+              <div className="dialog-actions">
+                <Button type="button" variant="secondary" onClick={() => setPlanPreview(null)}>
+                  Cancel
+                </Button>
+                <Button busy={saving} type="button" onClick={() => void confirmPlanAdditions()}>
+                  {planPreview.additions.length === 1
+                    ? 'Add 1 item'
+                    : `Add ${planPreview.additions.length} items`}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Dialog>
       ) : null}
 
       {editing ? (

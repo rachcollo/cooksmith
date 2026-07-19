@@ -79,6 +79,30 @@ export function createSupabaseShoppingRepository(
       return mapRow(result.data as unknown as ShoppingRow)
     },
 
+    async createFromPlan(householdId, inputs) {
+      if (inputs.length === 0) return []
+      const result = await database
+        .from('shopping_list_items')
+        .insert(
+          inputs.map((input) => ({
+            household_id: householdId,
+            display_name: input.name,
+            quantity: input.quantity,
+            unit: input.unit,
+            category: input.category,
+            manual: false,
+          })) as never,
+        )
+        .select(selection)
+      if (result.error?.code === '23505') {
+        throw new Error(
+          'Someone in your household just added one of those items. Refresh Cooksmith and try again.',
+        )
+      }
+      shoppingError(result.error)
+      return ((result.data ?? []) as unknown as ShoppingRow[]).map(mapRow)
+    },
+
     async update(itemId, input) {
       const result = await database
         .from('shopping_list_items')

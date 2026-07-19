@@ -240,6 +240,15 @@ export const defaultShoppingRepository: ShoppingRepository = {
     position: 0,
     updatedAt: '2026-01-01T00:00:00Z',
   }),
+  createFromPlan: async (householdId, inputs) =>
+    inputs.map((input, index) => ({
+      id: `shopping-plan-${index + 1}`,
+      householdId,
+      ...input,
+      completed: false,
+      position: index,
+      updatedAt: '2026-01-01T00:00:00Z',
+    })),
   update: async (itemId, input) => ({
     id: itemId,
     householdId: '20000000-0000-4000-8000-000000000001',
