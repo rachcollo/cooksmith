@@ -79,6 +79,34 @@ describe('selectNextReadyIssue', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  it('does not treat an open engineering-package PR as a build in flight', async () => {
+    await withReadyPackageFixture('CS-57', async (cwd) => {
+      const fetchMock = mockFetch({
+        pulls: [{ title: 'chore(package): CS-58 — engineering package draft' }],
+        issues: [issue('CS-57')],
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
+
+      expect(result.selected).toBe('CS-57')
+    })
+  })
+
+  it('does not treat a package/ branch as a claim on the story', async () => {
+    await withReadyPackageFixture('CS-59', async (cwd) => {
+      const fetchMock = mockFetch({
+        branches: [{ name: 'package/cs-59-engineering-package' }],
+        issues: [issue('CS-59')],
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
+
+      expect(result.selected).toBe('CS-59')
+    })
+  })
+
   it('skips a candidate blocked by an unfinished issue', async () => {
     const fetchMock = mockFetch({
       issues: [issue('CS-50', 'Medium', [blockedBy('CS-49', 'In Progress')])],

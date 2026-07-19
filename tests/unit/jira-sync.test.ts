@@ -93,6 +93,33 @@ describe('transitionForward', () => {
 })
 
 describe('handlers', () => {
+  it('package-merged promotes to Ready, swaps labels and comments', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ fields: { status: { name: 'Backlog' } } }))
+      .mockResolvedValueOnce(jsonResponse({ transitions: [{ id: '21', name: 'Ready' }] }))
+      .mockResolvedValueOnce(jsonResponse(null, 204))
+      .mockResolvedValueOnce(jsonResponse(null, 204))
+      .mockResolvedValueOnce(jsonResponse(null, 204))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await HANDLERS['package-merged'](config, {
+      key: 'CS-60',
+      prUrl: 'https://github.com/rachcollo/cooksmith/pull/99',
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+    const labelCall = fetchMock.mock.calls[3]
+    expect(labelCall[0]).toBe('https://example.atlassian.net/rest/api/3/issue/CS-60')
+    expect(labelCall[1].method).toBe('PUT')
+    expect(JSON.parse(labelCall[1].body)).toEqual({
+      update: { labels: [{ add: 'codex-ready' }, { remove: 'package-requested' }] },
+    })
+    const commentCall = fetchMock.mock.calls[4]
+    expect(commentCall[0]).toBe('https://example.atlassian.net/rest/api/3/issue/CS-60/comment')
+    expect(JSON.stringify(JSON.parse(commentCall[1].body))).toContain('Status moved to Ready')
+  })
+
   it('pr-merged posts an evidence comment without transitioning status', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(null, 204))
     vi.stubGlobal('fetch', fetchMock)

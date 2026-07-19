@@ -16,22 +16,36 @@ The agent will create a branch, move Jira to **In Progress** automatically
 once the branch exists, implement only the approved package, run the
 required checks, and open a pull request. It will stop before merging.
 
-### Automated pickup (once switched on)
+### Automated flow (once the scheduled Routine is live)
 
-Once the scheduled trigger described in the [AI engineering operating
-system](AI_ENGINEERING_OPERATING_SYSTEM.md#automated-pickup) is live, you
-will not need step 3 for most stories. Instead:
+Once the scheduled Routine described in the [AI engineering operating
+system](AI_ENGINEERING_OPERATING_SYSTEM.md#automated-pickup) is live, you do
+not write engineering packages or say "Build CS-XX" at all. Your whole part
+of starting a story becomes:
 
-1. Move the story to **Ready** and confirm the package, as above.
-2. Add the `codex-ready` label. This is the actual "go" signal — a story can
-   sit in Ready indefinitely without being picked up until you label it.
-3. It gets built automatically, in priority order, next time the trigger
-   fires, as long as no other story is already mid-build and its dependencies
-   are Done.
+1. Write the story in Jira: outcome, acceptance criteria, dependencies.
+2. Add the `package-requested` label.
+3. Within a couple of hours, a small pull request appears titled
+   `chore(package): CS-XX — engineering package`, and a link is posted on
+   the Jira story. Read it: does the proposed scope match what you meant?
+   Are the acceptance criteria right? This two-minute read is your scope
+   approval, so take it seriously; it is much cheaper to fix scope here than
+   in a finished build.
+4. Merge the package PR. The story moves to **Ready** and gets the
+   `codex-ready` label automatically. You do nothing else.
+5. The next scheduled run picks it up and builds it, in priority order, as
+   long as nothing else is mid-build and its dependencies are Done.
 
-To pause automated pickup for a single story, remove the `codex-ready`
-label; a build already under way is not affected. To pause it entirely, ask
-the agent to disable the scheduled trigger.
+You can still do any step manually: write the package yourself, add
+`codex-ready` by hand, or say "Build CS-XX" to start a build immediately.
+The automation only fills in whichever steps you have not done.
+
+To pause drafting for a story, remove the `package-requested` label. To
+pause building for a story, remove the `codex-ready` label; a build already
+under way is not affected. To pause everything, disable the scheduled
+Routine. The Routine's exact prompt lives in
+[DELIVERY_ROUTINE_PROMPT.md](DELIVERY_ROUTINE_PROMPT.md); keep the Routine
+and that file in sync.
 
 ## Review a build
 
