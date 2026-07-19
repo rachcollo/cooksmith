@@ -27,6 +27,7 @@ describe('generated database API contract', () => {
       | 'profiles'
       | 'recipe_ingredients'
       | 'recipe_steps'
+      | 'shopping_item_contributions'
       | 'shopping_list_items'
       | 'shopping_lists'
     >()
