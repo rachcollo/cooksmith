@@ -83,7 +83,15 @@ values
   ('70000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002', 'Fish pie')
 on conflict (household_id, normalised_name) do nothing;
 
+insert into cooksmith.imported_recipes (id, visibility, owner_id, name, source_url)
+values
+  ('71000000-0000-4000-8000-000000000001', 'public', '10000000-0000-4000-8000-000000000003', 'Public tray bake', 'https://example.com/public-tray-bake'),
+  ('71000000-0000-4000-8000-000000000002', 'private', '10000000-0000-4000-8000-000000000001', 'Private family pie', 'https://example.com/private-family-pie'),
+  ('71000000-0000-4000-8000-000000000003', 'private', '10000000-0000-4000-8000-000000000003', 'Another user recipe', 'https://example.com/another-user-recipe')
+on conflict do nothing;
+
 select col_is_fk('cooksmith', 'planned_meals', 'recipe_id', 'Planned meal recipe link is a foreign key');
+select col_is_fk('cooksmith', 'planned_meals', 'imported_recipe_id', 'Imported planned meal recipe link is a foreign key');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
@@ -96,6 +104,26 @@ select throws_ok(
   $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, recipe_id)
     values ('20000000-0000-4000-8000-000000000001', '2026-07-20', 'dinner', 'Cross-household fish pie', '70000000-0000-4000-8000-000000000002')$$,
   '23514', null, 'Cross-household recipe links are rejected by the database'
+);
+select lives_ok(
+  $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, imported_recipe_id)
+    values ('20000000-0000-4000-8000-000000000001', '2026-07-20', 'dinner', 'Public tray bake snapshot', '71000000-0000-4000-8000-000000000001')$$,
+  'Owner can link a public recipe-bank item to a planned meal'
+);
+select lives_ok(
+  $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, imported_recipe_id)
+    values ('20000000-0000-4000-8000-000000000001', '2026-07-21', 'dinner', 'Private pie snapshot', '71000000-0000-4000-8000-000000000002')$$,
+  'Owner can link their private recipe-bank item to a planned meal'
+);
+select throws_ok(
+  $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, imported_recipe_id)
+    values ('20000000-0000-4000-8000-000000000001', '2026-07-22', 'dinner', 'Hidden recipe snapshot', '71000000-0000-4000-8000-000000000003')$$,
+  '23514', null, 'A private recipe owned by another user cannot be linked'
+);
+select throws_ok(
+  $$insert into cooksmith.planned_meals (household_id, meal_date, meal_type, title, recipe_id, imported_recipe_id)
+    values ('20000000-0000-4000-8000-000000000001', '2026-07-23', 'dinner', 'Ambiguous link', '70000000-0000-4000-8000-000000000001', '71000000-0000-4000-8000-000000000001')$$,
+  '23514', null, 'A planned meal cannot link both recipe sources'
 );
 select results_eq(
   $$update cooksmith.household_recipes set archived_at = now() where id = '70000000-0000-4000-8000-000000000001' returning id$$,
