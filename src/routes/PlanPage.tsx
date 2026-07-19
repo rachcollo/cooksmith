@@ -10,6 +10,7 @@ import {
 import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
+import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../app/recipes/recipeContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
@@ -37,6 +38,7 @@ import {
 } from '../domain/meal-plans/week'
 import { recipeToMultilineInput, splitMeaningfulLines } from '../domain/recipes/multilineContent'
 import type { Recipe } from '../domain/recipes/types'
+import { buildPlanAdditions } from '../domain/shopping/planGeneration'
 import '../styles/mealPlannerLinkedCards.css'
 
 type MealDialog =
@@ -75,6 +77,7 @@ export function PlanPage() {
   const { state } = useOnboarding()
   const repository = usePlannedMealRepository()
   const recipeRepository = useRecipeRepository()
+  const shoppingRepository = useShoppingRepository()
   const householdId = state.householdId
   const today = toLocalIsoDate(new Date())
   const thisWeek = currentWeek(new Date())
@@ -235,6 +238,35 @@ export function PlanPage() {
         dialog.mode === 'add'
           ? await repository.create(householdId, input)
           : await repository.update(dialog.meal.id, input)
+
+      if (input.recipeId) {
+        const linkedRecipe = recipes.find((recipe) => recipe.id === input.recipeId)
+        if (linkedRecipe) {
+          const generationMeal: PlannedMeal = {
+            ...saved,
+            recipeId: linkedRecipe.id,
+            recipeSource: input.recipeSource,
+            linkedRecipe: {
+              id: linkedRecipe.id,
+              name: linkedRecipe.name,
+              archivedAt: linkedRecipe.archivedAt,
+            },
+            recipeState: {
+              kind: 'active',
+              recipe: {
+                id: linkedRecipe.id,
+                name: linkedRecipe.name,
+                archivedAt: linkedRecipe.archivedAt,
+              },
+            },
+          }
+          const additions = buildPlanAdditions([generationMeal], [linkedRecipe], []).additions
+          await shoppingRepository.createFromPlan?.(householdId, saved.id, additions)
+        }
+      } else {
+        await shoppingRepository.createFromPlan?.(householdId, saved.id, [])
+      }
+
       setMeals((current) =>
         dialog.mode === 'add'
           ? [...current, saved]

@@ -233,6 +233,87 @@ describe('weekly dinner planner', () => {
     expect(screen.queryByRole('button', { name: /Unlink recipe/ })).not.toBeInTheDocument()
   })
 
+  it('automatically adds linked recipe ingredients to shopping when a meal is planned', async () => {
+    const recipe = {
+      ...(await defaultRecipeRepository.list(householdId))[0],
+      id: '30000000-0000-4000-8000-000000000022',
+      ingredientRows: [
+        {
+          id: 'ingredient-1',
+          name: 'lentils',
+          quantity: '1',
+          unit: 'cup',
+          preparation: null,
+          originalLineText: '1 cup lentils',
+          parserVersion: 'recipe-content-v1',
+          derivationStatus: 'derived' as const,
+          position: 1,
+        },
+      ],
+    }
+    const createFromPlan = vi.fn(async () => undefined)
+    const shoppingRepository = {
+      list: vi.fn(async () => []),
+      create: vi.fn(),
+      createFromPlan,
+      update: vi.fn(),
+      setCompleted: vi.fn(),
+      remove: vi.fn(),
+    }
+    const repository: PlannedMealRepository = {
+      listWeek: async () => [],
+      create: async (savedHouseholdId, input) =>
+        meal({
+          id: 'linked-created',
+          householdId: savedHouseholdId,
+          ...input,
+          linkedRecipe: { id: recipe.id, name: recipe.name, archivedAt: null },
+          recipeState: {
+            kind: 'active',
+            recipe: { id: recipe.id, name: recipe.name, archivedAt: null },
+          },
+        }),
+      update: async (id, input) => meal({ id, ...input }),
+      remove: async () => undefined,
+    }
+    const recipeRepository: RecipeRepository = {
+      ...defaultRecipeRepository,
+      list: async () => [recipe],
+    }
+    const user = userEvent.setup()
+
+    renderApp(
+      '/plan',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      recipeRepository,
+      shoppingRepository,
+    )
+
+    const monday = await screen.findByRole('heading', { name: '13 July' })
+    await user.click(
+      within(monday.closest('article') as HTMLElement).getByRole('button', { name: 'Add dinner' }),
+    )
+    await user.selectOptions(screen.getByLabelText('Start with'), recipe.id)
+    await user.click(screen.getByRole('button', { name: 'Save dinner' }))
+
+    await waitFor(() =>
+      expect(createFromPlan).toHaveBeenCalledWith(householdId, 'linked-created', [
+        expect.objectContaining({
+          name: 'lentils',
+          quantity: 1,
+          unit: 'cup',
+          category: 'pantry',
+        }),
+      ]),
+    )
+  })
+
   it('shows loading and a compact failure message', async () => {
     const repository: PlannedMealRepository = {
       listWeek: async () => {
