@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Unlink, X } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
@@ -18,11 +18,7 @@ import { Dialog } from '../components/ui/Dialog'
 import { LoadingState } from '../components/ui/LoadingState'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
-import {
-  displayTitleForPlannedMeal,
-  snapshotTitleForRecipe,
-  unlinkPlannedMeal,
-} from '../domain/meal-plans/recipeLinks'
+import { displayTitleForPlannedMeal, snapshotTitleForRecipe } from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal, PlannedMealInput } from '../domain/meal-plans/types'
 import { plannedMealInputSchema } from '../domain/meal-plans/validationSchemas'
 import {
@@ -251,21 +247,6 @@ export function PlanPage() {
     }
   }
 
-  async function unlink(meal: PlannedMeal) {
-    try {
-      const saved = await repository.update(meal.id, unlinkPlannedMeal(meal))
-      setMeals((current) =>
-        current.map((candidate) => (candidate.id === saved.id ? saved : candidate)),
-      )
-    } catch (unlinkError) {
-      setError(
-        unlinkError instanceof Error
-          ? unlinkError.message
-          : 'Cooksmith could not unlink that recipe.',
-      )
-    }
-  }
-
   async function remove(meal: PlannedMeal) {
     if (!window.confirm(`Remove ${displayTitleForPlannedMeal(meal)} from the plan?`)) return
     try {
@@ -367,7 +348,6 @@ export function PlanPage() {
     <main className="page-stack meal-planner-page">
       <DocumentTitle title="Meal Planner" />
       <header className="page-header meal-planner-header">
-        <p className="eyebrow">The weekly wrangle</p>
         <h1>Seven days. Let’s not overthink it.</h1>
         <p>Plan the dinners that help. Leave the rest blank.</p>
       </header>
@@ -475,17 +455,6 @@ export function PlanPage() {
                     >
                       <Pencil aria-hidden="true" />
                     </button>
-                    {meal.recipeId ? (
-                      <button
-                        className="meal-remove"
-                        type="button"
-                        aria-label={`Unlink recipe from ${displayTitleForPlannedMeal(meal)}`}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={() => void unlink(meal)}
-                      >
-                        <Unlink aria-hidden="true" />
-                      </button>
-                    ) : null}
                     <button
                       className="meal-remove"
                       type="button"

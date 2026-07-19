@@ -20,14 +20,3 @@ export function displayTitleForPlannedMeal(meal: PlannedMeal): string {
   }
   return meal.title
 }
-
-export function unlinkPlannedMeal(meal: PlannedMeal) {
-  return {
-    mealDate: meal.mealDate,
-    mealType: meal.mealType,
-    title: meal.title,
-    notes: meal.notes,
-    recipeId: null,
-    recipeSource: null,
-  }
-}
