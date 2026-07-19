@@ -236,6 +236,7 @@ describe('weekly dinner planner', () => {
   it('automatically adds linked recipe ingredients to shopping when a meal is planned', async () => {
     const recipe = {
       ...(await defaultRecipeRepository.list(householdId))[0],
+      id: '30000000-0000-4000-8000-000000000022',
       ingredientRows: [
         {
           id: 'ingredient-1',
