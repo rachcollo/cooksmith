@@ -1294,6 +1294,7 @@
 
   .shopping-quick-add .field {
     gap: var(--space-1);
+    min-width: 0;
   }
 
   .shopping-quick-add .field input {
