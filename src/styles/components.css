@@ -709,7 +709,8 @@
   align-items: end;
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(5.5rem, 1fr) auto auto;
+  min-width: 0;
 }
 
 .recipe-library-toolbar .form-label {
@@ -768,8 +769,8 @@
   .recipe-library-toolbar .button,
   .recipe-library-toolbar .field input {
     font-size: 0.875rem;
-    height: 2.5rem;
-    min-height: 2.5rem;
+    height: var(--touch-target);
+    min-height: var(--touch-target);
   }
 
   .recipe-library-toolbar .button {
