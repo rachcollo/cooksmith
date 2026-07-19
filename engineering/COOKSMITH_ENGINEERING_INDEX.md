@@ -25,12 +25,18 @@ Codex may select work only when all are true:
 1. Jira project is `CS`.
 2. Status is `Ready`.
 3. Label `codex-ready` is present.
-4. The Jira issue references a package under `engineering/ready/`.
+4. The Jira issue references a package identifying itself as belonging to that key, under `engineering/` or `docs/engineering/packages/`, and that package passes readiness validation (no unresolved template placeholders, a Ready status, real acceptance criteria).
 5. Every blocker is Done.
 6. No active branch or open PR already claims the issue.
 7. It is the highest-priority eligible item unless a human names another issue.
 
 For equal priority, prefer the lower Jira key unless parallel execution is explicitly authorised.
+
+This rule is mechanically enforced by
+[`scripts/engineering/select-next-ready-issue.mjs`](../scripts/engineering/select-next-ready-issue.mjs),
+using [`scripts/engineering/validate-package-readiness.mjs`](../scripts/engineering/validate-package-readiness.mjs)
+for rule 4. See [automated pickup](../docs/operations/AI_ENGINEERING_OPERATING_SYSTEM.md#automated-pickup)
+for how selection connects to actually starting a build.
 
 ## Active Roadmap
 

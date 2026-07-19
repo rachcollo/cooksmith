@@ -1,4 +1,5 @@
 import { parseArgs } from './lib/args.mjs'
+import { jiraFetch, readConfig } from './lib/jira.mjs'
 
 // Safe, best-effort Jira status and evidence sync for GitHub events.
 //
@@ -16,36 +17,6 @@ const STATUS_RANK = {
   'in review': 3,
   testing: 4,
   done: 5,
-}
-
-function readConfig(env) {
-  const baseUrl = env.JIRA_BASE_URL
-  const email = env.JIRA_EMAIL
-  const token = env.JIRA_API_TOKEN
-  if (!baseUrl || !email || !token) return null
-  return { baseUrl: baseUrl.replace(/\/$/, ''), email, token }
-}
-
-function authHeader(config) {
-  const encoded = Buffer.from(`${config.email}:${config.token}`).toString('base64')
-  return `Basic ${encoded}`
-}
-
-async function jiraFetch(config, path, options = {}) {
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    ...options,
-    headers: {
-      Authorization: authHeader(config),
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
-  if (!response.ok) {
-    const body = await response.text().catch(() => '')
-    throw new Error(`Jira request to ${path} failed: ${response.status} ${body.slice(0, 500)}`)
-  }
-  return response.status === 204 ? null : response.json()
 }
 
 function runsToAdf(lines) {

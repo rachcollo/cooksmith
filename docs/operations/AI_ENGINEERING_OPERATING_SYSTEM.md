@@ -139,9 +139,82 @@ underlying standards. This change added:
 6. **This document and the [operator guide](OPERATOR_GUIDE.md)**, and an
    explicit `Edge Functions changed in this PR` line added to the pull
    request template alongside the existing `Migrations in this PR` line.
+7. **Automated pickup decision layer** (below). Two deterministic, tested
+   scripts that decide _whether_ a story is safe to start building
+   autonomously. They do not themselves start a build; that step still
+   requires the scheduled trigger described below to be switched on.
 
 None of this changes product functionality, application behaviour, or the
 standards already documented above.
+
+## Automated pickup
+
+The target shape for delivery is: a product owner defines a story, an
+engineering package is written to the standard format, the story is marked
+Ready, and it is picked up for implementation automatically in priority
+order, without anyone saying "Build CS-XX". This is a direct extension of the
+"Next-Task Selection Rule" already documented in the [Engineering
+Index](../../engineering/COOKSMITH_ENGINEERING_INDEX.md), which required a
+human to apply it by judgement each time. It is now mechanically enforced.
+
+### The `codex-ready` label is the human gate
+
+Marking a story **Ready** in Jira is not by itself enough to trigger a build.
+A product owner must also apply the `codex-ready` label. This is the single
+point where a human decides "this is genuinely fit to hand to an agent right
+now", separate from ordinary backlog grooming. Removing the label at any time
+stops that story being picked up; it does not affect a build already under
+way.
+
+### Package readiness validator
+
+[`scripts/engineering/validate-package-readiness.mjs`](../../scripts/engineering/validate-package-readiness.mjs)
+checks that a linked engineering package is actually filled in, not just
+present: no leftover template placeholders (`[Title]`, `[CS-###]`, `TBD`,
+`TODO`, an untouched `Status: Planned | Ready | ...` line, and so on), a
+`Status` field that reads as Ready, and a real set of acceptance-criteria
+items (it reads both package conventions in this repository, checkbox-style
+and plain-bulleted). A `Ready` + `codex-ready` story whose package fails this
+check is never picked up, and is reported as skipped with the specific reason.
+
+### Selection script
+
+[`scripts/engineering/select-next-ready-issue.mjs`](../../scripts/engineering/select-next-ready-issue.mjs)
+is the decision function, run by whatever starts a build. It:
+
+1. Checks GitHub for any already-open pull request referencing a `CS-###`
+   key. If one exists, it reports **busy** and stops immediately, enforcing
+   the Engineering Index's "maximum one active issue" rule without querying
+   Jira at all.
+2. Queries Jira for `project = CS AND status = "Ready" AND labels =
+"codex-ready"`.
+3. Ranks candidates by priority (Highest to Lowest), then by lower Jira key
+   for ties, matching the documented rule exactly.
+4. For each candidate in that order: confirms every issue it "is blocked by"
+   is Done (reading Jira's issue-link data directly, no extra calls), confirms
+   no branch already exists for that key, and runs the readiness validator
+   above. The first candidate that clears all three is selected.
+5. Returns the selection, or a full list of every candidate considered and
+   exactly why each was skipped, for an honest audit trail.
+
+This script is read-only: it never changes Jira or GitHub state itself.
+
+### What still starts the actual build
+
+Selecting a story is not the same as implementing it. An engineering package
+being "ready to build" still requires an actual agentic coding session to
+follow the [Codex Builder Guide](../../engineering/CODEX_BUILDER_GUIDE.md):
+branch, implement, validate, open a PR, stop before merge. That requires a
+scheduled trigger that fires into a fresh session periodically, runs the
+selector, and if it returns a selection, proceeds exactly as if a human had
+said "Build CS-XX". Everything downstream is unchanged: the same PR
+governance, the same required checks, the same human merge approval, the
+same protected production releases.
+
+As of this change, the two decision scripts above exist and are tested, but
+the scheduled trigger itself has not been created. Automated pickup is not
+live until that trigger is switched on; until then, every build still starts
+because a human said "Build CS-XX", exactly as before.
 
 ## Known drift found during discovery
 
