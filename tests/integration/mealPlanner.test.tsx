@@ -303,7 +303,7 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
 
     await waitFor(() =>
-      expect(createFromPlan).toHaveBeenCalledWith(householdId, [
+      expect(createFromPlan).toHaveBeenCalledWith(householdId, 'linked-created', [
         expect.objectContaining({
           name: 'lentils',
           quantity: 1,
