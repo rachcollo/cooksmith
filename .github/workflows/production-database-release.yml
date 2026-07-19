@@ -11,6 +11,15 @@ on:
         description: Type DEPLOY_PRODUCTION_DATABASE to confirm
         required: true
         type: string
+      allow_out_of_order_migrations:
+        description: >-
+          Only for a known, reviewed exception (e.g. a migration merged after a
+          newer one already reached production). Skips Supabase's check that
+          pending migrations are newer than the latest released migration.
+          Leave unchecked for normal releases.
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,6 +39,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      INCLUDE_ALL_FLAG: ${{ inputs.allow_out_of_order_migrations == true && '--include-all' || '' }}
 
     steps:
       - name: Check release approval inputs
@@ -56,6 +66,10 @@ jobs:
           test -n "$SUPABASE_DB_PASSWORD"
           test -n "$SUPABASE_PROJECT_REF"
 
+      - name: Warn if migration ordering check is disabled
+        if: inputs.allow_out_of_order_migrations == true
+        run: echo "::warning::allow_out_of_order_migrations is enabled — Supabase's pending-migration ordering check is bypassed for this run (--include-all)."
+
       - name: Check out approved main commit
         uses: actions/checkout@v4
         with:
@@ -80,12 +94,12 @@ jobs:
         run: npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
 
       - name: Dry-run pending migrations
-        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" $INCLUDE_ALL_FLAG --dry-run
 
       - name: Apply pending migrations
-        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" $INCLUDE_ALL_FLAG --yes
 
       - name: Verify migration history is current
         run: |
           npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
-          npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+          npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" $INCLUDE_ALL_FLAG --dry-run
