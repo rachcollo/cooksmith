@@ -53,6 +53,66 @@ describe('PR governance', () => {
     })
   })
 
+  it('exempts a "chore:" prefixed title from Jira, branch and package checks', () => {
+    withFixture((cwd) => {
+      const result = formatGovernanceReport(
+        collectGovernanceChecks({
+          prTitle: 'chore: tidy up CI caching',
+          branchName: 'chore/tidy-ci-caching',
+          cwd,
+        }),
+      )
+      expect(result.ok).toBe(true)
+      expect(result.text).toContain('infrastructure changes')
+    })
+  })
+
+  it('exempts a scoped "infra(ci):" prefixed title and still enforces base branch', () => {
+    withFixture((cwd) => {
+      const result = formatGovernanceReport(
+        collectGovernanceChecks({
+          prTitle: 'infra(ci): add security scan job',
+          branchName: 'infra/security-scan',
+          baseBranch: 'develop',
+          cwd,
+        }),
+      )
+      expect(result.ok).toBe(false)
+      expect(result.text).toContain('infrastructure changes')
+      expect(result.text).toContain('must target main')
+    })
+  })
+
+  it('still requires a migration declaration on an exempted infrastructure PR', () => {
+    withFixture((cwd) => {
+      const result = formatGovernanceReport(
+        collectGovernanceChecks({
+          prTitle: 'chore: bump dependency',
+          branchName: 'chore/bump-dependency',
+          changedFiles: ['supabase/migrations/20260101000000_x.sql'],
+          prBody: 'no mention',
+          cwd,
+        }),
+      )
+      expect(result.ok).toBe(false)
+      expect(result.text).toContain('does not declare "Migrations in this PR: yes"')
+    })
+  })
+
+  it('does not exempt a title that merely contains the word chore mid-sentence', () => {
+    withFixture((cwd) => {
+      const result = formatGovernanceReport(
+        collectGovernanceChecks({
+          prTitle: 'Reduce the chore of manual testing',
+          branchName: 'fix/manual-testing',
+          cwd,
+        }),
+      )
+      expect(result.ok).toBe(false)
+      expect(result.text).toContain('must contain a Jira key')
+    })
+  })
+
   it('fails when the branch does not reference the same Jira key as the title', () => {
     withFixture((cwd) => {
       const result = formatGovernanceReport(

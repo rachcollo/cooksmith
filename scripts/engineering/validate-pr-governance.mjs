@@ -3,6 +3,12 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const JIRA_KEY_PATTERN = /\bCS-(\d+)\b/i
+// Infrastructure and tooling changes (this governance system itself, CI,
+// scripts, repository docs) are not product scope and have no Jira story to
+// reference. A "chore:" or "infra:" title prefix, with an optional scope like
+// "chore(ci):", opts a PR out of the Jira/branch/package checks below, but not
+// out of the migration/Edge Function declaration or base-branch checks.
+const EXEMPT_PREFIX_PATTERN = /^(chore|infra)(\([^)]*\))?:\s/i
 const PACKAGE_DIRECTORIES = ['engineering', 'docs/engineering/packages']
 const MIGRATION_PATH_PATTERN = /^supabase\/migrations\/.*\.sql$/
 const EDGE_FUNCTION_PATH_PATTERN = /^supabase\/functions\//
@@ -59,40 +65,48 @@ export function collectGovernanceChecks({
 } = {}) {
   const checks = []
 
-  const titleMatch = prTitle?.match(JIRA_KEY_PATTERN)
-  checks.push(
-    titleMatch
-      ? { ok: true, message: `PR title references Jira issue CS-${titleMatch[1]}.` }
-      : {
-          ok: false,
-          message: `PR title must contain a Jira key matching CS-### (title: "${prTitle ?? ''}").`,
-        },
-  )
+  const exemptMatch = prTitle?.match(EXEMPT_PREFIX_PATTERN)
+  if (exemptMatch) {
+    checks.push({
+      ok: true,
+      message: `PR title uses the "${exemptMatch[0].trim()}" prefix; Jira and engineering-package linkage is not required for infrastructure changes.`,
+    })
+  } else {
+    const titleMatch = prTitle?.match(JIRA_KEY_PATTERN)
+    checks.push(
+      titleMatch
+        ? { ok: true, message: `PR title references Jira issue CS-${titleMatch[1]}.` }
+        : {
+            ok: false,
+            message: `PR title must contain a Jira key matching CS-### (title: "${prTitle ?? ''}"), or use a "chore:"/"infra:" prefix for non-product changes.`,
+          },
+    )
 
-  if (!titleMatch) {
-    return checks
+    if (!titleMatch) {
+      return checks
+    }
+
+    const jiraKey = `CS-${titleMatch[1]}`
+    const branchMatch = branchName?.match(new RegExp(`\\bcs-${titleMatch[1]}\\b`, 'i'))
+    checks.push(
+      branchMatch
+        ? { ok: true, message: `Branch "${branchName}" references ${jiraKey}.` }
+        : {
+            ok: false,
+            message: `Branch "${branchName ?? ''}" must reference the same Jira key as the PR title (${jiraKey}).`,
+          },
+    )
+
+    const packagePath = findPackageReferencing(jiraKey, cwd)
+    checks.push(
+      packagePath
+        ? { ok: true, message: `Engineering package found for ${jiraKey}: ${packagePath}.` }
+        : {
+            ok: false,
+            message: `No engineering package under engineering/ or docs/engineering/packages/ references ${jiraKey}.`,
+          },
+    )
   }
-
-  const jiraKey = `CS-${titleMatch[1]}`
-  const branchMatch = branchName?.match(new RegExp(`\\bcs-${titleMatch[1]}\\b`, 'i'))
-  checks.push(
-    branchMatch
-      ? { ok: true, message: `Branch "${branchName}" references ${jiraKey}.` }
-      : {
-          ok: false,
-          message: `Branch "${branchName ?? ''}" must reference the same Jira key as the PR title (${jiraKey}).`,
-        },
-  )
-
-  const packagePath = findPackageReferencing(jiraKey, cwd)
-  checks.push(
-    packagePath
-      ? { ok: true, message: `Engineering package found for ${jiraKey}: ${packagePath}.` }
-      : {
-          ok: false,
-          message: `No engineering package under engineering/ or docs/engineering/packages/ references ${jiraKey}.`,
-        },
-  )
 
   const migrationFiles = changedFiles.filter((path) => MIGRATION_PATH_PATTERN.test(path))
   if (migrationFiles.length > 0) {

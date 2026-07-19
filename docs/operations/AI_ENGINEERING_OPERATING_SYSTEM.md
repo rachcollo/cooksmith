@@ -103,7 +103,11 @@ underlying standards. This change added:
    engineering package exists that identifies itself as belonging to that
    key, migrations are declared when migration files changed, Edge Function
    changes are declared when function files changed, and the PR targets
-   `main`.
+   `main`. A PR title prefixed `chore:` or `infra:` (optionally scoped, for
+   example `chore(ci):`) exempts a non-product infrastructure or tooling
+   change from the Jira/branch/package checks; the migration, Edge Function
+   and base-branch checks still apply. This PR is itself an example: its
+   title is `chore: add AI engineering operating system automation`.
 2. **Jira sync workflow**
    ([`.github/workflows/jira-sync.yml`](../../.github/workflows/jira-sync.yml),
    [`scripts/engineering/jira-sync.mjs`](../../scripts/engineering/jira-sync.mjs)).
