@@ -25,7 +25,10 @@ import { Dialog } from '../components/ui/Dialog'
 import { LoadingState } from '../components/ui/LoadingState'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
-import { displayTitleForPlannedMeal, snapshotTitleForRecipe } from '../domain/meal-plans/recipeLinks'
+import {
+  displayTitleForPlannedMeal,
+  snapshotTitleForRecipe,
+} from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal, PlannedMealInput } from '../domain/meal-plans/types'
 import { plannedMealInputSchema } from '../domain/meal-plans/validationSchemas'
 import {
