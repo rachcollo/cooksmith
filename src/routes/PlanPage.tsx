@@ -239,10 +239,9 @@ export function PlanPage() {
           ? await repository.create(householdId, input)
           : await repository.update(dialog.meal.id, input)
 
-      if (dialog.mode === 'add' && input.recipeId) {
+      if (input.recipeId) {
         const linkedRecipe = recipes.find((recipe) => recipe.id === input.recipeId)
         if (linkedRecipe) {
-          const existingItems = await shoppingRepository.list(householdId)
           const generationMeal: PlannedMeal = {
             ...saved,
             recipeId: linkedRecipe.id,
@@ -264,10 +263,16 @@ export function PlanPage() {
           const additions = buildPlanAdditions(
             [generationMeal],
             [linkedRecipe],
-            existingItems,
+            [],
           ).additions
-          await shoppingRepository.createFromPlan?.(householdId, additions)
+          await shoppingRepository.createFromPlan?.(
+            householdId,
+            saved.id,
+            additions,
+          )
         }
+      } else {
+        await shoppingRepository.createFromPlan?.(householdId, saved.id, [])
       }
 
       setMeals((current) =>
