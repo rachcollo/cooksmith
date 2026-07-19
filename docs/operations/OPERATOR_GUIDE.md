@@ -16,6 +16,23 @@ The agent will create a branch, move Jira to **In Progress** automatically
 once the branch exists, implement only the approved package, run the
 required checks, and open a pull request. It will stop before merging.
 
+### Automated pickup (once switched on)
+
+Once the scheduled trigger described in the [AI engineering operating
+system](AI_ENGINEERING_OPERATING_SYSTEM.md#automated-pickup) is live, you
+will not need step 3 for most stories. Instead:
+
+1. Move the story to **Ready** and confirm the package, as above.
+2. Add the `codex-ready` label. This is the actual "go" signal — a story can
+   sit in Ready indefinitely without being picked up until you label it.
+3. It gets built automatically, in priority order, next time the trigger
+   fires, as long as no other story is already mid-build and its dependencies
+   are Done.
+
+To pause automated pickup for a single story, remove the `codex-ready`
+label; a build already under way is not affected. To pause it entirely, ask
+the agent to disable the scheduled trigger.
+
 ## Review a build
 
 1. Open the pull request in GitHub. Check that the required checks are

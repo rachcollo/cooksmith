@@ -31,4 +31,19 @@ declare module '*.mjs' {
     string,
     (config: unknown, args: Record<string, unknown>) => Promise<void>
   >
+
+  export const assessPackageReadiness: (options: Record<string, unknown>) => Check[]
+  export const formatReadinessReport: (checks: Check[]) => Report
+
+  type SelectionEvaluation = { key: string; eligible: boolean; reason: string | null }
+  type SelectionResult = {
+    selected: string | null
+    reason?: string
+    busyWith?: string
+    priority?: string | null
+    summary?: string
+    evaluated: SelectionEvaluation[]
+  }
+  export const selectNextReadyIssue: (options: Record<string, unknown>) => Promise<SelectionResult>
+  export const formatSelectionReport: (result: SelectionResult) => string
 }

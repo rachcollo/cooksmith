@@ -45,7 +45,9 @@
     "engineering:validate-pr": "node scripts/engineering/validate-pr-governance.mjs",
     "engineering:check-secrets": "node scripts/engineering/check-secrets-and-env-files.mjs",
     "engineering:verify-deployment": "node scripts/engineering/verify-deployment.mjs",
-    "engineering:delivery-summary": "node scripts/engineering/create-delivery-summary.mjs"
+    "engineering:delivery-summary": "node scripts/engineering/create-delivery-summary.mjs",
+    "engineering:validate-package": "node scripts/engineering/validate-package-readiness.mjs",
+    "engineering:select-next": "node scripts/engineering/select-next-ready-issue.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.5",
