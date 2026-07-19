@@ -27,6 +27,7 @@ select results_eq(
     'profiles:INSERT', 'profiles:SELECT', 'profiles:UPDATE',
     'recipe_ingredients:ALL', 'recipe_steps:ALL',
     'shopping_item_contributions:DELETE', 'shopping_item_contributions:INSERT', 'shopping_item_contributions:SELECT', 'shopping_item_contributions:UPDATE',
+    'shopping_item_contributions:DELETE', 'shopping_item_contributions:INSERT', 'shopping_item_contributions:SELECT', 'shopping_item_contributions:UPDATE',
     'shopping_list_items:DELETE', 'shopping_list_items:INSERT', 'shopping_list_items:SELECT', 'shopping_list_items:UPDATE',
     'shopping_lists:SELECT'
   ]::text[]) collate "C", 'Policy operation matrix matches the approved API contract'
