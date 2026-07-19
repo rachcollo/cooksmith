@@ -205,7 +205,10 @@ export function ShoppingPage() {
 
       <Panel className="shopping-add-panel">
         <h2>Add an item</h2>
-        <form className="shopping-form" onSubmit={(event) => void addItem(event)}>
+        <form
+          className="shopping-form shopping-quick-add"
+          onSubmit={(event) => void addItem(event)}
+        >
           <TextField
             error={errors.name}
             label="Item name"
@@ -226,26 +229,6 @@ export function ShoppingPage() {
               })
             }
           />
-          <TextField
-            error={errors.unit}
-            label="Unit"
-            optional
-            value={draft.unit ?? ''}
-            onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
-          />
-          <SelectField
-            label="Category"
-            value={draft.category}
-            onChange={(event) =>
-              setDraft({ ...draft, category: event.target.value as ShoppingCategory })
-            }
-          >
-            {Object.entries(shoppingCategoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectField>
           {errors.form ? <p className="form-error">{errors.form}</p> : null}
           <Button busy={saving} disabled={!draft.name.trim()} type="submit">
             <Plus aria-hidden="true" /> Add item
