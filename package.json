@@ -20,6 +20,7 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
+    "test:e2e:journey": "playwright test core-journey.spec.ts",
     "test:e2e:install": "playwright install chromium",
     "db:prerequisites": "node scripts/check-database-prerequisites.mjs",
     "db:prerequisites:runtime": "node scripts/check-database-prerequisites.mjs --runtime",

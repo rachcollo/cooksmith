@@ -162,6 +162,43 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  journey:
+    name: Core journey e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for journey test
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated local Supabase
+        run: npm run db:start
+      - name: Rebuild database from migrations and synthetic seed
+        run: npm run db:reset
+      - name: Run the core household journey
+        env:
+          VITE_APP_ENV: test
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+        run: |
+          eval "$(npx supabase status -o env 2>/dev/null | grep -E '^(ANON_KEY|PUBLISHABLE_KEY)=')"
+          export VITE_SUPABASE_PUBLISHABLE_KEY="${PUBLISHABLE_KEY:-$ANON_KEY}"
+          npm run test:e2e:journey
+      - name: Stop local Supabase
+        if: always()
+        run: npm run db:stop
+      - name: Upload journey diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-journey-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
   e2e:
     name: Playwright smoke tests
     runs-on: ubuntu-latest

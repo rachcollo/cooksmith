@@ -42,6 +42,7 @@ The application starts safely without an environment file. See [environment and 
 | `npm run test`             | Run all Vitest tests                               |
 | `npm run test:e2e:install` | Install the local Chromium test browser            |
 | `npm run test:e2e`         | Run Playwright shell smoke tests                   |
+| `npm run test:e2e:journey` | Run the core journey against local Supabase        |
 | `npm run validate:static`  | Run formatting, lint, types, Vitest and build      |
 | `npm run validate`         | Run the complete local quality baseline            |
 | `npm run db:config:check`  | Check v2 database files and local-only scripts     |
