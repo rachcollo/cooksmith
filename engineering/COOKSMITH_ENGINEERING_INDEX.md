@@ -52,6 +52,7 @@ for how selection connects to actually starting a build.
 | 8 | M12A MVP Beta Readiness | CS-25 | Not authored | Backlog | Core MVP and E01 | `chore/cs-25-beta-readiness` |
 | 9 | M12B Beta Feedback | CS-26 | Not authored | Backlog | CS-25 | `chore/cs-26-beta-feedback` |
 | 10 | Pantry-aware shopping indicator | CS-50 | Not authored | Backlog | Pantry and Shopping foundations | Not assigned |
+| 11 | Quick-add recipe to next plan date | CS-52 | `engineering/planned/cs52-quick-add-recipe-to-next-plan-date.md` | Planned; CS-49 must be Done and merged before Ready | CS-20 Done; CS-49 Done and merged | `feat/cs-52-quick-add-recipe-planner` |
 
 ## Completed Milestones
 
