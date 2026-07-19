@@ -477,6 +477,87 @@ export type Database = {
         }
         Relationships: []
       }
+      imported_recipes: {
+        Row: {
+          archived_at: string | null
+          author_name: string | null
+          category: string | null
+          cook_time_minutes: number | null
+          created_at: string
+          description: string | null
+          favourite: boolean
+          id: string
+          image_url: string | null
+          ingredient_rows: Json
+          ingredients: string | null
+          instruction_steps: Json
+          name: string
+          normalised_name: string | null
+          normalised_source_url: string | null
+          notes: string | null
+          owner_id: string
+          prep_time_minutes: number | null
+          publisher_name: string | null
+          servings: number | null
+          source_url: string
+          tags: string[]
+          updated_at: string
+          visibility: Database['cooksmith']['Enums']['imported_recipe_visibility']
+        }
+        Insert: {
+          archived_at?: string | null
+          author_name?: string | null
+          category?: string | null
+          cook_time_minutes?: number | null
+          created_at?: string
+          description?: string | null
+          favourite?: boolean
+          id?: string
+          image_url?: string | null
+          ingredient_rows?: Json
+          ingredients?: string | null
+          instruction_steps?: Json
+          name: string
+          normalised_name?: string | null
+          normalised_source_url?: string | null
+          notes?: string | null
+          owner_id?: string
+          prep_time_minutes?: number | null
+          publisher_name?: string | null
+          servings?: number | null
+          source_url: string
+          tags?: string[]
+          updated_at?: string
+          visibility?: Database['cooksmith']['Enums']['imported_recipe_visibility']
+        }
+        Update: {
+          archived_at?: string | null
+          author_name?: string | null
+          category?: string | null
+          cook_time_minutes?: number | null
+          created_at?: string
+          description?: string | null
+          favourite?: boolean
+          id?: string
+          image_url?: string | null
+          ingredient_rows?: Json
+          ingredients?: string | null
+          instruction_steps?: Json
+          name?: string
+          normalised_name?: string | null
+          normalised_source_url?: string | null
+          notes?: string | null
+          owner_id?: string
+          prep_time_minutes?: number | null
+          publisher_name?: string | null
+          servings?: number | null
+          source_url?: string
+          tags?: string[]
+          updated_at?: string
+          visibility?: Database['cooksmith']['Enums']['imported_recipe_visibility']
+        }
+        Relationships: []
+      }
       infrastructure_health: {
         Row: {
           key: string
@@ -868,6 +949,7 @@ export type Database = {
       cooking_skill: 'beginner' | 'confident' | 'experienced'
       household_role: 'owner' | 'member'
       household_status: 'active' | 'archived'
+      imported_recipe_visibility: 'public' | 'private'
       invitation_status: 'pending' | 'accepted' | 'cancelled' | 'expired'
       meal_type: 'breakfast' | 'lunch' | 'dinner'
       membership_status: 'active' | 'inactive'
@@ -1021,6 +1103,7 @@ export const Constants = {
       cooking_skill: ['beginner', 'confident', 'experienced'],
       household_role: ['owner', 'member'],
       household_status: ['active', 'archived'],
+      imported_recipe_visibility: ['public', 'private'],
       invitation_status: ['pending', 'accepted', 'cancelled', 'expired'],
       meal_type: ['breakfast', 'lunch', 'dinner'],
       membership_status: ['active', 'inactive'],

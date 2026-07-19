@@ -22,11 +22,14 @@ export interface RecipeStep {
 export interface Recipe {
   id: string
   householdId: string
+  scope?: 'household' | 'public' | 'private'
   name: string
   ingredients: string | null
   description: string | null
   sourceNote: string | null
   sourceUrl: string | null
+  authorName?: string | null
+  publisherName?: string | null
   servings: number | null
   prepTimeMinutes: number | null
   cookTimeMinutes: number | null
@@ -59,6 +62,8 @@ export interface RecipeInput {
   description: string | null
   sourceNote: string | null
   sourceUrl: string | null
+  authorName?: string | null
+  publisherName?: string | null
   servings: number | null
   prepTimeMinutes: number | null
   cookTimeMinutes: number | null
@@ -69,4 +74,20 @@ export interface RecipeInput {
   favourite: boolean
   ingredientRows: RecipeIngredientInput[]
   steps: RecipeStepInput[]
+}
+
+export type ImportedRecipeVisibility = 'public' | 'private'
+
+export interface RecipeImportDraft {
+  name: string
+  ingredients: string | null
+  description: string | null
+  sourceUrl: string
+  authorName: string | null
+  publisherName: string | null
+  servings: number | null
+  prepTimeMinutes: number | null
+  cookTimeMinutes: number | null
+  imageUrl: string | null
+  warnings: string[]
 }

@@ -2,7 +2,13 @@ import type { PostgrestError } from '@supabase/supabase-js'
 
 import type { RecipeRepository } from '../../application/recipes/recipeRepository'
 import { deriveRecipeContent } from '../../domain/recipes/contentDerivation'
-import type { Recipe, RecipeIngredient, RecipeInput, RecipeStep } from '../../domain/recipes/types'
+import type {
+  Recipe,
+  RecipeImportDraft,
+  RecipeIngredient,
+  RecipeInput,
+  RecipeStep,
+} from '../../domain/recipes/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
 type RecipeIngredientRow = {
@@ -49,6 +55,15 @@ type RecipeRow = {
   updated_at: string
 }
 
+type ImportedRecipeRow = Omit<RecipeRow, 'household_id' | 'source_note'> & {
+  visibility: 'public' | 'private'
+  author_name: string | null
+  publisher_name: string | null
+  owner_id: string
+  ingredient_rows: RecipeIngredientRow[] | null
+  instruction_steps: RecipeStepRow[] | null
+}
+
 function mapIngredient(row: RecipeIngredientRow): RecipeIngredient {
   return {
     id: row.id,
@@ -78,11 +93,14 @@ function mapRow(row: RecipeRow): Recipe {
   return {
     id: row.id,
     householdId: row.household_id,
+    scope: 'household',
     name: row.name,
     ingredients: row.ingredients,
     description: row.description,
     sourceNote: row.source_note,
     sourceUrl: row.source_url,
+    authorName: null,
+    publisherName: null,
     servings: row.servings,
     prepTimeMinutes: row.prep_time_minutes,
     cookTimeMinutes: row.cook_time_minutes,
@@ -98,6 +116,22 @@ function mapRow(row: RecipeRow): Recipe {
     archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  }
+}
+
+function mapImportedRow(row: ImportedRecipeRow): Recipe {
+  return {
+    ...mapRow({
+      ...row,
+      household_id: '',
+      source_note: row.publisher_name,
+      recipe_ingredients: row.ingredient_rows,
+      recipe_steps: row.instruction_steps,
+    }),
+    householdId: '',
+    scope: row.visibility,
+    authorName: row.author_name,
+    publisherName: row.publisher_name,
   }
 }
 
@@ -179,8 +213,16 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
   const database = client.schema('cooksmith')
   const selection =
     'id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_name, quantity_text, unit, preparation, original_line_text, parser_version, derivation_status, position), recipe_steps(id, instruction, original_line_text, parser_version, derivation_status, position)'
+  const importedSelection =
+    'id, visibility, owner_id, name, ingredients, description, ingredient_rows, instruction_steps, source_url, author_name, publisher_name, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at'
 
   return {
+    async importFromUrl(url) {
+      const result = await client.functions.invoke('import-recipe', { body: { url } })
+      if (result.error)
+        throw new Error('Cooksmith could not import that page. Check the URL and try again.')
+      return result.data as RecipeImportDraft
+    },
     async list(householdId) {
       const result = await database
         .from('household_recipes')
@@ -189,7 +231,88 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .is('archived_at', null)
         .order('name')
       recipeError(result.error)
-      return ((result.data ?? []) as unknown as RecipeRow[]).map(mapRow)
+      const importedResult = await (
+        database as never as {
+          from: (table: string) => ReturnType<typeof database.from>
+        }
+      )
+        .from('imported_recipes')
+        .select(importedSelection)
+        .is('archived_at', null)
+        .order('name')
+      recipeError(importedResult.error)
+      return [
+        ...((result.data ?? []) as unknown as RecipeRow[]).map(mapRow),
+        ...((importedResult.data ?? []) as unknown as ImportedRecipeRow[]).map(mapImportedRow),
+      ].sort((a, b) => a.name.localeCompare(b.name))
+    },
+    async createImported(input, visibility) {
+      const derivedContent = deriveRecipeContent(input.ingredients, input.description)
+      const result = await (
+        database as never as {
+          from: (table: string) => ReturnType<typeof database.from>
+        }
+      )
+        .from('imported_recipes')
+        .insert({
+          visibility,
+          name: input.name,
+          ingredients: input.ingredients,
+          description: input.description,
+          ingredient_rows: derivedContent.ingredients.map((ingredient, index) => ({
+            id: `derived-${index + 1}`,
+            ingredient_name: ingredient.name,
+            quantity_text: ingredient.quantity,
+            unit: ingredient.unit,
+            preparation: ingredient.preparation,
+            original_line_text: ingredient.originalLineText,
+            parser_version: ingredient.parserVersion,
+            derivation_status: ingredient.derivationStatus,
+            position: index + 1,
+          })),
+          instruction_steps: derivedContent.steps.map((step, index) => ({
+            id: `derived-${index + 1}`,
+            instruction: step.instruction,
+            original_line_text: step.originalLineText,
+            parser_version: step.parserVersion,
+            derivation_status: step.derivationStatus,
+            position: index + 1,
+          })),
+          source_url: input.sourceUrl,
+          author_name: input.authorName,
+          publisher_name: input.publisherName,
+          servings: input.servings,
+          prep_time_minutes: input.prepTimeMinutes,
+          cook_time_minutes: input.cookTimeMinutes,
+          image_url: input.imageUrl,
+          notes: input.notes,
+          category: input.category,
+          tags: input.tags,
+          favourite: input.favourite,
+        } as never)
+        .select(importedSelection)
+        .single()
+      if (result.error?.code === '23505' && visibility === 'public' && input.sourceUrl) {
+        const existing = await (
+          database as never as {
+            from: (table: string) => ReturnType<typeof database.from>
+          }
+        )
+          .from('imported_recipes')
+          .select(importedSelection)
+          .eq('visibility', 'public')
+          .eq('normalised_source_url', input.sourceUrl.trim().toLocaleLowerCase())
+          .is('archived_at', null)
+          .single()
+        recipeError(existing.error)
+        if (existing.data) return mapImportedRow(existing.data as unknown as ImportedRecipeRow)
+      }
+      if (result.error?.code === '23505' && visibility === 'private') {
+        throw new Error('You already have a private recipe imported from this URL.')
+      }
+      recipeError(result.error)
+      if (!result.data) throw new Error('Cooksmith could not save the imported recipe.')
+      return mapImportedRow(result.data as unknown as ImportedRecipeRow)
     },
     async create(householdId, input) {
       const result = await database

@@ -35,6 +35,61 @@ function recipe(overrides: Partial<Recipe>): Recipe {
 }
 
 describe('recipe library experience', () => {
+  it('imports into a review draft with public default and can save privately', async () => {
+    const createImported = vi.fn(async (input, visibility) =>
+      recipe({ id: 'imported', householdId: '', scope: visibility, ...input }),
+    )
+    const repository: RecipeRepository = {
+      list: async () => [],
+      create: async () => recipe({}),
+      update: async () => recipe({}),
+      archive: async () => recipe({}),
+      importFromUrl: async () => ({
+        name: 'Imported noodles',
+        ingredients: '200 g noodles',
+        description: 'Boil noodles.',
+        sourceUrl: 'https://example.com/noodles',
+        authorName: 'Jamie Example',
+        publisherName: 'Example Kitchen',
+        servings: 2,
+        prepTimeMinutes: 5,
+        cookTimeMinutes: 10,
+        imageUrl: null,
+        warnings: [],
+      }),
+      createImported,
+    }
+    renderApp(
+      '/recipes',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+    )
+    await screen.findByRole('heading', { name: 'Start your recipe library' })
+    await userEvent.click(screen.getByRole('button', { name: 'Import' }))
+    const urlDialog = screen.getByRole('dialog', { name: 'Import a recipe' })
+    await userEvent.type(
+      within(urlDialog).getByLabelText('Recipe URL'),
+      'https://example.com/noodles',
+    )
+    await userEvent.click(within(urlDialog).getByRole('button', { name: 'Import recipe' }))
+    const review = await screen.findByRole('dialog', { name: 'Review imported recipe' })
+    expect(within(review).getByRole('radio', { name: /Public/ })).toBeChecked()
+    expect(within(review).getByLabelText(/Author/)).toHaveValue('Jamie Example')
+    await userEvent.click(within(review).getByRole('radio', { name: /Private/ }))
+    await userEvent.click(within(review).getByRole('button', { name: 'Save imported recipe' }))
+    expect(createImported).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Imported noodles', authorName: 'Jamie Example' }),
+      'private',
+    )
+    expect(await screen.findByText('Private recipe')).toBeVisible()
+  })
+
   it('loads an empty library and creates a recipe that opens in detail', async () => {
     const create = vi.fn(async (householdId, input) =>
       recipe({

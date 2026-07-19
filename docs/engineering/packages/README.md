@@ -2,15 +2,15 @@
 
 Engineering packages define build-ready scope, constraints, validation, acceptance criteria, and handover requirements for upcoming Cooksmith milestones.
 
-| Milestone / story | Package | Status | Depends on |
-| --- | --- | --- | --- |
-| M08B / CS-18 | [Meal Planner UX & Drag & Drop](m08b-meal-planner-ux-drag-drop.md) | Delivered | M08A |
-| M09B / CS-19 | [Recipe Authoring & Ingredients](m09b-recipe-authoring-ingredients.md) | Delivered | M09A |
-| CS-27 | [Multiline Recipe Authoring](cs27-multiline-recipe-authoring.md) | Ready for Build | CS-19; deliver with CS-28 |
-| CS-28 | [Lossless Recipe Content Structuring](cs28-lossless-recipe-content-structuring.md) | Ready for Build | CS-19; deliver with CS-27 |
-| M08C / CS-20 | [Meal Planner ↔ Recipe Integration](m08c-meal-planner-recipe-integration.md) | Ready after CS-27/CS-28 | M08A, CS-18, M09A, CS-19, CS-27, CS-28 |
-| CS-30 | [Import and Review a Recipe from a URL](cs30-url-recipe-import.md) | First-release requirement; ready after CS-27/CS-28 | CS-27, CS-28 |
-| CS-29 | [Cook With Me Step-by-Step Mode](cs29-cook-with-me.md) | Future / Backlog | CS-27, CS-28 |
+| Milestone / story | Package                                                                            | Status                          | Depends on                             |
+| ----------------- | ---------------------------------------------------------------------------------- | ------------------------------- | -------------------------------------- |
+| M08B / CS-18      | [Meal Planner UX & Drag & Drop](m08b-meal-planner-ux-drag-drop.md)                 | Delivered                       | M08A                                   |
+| M09B / CS-19      | [Recipe Authoring & Ingredients](m09b-recipe-authoring-ingredients.md)             | Delivered                       | M09A                                   |
+| CS-27             | [Multiline Recipe Authoring](cs27-multiline-recipe-authoring.md)                   | Ready for Build                 | CS-19; deliver with CS-28              |
+| CS-28             | [Lossless Recipe Content Structuring](cs28-lossless-recipe-content-structuring.md) | Ready for Build                 | CS-19; deliver with CS-27              |
+| M08C / CS-20      | [Meal Planner ↔ Recipe Integration](m08c-meal-planner-recipe-integration.md)       | Ready after CS-27/CS-28         | M08A, CS-18, M09A, CS-19, CS-27, CS-28 |
+| CS-30             | [Import and Review a Recipe from a URL](cs30-url-recipe-import.md)                 | Implemented; validation pending | CS-27, CS-28                           |
+| CS-29             | [Cook With Me Step-by-Step Mode](cs29-cook-with-me.md)                             | Future / Backlog                | CS-27, CS-28                           |
 
 Build order:
 
