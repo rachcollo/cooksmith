@@ -779,6 +779,58 @@ export type Database = {
           },
         ]
       }
+      shopping_item_contributions: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          planned_meal_id: string
+          quantity: number | null
+          shopping_item_id: string
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          planned_meal_id: string
+          quantity?: number | null
+          shopping_item_id: string
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          planned_meal_id?: string
+          quantity?: number | null
+          shopping_item_id?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_item_contributions_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'shopping_item_contributions_planned_meal_id_fkey'
+            columns: ['planned_meal_id']
+            isOneToOne: false
+            referencedRelation: 'planned_meals'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'shopping_item_contributions_shopping_item_id_fkey'
+            columns: ['shopping_item_id']
+            isOneToOne: false
+            referencedRelation: 'shopping_list_items'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       shopping_list_items: {
         Row: {
           category: Database['cooksmith']['Enums']['shopping_item_category']
@@ -936,6 +988,14 @@ export type Database = {
           membership_id: string
           user_id: string
         }[]
+      }
+      reconcile_planned_meal_shopping: {
+        Args: {
+          ingredient_inputs: Json
+          target_household_id: string
+          target_planned_meal_id: string
+        }
+        Returns: undefined
       }
       remove_household_member: {
         Args: { p_member_id: string }

@@ -79,6 +79,22 @@ export function createSupabaseShoppingRepository(
       return mapRow(result.data as unknown as ShoppingRow)
     },
 
+    async createFromPlan(householdId, plannedMealId, inputs) {
+      const result = await (
+        database as never as {
+          rpc: (
+            name: string,
+            params: Record<string, unknown>,
+          ) => Promise<{ error: PostgrestError | null }>
+        }
+      ).rpc('reconcile_planned_meal_shopping', {
+        target_household_id: householdId,
+        target_planned_meal_id: plannedMealId,
+        ingredient_inputs: inputs,
+      })
+      shoppingError(result.error)
+    },
+
     async update(itemId, input) {
       const result = await database
         .from('shopping_list_items')
@@ -87,6 +103,7 @@ export function createSupabaseShoppingRepository(
           quantity: input.quantity,
           unit: input.unit,
           category: input.category,
+          manual: true,
         } as never)
         .eq('id', itemId)
         .select(selection)
