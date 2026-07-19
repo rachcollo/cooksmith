@@ -7,14 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import {
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  GripVertical,
-  Pencil,
-  X,
-} from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
@@ -42,19 +35,14 @@ import {
   toLocalIsoDate,
   weekDays,
 } from '../domain/meal-plans/week'
-import {
-  recipeToMultilineInput,
-  splitMeaningfulLines,
-} from '../domain/recipes/multilineContent'
+import { recipeToMultilineInput, splitMeaningfulLines } from '../domain/recipes/multilineContent'
 import type { Recipe } from '../domain/recipes/types'
 import '../styles/mealPlannerLinkedCards.css'
 
 type MealDialog =
   | { mode: 'add'; input: PlannedMealInput }
   | { mode: 'edit'; meal: PlannedMeal; input: PlannedMealInput }
-type MealFieldErrors = Partial<
-  Record<'mealDate' | 'title' | 'notes' | 'recipeId', string>
->
+type MealFieldErrors = Partial<Record<'mealDate' | 'title' | 'notes' | 'recipeId', string>>
 type DragDetails = {
   meal: PlannedMeal
   startX: number
@@ -107,20 +95,12 @@ export function PlanPage() {
   const suppressMealClick = useRef(false)
   const days = useMemo(() => weekDays(weekStart), [weekStart])
   const visibleMeals = useMemo(
-    () =>
-      meals.filter(
-        (meal) =>
-          meal.householdId === householdId && meal.mealType === 'dinner',
-      ),
+    () => meals.filter((meal) => meal.householdId === householdId && meal.mealType === 'dinner'),
     [householdId, meals],
   )
   const weekEnd = addDays(weekStart, 6)
-  const activeRecipes = useMemo(
-    () => recipes.filter((recipe) => !recipe.archivedAt),
-    [recipes],
-  )
-  const selectedRecipe =
-    recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null
+  const activeRecipes = useMemo(() => recipes.filter((recipe) => !recipe.archivedAt), [recipes])
+  const selectedRecipe = recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null
 
   useEffect(() => {
     let active = true
@@ -134,10 +114,7 @@ export function PlanPage() {
         }
       })
       .catch(() => {
-        if (active)
-          setError(
-            'We could not load this week’s dinners. Try refreshing Cooksmith.',
-          )
+        if (active) setError('We could not load this week’s dinners. Try refreshing Cooksmith.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -160,9 +137,7 @@ export function PlanPage() {
       })
       .catch(() => {
         if (active)
-          setRecipeError(
-            'Recipe selection is unavailable right now. Free-text dinners still work.',
-          )
+          setRecipeError('Recipe selection is unavailable right now. Free-text dinners still work.')
       })
     return () => {
       active = false
@@ -179,10 +154,7 @@ export function PlanPage() {
     for (const issue of result.error.issues) {
       const key = issue.path[0]
       if (
-        (key === 'mealDate' ||
-          key === 'title' ||
-          key === 'notes' ||
-          key === 'recipeId') &&
+        (key === 'mealDate' || key === 'title' || key === 'notes' || key === 'recipeId') &&
         !(key in nextErrors)
       ) {
         nextErrors[key] = issue.message
@@ -217,8 +189,7 @@ export function PlanPage() {
 
   function selectRecipe(recipeId: string) {
     if (!dialog) return
-    const recipe =
-      activeRecipes.find((candidate) => candidate.id === recipeId) ?? null
+    const recipe = activeRecipes.find((candidate) => candidate.id === recipeId) ?? null
     const nextInput: PlannedMealInput = recipe
       ? {
           ...dialog.input,
@@ -233,9 +204,7 @@ export function PlanPage() {
   function updateDialog(input: PlannedMealInput) {
     if (!dialog) return
     setDialog(
-      dialog.mode === 'add'
-        ? { mode: 'add', input }
-        : { mode: 'edit', meal: dialog.meal, input },
+      dialog.mode === 'add' ? { mode: 'add', input } : { mode: 'edit', meal: dialog.meal, input },
     )
   }
 
@@ -274,9 +243,7 @@ export function PlanPage() {
       setDialog(null)
     } catch (saveError) {
       setFormError(
-        saveError instanceof Error
-          ? saveError.message
-          : 'Cooksmith could not save that dinner.',
+        saveError instanceof Error ? saveError.message : 'Cooksmith could not save that dinner.',
       )
     } finally {
       setSaving(false)
@@ -284,17 +251,10 @@ export function PlanPage() {
   }
 
   async function remove(meal: PlannedMeal) {
-    if (
-      !window.confirm(
-        `Remove ${displayTitleForPlannedMeal(meal)} from the plan?`,
-      )
-    )
-      return
+    if (!window.confirm(`Remove ${displayTitleForPlannedMeal(meal)} from the plan?`)) return
     try {
       await repository.remove(meal.id)
-      setMeals((current) =>
-        current.filter((candidate) => candidate.id !== meal.id),
-      )
+      setMeals((current) => current.filter((candidate) => candidate.id !== meal.id))
     } catch (removeError) {
       setError(
         removeError instanceof Error
@@ -307,8 +267,7 @@ export function PlanPage() {
   async function moveMeal(meal: PlannedMeal, targetDate: string) {
     if (meal.mealDate === targetDate) return
     const displaced = visibleMeals.find(
-      (candidate) =>
-        candidate.mealDate === targetDate && candidate.id !== meal.id,
+      (candidate) => candidate.mealDate === targetDate && candidate.id !== meal.id,
     )
     try {
       const [moved, swapped] = await Promise.all([
@@ -330,17 +289,12 @@ export function PlanPage() {
       setError(null)
     } catch (moveError) {
       setError(
-        moveError instanceof Error
-          ? moveError.message
-          : 'Cooksmith could not move that dinner.',
+        moveError instanceof Error ? moveError.message : 'Cooksmith could not move that dinner.',
       )
     }
   }
 
-  function startDrag(
-    meal: PlannedMeal,
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) {
+  function startDrag(meal: PlannedMeal, event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return
     dragDetails.current = {
       meal,
@@ -357,10 +311,7 @@ export function PlanPage() {
   function continueDrag(event: ReactPointerEvent<HTMLDivElement>) {
     const details = dragDetails.current
     if (!details) return
-    const distance = Math.hypot(
-      event.clientX - details.startX,
-      event.clientY - details.startY,
-    )
+    const distance = Math.hypot(event.clientX - details.startX, event.clientY - details.startY)
     if (!details.active && distance < 8) return
     details.active = true
     const target = document
@@ -371,19 +322,9 @@ export function PlanPage() {
     setDropTargetDate(details.targetDate)
   }
 
-  function moveWithKeyboard(
-    meal: PlannedMeal,
-    event: ReactKeyboardEvent<HTMLButtonElement>,
-  ) {
-    if (
-      !event.altKey ||
-      (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')
-    )
-      return
-    const targetDate = addDays(
-      meal.mealDate,
-      event.key === 'ArrowLeft' ? -1 : 1,
-    )
+  function moveWithKeyboard(meal: PlannedMeal, event: ReactKeyboardEvent<HTMLButtonElement>) {
+    if (!event.altKey || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return
+    const targetDate = addDays(meal.mealDate, event.key === 'ArrowLeft' ? -1 : 1)
     if (!days.includes(targetDate)) return
     event.preventDefault()
     void moveMeal(meal, targetDate)
@@ -448,8 +389,8 @@ export function PlanPage() {
       ) : null}
 
       <span className="meal-drag-instructions" id="meal-drag-instructions">
-        To move a dinner without dragging, focus its name and press Alt with the
-        left or right arrow.
+        To move a dinner without dragging, focus its name and press Alt with the left or right
+        arrow.
       </span>
 
       {loading ? (
@@ -457,9 +398,7 @@ export function PlanPage() {
       ) : (
         <section className="meal-week" aria-label="Weekly dinner planner">
           {days.map((day) => {
-            const meal = visibleMeals.find(
-              (candidate) => candidate.mealDate === day,
-            )
+            const meal = visibleMeals.find((candidate) => candidate.mealDate === day)
             return (
               <article
                 className={[
@@ -478,9 +417,7 @@ export function PlanPage() {
                     <p>{formatDayLabel(day)}</p>
                     <h2 id={`meal-day-${day}`}>{compactDate(day)}</h2>
                   </div>
-                  {day === today ? (
-                    <span className="meal-today-badge">Today</span>
-                  ) : null}
+                  {day === today ? <span className="meal-today-badge">Today</span> : null}
                 </header>
 
                 {meal ? (
@@ -491,10 +428,7 @@ export function PlanPage() {
                     onPointerUp={finishDrag}
                     onPointerCancel={finishDrag}
                   >
-                    <GripVertical
-                      aria-hidden="true"
-                      className="meal-drag-handle"
-                    />
+                    <GripVertical aria-hidden="true" className="meal-drag-handle" />
                     <button
                       className="planned-meal-title"
                       type="button"
@@ -564,9 +498,7 @@ export function PlanPage() {
           title={selectedRecipe.name}
           description={[
             recipeMinutesLabel(selectedRecipe),
-            selectedRecipe.servings
-              ? `${selectedRecipe.servings} servings`
-              : null,
+            selectedRecipe.servings ? `${selectedRecipe.servings} servings` : null,
           ]
             .filter(Boolean)
             .join(' · ')}
@@ -577,15 +509,14 @@ export function PlanPage() {
           <div className="recipe-detail-dialog">
             <section>
               <h3>Ingredients</h3>
-              {splitMeaningfulLines(
-                recipeToMultilineInput(selectedRecipe).ingredients,
-              ).length > 0 ? (
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length >
+              0 ? (
                 <ul>
-                  {splitMeaningfulLines(
-                    recipeToMultilineInput(selectedRecipe).ingredients,
-                  ).map((line, index) => (
-                    <li key={`${index}-${line}`}>{line}</li>
-                  ))}
+                  {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).map(
+                    (line, index) => (
+                      <li key={`${index}-${line}`}>{line}</li>
+                    ),
+                  )}
                 </ul>
               ) : (
                 <p>No ingredients added yet.</p>
@@ -593,15 +524,14 @@ export function PlanPage() {
             </section>
             <section>
               <h3>Instructions</h3>
-              {splitMeaningfulLines(
-                recipeToMultilineInput(selectedRecipe).description,
-              ).length > 0 ? (
+              {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).length >
+              0 ? (
                 <ol>
-                  {splitMeaningfulLines(
-                    recipeToMultilineInput(selectedRecipe).description,
-                  ).map((line, index) => (
-                    <li key={`${index}-${line}`}>{line}</li>
-                  ))}
+                  {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).description).map(
+                    (line, index) => (
+                      <li key={`${index}-${line}`}>{line}</li>
+                    ),
+                  )}
                 </ol>
               ) : (
                 <p>No instructions added yet.</p>
@@ -610,21 +540,13 @@ export function PlanPage() {
             {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
             {selectedRecipe.sourceUrl ? (
               <p>
-                <a
-                  href={selectedRecipe.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href={selectedRecipe.sourceUrl} target="_blank" rel="noreferrer">
                   Open source link
                 </a>
               </p>
             ) : null}
             <div className="dialog-actions">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setSelectedRecipeId(null)}
-              >
+              <Button type="button" variant="secondary" onClick={() => setSelectedRecipeId(null)}>
                 Back to planner
               </Button>
             </div>
@@ -635,18 +557,13 @@ export function PlanPage() {
       {dialog ? (
         <Dialog
           open
-          title={
-            dialog.mode === 'add' ? 'Add dinner' : `Edit ${dialog.meal.title}`
-          }
+          title={dialog.mode === 'add' ? 'Add dinner' : `Edit ${dialog.meal.title}`}
           description={compactDate(dialog.input.mealDate)}
           onOpenChange={(open) => {
             if (!open && !saving) setDialog(null)
           }}
         >
-          <form
-            className="pantry-form pantry-edit-form"
-            onSubmit={(event) => void submit(event)}
-          >
+          <form className="pantry-form pantry-edit-form" onSubmit={(event) => void submit(event)}>
             <label className="field">
               <span>Start with</span>
               <select
@@ -661,10 +578,7 @@ export function PlanPage() {
                     {recipe.prepTimeMinutes || recipe.cookTimeMinutes
                       ? ` — ${[recipe.prepTimeMinutes, recipe.cookTimeMinutes]
                           .filter((value) => value !== null)
-                          .reduce(
-                            (total, value) => total + (value ?? 0),
-                            0,
-                          )} min`
+                          .reduce((total, value) => total + (value ?? 0), 0)} min`
                       : ''}
                   </option>
                 ))}
@@ -677,9 +591,7 @@ export function PlanPage() {
               required
               type="date"
               value={dialog.input.mealDate}
-              onChange={(event) =>
-                updateDialog({ ...dialog.input, mealDate: event.target.value })
-              }
+              onChange={(event) => updateDialog({ ...dialog.input, mealDate: event.target.value })}
             />
             <TextField
               data-autofocus
@@ -687,18 +599,14 @@ export function PlanPage() {
               label="Dinner"
               required
               value={dialog.input.title}
-              onChange={(event) =>
-                updateDialog({ ...dialog.input, title: event.target.value })
-              }
+              onChange={(event) => updateDialog({ ...dialog.input, title: event.target.value })}
             />
             <TextArea
               error={fieldErrors.notes}
               label="Notes"
               optional
               value={dialog.input.notes ?? ''}
-              onChange={(event) =>
-                updateDialog({ ...dialog.input, notes: event.target.value })
-              }
+              onChange={(event) => updateDialog({ ...dialog.input, notes: event.target.value })}
             />
             {formError ? <p className="form-error">{formError}</p> : null}
             <div className="dialog-actions">
@@ -710,11 +618,7 @@ export function PlanPage() {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                busy={saving}
-                disabled={dialog.input.title.trim() === ''}
-              >
+              <Button type="submit" busy={saving} disabled={dialog.input.title.trim() === ''}>
                 Save dinner
               </Button>
             </div>
