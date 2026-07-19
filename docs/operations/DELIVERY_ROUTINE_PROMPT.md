@@ -1,9 +1,14 @@
 # Delivery Routine prompt
 
-This is the authoritative prompt for the scheduled delivery Routine
+This is the authoritative prompt for the scheduled delivery job
 ("Cooksmith automated story pickup", every 2 hours, fresh session per
-firing). When this file changes, update the Routine's prompt to match.
-Everything between the markers below is pasted verbatim into the Routine.
+firing). It is platform-neutral: it can run on any agent platform whose
+scheduled job has GitHub access to rachcollo/cooksmith and Jira access to
+the smillins.atlassian.net CS project through the platform's connectors.
+Never paste API tokens or other credentials into the prompt itself.
+
+When this file changes, update the scheduled job's prompt to match.
+Everything below the marker is pasted verbatim into the job.
 
 To pause a single story, remove its `codex-ready` label (build pickup) or
 its `package-requested` label (package drafting). To pause everything,
@@ -20,9 +25,10 @@ project CS, cloudId d14250fb-f9d3-4ca4-9f89-37b4288080ce.
 
 ## Step 0 — get the repo current
 
-If /home/user/cooksmith exists, `cd` into it, `git fetch origin main`,
-`git checkout main`, `git reset --hard origin/main`. Otherwise clone
-rachcollo/cooksmith fresh and check out main.
+Work from the latest commit on rachcollo/cooksmith `main`. If your
+environment already has a clone, fetch and hard-reset it to `origin/main`;
+otherwise clone the repository fresh and check out `main`. Do not start
+from a cached or stale checkout.
 
 ## Step 1 — read the rules before doing anything else
 
