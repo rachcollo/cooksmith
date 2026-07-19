@@ -220,7 +220,6 @@ export function ShoppingPage() {
             error={errors.quantity}
             inputMode="decimal"
             label="Quantity"
-            optional
             value={draft.quantity === null ? '' : String(draft.quantity)}
             onChange={(event) =>
               setDraft({
