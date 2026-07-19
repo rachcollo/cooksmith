@@ -522,8 +522,8 @@ export function RecipesPage() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <Button type="button" onClick={() => setCreating(true)}>
-          Add recipe
+        <Button type="button" aria-label="Add recipe" onClick={() => setCreating(true)}>
+          Add
         </Button>
         <Button type="button" variant="secondary" onClick={() => setImporting(true)}>
           Import
