@@ -18,6 +18,7 @@ function meal(overrides: Partial<PlannedMeal>): PlannedMeal {
     title: 'Pasta',
     notes: null,
     recipeId: null,
+    recipeSource: null,
     linkedRecipe: null,
     recipeState: { kind: 'free-text' },
     createdAt: '2026-01-01T00:00:00Z',
@@ -120,11 +121,66 @@ describe('weekly dinner planner', () => {
     await waitFor(() => expect(remove).toHaveBeenCalledWith('existing-dinner'))
   })
 
+  it('adds a selected public recipe-bank meal using the imported recipe source', async () => {
+    const importedRecipe = {
+      ...(await defaultRecipeRepository.list(householdId))[0],
+      id: '30000000-0000-4000-8000-000000000001',
+      householdId: '',
+      scope: 'public' as const,
+      name: 'Baked garlic chicken',
+    }
+    const create = vi.fn(async (_householdId, input) =>
+      meal({ id: 'recipe-bank-dinner', ...input }),
+    ) satisfies PlannedMealRepository['create']
+    const repository: PlannedMealRepository = {
+      listWeek: async () => [],
+      create,
+      update: async (id, input) => meal({ id, ...input }),
+      remove: async () => undefined,
+    }
+    const recipeRepository: RecipeRepository = {
+      ...defaultRecipeRepository,
+      list: async () => [importedRecipe],
+    }
+    const user = userEvent.setup()
+
+    renderApp(
+      '/plan',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      recipeRepository,
+    )
+
+    const monday = await screen.findByRole('heading', { name: '13 July' })
+    await user.click(
+      within(monday.closest('article') as HTMLElement).getByRole('button', {
+        name: 'Add dinner',
+      }),
+    )
+    await user.selectOptions(screen.getByLabelText('Start with'), importedRecipe.id)
+    await user.click(screen.getByRole('button', { name: 'Save dinner' }))
+
+    expect(create).toHaveBeenCalledWith(householdId, {
+      mealDate: '2026-07-13',
+      mealType: 'dinner',
+      title: 'Baked garlic chicken',
+      notes: null,
+      recipeId: importedRecipe.id,
+      recipeSource: 'imported',
+    })
+  })
+
   it('opens linked recipe details from the meal card and exposes planner edit controls', async () => {
     const linkedMeal = meal({
       id: 'linked-dinner',
       title: 'Lentil soup',
       recipeId: 'recipe-1',
+      recipeSource: 'household',
       linkedRecipe: { id: 'recipe-1', name: 'Lentil soup', archivedAt: null },
       recipeState: {
         kind: 'active',

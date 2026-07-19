@@ -17,6 +17,7 @@ const meal: PlannedMeal = {
   title: 'Soup night',
   notes: 'Use the big pot',
   recipeId: recipe.id,
+  recipeSource: 'household',
   linkedRecipe: recipe,
   recipeState: { kind: 'active', recipe },
   createdAt: '2026-01-01T00:00:00Z',
@@ -48,6 +49,7 @@ describe('planned meal recipe links', () => {
       title: 'Soup night',
       notes: 'Use the big pot',
       recipeId: null,
+      recipeSource: null,
     })
   })
 })

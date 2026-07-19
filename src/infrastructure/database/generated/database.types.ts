@@ -582,6 +582,7 @@ export type Database = {
           created_by: string | null
           household_id: string
           id: string
+          imported_recipe_id: string | null
           meal_date: string
           meal_type: Database['cooksmith']['Enums']['meal_type']
           notes: string | null
@@ -595,6 +596,7 @@ export type Database = {
           created_by?: string | null
           household_id: string
           id?: string
+          imported_recipe_id?: string | null
           meal_date: string
           meal_type: Database['cooksmith']['Enums']['meal_type']
           notes?: string | null
@@ -608,6 +610,7 @@ export type Database = {
           created_by?: string | null
           household_id?: string
           id?: string
+          imported_recipe_id?: string | null
           meal_date?: string
           meal_type?: Database['cooksmith']['Enums']['meal_type']
           notes?: string | null
@@ -622,6 +625,13 @@ export type Database = {
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'planned_meals_imported_recipe_id_fkey'
+            columns: ['imported_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'imported_recipes'
             referencedColumns: ['id']
           },
           {

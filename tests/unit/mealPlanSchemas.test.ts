@@ -67,6 +67,7 @@ describe('planned meal validation', () => {
       title: 'Pasta',
       notes: null,
       recipeId: null,
+      recipeSource: null,
     })
     expect(
       plannedMealInputSchema.safeParse({
@@ -87,6 +88,7 @@ it('accepts optional recipe links for linked and free-text planned meals', () =>
       title: 'Soup',
       notes: null,
       recipeId: '30000000-0000-4000-8000-000000000001',
+      recipeSource: 'household',
     }).recipeId,
   ).toBe('30000000-0000-4000-8000-000000000001')
   expect(
@@ -96,6 +98,7 @@ it('accepts optional recipe links for linked and free-text planned meals', () =>
       title: 'Toasties',
       notes: null,
       recipeId: '',
+      recipeSource: null,
     }).recipeId,
   ).toBeNull()
 })
