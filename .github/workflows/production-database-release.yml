@@ -80,12 +80,12 @@ jobs:
         run: npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
 
       - name: Dry-run pending migrations
-        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --include-all --dry-run
 
       - name: Apply pending migrations
-        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
+        run: npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --include-all --yes
 
       - name: Verify migration history is current
         run: |
           npx supabase migration list --linked --password "$SUPABASE_DB_PASSWORD"
-          npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --dry-run
+          npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --include-all --dry-run
