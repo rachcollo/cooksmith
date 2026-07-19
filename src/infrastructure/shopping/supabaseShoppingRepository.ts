@@ -103,6 +103,7 @@ export function createSupabaseShoppingRepository(
           quantity: input.quantity,
           unit: input.unit,
           category: input.category,
+          manual: true,
         } as never)
         .eq('id', itemId)
         .select(selection)
