@@ -40,6 +40,12 @@ jobs:
             echo "No Jira key found in branch name '$BRANCH'; skipping."
             exit 0
           fi
+          case "$BRANCH" in
+            package/*)
+              echo "Engineering-package branch '$BRANCH'; not an implementation start, skipping status sync."
+              exit 0
+              ;;
+          esac
           node scripts/engineering/jira-sync.mjs branch-created \
             --key "$KEY" \
             --branch "$BRANCH" \
@@ -68,6 +74,10 @@ jobs:
             echo "No Jira key found in PR title '$TITLE'; skipping."
             exit 0
           fi
+          if printf '%s' "$TITLE" | grep -qiE '^(chore|infra)(\([^)]*\))?:'; then
+            echo "Infrastructure or package PR '$TITLE'; not a build in review, skipping status sync."
+            exit 0
+          fi
           node scripts/engineering/jira-sync.mjs pr-opened \
             --key "$KEY" \
             --pr-url "${{ github.event.pull_request.html_url }}"
@@ -94,10 +104,16 @@ jobs:
             echo "No Jira key found in PR title '$TITLE'; skipping."
             exit 0
           fi
-          node scripts/engineering/jira-sync.mjs pr-merged \
-            --key "$KEY" \
-            --pr-url "${{ github.event.pull_request.html_url }}" \
-            --merge-commit "${{ github.event.pull_request.merge_commit_sha }}"
+          if printf '%s' "$TITLE" | grep -qiE '^chore\(package\):'; then
+            node scripts/engineering/jira-sync.mjs package-merged \
+              --key "$KEY" \
+              --pr-url "${{ github.event.pull_request.html_url }}"
+          else
+            node scripts/engineering/jira-sync.mjs pr-merged \
+              --key "$KEY" \
+              --pr-url "${{ github.event.pull_request.html_url }}" \
+              --merge-commit "${{ github.event.pull_request.merge_commit_sha }}"
+          fi
 
   ci-failure:
     name: Required checks failed

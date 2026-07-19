@@ -100,6 +100,32 @@ const HANDLERS = {
     ])
   },
 
+  // Fires when a "chore(package):" engineering-package PR merges. The
+  // product owner's merge of that PR is the scope approval, so the story is
+  // promoted to Ready and labelled codex-ready for automated pickup.
+  async 'package-merged'(config, args) {
+    const result = await transitionForward(config, args.key, 'Ready')
+    await jiraFetch(config, `/rest/api/3/issue/${args.key}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        update: { labels: [{ add: 'codex-ready' }, { remove: 'package-requested' }] },
+      }),
+    })
+    await addComment(config, args.key, [
+      [
+        { text: 'Engineering package approved and merged: ' },
+        { text: args.prUrl, href: args.prUrl },
+      ],
+      [
+        {
+          text: result.moved
+            ? 'Status moved to Ready and the codex-ready label was added. Automated pickup will consider this story at its next scheduled run. Remove the codex-ready label to pause pickup for this story.'
+            : `Labelled codex-ready. Status not changed automatically (${result.reason}).`,
+        },
+      ],
+    ])
+  },
+
   async 'pr-merged'(config, args) {
     await addComment(config, args.key, [
       [{ text: 'Pull request merged: ' }, { text: args.prUrl, href: args.prUrl }],

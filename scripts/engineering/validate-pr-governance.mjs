@@ -9,7 +9,7 @@ const JIRA_KEY_PATTERN = /\bCS-(\d+)\b/i
 // reference. A "chore:" or "infra:" title prefix, with an optional scope like
 // "chore(ci):", opts a PR out of the Jira/branch/package checks below, but not
 // out of the migration/Edge Function declaration or base-branch checks.
-const EXEMPT_PREFIX_PATTERN = /^(chore|infra)(\([^)]*\))?:\s/i
+export const EXEMPT_PREFIX_PATTERN = /^(chore|infra)(\([^)]*\))?:\s/i
 const MIGRATION_PATH_PATTERN = /^supabase\/migrations\/.*\.sql$/
 const EDGE_FUNCTION_PATH_PATTERN = /^supabase\/functions\//
 

@@ -157,14 +157,31 @@ order, without anyone saying "Build CS-XX". This is a direct extension of the
 Index](../../engineering/COOKSMITH_ENGINEERING_INDEX.md), which required a
 human to apply it by judgement each time. It is now mechanically enforced.
 
-### The `codex-ready` label is the human gate
+### Automated package drafting and the `package-requested` label
+
+The product owner writes the story in Jira and applies the
+`package-requested` label. On its next firing, the delivery Routine drafts
+the engineering package to the standard template, opens a docs-only pull
+request titled `chore(package): CS-NN — engineering package` on a
+`package/cs-nn-slug` branch, and links it from the Jira story. The draft
+must pass the package readiness validator before the PR is opened.
+
+The product owner's merge of that PR is the scope approval. On merge, the
+Jira sync workflow's `package-merged` handler moves the story to Ready, adds
+the `codex-ready` label and removes `package-requested`, so the story flows
+straight into build pickup with no further manual step. Package PRs and
+`package/` branches are excluded from the build selector's busy and
+already-claimed checks, and from the In Progress/In Review status sync,
+because they are proposals, not implementations.
+
+### The `codex-ready` label is the build gate
 
 Marking a story **Ready** in Jira is not by itself enough to trigger a build.
-A product owner must also apply the `codex-ready` label. This is the single
-point where a human decides "this is genuinely fit to hand to an agent right
-now", separate from ordinary backlog grooming. Removing the label at any time
-stops that story being picked up; it does not affect a build already under
-way.
+The `codex-ready` label must also be present. It is applied automatically
+when a package PR is merged (that merge being the human approval), or
+manually by a product owner who wrote the package themselves. Removing the
+label at any time stops that story being picked up; it does not affect a
+build already under way.
 
 ### Package readiness validator
 
@@ -211,10 +228,12 @@ said "Build CS-XX". Everything downstream is unchanged: the same PR
 governance, the same required checks, the same human merge approval, the
 same protected production releases.
 
-As of this change, the two decision scripts above exist and are tested, but
-the scheduled trigger itself has not been created. Automated pickup is not
-live until that trigger is switched on; until then, every build still starts
-because a human said "Build CS-XX", exactly as before.
+The scheduled Routine's authoritative prompt, covering both package
+drafting and build pickup, is version-controlled in
+[DELIVERY_ROUTINE_PROMPT.md](DELIVERY_ROUTINE_PROMPT.md). When that file
+changes, the Routine's configured prompt must be updated to match. Until the
+Routine is created and enabled, none of this fires on its own: every build
+still starts because a human said "Build CS-XX", exactly as before.
 
 ## Known drift found during discovery
 

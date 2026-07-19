@@ -12,6 +12,7 @@ import {
   readConfig as readGitHubConfig,
 } from './lib/github.mjs'
 import { assessPackageReadiness } from './validate-package-readiness.mjs'
+import { EXEMPT_PREFIX_PATTERN } from './validate-pr-governance.mjs'
 
 const PRIORITY_RANK = { highest: 0, high: 1, medium: 2, low: 3, lowest: 4 }
 const JIRA_KEY_IN_TEXT = /\bCS-(\d+)\b/i
@@ -51,8 +52,13 @@ function unmetBlockers(issue) {
 }
 
 export async function selectNextReadyIssue({ jiraConfig, githubConfig, cwd = process.cwd() } = {}) {
+  // Infrastructure PRs, including "chore(package):" engineering-package
+  // drafts awaiting product-owner approval, are docs-only and do not count
+  // as a build in flight even when their titles carry a Jira key.
   const openPulls = await listOpenPullRequests(githubConfig)
-  const busyPull = openPulls.find((pr) => JIRA_KEY_IN_TEXT.test(pr.title ?? ''))
+  const busyPull = openPulls.find(
+    (pr) => !EXEMPT_PREFIX_PATTERN.test(pr.title ?? '') && JIRA_KEY_IN_TEXT.test(pr.title ?? ''),
+  )
   if (busyPull) {
     const busyWith = `CS-${busyPull.title.match(JIRA_KEY_IN_TEXT)[1]}`
     return { selected: null, reason: 'busy', busyWith, evaluated: [] }
@@ -77,8 +83,10 @@ export async function selectNextReadyIssue({ jiraConfig, githubConfig, cwd = pro
       continue
     }
 
+    // Branches under package/ carry engineering-package drafts, not
+    // implementations, so they never claim a story for build purposes.
     const branchPattern = new RegExp(`\\bcs-${keyNumber(key)}\\b`, 'i')
-    if (branchNames.some((name) => branchPattern.test(name))) {
+    if (branchNames.some((name) => !name.startsWith('package/') && branchPattern.test(name))) {
       evaluated.push({ key, eligible: false, reason: 'a branch already exists for this issue' })
       continue
     }
