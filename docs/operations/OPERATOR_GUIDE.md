@@ -106,13 +106,29 @@ have completed:
 
 ### Branch protection checklist (one time)
 
-Apply these settings to `main` in **Settings -> Branches -> Branch protection
-rules**. This session could not read or change these settings; a repository
-administrator must apply them manually.
+Apply these settings to `main` in **Settings -> Branches** (classic protection
+rules) or **Settings -> Rules -> Rulesets** (newer GitHub UI). This session
+could not read or change these settings; a repository administrator must apply
+them manually.
 
 - Require a pull request before merging; disallow direct pushes to `main`.
-- Require these status checks to pass before merging: the jobs in
-  **Cooksmith quality**, and **PR governance**.
+- Target branch: choose **Default branch** (or add `main` by name). `main` is
+  this repository's default branch, so "Default branch" already covers it.
+- Require these status checks to pass before merging. The check-name search
+  only matches individual **job** names, not workflow names, and only lists a
+  job once it has run at least once. Search for and add each of these ten:
+  - `Validate Jira and engineering-package linkage` (the PR governance job)
+  - `Environment preflight`
+  - `Database validation`
+  - `Format and docs`
+  - `Lint`
+  - `Type-check`
+  - `Unit and integration tests`
+  - `Production build`
+  - `Playwright smoke tests`
+  - `Secrets, environment files and dependency audit`
+    Do not add the Jira sync or Deployment verification jobs; neither is meant
+    to block merging.
 - Require branches to be up to date before merging.
 - Require conversation resolution before merging.
 - Dismiss stale pull request approvals when new commits are pushed.
