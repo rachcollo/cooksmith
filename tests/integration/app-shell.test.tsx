@@ -47,7 +47,7 @@ describe('v2 application shell', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Pantry' })).toBeVisible()
     expect(pantryLinks.every((link) => link.getAttribute('aria-current') === 'page')).toBe(true)
-    expect(document.title).toBe('Pantry | Cooksmith')
+    await waitFor(() => expect(document.title).toBe('Pantry | Cooksmith'))
 
     await act(() => router.navigate(-1))
     expect(
