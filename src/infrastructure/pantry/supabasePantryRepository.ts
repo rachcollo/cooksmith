@@ -9,7 +9,10 @@ type PantryRow = {
   household_id: string
   name: string
   category: PantryItem['category']
+  category_source: PantryItem['categorySource']
   storage_location: PantryItem['storageLocation']
+  storage_location_source: PantryItem['storageLocationSource']
+  classification_version: number | null
   quantity: number | string | null
   unit: string | null
   available: boolean
@@ -23,7 +26,10 @@ function mapRow(row: PantryRow): PantryItem {
     householdId: row.household_id,
     name: row.name,
     category: row.category,
+    categorySource: row.category_source,
     storageLocation: row.storage_location,
+    storageLocationSource: row.storage_location_source,
+    classificationVersion: row.classification_version,
     quantity: row.quantity === null ? null : Number(row.quantity),
     unit: row.unit,
     available: row.available,
@@ -45,7 +51,7 @@ function pantryError(error: PostgrestError | null): void {
 export function createSupabasePantryRepository(client: CooksmithSupabaseClient): PantryRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, name, category, storage_location, quantity, unit, available, is_default, updated_at'
+    'id, household_id, name, category, category_source, storage_location, storage_location_source, classification_version, quantity, unit, available, is_default, updated_at'
 
   return {
     async list(householdId) {
@@ -66,7 +72,10 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
           household_id: householdId,
           name: input.name,
           category: input.category,
+          category_source: input.categorySource,
           storage_location: input.storageLocation,
+          storage_location_source: input.storageLocationSource,
+          classification_version: input.classificationVersion,
           quantity: input.quantity,
           unit: input.unit,
           available: input.available,
@@ -84,7 +93,10 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
         .update({
           name: input.name,
           category: input.category,
+          category_source: input.categorySource,
           storage_location: input.storageLocation,
+          storage_location_source: input.storageLocationSource,
+          classification_version: input.classificationVersion,
           quantity: input.quantity,
           unit: input.unit,
           available: input.available,
