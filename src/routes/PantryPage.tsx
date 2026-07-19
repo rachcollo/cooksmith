@@ -18,12 +18,16 @@ import {
   type PantryItemInput,
   type PantryStorageLocation,
 } from '../domain/pantry/types'
+import { classifyPantryItem } from '../domain/pantry/classification'
 import { pantryItemInputSchema } from '../domain/pantry/validationSchemas'
 
 const emptyInput: PantryItemInput = {
   name: '',
-  category: 'other',
-  storageLocation: 'pantry',
+  category: 'uncategorised',
+  categorySource: 'automatic',
+  storageLocation: 'other',
+  storageLocationSource: 'automatic',
+  classificationVersion: null,
   quantity: null,
   unit: null,
   available: true,
@@ -132,7 +136,10 @@ export function PantryPage() {
     setEditDraft({
       name: item.name,
       category: item.category,
+      categorySource: item.categorySource,
       storageLocation: item.storageLocation,
+      storageLocationSource: item.storageLocationSource,
+      classificationVersion: item.classificationVersion,
       quantity: item.quantity,
       unit: item.unit,
       available: item.available,
@@ -151,7 +158,15 @@ export function PantryPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!householdId) return
-    const result = validateDraft(draft)
+    const classification = classifyPantryItem(draft.name)
+    const result = validateDraft({
+      ...draft,
+      category: classification.category,
+      categorySource: 'automatic',
+      storageLocation: classification.storageLocation,
+      storageLocationSource: 'automatic',
+      classificationVersion: classification.version,
+    })
     if (!result) {
       setItemError('Check the highlighted pantry item details.')
       return
@@ -176,7 +191,26 @@ export function PantryPage() {
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!editingItem) return
-    const result = validateDraft(editDraft, editingItem.id)
+    const renamed = editDraft.name.trim() !== editingItem.name.trim()
+    const classification = renamed ? classifyPantryItem(editDraft.name) : null
+    const preparedDraft: PantryItemInput = {
+      ...editDraft,
+      category:
+        classification && editDraft.categorySource === 'automatic'
+          ? classification.category
+          : editDraft.category,
+      storageLocation:
+        classification && editDraft.storageLocationSource === 'automatic'
+          ? classification.storageLocation
+          : editDraft.storageLocation,
+      classificationVersion:
+        classification &&
+        (editDraft.categorySource === 'automatic' ||
+          editDraft.storageLocationSource === 'automatic')
+          ? classification.version
+          : editDraft.classificationVersion,
+    }
+    const result = validateDraft(preparedDraft, editingItem.id)
     if (!result) return
     setEditingSaving(true)
     setItemError(null)
@@ -201,7 +235,10 @@ export function PantryPage() {
     const input: PantryItemInput = {
       name: item.name,
       category: item.category,
+      categorySource: item.categorySource,
       storageLocation: item.storageLocation,
+      storageLocationSource: item.storageLocationSource,
+      classificationVersion: item.classificationVersion,
       quantity: item.quantity,
       unit: item.unit,
       available: !item.available,
@@ -275,37 +312,6 @@ export function PantryPage() {
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           />
-          <SelectField
-            error={fieldErrors.storageLocation}
-            label="Location"
-            value={draft.storageLocation}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                storageLocation: event.target.value as PantryStorageLocation,
-              })
-            }
-          >
-            {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectField>
-          <SelectField
-            error={fieldErrors.category}
-            label="Category"
-            value={draft.category}
-            onChange={(event) =>
-              setDraft({ ...draft, category: event.target.value as PantryItemInput['category'] })
-            }
-          >
-            {Object.entries(pantryCategoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectField>
           <TextField
             error={fieldErrors.quantity}
             label="Quantity"
@@ -435,6 +441,10 @@ export function PantryPage() {
                         {pantryCategoryLabels[item.category]} ·{' '}
                         {pantryStorageLocationLabels[item.storageLocation]}
                       </p>
+                      {item.categorySource === 'automatic' ||
+                      item.storageLocationSource === 'automatic' ? (
+                        <p className="pantry-classification-note">Cooksmith suggested</p>
+                      ) : null}
                     </div>
                     <p className="pantry-quantity">
                       {item.quantity === null
@@ -493,6 +503,7 @@ export function PantryPage() {
                 setEditDraft({
                   ...editDraft,
                   storageLocation: event.target.value as PantryStorageLocation,
+                  storageLocationSource: 'explicit',
                 })
               }
             >
@@ -510,6 +521,7 @@ export function PantryPage() {
                 setEditDraft({
                   ...editDraft,
                   category: event.target.value as PantryItemInput['category'],
+                  categorySource: 'explicit',
                 })
               }
             >

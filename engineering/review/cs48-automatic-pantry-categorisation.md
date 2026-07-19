@@ -4,20 +4,42 @@
 - **Milestone:** M11C
 - **Jira issue:** CS-48
 - **Epic:** Pantry (CS-3)
-- **Status:** Planned
+- **Status:** In Review
 - **Branch:** `feat/cs-48-automatic-pantry-categorisation`
 - **Depends on:** CS-14
 - **Blocks:** CS-55
-- **Package path:** `engineering/planned/cs48-automatic-pantry-categorisation.md`
+- **Package path:** `engineering/review/cs48-automatic-pantry-categorisation.md`
 
 ## Product Outcome
 Users add food by name while Cooksmith deterministically assigns storage location and food category; users correct exceptions instead of completing a form.
 
-## Current Baseline
-- Pantry CRUD/RLS is delivered by CS-14.
-- Current location/category fields and defaults require verification.
-- CS-55 consumes this contract.
-Verify against latest remote `main`, Jira, migrations, open PRs and tests before Ready. Material conflict is a stop condition.
+## Current Baseline and Approved Data Contract
+- Pantry CRUD/RLS is delivered by CS-14 and remains the household boundary.
+- The current model persists category and storage location but cannot distinguish Cooksmith suggestions from explicit user corrections.
+- Add per-field `automatic`/`explicit` provenance and a nullable classification rule version. Existing rows are treated as explicit so the migration never reclassifies or overwrites accepted household data.
+- New Pantry items are classified in the framework-independent domain layer before the authorised repository insert.
+- A rename reclassifies only fields still marked automatic. An explicit category or location survives renames, refreshes and unrelated edits.
+- CS-55 consumes this contract without owning or duplicating categorisation.
+
+## Classification Decision Table (Rule Version 1)
+
+Matching is case-insensitive, punctuation-tolerant and uses whole words or approved phrases. More-specific rules run before general rules. A leading `frozen` phrase forces Freezer/Frozen. Conflicting matches and unknown names return Other/Uncategorised.
+
+| Common name signals | Storage location | Food category |
+|---|---|---|
+| milk, yoghurt, cheese, butter, cream | Fridge | Dairy |
+| chicken, beef, pork, lamb, mince, fish, salmon, prawns | Fridge | Meat and seafood |
+| frozen… | Freezer | Frozen |
+| apples, bananas, oranges, tomatoes, potatoes, onions, carrots, lettuce, spinach | Produce storage | Produce |
+| bread, rolls, wraps, buns | Pantry | Bakery |
+| rice, pasta, noodles, couscous, flour, sugar, oats, cereal | Pantry | Dry goods |
+| tinned/canned goods, beans, chickpeas, lentils | Pantry | Canned and jarred |
+| oil, vinegar | Pantry | Oils and vinegars |
+| sauce, mustard, mayonnaise, jam, honey, Vegemite | Pantry | Condiments and sauces |
+| salt, pepper, herbs, spices and named common spices | Pantry | Herbs and spices |
+| tea, coffee, juice, soft drink | Pantry | Drinks |
+| dishwashing tablets/liquid, detergent, cleaning products, paper towel, toilet paper | Household supplies | Household |
+| unknown or conflicting name | Other | Uncategorised |
 
 ## Scope
 ### Included

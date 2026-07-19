@@ -14,7 +14,10 @@ function pantryItem(overrides: Partial<PantryItem>): PantryItem {
     householdId,
     name: 'Plain flour',
     category: 'baking',
+    categorySource: 'explicit',
     storageLocation: 'pantry',
+    storageLocationSource: 'explicit',
+    classificationVersion: null,
     quantity: 1,
     unit: 'kg',
     available: true,
@@ -73,13 +76,15 @@ describe('household staples experience', () => {
 
     await userEvent.clear(screen.getByLabelText('Search staples'))
     await userEvent.type(screen.getByLabelText('Item name'), 'Greek yoghurt')
-    await userEvent.selectOptions(screen.getByLabelText('Location'), 'fridge')
     await userEvent.click(screen.getByRole('button', { name: 'Add item' }))
 
     expect(create).toHaveBeenCalledWith(householdId, {
       name: 'Greek yoghurt',
-      category: 'other',
+      category: 'dairy',
+      categorySource: 'automatic',
       storageLocation: 'fridge',
+      storageLocationSource: 'automatic',
+      classificationVersion: 1,
       quantity: null,
       unit: null,
       available: true,
@@ -119,7 +124,10 @@ describe('household staples experience', () => {
     expect(update).toHaveBeenCalledWith('default-flour', {
       name: 'Bread flour',
       category: 'baking',
+      categorySource: 'explicit',
       storageLocation: 'freezer',
+      storageLocationSource: 'explicit',
+      classificationVersion: null,
       quantity: 1,
       unit: 'kg',
       available: true,
@@ -166,6 +174,51 @@ describe('household staples experience', () => {
     dialog = screen.getByRole('dialog', { name: 'Edit Plain flour' })
     within(dialog).getByRole('button', { name: 'Close Edit Plain flour' }).click()
     expect(screen.queryByRole('dialog', { name: 'Edit Plain flour' })).not.toBeInTheDocument()
+  })
+
+  it('reclassifies an automatic suggestion on rename without overwriting an explicit correction', async () => {
+    const update = vi.fn(async (itemId, input) => ({
+      id: itemId,
+      householdId,
+      ...input,
+      isDefault: false,
+      updatedAt: '2026-01-02T00:00:00Z',
+    })) satisfies PantryRepository['update']
+    const repository: PantryRepository = {
+      list: async () => [
+        pantryItem({
+          name: 'Milk',
+          category: 'dairy',
+          categorySource: 'automatic',
+          storageLocation: 'fridge',
+          storageLocationSource: 'explicit',
+          classificationVersion: 1,
+        }),
+      ],
+      create: async () => pantryItem({ id: 'created' }),
+      update,
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+
+    renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
+    const card = (await screen.findByRole('heading', { name: 'Milk' })).closest('article')
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit Milk' })
+    await user.clear(within(dialog).getByLabelText('Item name'))
+    await user.type(within(dialog).getByLabelText('Item name'), 'Apples')
+    await user.click(within(dialog).getByRole('button', { name: 'Save changes' }))
+
+    expect(update).toHaveBeenCalledWith(
+      'default-flour',
+      expect.objectContaining({
+        category: 'produce',
+        categorySource: 'automatic',
+        storageLocation: 'fridge',
+        storageLocationSource: 'explicit',
+        classificationVersion: 1,
+      }),
+    )
   })
 
   it('preserves remove and availability regressions', async () => {
