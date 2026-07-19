@@ -28,5 +28,6 @@ export function unlinkPlannedMeal(meal: PlannedMeal) {
     title: meal.title,
     notes: meal.notes,
     recipeId: null,
+    recipeSource: null,
   }
 }

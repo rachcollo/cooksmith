@@ -1,4 +1,5 @@
 export type MealType = 'breakfast' | 'lunch' | 'dinner'
+export type PlannedMealRecipeSource = 'household' | 'imported'
 export interface LinkedRecipeSummary {
   id: string
   name: string | null
@@ -17,6 +18,7 @@ export interface PlannedMeal {
   title: string
   notes: string | null
   recipeId: string | null
+  recipeSource: PlannedMealRecipeSource | null
   linkedRecipe: LinkedRecipeSummary | null
   recipeState: PlannedMealRecipeState
   createdAt: string
@@ -28,6 +30,7 @@ export interface PlannedMealInput {
   title: string
   notes: string | null
   recipeId: string | null
+  recipeSource: PlannedMealRecipeSource | null
 }
 export const mealTypeLabels: Record<MealType, string> = {
   breakfast: 'Breakfast',

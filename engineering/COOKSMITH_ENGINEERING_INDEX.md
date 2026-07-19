@@ -45,12 +45,13 @@ for how selection connects to actually starting a build.
 | 1 | M08B Meal Planner UX & Drag-and-Drop | CS-18 | `engineering/ready/m08b-meal-planner-ux-drag-drop.md` | Ready | CS-15 Done | `feat/cs-18-meal-planner-drag-drop` |
 | 2 | M09B Recipe Authoring & Ingredients | CS-19 | `engineering/ready/m09b-recipe-authoring-ingredients.md` | Ready | CS-16 Done | `feat/cs-19-recipe-authoring` |
 | 3 | M08C Planner and Recipe Integration | CS-20 | `engineering/planned/m08c-planner-recipe-integration.md` | Backlog | Prefer CS-18 and CS-19 Done | `feat/cs-20-planner-recipe-integration` |
-| 4 | M10A Shopping List Foundation | CS-21 | `engineering/review/cs21-shopping-list-foundation.md` | In Review | CS-20 Done | `feat/cs-21-shopping-list-foundation` |
-| 5 | M10B Generate Shopping List | CS-22 | Not authored | Backlog | CS-21 | `feat/cs-22-generate-shopping-list` |
+| 4 | M10A Shopping List Foundation | CS-21 | `engineering/review/cs21-shopping-list-foundation.md` | Done in Jira; package lifecycle cleanup pending | CS-20 Done | `feat/cs-21-shopping-list-foundation` |
+| 5 | M10B Generate Shopping List | CS-22 | `engineering/planned/cs22-generate-shopping-list-from-meal-plan.md` | Planned; linked-recipe save defect must be resolved before Ready | CS-21 Done; planner prerequisite | `feat/cs-22-generate-shopping-list` |
 | 6 | M11A Pantry Reconciliation | CS-23 | Not authored | Backlog | CS-22 | `feat/cs-23-pantry-reconciliation` |
 | 7 | M11B Pantry Intelligence | CS-24 | Not authored | Backlog | CS-23 | `feat/cs-24-pantry-intelligence` |
 | 8 | M12A MVP Beta Readiness | CS-25 | Not authored | Backlog | Core MVP and E01 | `chore/cs-25-beta-readiness` |
 | 9 | M12B Beta Feedback | CS-26 | Not authored | Backlog | CS-25 | `chore/cs-26-beta-feedback` |
+| 10 | Pantry-aware shopping indicator | CS-50 | Not authored | Backlog | Pantry and Shopping foundations | Not assigned |
 
 ## Completed Milestones
 

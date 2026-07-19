@@ -59,6 +59,7 @@ function inputFor(mealDate: string): PlannedMealInput {
     title: '',
     notes: null,
     recipeId: null,
+    recipeSource: null,
   }
 }
 
@@ -180,6 +181,7 @@ export function PlanPage() {
         title: meal.title,
         notes: meal.notes,
         recipeId: meal.recipeId,
+        recipeSource: meal.recipeSource,
       },
     })
     setFieldErrors({})
@@ -189,13 +191,14 @@ export function PlanPage() {
   function selectRecipe(recipeId: string) {
     if (!dialog) return
     const recipe = activeRecipes.find((candidate) => candidate.id === recipeId) ?? null
-    const nextInput = recipe
+    const nextInput: PlannedMealInput = recipe
       ? {
           ...dialog.input,
           recipeId: recipe.id,
+          recipeSource: recipe.scope === 'household' ? 'household' : 'imported',
           title: snapshotTitleForRecipe(recipe),
         }
-      : { ...dialog.input, recipeId: null }
+      : { ...dialog.input, recipeId: null, recipeSource: null }
     updateDialog(nextInput)
   }
 
