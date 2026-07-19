@@ -2,6 +2,8 @@
 
 ## Scope
 
+- Jira issue: `CS-###`
+- Engineering package path:
 - Work package or milestone:
 - Branch verified:
 - Base branch verified: `main`
@@ -19,6 +21,7 @@
 ## Database and release
 
 - Migrations in this PR: yes/no
+- Edge Functions changed in this PR: yes/no
 - Local database validation result:
 - Hosted migration required after merge: yes/no
 - Dry-run or release evidence required:

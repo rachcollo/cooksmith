@@ -78,6 +78,22 @@ jobs:
         if: always()
         run: npm run db:stop
 
+  security:
+    name: Secrets, environment files and dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Check for tracked environment files and high-confidence secret patterns
+        run: npm run engineering:check-secrets
+      - name: Audit production dependencies for known vulnerabilities
+        run: npm audit --omit=dev --audit-level=high
+
   format:
     name: Format and docs
     runs-on: ubuntu-latest

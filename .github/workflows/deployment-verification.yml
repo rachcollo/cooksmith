@@ -1,0 +1,78 @@
+name: Deployment verification
+
+# Manually triggered after a human or AI operator has confirmed the Vercel
+# production deployment (and, where relevant, the production database and
+# Edge Function releases) completed successfully. This workflow performs a
+# shallow public smoke check, records evidence, and optionally moves the named
+# Jira issue to Done once verification passes. It never deploys anything
+# itself and never touches production credentials.
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_url:
+        description: The exact production URL to verify, for example https://cooksmith.app
+        required: true
+        type: string
+      jira_key:
+        description: 'Optional Jira key to update with delivery evidence, for example CS-21'
+        required: false
+        type: string
+      release_commit:
+        description: The approved main commit SHA that was released
+        required: false
+        type: string
+      database_status:
+        description: 'Database migration status for this release, for example "no migration" or "applied"'
+        required: false
+        type: string
+      edge_function_status:
+        description: 'Edge Function release status for this release, for example "no change" or "deployed"'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify public production smoke checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use pinned Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Verify deployment
+        run: node scripts/engineering/verify-deployment.mjs --url "${{ inputs.production_url }}"
+
+      - name: Print delivery summary
+        if: always()
+        run: |
+          node scripts/engineering/create-delivery-summary.mjs \
+            --jira-key "${{ inputs.jira_key }}" \
+            --release-commit "${{ inputs.release_commit }}" \
+            --app-status "Verified at ${{ inputs.production_url }}" \
+            --db-status "${{ inputs.database_status }}" \
+            --edge-status "${{ inputs.edge_function_status }}" \
+            --verification-url "${{ inputs.production_url }}/health.json"
+
+      - name: Sync production verification to Jira
+        if: success() && inputs.jira_key != ''
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          node scripts/engineering/jira-sync.mjs production-verified \
+            --key "${{ inputs.jira_key }}" \
+            --release-commit "${{ inputs.release_commit }}" \
+            --app-status "Verified at ${{ inputs.production_url }}" \
+            --db-status "${{ inputs.database_status }}" \
+            --edge-status "${{ inputs.edge_function_status }}" \
+            --verification-url "${{ inputs.production_url }}/health.json"

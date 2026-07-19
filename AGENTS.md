@@ -18,6 +18,8 @@ Also read:
 
 The [documentation index](docs/README.md) defines the authoritative product and architecture hierarchy. Resolve conflicts through that hierarchy and stop on any material unresolved conflict.
 
+The [AI engineering operating system](docs/operations/AI_ENGINEERING_OPERATING_SYSTEM.md) describes how Jira, this repository, CI, Vercel and Supabase releases coordinate, including the automated PR governance and Jira sync checks that run on every pull request. Every pull request title and branch must reference a Jira key (`CS-###`) and a matching engineering package, or the **PR governance** check fails. Non-product infrastructure and tooling changes (this operating system, CI, repository scripts and docs) may use a `chore:` or `infra:` title prefix instead, for example `chore: tidy CI caching`; this exempts the Jira/branch/package checks but not the migration/Edge Function declaration or base-branch checks.
+
 ## Product direction
 
 Cooksmith quietly removes the invisible work of feeding a household. Apply the Product Principles, keep the experience calm and practical, use Australian/UK English, design mobile first and target WCAG 2.2 AA. Protect household safety and trust before convenience.
