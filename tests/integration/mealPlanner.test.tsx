@@ -251,7 +251,7 @@ describe('weekly dinner planner', () => {
         },
       ],
     }
-    const createFromPlan = vi.fn(async () => [])
+    const createFromPlan = vi.fn(async () => undefined)
     const shoppingRepository = {
       list: vi.fn(async () => []),
       create: vi.fn(),
