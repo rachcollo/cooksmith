@@ -47,12 +47,18 @@ for how selection connects to actually starting a build.
 | 3 | M08C Planner and Recipe Integration | CS-20 | `engineering/planned/m08c-planner-recipe-integration.md` | Backlog | Prefer CS-18 and CS-19 Done | `feat/cs-20-planner-recipe-integration` |
 | 4 | M10A Shopping List Foundation | CS-21 | `engineering/review/cs21-shopping-list-foundation.md` | Done in Jira; package lifecycle cleanup pending | CS-20 Done | `feat/cs-21-shopping-list-foundation` |
 | 5 | M10B Generate Shopping List | CS-22 | `engineering/planned/cs22-generate-shopping-list-from-meal-plan.md` | Planned; linked-recipe save defect must be resolved before Ready | CS-21 Done; planner prerequisite | `feat/cs-22-generate-shopping-list` |
-| 6 | M11A Pantry Reconciliation | CS-23 | Not authored | Backlog | CS-22 | `feat/cs-23-pantry-reconciliation` |
-| 7 | M11B Pantry Intelligence | CS-24 | Not authored | Backlog | CS-23 | `feat/cs-24-pantry-intelligence` |
-| 8 | M12A MVP Beta Readiness | CS-25 | Not authored | Backlog | Core MVP and E01 | `chore/cs-25-beta-readiness` |
-| 9 | M12B Beta Feedback | CS-26 | Not authored | Backlog | CS-25 | `chore/cs-26-beta-feedback` |
-| 10 | Pantry-aware shopping indicator | CS-50 | `engineering/planned/cs50-pantry-aware-shopping-indicator.md` | Planned; dependency and matching-decision review required before Ready | CS-14 Done; CS-21 Done; CS-22 Done and released | `feat/cs-50-pantry-aware-shopping-indicator` |
-| 11 | Quick-add recipe to next plan date | CS-52 | `engineering/planned/cs52-quick-add-recipe-to-next-plan-date.md` | Planned; CS-49 must be Done and merged before Ready | CS-20 Done; CS-49 Done and merged | `feat/cs-52-quick-add-recipe-planner` |
+| 6 | Automatic Pantry categorisation | CS-48 | `engineering/planned/cs48-automatic-pantry-categorisation.md` | Planned | CS-14 Done | `feat/cs-48-automatic-pantry-categorisation` |
+| 7 | Recipe Library compact toolbar | CS-53 | `engineering/planned/cs53-compact-recipe-library-toolbar.md` | Planned; parallel-safe with CS-48 and CS-54 | Recipe/import foundations Done | `feat/cs-53-compact-recipe-toolbar` |
+| 8 | Shopping page compact UX | CS-54 | `engineering/planned/cs54-compact-shopping-page.md` | Planned; parallel-safe with CS-48 and CS-53 | CS-21 and CS-22 Done | `feat/cs-54-compact-shopping-page` |
+| 9 | Pantry compact management UX | CS-55 | `engineering/planned/cs55-simplify-compact-pantry.md` | Planned | CS-48 | `feat/cs-55-compact-pantry` |
+| 10 | Retailer-ready list copy | CS-41 | `engineering/planned/cs41-copy-retailer-ready-shopping-list.md` | Planned; start after CS-54 to avoid Shopping-page conflicts | CS-21, CS-22 and CS-54 | `feat/cs-41-copy-retailer-shopping-list` |
+| 11 | Fortnight plan generation | CS-38 | `engineering/planned/cs38-generate-fortnight-meal-plan.md` | Planned; may run with CS-55 or CS-41 | Planner/recipe/Shopping foundations | `feat/cs-38-fortnight-plan-generation` |
+| 12 | M11A Pantry Reconciliation | CS-23 | `engineering/planned/cs23-pantry-consumption-reconciliation.md` | Planned; start after CS-48 and preferably CS-55 | CS-14, CS-22, CS-48 | `feat/cs-23-pantry-reconciliation` |
+| 13 | Pantry-aware shopping indicator | CS-50 | `engineering/planned/cs50-pantry-aware-shopping-indicator.md` | Jira Ready; package readiness transition still required | CS-14, CS-21, CS-22 Done | `feat/cs-50-pantry-aware-shopping-indicator` |
+| 14 | Quick-add recipe to next plan date | CS-52 | `engineering/planned/cs52-quick-add-recipe-to-next-plan-date.md` | Jira Ready; package readiness transition still required | CS-20 and CS-49 Done | `feat/cs-52-quick-add-recipe-planner` |
+| 15 | M11B Pantry Intelligence | CS-24 | `engineering/planned/cs24-explainable-pantry-intelligence.md` | Planned | CS-23 | `feat/cs-24-pantry-intelligence` |
+| 16 | M12A MVP Beta Readiness | CS-25 | `engineering/planned/cs25-mvp-beta-readiness.md` | Planned; final gate | Approved core MVP and E01 | `chore/cs-25-beta-readiness` |
+| 17 | M12B Beta Feedback | CS-26 | Not authored | Backlog | CS-25 | `chore/cs-26-beta-feedback` |
 
 ## Completed Milestones
 
@@ -68,7 +74,14 @@ for how selection connects to actually starting a build.
 | M09A Recipe Library Foundation | CS-16 | Done |
 
 ## Parallel Work
-M08B and M09B are parallel-safe. M08C is the convergence milestone and should wait until both are merged unless the user explicitly accepts integration risk. E01 may continue in parallel without rewriting unrelated product behaviour.
+
+- **Wave 1:** CS-48, CS-53 and CS-54 may run concurrently because they own Pantry categorisation, Recipe Library toolbar and Shopping density respectively.
+- **Wave 2:** CS-55 follows CS-48. CS-41 follows CS-54. CS-55 and CS-41 may run concurrently.
+- **Independent planning stream:** CS-38 may run alongside Wave 2 when no shared Planner/Shopping contract change is active.
+- **Pantry data stream:** CS-23 follows CS-48 and preferably CS-55; it should not run concurrently with another Pantry schema/lifecycle change.
+- **Intelligence and release:** CS-24 follows accepted CS-23 reconciliation. CS-25 is the final beta gate after the approved MVP scope and critical defects are complete.
+- CS-50 and CS-52 retain their existing packages; Jira/package lifecycle drift must be resolved before autonomous pickup.
+- E01 may continue in parallel without rewriting unrelated product behaviour.
 
 ## Jira-to-Package Contract
 Every implementation issue should contain:
