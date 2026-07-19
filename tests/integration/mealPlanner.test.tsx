@@ -45,6 +45,7 @@ describe('weekly dinner planner', () => {
         name: 'Seven days. Let’s not overthink it.',
       }),
     ).toBeVisible()
+    expect(screen.queryByText('The weekly wrangle')).not.toBeInTheDocument()
     expect(await screen.findAllByRole('button', { name: 'Add dinner' })).toHaveLength(7)
     expect(screen.queryByText('Nothing planned.')).not.toBeInTheDocument()
 
@@ -229,6 +230,7 @@ describe('weekly dinner planner', () => {
     expect(within(editDialog).getByLabelText('Dinner')).toHaveValue('Lentil soup')
     expect(within(editDialog).getByLabelText(/Notes/)).toBeVisible()
     expect(recipeUpdate).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /Unlink recipe/ })).not.toBeInTheDocument()
   })
 
   it('shows loading and a compact failure message', async () => {
