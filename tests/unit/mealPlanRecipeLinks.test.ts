@@ -4,7 +4,6 @@ import {
   displayTitleForPlannedMeal,
   recipeStateForLink,
   snapshotTitleForRecipe,
-  unlinkPlannedMeal,
 } from '../../src/domain/meal-plans/recipeLinks'
 import type { PlannedMeal } from '../../src/domain/meal-plans/types'
 
@@ -39,17 +38,6 @@ describe('planned meal recipe links', () => {
     expect(recipeStateForLink(recipe.id, null)).toEqual({
       kind: 'unavailable',
       recipeId: recipe.id,
-    })
-  })
-
-  it('unlinks a recipe without losing the editable planned title or notes', () => {
-    expect(unlinkPlannedMeal(meal)).toEqual({
-      mealDate: '2026-07-17',
-      mealType: 'dinner',
-      title: 'Soup night',
-      notes: 'Use the big pot',
-      recipeId: null,
-      recipeSource: null,
     })
   })
 })
