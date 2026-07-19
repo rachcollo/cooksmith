@@ -260,16 +260,8 @@ export function PlanPage() {
               },
             },
           }
-          const additions = buildPlanAdditions(
-            [generationMeal],
-            [linkedRecipe],
-            [],
-          ).additions
-          await shoppingRepository.createFromPlan?.(
-            householdId,
-            saved.id,
-            additions,
-          )
+          const additions = buildPlanAdditions([generationMeal], [linkedRecipe], []).additions
+          await shoppingRepository.createFromPlan?.(householdId, saved.id, additions)
         }
       } else {
         await shoppingRepository.createFromPlan?.(householdId, saved.id, [])
