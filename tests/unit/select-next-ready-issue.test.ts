@@ -155,7 +155,7 @@ describe('selectNextReadyIssue', () => {
   })
 
   it('skips a candidate whose package readiness fails', async () => {
-    const fetchMock = mockFetch({ issues: [issue('CS-53')] })
+    const fetchMock = mockFetch({ issues: [issue('CS-9999')] })
     vi.stubGlobal('fetch', fetchMock)
 
     const result = await selectNextReadyIssue({ jiraConfig, githubConfig })
