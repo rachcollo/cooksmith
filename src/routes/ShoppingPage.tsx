@@ -192,19 +192,24 @@ export function ShoppingPage() {
       <DocumentTitle title="Shopping" />
       <header className="page-header shopping-header">
         <p className="eyebrow">One useful list</p>
-        <h1>Shopping</h1>
+        <div className="shopping-title-row">
+          <h1>Shopping</h1>
+          <p className="shopping-summary" role="status" aria-live="polite" aria-atomic="true">
+            <span aria-hidden="true">
+              <strong>{outstanding.length}</strong> left to buy
+            </span>
+            <span className="visually-hidden">
+              {outstanding.length} {outstanding.length === 1 ? 'item' : 'items'} left to buy
+            </span>
+          </p>
+        </div>
         <p>Add what your household needs, then tick items off as you shop.</p>
       </header>
-
-      <div className="shopping-summary" aria-label="Shopping list summary">
-        <strong>{outstanding.length}</strong> left to buy
-        {completed.length > 0 ? <span>{completed.length} done</span> : null}
-      </div>
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
 
       <Panel className="shopping-add-panel">
-        <h2>Add an item</h2>
+        <h2 className="visually-hidden">Add an item</h2>
         <form
           className="shopping-form shopping-quick-add"
           onSubmit={(event) => void addItem(event)}
@@ -220,6 +225,7 @@ export function ShoppingPage() {
             error={errors.quantity}
             inputMode="decimal"
             label="Quantity"
+            optional
             value={draft.quantity === null ? '' : String(draft.quantity)}
             onChange={(event) =>
               setDraft({
@@ -230,7 +236,7 @@ export function ShoppingPage() {
           />
           {errors.form ? <p className="form-error">{errors.form}</p> : null}
           <Button busy={saving} disabled={!draft.name.trim()} type="submit">
-            <Plus aria-hidden="true" /> Add item
+            <Plus aria-hidden="true" /> Add
           </Button>
         </form>
       </Panel>
