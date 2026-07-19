@@ -79,28 +79,20 @@ export function createSupabaseShoppingRepository(
       return mapRow(result.data as unknown as ShoppingRow)
     },
 
-    async createFromPlan(householdId, inputs) {
-      if (inputs.length === 0) return []
-      const result = await database
-        .from('shopping_list_items')
-        .insert(
-          inputs.map((input) => ({
-            household_id: householdId,
-            display_name: input.name,
-            quantity: input.quantity,
-            unit: input.unit,
-            category: input.category,
-            manual: false,
-          })) as never,
-        )
-        .select(selection)
-      if (result.error?.code === '23505') {
-        throw new Error(
-          'Someone in your household just added one of those items. Refresh Cooksmith and try again.',
-        )
-      }
+    async createFromPlan(householdId, plannedMealId, inputs) {
+      const result = await (
+        database as never as {
+          rpc: (
+            name: string,
+            params: Record<string, unknown>,
+          ) => Promise<{ error: PostgrestError | null }>
+        }
+      ).rpc('reconcile_planned_meal_shopping', {
+        target_household_id: householdId,
+        target_planned_meal_id: plannedMealId,
+        ingredient_inputs: inputs,
+      })
       shoppingError(result.error)
-      return ((result.data ?? []) as unknown as ShoppingRow[]).map(mapRow)
     },
 
     async update(itemId, input) {
