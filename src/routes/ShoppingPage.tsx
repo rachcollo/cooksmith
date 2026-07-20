@@ -455,44 +455,46 @@ function ShoppingItemRow({
             {amount ? <span>{amount}</span> : null}
             <strong>{item.name}</strong>
           </div>
-          {pantryMatch ? (
-            <div className="shopping-pantry-info">
-              <button
-                aria-describedby={pantryInfoOpen ? `pantry-match-message-${item.id}` : undefined}
-                aria-expanded={pantryInfoOpen}
-                aria-label={`Why should I check my pantry for ${item.name}?`}
-                className="shopping-pantry-info-button"
-                type="button"
-                onBlur={(event) => {
-                  if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) {
-                    onPantryInfoChange(false)
-                  }
-                }}
-                onClick={() => onPantryInfoChange(true)}
-                onFocus={() => onPantryInfoChange(true)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape') {
-                    event.preventDefault()
-                    onPantryInfoChange(false)
-                  }
-                }}
-                onMouseEnter={() => onPantryInfoChange(true)}
-                onMouseLeave={() => onPantryInfoChange(false)}
-              >
-                ?
-              </button>
-              {pantryInfoOpen ? (
-                <span
-                  className="shopping-pantry-tooltip"
-                  id={`pantry-match-message-${item.id}`}
-                  role="tooltip"
+          <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
+            {pantryMatch ? (
+              <>
+                <button
+                  aria-describedby={pantryInfoOpen ? `pantry-match-message-${item.id}` : undefined}
+                  aria-expanded={pantryInfoOpen}
+                  aria-label={`Why should I check my pantry for ${item.name}?`}
+                  className="shopping-pantry-info-button"
+                  type="button"
+                  onBlur={(event) => {
+                    if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                      onPantryInfoChange(false)
+                    }
+                  }}
+                  onClick={() => onPantryInfoChange(true)}
+                  onFocus={() => onPantryInfoChange(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      event.preventDefault()
+                      onPantryInfoChange(false)
+                    }
+                  }}
+                  onMouseEnter={() => onPantryInfoChange(true)}
+                  onMouseLeave={() => onPantryInfoChange(false)}
                 >
-                  Check your pantry — you might already have this item, and we hate wasting food and
-                  money!
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+                  ?
+                </button>
+                {pantryInfoOpen ? (
+                  <span
+                    className="shopping-pantry-tooltip"
+                    id={`pantry-match-message-${item.id}`}
+                    role="tooltip"
+                  >
+                    Check your pantry — you might already have this item, and we hate wasting food
+                    and money!
+                  </span>
+                ) : null}
+              </>
+            ) : null}
+          </div>
           <button
             aria-label={`Edit ${item.name}`}
             className="shopping-icon-action"
