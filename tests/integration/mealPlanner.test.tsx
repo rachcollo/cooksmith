@@ -32,7 +32,7 @@ function meal(overrides: Partial<PlannedMeal>): PlannedMeal {
 }
 
 describe('weekly dinner planner', () => {
-  it('reviews and applies deterministic proposals only to empty days', async () => {
+  it('reviews and applies generated proposals only to empty days', async () => {
     const existing = meal({ id: 'existing-dinner' })
     const listWeek = vi.fn(async () => [existing]) satisfies PlannedMealRepository['listWeek']
     const create = vi.fn(async (savedHouseholdId, input) =>
@@ -90,6 +90,114 @@ describe('weekly dinner planner', () => {
       expect.objectContaining({ mealDate: testFriday }),
     )
     expect(await screen.findByRole('dialog', { name: 'Your week is planned' })).toBeVisible()
+  })
+
+  it('searches repeat recipes, replaces one proposal and reorders proposals by keyboard', async () => {
+    const baseRecipe = (await defaultRecipeRepository.list(householdId))[0]!
+    const curry = { ...baseRecipe, id: 'recipe-2', name: 'Chickpea curry' }
+    const tacos = { ...baseRecipe, id: 'recipe-3', name: 'Bean tacos' }
+    const existing = meal({ id: 'existing-dinner', recipeId: baseRecipe.id })
+    const repository: PlannedMealRepository = {
+      listWeek: async () => [existing],
+      create: async (_householdId, input) => meal({ id: `created-${input.mealDate}`, ...input }),
+      update: async (id, input) => meal({ id, ...input }),
+      remove: async () => undefined,
+    }
+    const recipeRepository: RecipeRepository = {
+      ...defaultRecipeRepository,
+      list: async () => [baseRecipe, curry, tacos],
+    }
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.999)
+    const user = userEvent.setup()
+
+    renderApp(
+      '/plan',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      recipeRepository,
+    )
+    await screen.findByRole('heading', { name: testMondayLabel })
+    await user.click(screen.getByRole('button', { name: 'Plan my week' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Plan my week' })
+    const searches = within(dialog).getAllByRole('combobox')
+    const originalFirst = (searches[0] as HTMLInputElement).value
+    const originalSecond = (searches[1] as HTMLInputElement).value
+
+    fireEvent.keyDown(within(dialog).getAllByRole('button', { name: /Move dinner for/ })[0]!, {
+      altKey: true,
+      key: 'ArrowDown',
+    })
+    expect(within(dialog).getAllByRole('combobox')[0]).toHaveValue(originalSecond)
+    expect(within(dialog).getAllByRole('combobox')[1]).toHaveValue(originalFirst)
+
+    const secondSearch = within(dialog).getAllByRole('combobox')[1]!
+    await user.click(secondSearch)
+    await user.clear(secondSearch)
+    await user.type(secondSearch, baseRecipe.name)
+    await user.click(within(dialog).getByRole('option', { name: baseRecipe.name }))
+    expect(within(dialog).getAllByRole('combobox')[1]).toHaveValue(baseRecipe.name)
+
+    await user.click(
+      within(dialog).getAllByRole('button', { name: /Replace proposal .* random recipe/ })[1]!,
+    )
+    expect(within(dialog).getAllByRole('combobox')[1]).toHaveValue(tacos.name)
+    random.mockRestore()
+  })
+
+  it('randomly replaces only one existing dinner from Plan', async () => {
+    const baseRecipe = (await defaultRecipeRepository.list(householdId))[0]!
+    const curry = { ...baseRecipe, id: 'recipe-2', name: 'Chickpea curry' }
+    const linkedMeal = meal({
+      id: 'existing-dinner',
+      title: baseRecipe.name,
+      recipeId: baseRecipe.id,
+      recipeSource: 'household',
+      linkedRecipe: { id: baseRecipe.id, name: baseRecipe.name, archivedAt: null },
+      recipeState: {
+        kind: 'active',
+        recipe: { id: baseRecipe.id, name: baseRecipe.name, archivedAt: null },
+      },
+    })
+    const update = vi.fn(async (id, input) => meal({ id, ...input }))
+    const repository: PlannedMealRepository = {
+      listWeek: async () => [linkedMeal],
+      create: async (_householdId, input) => meal({ id: `created-${input.mealDate}`, ...input }),
+      update,
+      remove: async () => undefined,
+    }
+    const recipeList = vi.fn(async () => [baseRecipe, curry])
+    const recipeRepository: RecipeRepository = { ...defaultRecipeRepository, list: recipeList }
+
+    renderApp(
+      '/plan',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      recipeRepository,
+    )
+    await waitFor(() => expect(recipeList).toHaveBeenCalled())
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: `Replace ${baseRecipe.name} with a random recipe`,
+      }),
+    )
+
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(
+        linkedMeal.id,
+        expect.objectContaining({ recipeId: curry.id, title: curry.name }),
+      ),
+    )
+    expect(await screen.findByText(curry.name)).toBeVisible()
   })
 
   it('requires a separate confirmation before reviewing a full-week replacement', async () => {
