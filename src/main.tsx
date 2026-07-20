@@ -8,6 +8,7 @@ import { BootstrapError } from './app/errors/BootstrapError'
 import { LoadingState } from './components/ui/LoadingState'
 import { loadPublicEnv } from './config/env'
 import { createSupabaseAuthClient } from './infrastructure/auth/supabaseAuthClient'
+import { initObservability } from './infrastructure/observability/observability'
 import './styles/global.css'
 
 const rootElement = document.getElementById('root')
@@ -26,6 +27,7 @@ root.render(
 
 async function startCooksmith() {
   const config = loadPublicEnv(import.meta.env)
+  void initObservability(config)
   const authClient = createSupabaseAuthClient(config)
   const initialAuthState = await bootstrapAuth(authClient)
 

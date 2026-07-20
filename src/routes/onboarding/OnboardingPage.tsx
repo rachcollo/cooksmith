@@ -16,6 +16,7 @@ import {
 } from '../../domain/onboarding/validationSchemas'
 import type { DietaryPreferences } from '../../domain/onboarding/types'
 import { DocumentTitle } from '../../app/router/DocumentTitle'
+import { track } from '../../infrastructure/observability/observability'
 
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Pescatarian', 'Gluten free', 'Dairy free']
 const ALLERGY_OPTIONS = ['Peanuts', 'Tree nuts', 'Milk', 'Egg', 'Wheat', 'Soy', 'Fish', 'Shellfish']
@@ -397,7 +398,14 @@ export function OnboardingPage() {
           {step === 1 ? <ProfileStep /> : null}
           {step === 2 ? <HouseholdStep /> : null}
           {step === 3 ? <PreferencesStep /> : null}
-          {step === 4 ? <DietaryStep onFinished={() => setFinished(true)} /> : null}
+          {step === 4 ? (
+            <DietaryStep
+              onFinished={() => {
+                track('onboarding_completed')
+                setFinished(true)
+              }}
+            />
+          ) : null}
           {step === 5 ? (
             <div className="onboarding-form">
               <Intro title="You’re ready to cook lighter">

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { useRecipeRepository } from '../app/recipes/recipeContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
+import { track } from '../infrastructure/observability/observability'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
 import { ErrorState } from '../components/ui/ErrorState'
@@ -176,6 +177,7 @@ export function RecipesPage() {
     setError(null)
     try {
       const saved = await repository.create(householdId, parsed)
+      track('recipe_created')
       setRecipes((current) => [...current, saved].sort((a, b) => a.name.localeCompare(b.name)))
       setSelectedId(saved.id)
       setDraft(emptyInput)
@@ -240,6 +242,7 @@ export function RecipesPage() {
     try {
       if (!repository.createImported) throw new Error('Recipe importing is not configured yet.')
       const saved = await repository.createImported(parsed, importVisibility)
+      track('recipe_imported')
       setRecipes((current) => [...current, saved].sort((a, b) => a.name.localeCompare(b.name)))
       setSelectedId(saved.id)
       setImporting(false)

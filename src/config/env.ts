@@ -5,10 +5,17 @@ export interface SupabasePublicConfig {
   url: string
 }
 
+export interface PosthogPublicConfig {
+  key: string
+  host: string
+}
+
 export interface PublicEnv {
   appEnvironment: AppEnvironment
   buildCommit?: string
   supabase?: SupabasePublicConfig
+  sentryDsn?: string
+  posthog?: PosthogPublicConfig
 }
 
 type EnvSource = Record<string, string | boolean | undefined>
@@ -76,12 +83,28 @@ export function parsePublicEnv(source: EnvSource): PublicEnv {
 
   const buildCommit = readString(source, 'VITE_BUILD_COMMIT')
   const parsedUrl = hasUrl ? parseSupabaseUrl(rawUrl) : undefined
+  const sentryDsn = readString(source, 'VITE_SENTRY_DSN')
+  const posthogKey = readString(source, 'VITE_POSTHOG_KEY')
+  const posthogHost = readString(source, 'VITE_POSTHOG_HOST')
+
+  if (posthogHost && !posthogKey) {
+    throw new Error('VITE_POSTHOG_HOST requires VITE_POSTHOG_KEY.')
+  }
 
   return {
     appEnvironment: appEnvironment as AppEnvironment,
     ...(buildCommit ? { buildCommit } : {}),
     ...(parsedUrl
       ? { supabase: { url: parsedUrl.url, publishableKey } satisfies SupabasePublicConfig }
+      : {}),
+    ...(sentryDsn ? { sentryDsn } : {}),
+    ...(posthogKey
+      ? {
+          posthog: {
+            key: posthogKey,
+            host: posthogHost || 'https://us.i.posthog.com',
+          } satisfies PosthogPublicConfig,
+        }
       : {}),
   }
 }

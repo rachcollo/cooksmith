@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 import { ErrorState } from '../../components/ui/ErrorState'
 import { logger } from '../../infrastructure/logging/logger'
+import { captureError } from '../../infrastructure/observability/observability'
 import { createCorrelationId } from '../../shared/utils/createCorrelationId'
 
 interface AppErrorBoundaryProps {
@@ -28,6 +29,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
       errorName: error.name,
       componentStackAvailable: Boolean(info.componentStack),
     })
+    captureError(error, { correlationId })
 
     this.setState({ correlationId })
   }

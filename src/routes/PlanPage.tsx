@@ -13,6 +13,7 @@ import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../app/recipes/recipeContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
+import { track } from '../infrastructure/observability/observability'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
 import { LoadingState } from '../components/ui/LoadingState'
@@ -233,6 +234,7 @@ export function PlanPage() {
         dialog.mode === 'add'
           ? await repository.create(householdId, input)
           : await repository.update(dialog.meal.id, input)
+      if (dialog.mode === 'add') track('meal_planned')
       setMeals((current) =>
         dialog.mode === 'add'
           ? [...current, saved]

@@ -40,6 +40,31 @@ describe('public environment configuration', () => {
       'Supabase public configuration is required',
     )
   })
+
+  it('parses optional observability values with a default PostHog host', () => {
+    expect(
+      parsePublicEnv({
+        VITE_SENTRY_DSN: 'https://public@sentry.example/1',
+        VITE_POSTHOG_KEY: 'phc_synthetic',
+      }),
+    ).toEqual({
+      appEnvironment: 'development',
+      sentryDsn: 'https://public@sentry.example/1',
+      posthog: { key: 'phc_synthetic', host: 'https://us.i.posthog.com' },
+    })
+  })
+
+  it('accepts a custom PostHog host and rejects a host without a key', () => {
+    expect(
+      parsePublicEnv({
+        VITE_POSTHOG_KEY: 'phc_synthetic',
+        VITE_POSTHOG_HOST: 'https://eu.i.posthog.com',
+      }).posthog,
+    ).toEqual({ key: 'phc_synthetic', host: 'https://eu.i.posthog.com' })
+    expect(() => parsePublicEnv({ VITE_POSTHOG_HOST: 'https://eu.i.posthog.com' })).toThrow(
+      'VITE_POSTHOG_HOST requires VITE_POSTHOG_KEY',
+    )
+  })
 })
 
 describe('preview-to-production safety', () => {

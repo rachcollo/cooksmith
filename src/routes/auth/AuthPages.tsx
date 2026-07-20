@@ -6,6 +6,7 @@ import { useAuth } from '../../app/auth/authContext'
 import { Button } from '../../components/ui/Button'
 import { FeedbackState } from '../../components/ui/FeedbackState'
 import { TextField } from '../../components/ui/TextField'
+import { track } from '../../infrastructure/observability/observability'
 
 function AuthHeading({ title, children }: { title: string; children: ReactNode }) {
   useEffect(() => {
@@ -126,6 +127,7 @@ export function CreateAccountPage() {
     e.preventDefault()
     await form.run(async () => {
       await auth.signUp({ email, password }, authRedirectUrl('/auth/confirm'))
+      track('account_created')
       setSent(true)
     })
   }

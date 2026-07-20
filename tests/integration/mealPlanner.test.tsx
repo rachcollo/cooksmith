@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
 import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
@@ -27,6 +27,17 @@ function meal(overrides: Partial<PlannedMeal>): PlannedMeal {
 }
 
 describe('weekly dinner planner', () => {
+  // Pin the clock inside the week of Monday 13 July 2026 so the week-range
+  // assertions stay deterministic as real time passes. Only Date is faked, so
+  // userEvent's internal timers keep working.
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true })
+    vi.setSystemTime(new Date('2026-07-16T09:00:00'))
+  })
+  afterAll(() => {
+    vi.useRealTimers()
+  })
+
   it('renders one calm dinner slot per day and navigates weeks', async () => {
     const listWeek = vi.fn(async () => []) satisfies PlannedMealRepository['listWeek']
     const repository: PlannedMealRepository = {

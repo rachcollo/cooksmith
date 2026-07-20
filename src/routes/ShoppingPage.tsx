@@ -14,6 +14,7 @@ import { Panel } from '../components/ui/Panel'
 import { SelectField } from '../components/ui/SelectField'
 import { TextField } from '../components/ui/TextField'
 import { addDays, currentWeek } from '../domain/meal-plans/week'
+import { track } from '../infrastructure/observability/observability'
 import { buildPlanAdditions, type PlanAdditions } from '../domain/shopping/planGeneration'
 import {
   shoppingCategoryLabels,
@@ -186,6 +187,7 @@ export function ShoppingPage() {
     setPlanError(null)
     try {
       const saved = await repository.createFromPlan(householdId, planPreview.additions)
+      track('shopping_list_generated', { itemCount: saved.length })
       setItems((current) => [...current, ...saved])
       setPlanNotice(
         saved.length === 1
@@ -213,6 +215,7 @@ export function ShoppingPage() {
     )
     try {
       const saved = await repository.setCompleted(item.id, !item.completed)
+      if (saved.completed) track('shopping_item_completed')
       setItems((current) =>
         current.map((candidate) => (candidate.id === saved.id ? saved : candidate)),
       )
