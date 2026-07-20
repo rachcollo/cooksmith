@@ -999,6 +999,12 @@
   cursor: pointer;
 }
 
+.planned-meal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .planned-meal-title {
   display: grid;
   gap: var(--space-1);
@@ -1138,7 +1144,7 @@
 
   .planned-meal {
     gap: 0;
-    grid-template-columns: 1rem minmax(0, 1fr) var(--touch-target) var(--touch-target);
+    grid-template-columns: 1rem minmax(0, 1fr) auto;
     min-height: var(--touch-target);
     padding: 0;
   }
@@ -1182,13 +1188,17 @@
   }
 
   .planned-meal {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     min-height: 5.25rem;
     padding: var(--space-3);
   }
 
   .meal-drag-handle {
     display: none;
+  }
+
+  .planned-meal-actions {
+    justify-content: flex-start;
   }
 }
 
@@ -1548,11 +1558,63 @@
   gap: var(--space-3);
 }
 
+.week-plan-drag-instructions {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  margin-block: 0 var(--space-3);
+}
+
 .week-plan-proposal {
-  align-items: end;
+  align-items: center;
+  border: var(--border-default);
+  border-radius: var(--radius-medium);
   display: grid;
   gap: var(--space-2);
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: var(--space-2);
+  transition:
+    border-color var(--motion-fast) var(--motion-ease),
+    opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+}
+
+.week-plan-proposal.dragging {
+  opacity: 0.7;
+  transform: scale(1.01);
+}
+
+.week-plan-proposal.drop-target {
+  border-color: var(--colour-brand);
+}
+
+.week-plan-drag-handle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--colour-text-muted);
+  cursor: grab;
+  display: inline-flex;
+  justify-content: center;
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  padding: var(--space-2);
+  touch-action: none;
+}
+
+.week-plan-drag-handle:active {
+  cursor: grabbing;
+}
+
+.week-plan-drag-handle svg,
+.week-plan-proposal-actions svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.recipe-search-field {
+  min-width: 0;
+  position: relative;
 }
 
 .week-plan-proposal label {
@@ -1560,15 +1622,64 @@
   gap: var(--space-1);
 }
 
-.week-plan-proposal select {
+.recipe-search-field input {
   min-height: 44px;
   min-width: 0;
   width: 100%;
 }
 
-@media (max-width: 360px) {
+.recipe-search-results {
+  background: var(--colour-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-medium);
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  inset-inline: 0;
+  max-height: min(18rem, 45vh);
+  overflow-y: auto;
+  padding: var(--space-1);
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  z-index: 3;
+}
+
+.recipe-search-results button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-small);
+  color: inherit;
+  cursor: pointer;
+  min-height: var(--touch-target);
+  padding: var(--space-2);
+  text-align: left;
+}
+
+.recipe-search-results button:hover,
+.recipe-search-results button.active {
+  background: var(--colour-brand-soft);
+}
+
+.recipe-search-results p {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  margin: 0;
+  padding: var(--space-2);
+}
+
+.week-plan-proposal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
   .week-plan-proposal {
     align-items: stretch;
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .week-plan-proposal-actions {
+    grid-column: 2;
+    justify-content: flex-start;
   }
 }
