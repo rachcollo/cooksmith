@@ -39,6 +39,7 @@ import {
 import { recipeToMultilineInput, splitMeaningfulLines } from '../domain/recipes/multilineContent'
 import type { Recipe } from '../domain/recipes/types'
 import { buildPlanAdditions } from '../domain/shopping/planGeneration'
+import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
 import '../styles/mealPlannerLinkedCards.css'
 
 type MealDialog =
@@ -385,6 +386,14 @@ export function PlanPage() {
       <header className="page-header meal-planner-header">
         <h1>Seven days. Let’s not overthink it.</h1>
         <p>Plan the dinners that help. Leave the rest blank.</p>
+        <WeekPlanGenerator
+          householdId={householdId}
+          targetWeek={weekStart}
+          onApplied={async () => {
+            if (!householdId) return
+            setMeals(await repository.listWeek(householdId, weekStart, weekEnd))
+          }}
+        />
       </header>
 
       <div className="meal-week-toolbar" aria-label="Week navigation">
