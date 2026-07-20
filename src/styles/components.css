@@ -1583,24 +1583,28 @@
 
 .week-plan-drag-handle {
   align-items: center;
-  background: transparent;
+  align-self: stretch;
+  background: var(--colour-brand);
   border: 0;
-  border-radius: var(--radius-pill);
-  color: var(--colour-text-muted);
+  border-radius: calc(var(--radius-medium) - 1px) 0 0 calc(var(--radius-medium) - 1px);
   cursor: grab;
   display: inline-flex;
   justify-content: center;
   min-height: 2.75rem;
-  min-width: 2.75rem;
-  padding: var(--space-1);
+  min-width: 0.625rem;
+  padding: 0;
   touch-action: none;
+}
+
+.week-plan-proposal:has(.week-plan-drag-handle:focus-visible) {
+  outline: 3px solid var(--colour-focus);
+  outline-offset: 2px;
 }
 
 .week-plan-drag-handle:active {
   cursor: grabbing;
 }
 
-.week-plan-drag-handle svg,
 .week-plan-proposal-actions svg {
   height: 1rem;
   width: 1rem;
@@ -1614,19 +1618,11 @@
 .week-plan-proposal label {
   align-items: center;
   display: flex;
-  gap: var(--space-1);
   min-width: 0;
 }
 
-.week-plan-proposal label > span {
-  color: var(--colour-text-muted);
-  flex: 0 0 1ch;
-  font-size: var(--font-size-small);
-  font-weight: 750;
-  text-align: center;
-}
-
 .recipe-search-field input {
+  appearance: none;
   font-size: 1.1rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1634,6 +1630,10 @@
   min-height: 44px;
   min-width: 0;
   width: 100%;
+}
+
+.recipe-search-field input::-webkit-search-decoration {
+  appearance: none;
 }
 
 .recipe-search-results {
@@ -1683,6 +1683,14 @@
   min-height: 2.75rem;
   min-width: 2.75rem;
   padding: var(--space-1);
+}
+
+.week-plan-proposal-actions .icon-button:first-child svg {
+  transform: translateX(var(--space-1));
+}
+
+.week-plan-proposal-actions .icon-button:last-child svg {
+  transform: translateX(calc(var(--space-1) * -1));
 }
 
 @media (max-width: 480px) {

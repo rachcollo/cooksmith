@@ -125,12 +125,12 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Plan my week' }))
     const dialog = await screen.findByRole('dialog', { name: 'Plan my week' })
     const searches = within(dialog).getAllByRole('combobox')
-    expect(within(dialog).getAllByTitle(formatDisplayDate(testWeekStart))[0]).toHaveTextContent(
-      formatDisplayDate(testWeekStart).charAt(0),
-    )
     expect(searches[0]).toHaveAccessibleName(
       `Search recipe for ${formatDisplayDate(testWeekStart)}`,
     )
+    expect(
+      within(dialog).getAllByRole('button', { name: /Move dinner for/ })[0],
+    ).toBeEmptyDOMElement()
     expect(
       within(dialog).queryByText(
         'Existing dinners stay as they are. Cooksmith will fill only the empty days.',

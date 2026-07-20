@@ -4,7 +4,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { GripVertical, RefreshCw, X } from 'lucide-react'
+import { RefreshCw, X } from 'lucide-react'
 
 import { usePlannedMealRepository } from '../../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../../app/recipes/recipeContext'
@@ -443,12 +443,9 @@ export function WeekPlanGenerator({
                           onPointerMove={continueProposalDrag}
                           onPointerUp={finishProposalDrag}
                           onPointerCancel={finishProposalDrag}
-                        >
-                          <GripVertical aria-hidden="true" />
-                        </button>
+                        ></button>
                         <RecipeSearchField
                           key={`${proposal.mealDate}-${proposal.recipe.id}`}
-                          displayLabel={formatDisplayDate(proposal.mealDate).charAt(0)}
                           label={formatDisplayDate(proposal.mealDate)}
                           recipe={proposal.recipe}
                           recipes={state.recipes}
