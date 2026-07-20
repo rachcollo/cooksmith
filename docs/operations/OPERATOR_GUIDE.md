@@ -112,7 +112,13 @@ have completed:
 1. Go to **Actions -> Deployment verification -> Run workflow**.
 2. Enter the production URL, the Jira key, the release commit SHA, and a
    short plain-language database and Edge Function status (for example "no
-   migration" or "applied").
+   migration" or "applied"). For the URL, use the production base address
+   `https://app.smillins.com.au` (scheme and host, no path or query string),
+   and not a per-deployment preview URL. The workflow trims a pasted browser
+   URL to its origin, but a preview URL behind Vercel Deployment Protection
+   will still fail because it serves a login page instead of the app. See
+   [Production domain setup](PRODUCTION_DOMAIN_SETUP.md) for how that domain
+   is configured.
 3. Run it. On success, it posts delivery evidence to Jira and moves the
    issue towards Done automatically.
 4. Do a final human smoke test of the real feature in production yourself

@@ -16,6 +16,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 
 - AI engineering operating system: [Lifecycle, automation and evidence model](operations/AI_ENGINEERING_OPERATING_SYSTEM.md)
 - Operator guide: [Plain-language delivery guide](operations/OPERATOR_GUIDE.md)
+- Production domain setup: [Custom production domain and auth configuration](operations/PRODUCTION_DOMAIN_SETUP.md)
 
 ## Engineering governance
 
