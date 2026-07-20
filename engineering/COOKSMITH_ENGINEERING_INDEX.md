@@ -49,7 +49,7 @@ for how selection connects to actually starting a build.
 | 5 | M10B Generate Shopping List | CS-22 | `engineering/planned/cs22-generate-shopping-list-from-meal-plan.md` | Planned; linked-recipe save defect must be resolved before Ready | CS-21 Done; planner prerequisite | `feat/cs-22-generate-shopping-list` |
 | 6 | Automatic Pantry categorisation | CS-48 | `engineering/review/cs48-automatic-pantry-categorisation.md` | In Review | CS-14 Done | `feat/cs-48-automatic-pantry-categorisation` |
 | 7 | Recipe Library compact toolbar | CS-53 | `engineering/planned/cs53-compact-recipe-library-toolbar.md` | Planned; parallel-safe with CS-48 and CS-54 | Recipe/import foundations Done | `feat/cs-53-compact-recipe-toolbar` |
-| 8 | Shopping page compact UX | CS-54 | `engineering/planned/cs54-compact-shopping-page.md` | Planned; parallel-safe with CS-48 and CS-53 | CS-21 and CS-22 Done | `feat/cs-54-compact-shopping-page` |
+| 8 | Shopping page compact UX | CS-54 | `engineering/review/cs54-compact-shopping-page.md` | In Review; hosted responsive validation pending | CS-21 and CS-22 Done | `feat/cs-54-compact-shopping-page` |
 | 9 | Pantry compact management UX | CS-55 | `engineering/planned/cs55-simplify-compact-pantry.md` | Planned | CS-48 | `feat/cs-55-compact-pantry` |
 | 10 | Retailer-ready list copy | CS-41 | `engineering/planned/cs41-copy-retailer-ready-shopping-list.md` | Planned; start after CS-54 to avoid Shopping-page conflicts | CS-21, CS-22 and CS-54 | `feat/cs-41-copy-retailer-shopping-list` |
 | 11 | Fortnight plan generation | CS-38 | `engineering/planned/cs38-generate-fortnight-meal-plan.md` | Planned; may run with CS-55 or CS-41 | Planner/recipe/Shopping foundations | `feat/cs-38-fortnight-plan-generation` |

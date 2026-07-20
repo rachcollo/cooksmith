@@ -5,15 +5,19 @@ import { describe, expect, it, vi } from 'vitest'
 import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
 import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
 import type { PlannedMeal } from '../../src/domain/meal-plans/types'
+import { addDays, currentWeek, formatDisplayDate, nextWeek } from '../../src/domain/meal-plans/week'
 import { defaultRecipeRepository, renderApp } from '../renderApp'
 
 const householdId = '20000000-0000-4000-8000-000000000001'
+const testWeekStart = currentWeek(new Date())
+const testMondayLabel = formatDisplayDate(testWeekStart).replace(/\s+\d{4}$/, '')
+const testFriday = addDays(testWeekStart, 4)
 
 function meal(overrides: Partial<PlannedMeal>): PlannedMeal {
   return {
     id: 'meal-1',
     householdId,
-    mealDate: '2026-07-17',
+    mealDate: testFriday,
     mealType: 'dinner',
     title: 'Pasta',
     notes: null,
@@ -51,11 +55,19 @@ describe('weekly dinner planner', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Next week' }))
     await waitFor(() =>
-      expect(listWeek).toHaveBeenLastCalledWith(householdId, '2026-07-20', '2026-07-26'),
+      expect(listWeek).toHaveBeenLastCalledWith(
+        householdId,
+        nextWeek(testWeekStart),
+        addDays(nextWeek(testWeekStart), 6),
+      ),
     )
     await userEvent.click(screen.getByRole('button', { name: 'Previous week' }))
     await waitFor(() =>
-      expect(listWeek).toHaveBeenLastCalledWith(householdId, '2026-07-13', '2026-07-19'),
+      expect(listWeek).toHaveBeenLastCalledWith(
+        householdId,
+        testWeekStart,
+        addDays(testWeekStart, 6),
+      ),
     )
   })
 
@@ -79,7 +91,7 @@ describe('weekly dinner planner', () => {
 
     renderApp('/plan', undefined, undefined, undefined, undefined, undefined, repository)
 
-    const monday = await screen.findByRole('heading', { name: '13 July' })
+    const monday = await screen.findByRole('heading', { name: testMondayLabel })
     const mondayCard = monday.closest('article')
     expect(mondayCard).not.toBeNull()
 
@@ -93,7 +105,7 @@ describe('weekly dinner planner', () => {
     expect(create).toHaveBeenCalledWith(
       householdId,
       expect.objectContaining({
-        mealDate: '2026-07-13',
+        mealDate: testWeekStart,
         mealType: 'dinner',
         title: 'Tacos',
       }),
@@ -114,7 +126,7 @@ describe('weekly dinner planner', () => {
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith(
         'existing-dinner',
-        expect.objectContaining({ mealDate: '2026-07-18', mealType: 'dinner' }),
+        expect.objectContaining({ mealDate: addDays(testFriday, 1), mealType: 'dinner' }),
       ),
     )
 
@@ -157,7 +169,7 @@ describe('weekly dinner planner', () => {
       recipeRepository,
     )
 
-    const monday = await screen.findByRole('heading', { name: '13 July' })
+    const monday = await screen.findByRole('heading', { name: testMondayLabel })
     await user.click(
       within(monday.closest('article') as HTMLElement).getByRole('button', {
         name: 'Add dinner',
@@ -167,7 +179,7 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
 
     expect(create).toHaveBeenCalledWith(householdId, {
-      mealDate: '2026-07-13',
+      mealDate: testWeekStart,
       mealType: 'dinner',
       title: 'Baked garlic chicken',
       notes: null,
@@ -226,7 +238,7 @@ describe('weekly dinner planner', () => {
 
     await user.click(screen.getByRole('button', { name: 'Edit planned dinner Lentil soup' }))
     const editDialog = await screen.findByRole('dialog', { name: 'Edit Lentil soup' })
-    expect(within(editDialog).getByLabelText('Date')).toHaveValue('2026-07-17')
+    expect(within(editDialog).getByLabelText('Date')).toHaveValue(testFriday)
     expect(within(editDialog).getByLabelText('Dinner')).toHaveValue('Lentil soup')
     expect(within(editDialog).getByLabelText(/Notes/)).toBeVisible()
     expect(recipeUpdate).not.toHaveBeenCalled()
@@ -295,7 +307,7 @@ describe('weekly dinner planner', () => {
       shoppingRepository,
     )
 
-    const monday = await screen.findByRole('heading', { name: '13 July' })
+    const monday = await screen.findByRole('heading', { name: testMondayLabel })
     await user.click(
       within(monday.closest('article') as HTMLElement).getByRole('button', { name: 'Add dinner' }),
     )

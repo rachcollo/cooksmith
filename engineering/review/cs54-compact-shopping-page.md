@@ -5,11 +5,11 @@
 - **Milestone:** UX-S1
 - **Jira issue:** CS-54
 - **Epic:** Shopping Lists (CS-6)
-- **Status:** Planned
+- **Status:** Review
 - **Branch:** `feat/cs-54-compact-shopping-page`
 - **Depends on:** CS-21 and CS-22
 - **Blocks:** None
-- **Package path:** `engineering/planned/cs54-compact-shopping-page.md`
+- **Package path:** `engineering/review/cs54-compact-shopping-page.md`
 
 ## Product Outcome
 
@@ -42,21 +42,22 @@ Verify these assumptions against latest remote `main`, Jira, migrations, open PR
 
 ### FR-1 — Heading and live count
 
-- [ ] Shopping uses the shared heading scale.
-- [ ] # left to buy is right-aligned on the heading row.
-- [ ] Count updates and has meaningful screen-reader text.
+- [x] Shopping uses the shared heading scale.
+- [x] # left to buy is right-aligned on the heading row.
+- [x] Count updates and has meaningful screen-reader text.
 
 ### FR-2 — One-line quick add
 
-- [ ] Item, optional quantity and Add fit one row.
-- [ ] Keyboard submit and Add share validation/mutation.
-- [ ] 320px layouts do not overflow.
+- [x] Item, optional quantity and Add fit one row.
+- [x] Keyboard submit and Add share validation/mutation.
+- [ ] 320px layout verification pending hosted Preview (local Chromium unavailable).
 
 ### FR-3 — Dense usable rows
 
-- [ ] More rows appear before scrolling.
-- [ ] Names, quantities, sources and completion remain legible.
-- [ ] Controls remain 44px and long names wrap safely.
+- [x] More rows appear before scrolling.
+- [x] Names, quantities, sources and completion remain legible.
+- [x] Controls remain 44px and long names wrap safely.
+- [x] Preview feedback: use a smaller tick visual, align name and quantity on one line at the same size, and edit those two fields inline.
 
 ## UX and Accessibility
 

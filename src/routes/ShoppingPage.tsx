@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Check, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { Button } from '../components/ui/Button'
-import { Dialog } from '../components/ui/Dialog'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
-import { SelectField } from '../components/ui/SelectField'
 import { TextField } from '../components/ui/TextField'
 import {
   shoppingCategoryLabels,
@@ -192,19 +190,24 @@ export function ShoppingPage() {
       <DocumentTitle title="Shopping" />
       <header className="page-header shopping-header">
         <p className="eyebrow">One useful list</p>
-        <h1>Shopping</h1>
+        <div className="shopping-title-row">
+          <h1>Shopping</h1>
+          <p className="shopping-summary" role="status" aria-live="polite" aria-atomic="true">
+            <span aria-hidden="true">
+              <strong>{outstanding.length}</strong> left to buy
+            </span>
+            <span className="visually-hidden">
+              {outstanding.length} {outstanding.length === 1 ? 'item' : 'items'} left to buy
+            </span>
+          </p>
+        </div>
         <p>Add what your household needs, then tick items off as you shop.</p>
       </header>
-
-      <div className="shopping-summary" aria-label="Shopping list summary">
-        <strong>{outstanding.length}</strong> left to buy
-        {completed.length > 0 ? <span>{completed.length} done</span> : null}
-      </div>
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
 
       <Panel className="shopping-add-panel">
-        <h2>Add an item</h2>
+        <h2 className="visually-hidden">Add an item</h2>
         <form
           className="shopping-form shopping-quick-add"
           onSubmit={(event) => void addItem(event)}
@@ -220,6 +223,7 @@ export function ShoppingPage() {
             error={errors.quantity}
             inputMode="decimal"
             label="Quantity"
+            optional
             value={draft.quantity === null ? '' : String(draft.quantity)}
             onChange={(event) =>
               setDraft({
@@ -230,7 +234,7 @@ export function ShoppingPage() {
           />
           {errors.form ? <p className="form-error">{errors.form}</p> : null}
           <Button busy={saving} disabled={!draft.name.trim()} type="submit">
-            <Plus aria-hidden="true" /> Add item
+            <Plus aria-hidden="true" /> Add
           </Button>
         </form>
       </Panel>
@@ -261,10 +265,17 @@ export function ShoppingPage() {
             <ul className="shopping-list">
               {categoryItems.map((item) => (
                 <ShoppingItemRow
+                  editDraft={editDraft}
+                  editErrors={editErrors}
+                  editing={editing?.id === item.id}
                   item={item}
                   key={item.id}
+                  saving={saving}
+                  onCancelEdit={() => setEditing(null)}
+                  onEditDraftChange={setEditDraft}
                   onEdit={openEdit}
                   onRemove={(candidate) => void removeItem(candidate)}
+                  onSaveEdit={(event) => void saveEdit(event)}
                   onToggle={(candidate) => void toggleCompleted(candidate)}
                 />
               ))}
@@ -282,96 +293,50 @@ export function ShoppingPage() {
           <ul className="shopping-list">
             {completed.map((item) => (
               <ShoppingItemRow
+                editDraft={editDraft}
+                editErrors={editErrors}
+                editing={editing?.id === item.id}
                 item={item}
                 key={item.id}
+                saving={saving}
+                onCancelEdit={() => setEditing(null)}
+                onEditDraftChange={setEditDraft}
                 onEdit={openEdit}
                 onRemove={(candidate) => void removeItem(candidate)}
+                onSaveEdit={(event) => void saveEdit(event)}
                 onToggle={(candidate) => void toggleCompleted(candidate)}
               />
             ))}
           </ul>
         </section>
       ) : null}
-
-      {editing ? (
-        <Dialog
-          description="Update this item for everyone in your household."
-          onOpenChange={(open) => {
-            if (!open && !saving) setEditing(null)
-          }}
-          open
-          title={`Edit ${editing.name}`}
-        >
-          <form
-            className="shopping-form shopping-edit-form"
-            onSubmit={(event) => void saveEdit(event)}
-          >
-            <TextField
-              data-autofocus
-              error={editErrors.name}
-              label="Item name"
-              required
-              value={editDraft.name}
-              onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
-            />
-            <TextField
-              error={editErrors.quantity}
-              inputMode="decimal"
-              label="Quantity"
-              optional
-              value={editDraft.quantity === null ? '' : String(editDraft.quantity)}
-              onChange={(event) =>
-                setEditDraft({
-                  ...editDraft,
-                  quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
-                })
-              }
-            />
-            <TextField
-              error={editErrors.unit}
-              label="Unit"
-              optional
-              value={editDraft.unit ?? ''}
-              onChange={(event) => setEditDraft({ ...editDraft, unit: event.target.value })}
-            />
-            <SelectField
-              label="Category"
-              value={editDraft.category}
-              onChange={(event) =>
-                setEditDraft({ ...editDraft, category: event.target.value as ShoppingCategory })
-              }
-            >
-              {Object.entries(shoppingCategoryLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </SelectField>
-            {editErrors.form ? <p className="form-error">{editErrors.form}</p> : null}
-            <div className="dialog-actions">
-              <Button type="button" variant="secondary" onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
-              <Button busy={saving} disabled={!editDraft.name.trim()} type="submit">
-                Save changes
-              </Button>
-            </div>
-          </form>
-        </Dialog>
-      ) : null}
     </main>
   )
 }
 
 function ShoppingItemRow({
+  editDraft,
+  editErrors,
+  editing,
   item,
+  saving,
+  onCancelEdit,
   onEdit,
+  onEditDraftChange,
   onRemove,
+  onSaveEdit,
   onToggle,
 }: {
+  editDraft: ShoppingItemInput
+  editErrors: FieldErrors
+  editing: boolean
   item: ShoppingItem
+  saving: boolean
+  onCancelEdit: () => void
   onEdit: (item: ShoppingItem) => void
+  onEditDraftChange: (draft: ShoppingItemInput) => void
   onRemove: (item: ShoppingItem) => void
+  onSaveEdit: (event: FormEvent<HTMLFormElement>) => void
   onToggle: (item: ShoppingItem) => void
 }) {
   const amount =
@@ -386,26 +351,79 @@ function ShoppingItemRow({
       >
         {item.completed ? <Check aria-hidden="true" /> : null}
       </button>
-      <div className="shopping-item-copy">
-        <strong>{item.name}</strong>
-        {amount ? <span>{amount}</span> : null}
-      </div>
-      <button
-        aria-label={`Edit ${item.name}`}
-        className="shopping-icon-action"
-        type="button"
-        onClick={() => onEdit(item)}
-      >
-        <Pencil aria-hidden="true" />
-      </button>
-      <button
-        aria-label={`Remove ${item.name}`}
-        className="shopping-icon-action"
-        type="button"
-        onClick={() => onRemove(item)}
-      >
-        <Trash2 aria-hidden="true" />
-      </button>
+      {editing ? (
+        <form className="shopping-inline-edit" onSubmit={onSaveEdit}>
+          <label className="visually-hidden" htmlFor={`shopping-quantity-${item.id}`}>
+            Quantity
+          </label>
+          <input
+            id={`shopping-quantity-${item.id}`}
+            inputMode="decimal"
+            value={editDraft.quantity === null ? '' : String(editDraft.quantity)}
+            onChange={(event) =>
+              onEditDraftChange({
+                ...editDraft,
+                quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+              })
+            }
+          />
+          <label className="visually-hidden" htmlFor={`shopping-name-${item.id}`}>
+            Item name
+          </label>
+          <input
+            autoFocus
+            id={`shopping-name-${item.id}`}
+            required
+            value={editDraft.name}
+            onChange={(event) => onEditDraftChange({ ...editDraft, name: event.target.value })}
+          />
+          <button
+            aria-label={`Save changes to ${item.name}`}
+            className="shopping-icon-action"
+            disabled={saving || !editDraft.name.trim()}
+            type="submit"
+          >
+            <Check aria-hidden="true" />
+          </button>
+          <button
+            aria-label={`Cancel editing ${item.name}`}
+            className="shopping-icon-action"
+            disabled={saving}
+            type="button"
+            onClick={onCancelEdit}
+          >
+            <X aria-hidden="true" />
+          </button>
+          {editErrors.name || editErrors.quantity || editErrors.form ? (
+            <p className="form-error" role="alert">
+              {editErrors.name ?? editErrors.quantity ?? editErrors.form}
+            </p>
+          ) : null}
+        </form>
+      ) : (
+        <>
+          <div className="shopping-item-copy">
+            {amount ? <span>{amount}</span> : null}
+            <strong>{item.name}</strong>
+          </div>
+          <button
+            aria-label={`Edit ${item.name}`}
+            className="shopping-icon-action"
+            type="button"
+            onClick={() => onEdit(item)}
+          >
+            <Pencil aria-hidden="true" />
+          </button>
+          <button
+            aria-label={`Remove ${item.name}`}
+            className="shopping-icon-action"
+            type="button"
+            onClick={() => onRemove(item)}
+          >
+            <Trash2 aria-hidden="true" />
+          </button>
+        </>
+      )}
     </li>
   )
 }
