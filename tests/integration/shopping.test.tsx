@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { ShoppingRepository } from '../../src/application/shopping/shoppingRepository'
+import type { PantryRepository } from '../../src/application/pantry/pantryRepository'
 import type { ShoppingItem } from '../../src/domain/shopping/types'
 import {
   authenticatedTestAuthState,
@@ -32,14 +33,17 @@ function item(overrides: Partial<ShoppingItem> = {}): ShoppingItem {
   }
 }
 
-function renderShopping(repository: ShoppingRepository) {
+function renderShopping(
+  repository: ShoppingRepository,
+  pantryRepository: PantryRepository = defaultPantryRepository,
+) {
   return renderApp(
     '/shopping',
     undefined,
     authenticatedTestClient,
     completedOnboardingRepository,
     ownerHouseholdPeopleRepository,
-    defaultPantryRepository,
+    pantryRepository,
     defaultPlannedMealRepository,
     authenticatedTestAuthState,
     defaultRecipeRepository,
@@ -48,6 +52,71 @@ function renderShopping(repository: ShoppingRepository) {
 }
 
 describe('shopping list foundation', () => {
+  it('shows accessible pantry guidance only for a strong same-household match', async () => {
+    const repository: ShoppingRepository = {
+      list: async () => [item(), item({ id: 'shopping-rice', name: 'Rice' })],
+      create: async () => item(),
+      update: async () => item(),
+      setCompleted: async () => item(),
+      remove: async () => undefined,
+    }
+    const pantryRepository: PantryRepository = {
+      list: async (nextHouseholdId) => [
+        {
+          id: 'pantry-milk',
+          householdId: nextHouseholdId,
+          name: ' milk ',
+          category: 'dairy',
+          categorySource: 'explicit',
+          storageLocation: 'fridge',
+          storageLocationSource: 'explicit',
+          classificationVersion: null,
+          quantity: 1,
+          unit: 'L',
+          available: true,
+          isDefault: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          id: 'pantry-rice-vinegar',
+          householdId: nextHouseholdId,
+          name: 'Rice vinegar',
+          category: 'oils_and_vinegars',
+          categorySource: 'explicit',
+          storageLocation: 'pantry',
+          storageLocationSource: 'explicit',
+          classificationVersion: null,
+          quantity: null,
+          unit: null,
+          available: true,
+          isDefault: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      create: async () => defaultPantryRepository.create(householdId, {} as never),
+      update: async () => defaultPantryRepository.update('', {} as never),
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+    renderShopping(repository, pantryRepository)
+
+    const info = await screen.findByRole('button', {
+      name: 'Why should I check my pantry for Milk?',
+    })
+    expect(info.closest('li')).toHaveClass('shopping-item-pantry-match')
+    expect(screen.queryByText('May already have')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Why should I check my pantry for Rice?' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(info)
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      'Check your pantry — you might already have this item, and we hate wasting food and money!',
+    )
+    expect(info).toHaveAttribute('aria-describedby', 'pantry-match-message-shopping-milk')
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+  })
   it('quickly adds a household item with safe defaults for hidden fields', async () => {
     const create = vi.fn(async (nextHouseholdId, input) => ({
       id: 'shopping-apples',
