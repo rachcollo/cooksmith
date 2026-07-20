@@ -139,4 +139,56 @@ describe('handlers', () => {
     expect(text).toContain('abc123')
     expect(text).not.toContain('secret-token')
   })
+
+  it('pr-merged states neither release is required when nothing relevant changed', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(null, 204))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await HANDLERS['pr-merged'](config, {
+      key: 'CS-21',
+      prUrl: 'https://github.com/rachcollo/cooksmith/pull/45',
+      mergeCommit: 'abc123',
+      dbRequired: 'no',
+      edgeRequired: 'no',
+    })
+
+    const text = JSON.stringify(JSON.parse(fetchMock.mock.calls[0][1].body))
+    expect(text).toContain('Production database release: not required')
+    expect(text).toContain('Production Edge Function release: not required')
+    expect(text).not.toContain('REQUIRED')
+  })
+
+  it('pr-merged calls out a required database release when a migration changed', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(null, 204))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await HANDLERS['pr-merged'](config, {
+      key: 'CS-21',
+      prUrl: 'https://github.com/rachcollo/cooksmith/pull/45',
+      mergeCommit: 'abc123',
+      dbRequired: 'yes',
+      edgeRequired: 'no',
+    })
+
+    const text = JSON.stringify(JSON.parse(fetchMock.mock.calls[0][1].body))
+    expect(text).toContain('Production database release REQUIRED')
+    expect(text).toContain('Production Edge Function release: not required')
+  })
+
+  it('pr-merged calls out both releases when a migration and an Edge Function changed', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(jsonResponse(null, 204))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await HANDLERS['pr-merged'](config, {
+      key: 'CS-21',
+      prUrl: 'https://github.com/rachcollo/cooksmith/pull/45',
+      mergeCommit: 'abc123',
+      dbRequired: 'yes',
+      edgeRequired: 'yes',
+    })
+
+    const text = JSON.stringify(JSON.parse(fetchMock.mock.calls[0][1].body))
+    expect(text).toContain('Production database release REQUIRED')
+    expect(text).toContain('Production Edge Function release REQUIRED')
+  })
 })

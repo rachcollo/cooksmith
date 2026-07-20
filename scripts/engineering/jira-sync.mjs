@@ -127,15 +127,36 @@ const HANDLERS = {
   },
 
   async 'pr-merged'(config, args) {
-    await addComment(config, args.key, [
+    const dbRequired = args.dbRequired === 'yes'
+    const edgeRequired = args.edgeRequired === 'yes'
+    const lines = [
       [{ text: 'Pull request merged: ' }, { text: args.prUrl, href: args.prUrl }],
       [{ text: `Merge commit: ${args.mergeCommit ?? 'unknown'}.` }],
+      [{ text: 'Merging is not delivery. Required to reach Done:' }],
       [
         {
-          text: 'Merging is not delivery. This issue stays out of Done until required application, database and Edge Function releases are verified in production.',
+          text: dbRequired
+            ? '- Production database release REQUIRED: run the Production database release workflow for this merge commit.'
+            : '- Production database release: not required for this change.',
         },
       ],
-    ])
+      [
+        {
+          text: edgeRequired
+            ? '- Production Edge Function release REQUIRED: run the Production Edge Function release workflow for this merge commit.'
+            : '- Production Edge Function release: not required for this change.',
+        },
+      ],
+      [
+        {
+          text:
+            dbRequired || edgeRequired
+              ? '- After the required release(s) above, run the Deployment verification workflow to smoke-check production and move this issue to Done.'
+              : '- Run the Deployment verification workflow to smoke-check the production application and move this issue to Done.',
+        },
+      ],
+    ]
+    await addComment(config, args.key, lines)
   },
 
   async 'ci-failure'(config, args) {
