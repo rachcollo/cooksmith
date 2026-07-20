@@ -35,6 +35,16 @@ function recipe(overrides: Partial<Recipe>): Recipe {
 }
 
 describe('recipe library experience', () => {
+  it('starts the shared current-week planning review without leaving Recipes', async () => {
+    renderApp('/recipes')
+    await screen.findByRole('button', { name: 'Open Lentil soup recipe' })
+    await userEvent.click(screen.getByRole('button', { name: 'Plan my week' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Plan my week' })
+    expect(within(dialog).getByRole('heading', { name: 'Proposed dinners' })).toBeVisible()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('heading', { name: 'Recipe Library' })).toBeVisible()
+  })
+
   it('imports into a review draft with public default and can save privately', async () => {
     const createImported = vi.fn(async (input, visibility) =>
       recipe({ id: 'imported', householdId: '', scope: visibility, ...input }),
