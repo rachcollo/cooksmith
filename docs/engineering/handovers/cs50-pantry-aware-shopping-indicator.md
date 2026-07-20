@@ -8,7 +8,7 @@ Implemented; hosted Preview and manual validation pending.
 
 - Branch: `feat/cs-50-pantry-aware-shopping-indicator`
 - Baseline: latest `main` used by the connected GitHub branch creation
-- Package: `engineering/building/cs50-pantry-aware-shopping-indicator.md`
+- Package: `engineering/review/cs50-pantry-aware-shopping-indicator.md`
 - Adds read-only, household-scoped pantry guidance to shopping rows.
 - Database migrations: none.
 - Edge Functions: none.
