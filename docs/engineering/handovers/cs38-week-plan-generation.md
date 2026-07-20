@@ -8,7 +8,7 @@
 
 ## Reviewer outcome
 
-Verify the same **Plan my week** review opens from Recipes and Plan; partial weeks preserve every occupied dinner; complete weeks offer next week, replacement and cancel; replacement has a separate confirmation; and Apply updates Planner plus Shopping only after review.
+Verify the same **Plan my week** review opens from Recipes and Plan; each run reshuffles recipes; search permits repeated meals; review rows can be reordered and replaced individually; Plan can replace one existing dinner; partial weeks preserve occupied dinners; and Apply updates Planner plus Shopping only after review.
 
 ## Preview checklist
 
