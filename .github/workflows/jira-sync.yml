@@ -89,6 +89,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -97,6 +99,8 @@ jobs:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           TITLE="${{ github.event.pull_request.title }}"
           KEY=$(echo "$TITLE" | grep -ioE 'cs-[0-9]+' | head -n1 | tr '[:lower:]' '[:upper:]')
@@ -108,12 +112,26 @@ jobs:
             node scripts/engineering/jira-sync.mjs package-merged \
               --key "$KEY" \
               --pr-url "${{ github.event.pull_request.html_url }}"
-          else
-            node scripts/engineering/jira-sync.mjs pr-merged \
-              --key "$KEY" \
-              --pr-url "${{ github.event.pull_request.html_url }}" \
-              --merge-commit "${{ github.event.pull_request.merge_commit_sha }}"
+            exit 0
           fi
+          # Detect what this merge actually changed so the Jira comment states
+          # exactly which production releases are required, rather than a
+          # generic reminder. Fall back to "no" if the diff cannot be computed.
+          FILES=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" 2>/dev/null || true)
+          DB_REQUIRED=no
+          EDGE_REQUIRED=no
+          if printf '%s\n' "$FILES" | grep -qE '^supabase/migrations/.*\.sql$'; then
+            DB_REQUIRED=yes
+          fi
+          if printf '%s\n' "$FILES" | grep -qE '^supabase/functions/'; then
+            EDGE_REQUIRED=yes
+          fi
+          node scripts/engineering/jira-sync.mjs pr-merged \
+            --key "$KEY" \
+            --pr-url "${{ github.event.pull_request.html_url }}" \
+            --merge-commit "${{ github.event.pull_request.merge_commit_sha }}" \
+            --db-required "$DB_REQUIRED" \
+            --edge-required "$EDGE_REQUIRED"
 
   ci-failure:
     name: Required checks failed
