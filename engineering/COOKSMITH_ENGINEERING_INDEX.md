@@ -52,7 +52,7 @@ for how selection connects to actually starting a build.
 | 8 | Shopping page compact UX | CS-54 | `engineering/review/cs54-compact-shopping-page.md` | In Review; hosted responsive validation pending | CS-21 and CS-22 Done | `feat/cs-54-compact-shopping-page` |
 | 9 | Pantry compact management UX | CS-55 | `engineering/planned/cs55-simplify-compact-pantry.md` | Planned | CS-48 | `feat/cs-55-compact-pantry` |
 | 10 | Retailer-ready list copy | CS-41 | `engineering/planned/cs41-copy-retailer-ready-shopping-list.md` | Planned; start after CS-54 to avoid Shopping-page conflicts | CS-21, CS-22 and CS-54 | `feat/cs-41-copy-retailer-shopping-list` |
-| 11 | Fortnight plan generation | CS-38 | `engineering/planned/cs38-generate-fortnight-meal-plan.md` | Planned; may run with CS-55 or CS-41 | Planner/recipe/Shopping foundations | `feat/cs-38-fortnight-plan-generation` |
+| 11 | Week plan generation | CS-38 | `engineering/ready/cs38-generate-week-meal-plan.md` | Package ready for approval; Jira remains Backlog until package PR merge | CS-20 and CS-22 Done | `feat/cs-38-week-plan-generation` |
 | 12 | M11A Pantry Reconciliation | CS-23 | `engineering/planned/cs23-pantry-consumption-reconciliation.md` | Planned; start after CS-48 and preferably CS-55 | CS-14, CS-22, CS-48 | `feat/cs-23-pantry-reconciliation` |
 | 13 | Pantry-aware shopping indicator | CS-50 | `engineering/planned/cs50-pantry-aware-shopping-indicator.md` | Jira Ready; package readiness transition still required | CS-14, CS-21, CS-22 Done | `feat/cs-50-pantry-aware-shopping-indicator` |
 | 14 | Quick-add recipe to next plan date | CS-52 | `engineering/planned/cs52-quick-add-recipe-to-next-plan-date.md` | Jira Ready; package readiness transition still required | CS-20 and CS-49 Done | `feat/cs-52-quick-add-recipe-planner` |
@@ -77,7 +77,7 @@ for how selection connects to actually starting a build.
 
 - **Wave 1:** CS-48, CS-53 and CS-54 may run concurrently because they own Pantry categorisation, Recipe Library toolbar and Shopping density respectively.
 - **Wave 2:** CS-55 follows CS-48. CS-41 follows CS-54. CS-55 and CS-41 may run concurrently.
-- **Independent planning stream:** CS-38 may run alongside Wave 2 when no shared Planner/Shopping contract change is active.
+- **Independent planning stream:** CS-38 may run alongside Wave 2 only when no shared Planner or Shopping reconciliation contract change is active.
 - **Pantry data stream:** CS-23 follows CS-48 and preferably CS-55; it should not run concurrently with another Pantry schema/lifecycle change.
 - **Intelligence and release:** CS-24 follows accepted CS-23 reconciliation. CS-25 is the final beta gate after the approved MVP scope and critical defects are complete.
 - CS-50 and CS-52 retain their existing packages; Jira/package lifecycle drift must be resolved before autonomous pickup.
