@@ -730,6 +730,10 @@
   min-width: 0;
 }
 
+.recipe-library-grid {
+  margin-top: var(--space-2);
+}
+
 .recipe-detail-dialog {
   display: grid;
   gap: var(--space-4);
@@ -785,7 +789,6 @@
   .recipe-library-grid {
     gap: var(--space-2);
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: var(--space-2);
   }
 
   .recipe-library-grid .recipe-card {
