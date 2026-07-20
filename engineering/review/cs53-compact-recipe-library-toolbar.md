@@ -5,11 +5,11 @@
 - **Milestone:** UX-R1
 - **Jira issue:** CS-53
 - **Epic:** Recipe Library (CS-5)
-- **Status:** Planned
+- **Status:** Review
 - **Branch:** `feat/cs-53-compact-recipe-toolbar`
 - **Depends on:** CS-20 and CS-30
 - **Blocks:** None
-- **Package path:** `engineering/planned/cs53-compact-recipe-library-toolbar.md`
+- **Package path:** `engineering/review/cs53-compact-recipe-library-toolbar.md`
 
 ## Product Outcome
 

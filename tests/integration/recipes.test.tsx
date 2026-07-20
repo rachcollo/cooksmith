@@ -71,6 +71,9 @@ describe('recipe library experience', () => {
       repository,
     )
     await screen.findByRole('heading', { name: 'Start your recipe library' })
+    expect(screen.getByRole('searchbox', { name: 'Search recipes' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Add recipe' })).toHaveTextContent('Add')
+    expect(screen.getByRole('button', { name: 'Import' })).toBeVisible()
     await userEvent.click(screen.getByRole('button', { name: 'Import' }))
     const urlDialog = screen.getByRole('dialog', { name: 'Import a recipe' })
     await userEvent.type(

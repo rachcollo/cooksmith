@@ -709,7 +709,8 @@
   align-items: end;
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(5.5rem, 1fr) auto auto;
+  min-width: 0;
 }
 
 .recipe-library-toolbar .form-label {
@@ -727,6 +728,10 @@
 
 .recipe-library-toolbar .field input {
   min-width: 0;
+}
+
+.recipe-library-grid {
+  margin-top: var(--space-2);
 }
 
 .recipe-detail-dialog {
@@ -768,8 +773,8 @@
   .recipe-library-toolbar .button,
   .recipe-library-toolbar .field input {
     font-size: 0.875rem;
-    height: 2.5rem;
-    min-height: 2.5rem;
+    height: var(--touch-target);
+    min-height: var(--touch-target);
   }
 
   .recipe-library-toolbar .button {
@@ -784,7 +789,6 @@
   .recipe-library-grid {
     gap: var(--space-2);
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: var(--space-2);
   }
 
   .recipe-library-grid .recipe-card {
