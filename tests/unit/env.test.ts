@@ -40,6 +40,34 @@ describe('public environment configuration', () => {
       'Supabase public configuration is required',
     )
   })
+
+  it('omits observability and analytics when their values are absent', () => {
+    const config = parsePublicEnv({ VITE_APP_ENV: 'development' })
+    expect(config.observability).toBeUndefined()
+    expect(config.analytics).toBeUndefined()
+  })
+
+  it('reads Sentry and PostHog configuration when present, defaulting the EU host', () => {
+    const config = parsePublicEnv({
+      VITE_APP_ENV: 'development',
+      VITE_SENTRY_DSN: ' https://public@o1.ingest.sentry.io/2 ',
+      VITE_POSTHOG_KEY: ' phc_synthetic ',
+    })
+    expect(config.observability).toEqual({ sentryDsn: 'https://public@o1.ingest.sentry.io/2' })
+    expect(config.analytics).toEqual({
+      posthogKey: 'phc_synthetic',
+      posthogHost: 'https://eu.i.posthog.com',
+    })
+  })
+
+  it('honours an explicit PostHog host', () => {
+    const config = parsePublicEnv({
+      VITE_APP_ENV: 'development',
+      VITE_POSTHOG_KEY: 'phc_synthetic',
+      VITE_POSTHOG_HOST: 'https://us.i.posthog.com',
+    })
+    expect(config.analytics?.posthogHost).toBe('https://us.i.posthog.com')
+  })
 })
 
 describe('preview-to-production safety', () => {
