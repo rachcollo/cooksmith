@@ -57,6 +57,7 @@ Verify these assumptions against latest remote `main`, Jira, migrations, open PR
 - [x] More rows appear before scrolling.
 - [x] Names, quantities, sources and completion remain legible.
 - [x] Controls remain 44px and long names wrap safely.
+- [x] Preview feedback: use a smaller tick visual, align name and quantity on one line at the same size, and edit those two fields inline.
 
 ## UX and Accessibility
 

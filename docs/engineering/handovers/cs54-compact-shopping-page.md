@@ -16,6 +16,7 @@ Show more shopping items before scrolling, keep manual item entry to one line an
 - Compressed item name, optional quantity and Add into one responsive row.
 - Reduced list gaps and row padding while retaining 44px action targets.
 - Allowed long item names and quantities to wrap safely.
+- Refined preview feedback with a smaller tick visual, same-line name and quantity, and inline two-field editing.
 - Added integration coverage for count updates and keyboard form submission.
 
 ## Tests run

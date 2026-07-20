@@ -153,15 +153,22 @@ describe('shopping list foundation', () => {
     const user = userEvent.setup()
     renderShopping(repository)
 
-    await user.click(await screen.findByRole('button', { name: 'Edit Milk' }))
-    const dialog = screen.getByRole('dialog', { name: 'Edit Milk' })
-    await user.clear(within(dialog).getByLabelText('Item name'))
-    await user.type(within(dialog).getByLabelText('Item name'), 'Oat milk')
-    await user.click(within(dialog).getByRole('button', { name: 'Save changes' }))
-    expect(update).toHaveBeenCalledWith(
-      'shopping-milk',
-      expect.objectContaining({ name: 'Oat milk' }),
-    )
+    const editButton = await screen.findByRole('button', { name: 'Edit Milk' })
+    const row = editButton.closest('li')
+    expect(row).not.toBeNull()
+    await user.click(editButton)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    await user.clear(within(row!).getByLabelText('Item name'))
+    await user.type(within(row!).getByLabelText('Item name'), 'Oat milk')
+    await user.clear(within(row!).getByLabelText('Quantity'))
+    await user.type(within(row!).getByLabelText('Quantity'), '3')
+    await user.click(within(row!).getByRole('button', { name: 'Save changes to Milk' }))
+    expect(update).toHaveBeenCalledWith('shopping-milk', {
+      name: 'Oat milk',
+      quantity: 3,
+      unit: 'L',
+      category: 'dairy_and_eggs',
+    })
     expect(await screen.findByText('Oat milk')).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Remove Oat milk' }))

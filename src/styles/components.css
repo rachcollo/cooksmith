@@ -1305,9 +1305,9 @@
   border: 2px solid var(--colour-brand);
   border-radius: var(--radius-pill);
   content: '';
-  height: 1.75rem;
+  height: 1.35rem;
   position: absolute;
-  width: 1.75rem;
+  width: 1.35rem;
 }
 
 .shopping-check svg,
@@ -1319,7 +1319,9 @@
 }
 
 .shopping-item-copy {
-  display: grid;
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-2);
   min-width: 0;
 }
 
@@ -1330,7 +1332,8 @@
 
 .shopping-item-copy span {
   color: var(--colour-text-muted);
-  font-size: var(--font-size-small);
+  font-size: inherit;
+  flex: none;
 }
 
 .shopping-item-completed .shopping-item-copy {
@@ -1350,9 +1353,28 @@
   margin-top: var(--space-3);
 }
 
-.shopping-edit-form {
-  align-items: stretch;
-  grid-template-columns: 1fr;
+.shopping-inline-edit {
+  align-items: center;
+  display: grid;
+  gap: var(--space-1);
+  grid-column: 2 / -1;
+  grid-template-columns: minmax(0, 1fr) 4.75rem var(--touch-target) var(--touch-target);
+}
+
+.shopping-inline-edit input {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border-strong);
+  border-radius: var(--radius-small);
+  color: var(--colour-text);
+  font: inherit;
+  min-height: var(--touch-target);
+  min-width: 0;
+  padding-inline: var(--space-2);
+  width: 100%;
+}
+
+.shopping-inline-edit .form-error {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 52rem) {
