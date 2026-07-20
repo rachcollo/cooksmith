@@ -709,7 +709,7 @@
   align-items: end;
   display: grid;
   gap: var(--space-3);
-  grid-template-columns: minmax(5.5rem, 1fr) auto auto;
+  grid-template-columns: minmax(5.5rem, 1fr) auto auto auto;
   min-width: 0;
 }
 
@@ -786,6 +786,10 @@
     padding-inline: var(--space-2);
   }
 
+  .recipe-library-toolbar > .button:last-child {
+    grid-column: 1 / -1;
+  }
+
   .recipe-library-grid {
     gap: var(--space-2);
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -847,11 +851,15 @@
   max-width: 15ch;
 }
 
-.meal-planner-header > p:last-child {
+.meal-planner-header > p {
   color: var(--colour-text-muted);
   font-size: var(--font-size-lead);
   margin: 0;
   max-width: 36rem;
+}
+
+.meal-planner-header > .button {
+  margin-top: var(--space-4);
 }
 
 .meal-week-toolbar {
@@ -1075,9 +1083,14 @@
     margin-bottom: var(--space-1);
   }
 
-  .meal-planner-header > p:last-child {
+  .meal-planner-header > p {
     font-size: 0.9rem;
     line-height: 1.3;
+  }
+
+  .meal-planner-header > .button {
+    margin-top: var(--space-2);
+    width: 100%;
   }
 
   .meal-week-toolbar {
@@ -1520,4 +1533,42 @@
   color: var(--colour-text-muted);
   font-size: var(--font-size-small);
   overflow-wrap: anywhere;
+}
+.week-plan-dialog {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.week-plan-dialog h3 {
+  margin-block-end: var(--space-2);
+}
+
+.week-plan-proposals {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.week-plan-proposal {
+  align-items: end;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.week-plan-proposal label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.week-plan-proposal select {
+  min-height: 44px;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 360px) {
+  .week-plan-proposal {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
 }
