@@ -43,8 +43,20 @@ async function checkRoot(baseUrl) {
   }
 }
 
+// Reduce whatever the operator pastes (often a full browser URL, complete
+// with an auth-redirect path and query string) to just the origin, since the
+// checks below only ever hit the site root and /health.json. Falls back to a
+// trailing-slash trim if the input is not a parseable URL.
+function toOrigin(baseUrl) {
+  try {
+    return new URL(baseUrl).origin
+  } catch {
+    return baseUrl.replace(/\/$/, '')
+  }
+}
+
 export async function verifyDeployment(baseUrl) {
-  const normalised = baseUrl.replace(/\/$/, '')
+  const normalised = toOrigin(baseUrl)
   const checks = [await checkHealth(normalised), await checkRoot(normalised)]
   return checks
 }

@@ -32,6 +32,22 @@ describe('verifyDeployment', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, 'https://cooksmith.example.com')
   })
 
+  it('reduces a pasted URL with a path and query string to the origin', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ application: 'cooksmith-v2', status: 'ok' }))
+      .mockResolvedValueOnce(textResponse('<div id="root"></div>'))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = formatVerification(
+      await verifyDeployment('https://cooksmith.example.com/welcome?returnTo=%2F'),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'https://cooksmith.example.com/health.json')
+    expect(fetchMock).toHaveBeenNthCalledWith(2, 'https://cooksmith.example.com')
+  })
+
   it('fails when health.json reports the wrong application', async () => {
     const fetchMock = vi
       .fn()
