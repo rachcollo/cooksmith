@@ -108,6 +108,12 @@ describe('shopping list foundation', () => {
     expect(
       screen.queryByRole('button', { name: 'Why should I check my pantry for Rice?' }),
     ).not.toBeInTheDocument()
+    const milkRow = screen.getByText('Milk').closest('li')
+    const riceRow = screen.getByText('Rice').closest('li')
+    expect(milkRow?.children).toHaveLength(5)
+    expect(riceRow?.children).toHaveLength(5)
+    expect(within(milkRow!).getByRole('button', { name: 'Edit Milk' })).toBeVisible()
+    expect(within(riceRow!).getByRole('button', { name: 'Edit Rice' })).toBeVisible()
 
     await user.click(info)
     expect(screen.getByRole('tooltip')).toHaveTextContent(
