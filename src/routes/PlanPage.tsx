@@ -7,7 +7,15 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, X } from 'lucide-react'
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+  Pencil,
+  RefreshCw,
+  X,
+} from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
@@ -23,6 +31,7 @@ import {
   displayTitleForPlannedMeal,
   snapshotTitleForRecipe,
 } from '../domain/meal-plans/recipeLinks'
+import { randomReplacementRecipe, recipeSourceForPlan } from '../domain/meal-plans/weekGeneration'
 import type { PlannedMeal, PlannedMealInput } from '../domain/meal-plans/types'
 import { plannedMealInputSchema } from '../domain/meal-plans/validationSchemas'
 import {
@@ -39,6 +48,7 @@ import {
 import { recipeToMultilineInput, splitMeaningfulLines } from '../domain/recipes/multilineContent'
 import type { Recipe } from '../domain/recipes/types'
 import { buildPlanAdditions } from '../domain/shopping/planGeneration'
+import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
 import '../styles/mealPlannerLinkedCards.css'
 
 type MealDialog =
@@ -73,6 +83,17 @@ function recipeMinutesLabel(recipe: Recipe) {
   return total > 0 ? `${total} min total` : null
 }
 
+function plannedMealWithRecipe(saved: PlannedMeal, recipe: Recipe): PlannedMeal {
+  const linkedRecipe = { id: recipe.id, name: recipe.name, archivedAt: recipe.archivedAt }
+  return {
+    ...saved,
+    recipeId: recipe.id,
+    recipeSource: recipeSourceForPlan(recipe),
+    linkedRecipe,
+    recipeState: { kind: 'active', recipe: linkedRecipe },
+  }
+}
+
 export function PlanPage() {
   const { state } = useOnboarding()
   const repository = usePlannedMealRepository()
@@ -89,6 +110,7 @@ export function PlanPage() {
   const [fieldErrors, setFieldErrors] = useState<MealFieldErrors>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [replacingMealId, setReplacingMealId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [recipeError, setRecipeError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -296,6 +318,41 @@ export function PlanPage() {
     }
   }
 
+  async function replaceMeal(meal: PlannedMeal) {
+    if (!householdId || replacingMealId) return
+    const recipe = randomReplacementRecipe(activeRecipes, meal.recipeId)
+    if (!recipe) {
+      setError('Add another recipe before replacing this dinner.')
+      return
+    }
+    setReplacingMealId(meal.id)
+    try {
+      const saved = await repository.update(meal.id, {
+        mealDate: meal.mealDate,
+        mealType: 'dinner',
+        title: snapshotTitleForRecipe(recipe),
+        notes: meal.notes,
+        recipeId: recipe.id,
+        recipeSource: recipeSourceForPlan(recipe),
+      })
+      const replacement = plannedMealWithRecipe(saved, recipe)
+      const additions = buildPlanAdditions([replacement], [recipe], []).additions
+      await shoppingRepository.createFromPlan?.(householdId, saved.id, additions)
+      setMeals((current) =>
+        current.map((candidate) => (candidate.id === meal.id ? replacement : candidate)),
+      )
+      setError(null)
+    } catch (replaceError) {
+      setError(
+        replaceError instanceof Error
+          ? replaceError.message
+          : 'Cooksmith could not replace that dinner.',
+      )
+    } finally {
+      setReplacingMealId(null)
+    }
+  }
+
   async function moveMeal(meal: PlannedMeal, targetDate: string) {
     if (meal.mealDate === targetDate) return
     const displaced = visibleMeals.find(
@@ -385,6 +442,14 @@ export function PlanPage() {
       <header className="page-header meal-planner-header">
         <h1>Seven days. Let’s not overthink it.</h1>
         <p>Plan the dinners that help. Leave the rest blank.</p>
+        <WeekPlanGenerator
+          householdId={householdId}
+          targetWeek={weekStart}
+          onApplied={async () => {
+            if (!householdId) return
+            setMeals(await repository.listWeek(householdId, weekStart, weekEnd))
+          }}
+        />
       </header>
 
       <div className="meal-week-toolbar" aria-label="Week navigation">
@@ -481,24 +546,37 @@ export function PlanPage() {
                       ) : null}
                       {meal.notes ? <span>{meal.notes}</span> : null}
                     </button>
-                    <button
-                      className="meal-remove"
-                      type="button"
-                      aria-label={`Edit planned dinner ${displayTitleForPlannedMeal(meal)}`}
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onClick={() => openEdit(meal)}
-                    >
-                      <Pencil aria-hidden="true" />
-                    </button>
-                    <button
-                      className="meal-remove"
-                      type="button"
-                      aria-label={`Remove ${displayTitleForPlannedMeal(meal)}`}
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onClick={() => void remove(meal)}
-                    >
-                      <X aria-hidden="true" />
-                    </button>
+                    <div className="planned-meal-actions">
+                      <button
+                        className="meal-remove"
+                        type="button"
+                        aria-label={`Replace ${displayTitleForPlannedMeal(meal)} with a random recipe`}
+                        aria-busy={replacingMealId === meal.id}
+                        disabled={replacingMealId !== null}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={() => void replaceMeal(meal)}
+                      >
+                        <RefreshCw aria-hidden="true" />
+                      </button>
+                      <button
+                        className="meal-remove"
+                        type="button"
+                        aria-label={`Edit planned dinner ${displayTitleForPlannedMeal(meal)}`}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={() => openEdit(meal)}
+                      >
+                        <Pencil aria-hidden="true" />
+                      </button>
+                      <button
+                        className="meal-remove"
+                        type="button"
+                        aria-label={`Remove ${displayTitleForPlannedMeal(meal)}`}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={() => void remove(meal)}
+                      >
+                        <X aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <Button
