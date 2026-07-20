@@ -47,7 +47,7 @@ for how selection connects to actually starting a build.
 | 3 | M08C Planner and Recipe Integration | CS-20 | `engineering/planned/m08c-planner-recipe-integration.md` | Backlog | Prefer CS-18 and CS-19 Done | `feat/cs-20-planner-recipe-integration` |
 | 4 | M10A Shopping List Foundation | CS-21 | `engineering/review/cs21-shopping-list-foundation.md` | Done in Jira; package lifecycle cleanup pending | CS-20 Done | `feat/cs-21-shopping-list-foundation` |
 | 5 | M10B Generate Shopping List | CS-22 | `engineering/planned/cs22-generate-shopping-list-from-meal-plan.md` | Planned; linked-recipe save defect must be resolved before Ready | CS-21 Done; planner prerequisite | `feat/cs-22-generate-shopping-list` |
-| 6 | Automatic Pantry categorisation | CS-48 | `engineering/planned/cs48-automatic-pantry-categorisation.md` | Planned | CS-14 Done | `feat/cs-48-automatic-pantry-categorisation` |
+| 6 | Automatic Pantry categorisation | CS-48 | `engineering/review/cs48-automatic-pantry-categorisation.md` | In Review | CS-14 Done | `feat/cs-48-automatic-pantry-categorisation` |
 | 7 | Recipe Library compact toolbar | CS-53 | `engineering/planned/cs53-compact-recipe-library-toolbar.md` | Planned; parallel-safe with CS-48 and CS-54 | Recipe/import foundations Done | `feat/cs-53-compact-recipe-toolbar` |
 | 8 | Shopping page compact UX | CS-54 | `engineering/review/cs54-compact-shopping-page.md` | In Review; hosted responsive validation pending | CS-21 and CS-22 Done | `feat/cs-54-compact-shopping-page` |
 | 9 | Pantry compact management UX | CS-55 | `engineering/planned/cs55-simplify-compact-pantry.md` | Planned | CS-48 | `feat/cs-55-compact-pantry` |
