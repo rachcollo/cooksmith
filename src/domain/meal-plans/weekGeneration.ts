@@ -14,14 +14,23 @@ export interface WeekPlanProposal {
   unfilledDates: string[]
 }
 
-function rankRecipes(recipes: Recipe[]): Recipe[] {
-  return [...recipes]
-    .filter((recipe) => !recipe.archivedAt)
-    .sort((left, right) => {
-      if (left.favourite !== right.favourite) return left.favourite ? -1 : 1
-      const nameOrder = left.name.localeCompare(right.name, 'en-AU', { sensitivity: 'base' })
-      return nameOrder !== 0 ? nameOrder : left.id.localeCompare(right.id)
-    })
+function shuffledRecipes(recipes: Recipe[], random: () => number): Recipe[] {
+  const shuffled = recipes.filter((recipe) => !recipe.archivedAt)
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1))
+    ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex]!, shuffled[index]!]
+  }
+  return shuffled
+}
+
+export function randomReplacementRecipe(
+  recipes: Recipe[],
+  currentRecipeId: string | null,
+  random: () => number = Math.random,
+): Recipe | null {
+  const candidates = recipes.filter((recipe) => !recipe.archivedAt && recipe.id !== currentRecipeId)
+  if (candidates.length === 0) return null
+  return candidates[Math.floor(random() * candidates.length)] ?? null
 }
 
 export function proposeWeekMeals({
@@ -29,11 +38,13 @@ export function proposeWeekMeals({
   recipes,
   replace,
   weekStart,
+  random = Math.random,
 }: {
   meals: PlannedMeal[]
   recipes: Recipe[]
   replace: boolean
   weekStart: string
+  random?: () => number
 }): WeekPlanProposal {
   const days = weekDays(weekStart)
   const dinners = meals.filter((meal) => meal.mealType === 'dinner' && days.includes(meal.mealDate))
@@ -42,7 +53,9 @@ export function proposeWeekMeals({
   const existingRecipeIds = new Set(
     replace ? [] : dinners.map((meal) => meal.recipeId).filter((id): id is string => Boolean(id)),
   )
-  const candidates = rankRecipes(recipes).filter((recipe) => !existingRecipeIds.has(recipe.id))
+  const candidates = shuffledRecipes(recipes, random).filter(
+    (recipe) => !existingRecipeIds.has(recipe.id),
+  )
   const proposals = targets.flatMap((mealDate, index) => {
     const recipe = candidates[index]
     return recipe ? [{ mealDate, recipe }] : []
