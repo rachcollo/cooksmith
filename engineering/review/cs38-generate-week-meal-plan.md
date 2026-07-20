@@ -13,7 +13,7 @@
 ## Product Outcome
 Help a household plan meals with one clear action available from both Recipes and Plan. Cooksmith fills only genuinely empty days, preserves work already done, and gives an explicit choice when the selected week is already complete.
 
-The first release is deterministic and uses recipes visible to the active household. It reduces planning effort without silently replacing meals or requiring paid AI.
+The first release uses recipes visible to the active household and reshuffles them for each generation. It reduces planning effort without silently replacing meals or requiring paid AI.
 
 ## Current Baseline
 - Recipes provides the household's visible shared and private recipe collection.
@@ -33,7 +33,9 @@ The first release is deterministic and uses recipes visible to the active househ
 - When the target week has no empty meal days, offer **Plan next week**, **Replace this week** and **Cancel**.
 - Require a separate destructive confirmation before replacing a complete week.
 - Review generated meals before applying them.
-- Deterministic selection from recipes visible and permitted for the active household.
+- Randomised selection from recipes visible and permitted for the active household.
+- Search, drag-and-drop and one-meal random replacement during review.
+- One-meal random replacement from the normal Plan view.
 - Normal CS-22 Shopping reconciliation after confirmed planner changes.
 
 ### Explicitly Out of Scope
@@ -86,21 +88,25 @@ Generated meals remain a proposal until confirmed.
 
 **Acceptance criteria**
 - [ ] The review shows the target week and distinguishes preserved meals from proposed meals.
-- [ ] Users can replace or remove an individual proposed meal before Apply.
+- [ ] Users can search all permitted recipes, including one already used elsewhere in the week, and replace or remove an individual proposal before Apply.
+- [ ] Users can drag proposals between days, with an equivalent keyboard interaction.
+- [ ] A per-meal action randomly replaces only that proposal.
+- [ ] Plan offers the same per-meal random replacement action for an already planned dinner.
 - [ ] Existing meals in a partially planned week cannot be edited through the generation review; normal Plan editing remains available.
 - [ ] For confirmed full-week replacement, the review clearly identifies every existing meal that will be replaced.
 - [ ] Cancelling review leaves all planner and Shopping data unchanged.
 - [ ] Apply is disabled while generation or persistence is busy and cannot be submitted twice.
 
-### FR-5 — Deterministic, household-safe generation
+### FR-5 — Varied, household-safe generation
 The first release works without AI and cannot use another household's private data.
 
 **Acceptance criteria**
 - [ ] Candidate recipes are restricted to recipes visible and permitted for the authenticated user's active household.
 - [ ] Private recipes belonging to another user or household never influence results.
 - [ ] Safety requirements represented by existing authoritative data are hard constraints and are never relaxed.
-- [ ] The deterministic selector avoids duplicate recipes within the generated week when enough candidates exist.
-- [ ] Frozen inputs produce stable, testable output.
+- [ ] Each new generation shuffles permitted candidates so repeated planning attempts are not locked to the same order.
+- [ ] The random source can be injected in unit tests for stable, testable output.
+- [ ] A user can deliberately repeat a recipe on multiple nights for batch cooking.
 - [ ] When candidates are insufficient, the review explains the shortfall in plain language without inventing recipes.
 - [ ] No paid provider, external AI call or new dependency is introduced.
 
@@ -122,6 +128,7 @@ Confirmed changes use current authoritative planner behaviour.
 - Define loading, empty-recipe, insufficient-candidate, busy, success, error and recovery states.
 - Preserve 44px targets, visible focus, semantic headings, contextual accessible names, zoom/reflow and reduced motion.
 - Do not rely on colour, hover, gesture or an icon alone.
+- Search results, drag handles and random replacement actions must work by keyboard and touch.
 
 ## Data and Domain Requirements
 - Prefer existing planner, recipe-visibility and Shopping reconciliation contracts.
@@ -136,7 +143,7 @@ Confirmed changes use current authoritative planner behaviour.
 - Implement a single application use case shared by Recipes and Plan.
 - Separate proposal generation from planner mutation.
 - Reuse existing route, dialog, planner mutation and CS-22 reconciliation patterns.
-- Use a deterministic ranker with injected/frozen time or seed where ordering needs a stable tie-break.
+- Use an injectable random source so production proposals vary and tests remain stable.
 - Avoid broad Planner, Recipe or Shopping refactors.
 - Do not add an AI abstraction, provider, feature flag or dependency for speculative later use.
 - Record an ADR only if implementation reveals a genuinely new durable cross-domain contract.
@@ -145,7 +152,7 @@ Confirmed changes use current authoritative planner behaviour.
 1. Verify CS-20 and CS-22 are Done, merged and released on the latest remote `main`.
 2. Inspect current Recipes and Plan entry points, planner date semantics, authoritative recipe visibility and CS-22 reconciliation.
 3. Write decision-table unit tests for current/visible week selection, partial weeks, full weeks, next-week choice and confirmed replacement.
-4. Implement the deterministic proposal use case and typed result states.
+4. Implement the randomised proposal use case and typed result states.
 5. Add the shared review and complete-week choice UI to both routes.
 6. Persist only on Apply through authoritative planner mutations.
 7. Add regression coverage for Shopping additions/removals and idempotent retry.
@@ -160,7 +167,8 @@ Confirmed changes use current authoritative planner behaviour.
 - Partial-week empty-slot selection.
 - Complete-week choice state and next-week targeting.
 - Replacement confirmation requirement.
-- Deterministic ranking, duplicate avoidance and insufficient-candidate output.
+- Randomised ordering, injectable randomness and insufficient-candidate output.
+- Repeated-recipe selection and single-meal random replacement.
 - Idempotency keys or equivalent retry contract.
 
 ### Component tests
