@@ -17,6 +17,7 @@ Show more shopping items before scrolling, keep manual item entry to one line an
 - Reduced list gaps and row padding while retaining 44px action targets.
 - Allowed long item names and quantities to wrap safely.
 - Refined preview feedback with a smaller tick visual, same-line name and quantity, and inline two-field editing.
+- Ordered quantity before the item name in both display and inline editing states.
 - Added integration coverage for count updates and keyboard form submission.
 
 ## Tests run

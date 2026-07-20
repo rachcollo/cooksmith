@@ -353,16 +353,6 @@ function ShoppingItemRow({
       </button>
       {editing ? (
         <form className="shopping-inline-edit" onSubmit={onSaveEdit}>
-          <label className="visually-hidden" htmlFor={`shopping-name-${item.id}`}>
-            Item name
-          </label>
-          <input
-            autoFocus
-            id={`shopping-name-${item.id}`}
-            required
-            value={editDraft.name}
-            onChange={(event) => onEditDraftChange({ ...editDraft, name: event.target.value })}
-          />
           <label className="visually-hidden" htmlFor={`shopping-quantity-${item.id}`}>
             Quantity
           </label>
@@ -376,6 +366,16 @@ function ShoppingItemRow({
                 quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
               })
             }
+          />
+          <label className="visually-hidden" htmlFor={`shopping-name-${item.id}`}>
+            Item name
+          </label>
+          <input
+            autoFocus
+            id={`shopping-name-${item.id}`}
+            required
+            value={editDraft.name}
+            onChange={(event) => onEditDraftChange({ ...editDraft, name: event.target.value })}
           />
           <button
             aria-label={`Save changes to ${item.name}`}
@@ -403,8 +403,8 @@ function ShoppingItemRow({
       ) : (
         <>
           <div className="shopping-item-copy">
-            <strong>{item.name}</strong>
             {amount ? <span>{amount}</span> : null}
+            <strong>{item.name}</strong>
           </div>
           <button
             aria-label={`Edit ${item.name}`}
