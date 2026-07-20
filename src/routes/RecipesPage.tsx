@@ -22,6 +22,8 @@ import type {
   RecipeInput,
 } from '../domain/recipes/types'
 import { recipeInputSchema } from '../domain/recipes/validationSchemas'
+import { currentWeek } from '../domain/meal-plans/week'
+import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
 
 const emptyInput: RecipeInput = {
   name: '',
@@ -528,6 +530,7 @@ export function RecipesPage() {
         <Button type="button" variant="secondary" onClick={() => setImporting(true)}>
           Import
         </Button>
+        <WeekPlanGenerator householdId={householdId} targetWeek={currentWeek(new Date())} />
       </div>
       {filteredRecipes.length === 0 ? (
         <Panel>
