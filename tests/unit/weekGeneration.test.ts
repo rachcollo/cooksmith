@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { proposeWeekMeals, recipeSourceForPlan } from '../../src/domain/meal-plans/weekGeneration'
+import {
+  proposeWeekMeals,
+  randomReplacementRecipe,
+  recipeSourceForPlan,
+} from '../../src/domain/meal-plans/weekGeneration'
 import type { PlannedMeal } from '../../src/domain/meal-plans/types'
 import { addDays } from '../../src/domain/meal-plans/week'
 import type { Recipe } from '../../src/domain/recipes/types'
@@ -50,7 +54,7 @@ function meal(mealDate: string, recipeId: string | null = null): PlannedMeal {
 }
 
 describe('week meal generation', () => {
-  it('preserves occupied days and deterministically prefers favourites', () => {
+  it('preserves occupied days and avoids proposing an already-planned recipe automatically', () => {
     const existing = meal(addDays(weekStart, 1), 'recipe-existing')
     const result = proposeWeekMeals({
       weekStart,
@@ -61,14 +65,47 @@ describe('week meal generation', () => {
         recipe('recipe-existing', 'Existing'),
       ],
       replace: false,
+      random: () => 0.999,
     })
 
     expect(result.preservedMeals).toEqual([existing])
     expect(result.proposals.map((proposal) => [proposal.mealDate, proposal.recipe.id])).toEqual([
-      [weekStart, 'recipe-a'],
-      [addDays(weekStart, 2), 'recipe-b'],
+      [weekStart, 'recipe-b'],
+      [addDays(weekStart, 2), 'recipe-a'],
     ])
     expect(result.unfilledDates).toHaveLength(4)
+  })
+
+  it('changes the generated order when the random source changes', () => {
+    const recipes = [
+      recipe('recipe-a', 'Apple bake'),
+      recipe('recipe-b', 'Bowl'),
+      recipe('recipe-c', 'Curry'),
+    ]
+    const first = proposeWeekMeals({
+      weekStart,
+      meals: [],
+      recipes,
+      replace: false,
+      random: () => 0,
+    })
+    const second = proposeWeekMeals({
+      weekStart,
+      meals: [],
+      recipes,
+      replace: false,
+      random: () => 0.999,
+    })
+
+    expect(first.proposals.map((proposal) => proposal.recipe.id)).not.toEqual(
+      second.proposals.map((proposal) => proposal.recipe.id),
+    )
+  })
+
+  it('randomly replaces only the requested recipe', () => {
+    const recipes = [recipe('recipe-a', 'Apple bake'), recipe('recipe-b', 'Bowl')]
+    expect(randomReplacementRecipe(recipes, 'recipe-a', () => 0)?.id).toBe('recipe-b')
+    expect(randomReplacementRecipe([recipes[0]!], 'recipe-a', () => 0)).toBeNull()
   })
 
   it('targets all seven days only after replacement is confirmed', () => {
