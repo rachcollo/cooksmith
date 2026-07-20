@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
+import { usePantryRepository } from '../app/pantry/pantryContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { Button } from '../components/ui/Button'
@@ -16,6 +17,8 @@ import {
   type ShoppingItemInput,
 } from '../domain/shopping/types'
 import { shoppingItemInputSchema } from '../domain/shopping/validationSchemas'
+import type { PantryItem } from '../domain/pantry/types'
+import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
 
 const emptyInput: ShoppingItemInput = {
   name: '',
@@ -30,7 +33,9 @@ export function ShoppingPage() {
   const { state } = useOnboarding()
   const householdId = state.householdId
   const repository = useShoppingRepository()
+  const pantryRepository = usePantryRepository()
   const [items, setItems] = useState<ShoppingItem[]>([])
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>([])
   const [draft, setDraft] = useState<ShoppingItemInput>(emptyInput)
   const [editing, setEditing] = useState<ShoppingItem | null>(null)
   const [editDraft, setEditDraft] = useState<ShoppingItemInput>(emptyInput)
@@ -39,14 +44,23 @@ export function ShoppingPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [openPantryInfoId, setOpenPantryInfoId] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
     if (!householdId) return
-    repository
-      .list(householdId)
-      .then((next) => {
-        if (active) setItems(next)
+    Promise.allSettled([repository.list(householdId), pantryRepository.list(householdId)])
+      .then(([shoppingResult, pantryResult]) => {
+        if (!active) return
+        if (shoppingResult.status === 'rejected') throw shoppingResult.reason
+        setItems(shoppingResult.value)
+        setPantryItems(
+          pantryResult.status === 'fulfilled'
+            ? pantryResult.value.filter(
+                (item) => item.householdId === householdId && item.available,
+              )
+            : [],
+        )
       })
       .catch(() => {
         if (active) setError('We could not load your shopping list. Try refreshing Cooksmith.')
@@ -57,7 +71,23 @@ export function ShoppingPage() {
     return () => {
       active = false
     }
-  }, [householdId, repository])
+  }, [householdId, pantryRepository, repository])
+
+  useEffect(() => {
+    if (!openPantryInfoId) return
+    function closeOnOutsidePress(event: PointerEvent) {
+      const target = event.target
+      if (
+        target instanceof Element &&
+        target.closest(`[data-pantry-match-info="${openPantryInfoId}"]`)
+      ) {
+        return
+      }
+      setOpenPantryInfoId(null)
+    }
+    document.addEventListener('pointerdown', closeOnOutsidePress)
+    return () => document.removeEventListener('pointerdown', closeOnOutsidePress)
+  }, [openPantryInfoId])
 
   const outstanding = items.filter((item) => !item.completed)
   const completed = items.filter((item) => item.completed)
@@ -68,6 +98,10 @@ export function ShoppingPage() {
         return groups
       }, {}),
     [outstanding],
+  )
+  const pantryMatches = useMemo(
+    () => buildPantryMatchIndex(items, pantryItems),
+    [items, pantryItems],
   )
 
   function validate(input: ShoppingItemInput, currentId?: string) {
@@ -269,12 +303,15 @@ export function ShoppingPage() {
                   editErrors={editErrors}
                   editing={editing?.id === item.id}
                   item={item}
+                  pantryMatch={pantryMatches.get(item.id)?.state === 'match'}
+                  pantryInfoOpen={openPantryInfoId === item.id}
                   key={item.id}
                   saving={saving}
                   onCancelEdit={() => setEditing(null)}
                   onEditDraftChange={setEditDraft}
                   onEdit={openEdit}
                   onRemove={(candidate) => void removeItem(candidate)}
+                  onPantryInfoChange={(open) => setOpenPantryInfoId(open ? item.id : null)}
                   onSaveEdit={(event) => void saveEdit(event)}
                   onToggle={(candidate) => void toggleCompleted(candidate)}
                 />
@@ -297,12 +334,15 @@ export function ShoppingPage() {
                 editErrors={editErrors}
                 editing={editing?.id === item.id}
                 item={item}
+                pantryMatch={pantryMatches.get(item.id)?.state === 'match'}
+                pantryInfoOpen={openPantryInfoId === item.id}
                 key={item.id}
                 saving={saving}
                 onCancelEdit={() => setEditing(null)}
                 onEditDraftChange={setEditDraft}
                 onEdit={openEdit}
                 onRemove={(candidate) => void removeItem(candidate)}
+                onPantryInfoChange={(open) => setOpenPantryInfoId(open ? item.id : null)}
                 onSaveEdit={(event) => void saveEdit(event)}
                 onToggle={(candidate) => void toggleCompleted(candidate)}
               />
@@ -319,11 +359,14 @@ function ShoppingItemRow({
   editErrors,
   editing,
   item,
+  pantryMatch,
+  pantryInfoOpen,
   saving,
   onCancelEdit,
   onEdit,
   onEditDraftChange,
   onRemove,
+  onPantryInfoChange,
   onSaveEdit,
   onToggle,
 }: {
@@ -331,18 +374,24 @@ function ShoppingItemRow({
   editErrors: FieldErrors
   editing: boolean
   item: ShoppingItem
+  pantryMatch: boolean
+  pantryInfoOpen: boolean
   saving: boolean
   onCancelEdit: () => void
   onEdit: (item: ShoppingItem) => void
   onEditDraftChange: (draft: ShoppingItemInput) => void
   onRemove: (item: ShoppingItem) => void
+  onPantryInfoChange: (open: boolean) => void
   onSaveEdit: (event: FormEvent<HTMLFormElement>) => void
   onToggle: (item: ShoppingItem) => void
 }) {
   const amount =
     item.quantity === null ? null : `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`
   return (
-    <li className={item.completed ? 'shopping-item shopping-item-completed' : 'shopping-item'}>
+    <li
+      className={`shopping-item${item.completed ? ' shopping-item-completed' : ''}${pantryMatch ? ' shopping-item-pantry-match' : ''}`}
+      data-pantry-match-info={item.id}
+    >
       <button
         aria-label={`${item.completed ? 'Mark as needed' : 'Mark as done'}: ${item.name}`}
         className="shopping-check"
@@ -405,6 +454,46 @@ function ShoppingItemRow({
           <div className="shopping-item-copy">
             {amount ? <span>{amount}</span> : null}
             <strong>{item.name}</strong>
+          </div>
+          <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
+            {pantryMatch ? (
+              <>
+                <button
+                  aria-describedby={pantryInfoOpen ? `pantry-match-message-${item.id}` : undefined}
+                  aria-expanded={pantryInfoOpen}
+                  aria-label={`Why should I check my pantry for ${item.name}?`}
+                  className="shopping-pantry-info-button"
+                  type="button"
+                  onBlur={(event) => {
+                    if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                      onPantryInfoChange(false)
+                    }
+                  }}
+                  onClick={() => onPantryInfoChange(true)}
+                  onFocus={() => onPantryInfoChange(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') {
+                      event.preventDefault()
+                      onPantryInfoChange(false)
+                    }
+                  }}
+                  onMouseEnter={() => onPantryInfoChange(true)}
+                  onMouseLeave={() => onPantryInfoChange(false)}
+                >
+                  ?
+                </button>
+                {pantryInfoOpen ? (
+                  <span
+                    className="shopping-pantry-tooltip"
+                    id={`pantry-match-message-${item.id}`}
+                    role="tooltip"
+                  >
+                    Check your pantry — you might already have this item, and we hate wasting food
+                    and money!
+                  </span>
+                ) : null}
+              </>
+            ) : null}
           </div>
           <button
             aria-label={`Edit ${item.name}`}
