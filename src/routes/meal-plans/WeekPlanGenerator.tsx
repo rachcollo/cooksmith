@@ -448,6 +448,7 @@ export function WeekPlanGenerator({
                         </button>
                         <RecipeSearchField
                           key={`${proposal.mealDate}-${proposal.recipe.id}`}
+                          displayLabel={formatDisplayDate(proposal.mealDate).charAt(0)}
                           label={formatDisplayDate(proposal.mealDate)}
                           recipe={proposal.recipe}
                           recipes={state.recipes}

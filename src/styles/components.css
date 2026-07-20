@@ -1555,7 +1555,7 @@
 
 .week-plan-proposals {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .week-plan-proposal {
@@ -1563,9 +1563,9 @@
   border: var(--border-default);
   border-radius: var(--radius-medium);
   display: grid;
-  gap: var(--space-1);
+  gap: 0;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  padding: var(--space-1);
+  padding: 0 var(--space-1);
   transition:
     border-color var(--motion-fast) var(--motion-ease),
     opacity var(--motion-fast) var(--motion-ease),
@@ -1590,9 +1590,9 @@
   cursor: grab;
   display: inline-flex;
   justify-content: center;
-  min-height: var(--touch-target);
-  min-width: var(--touch-target);
-  padding: var(--space-2);
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: var(--space-1);
   touch-action: none;
 }
 
@@ -1614,10 +1614,20 @@
 .week-plan-proposal label {
   align-items: center;
   display: flex;
+  gap: var(--space-1);
   min-width: 0;
 }
 
+.week-plan-proposal label > span {
+  color: var(--colour-text-muted);
+  flex: 0 0 1ch;
+  font-size: var(--font-size-small);
+  font-weight: 750;
+  text-align: center;
+}
+
 .recipe-search-field input {
+  font-size: 1.1rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1667,6 +1677,12 @@
 .week-plan-proposal-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.week-plan-proposal-actions .icon-button {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: var(--space-1);
 }
 
 @media (max-width: 480px) {

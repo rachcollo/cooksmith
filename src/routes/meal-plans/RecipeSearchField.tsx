@@ -3,11 +3,13 @@ import { useId, useMemo, useState, type KeyboardEvent } from 'react'
 import type { Recipe } from '../../domain/recipes/types'
 
 export function RecipeSearchField({
+  displayLabel,
   label,
   onSelect,
   recipe,
   recipes,
 }: {
+  displayLabel?: string
   label: string
   onSelect: (recipeId: string) => void
   recipe: Recipe
@@ -69,7 +71,12 @@ export function RecipeSearchField({
       }}
     >
       <label>
-        <span>{label}</span>
+        <span
+          aria-hidden={displayLabel ? 'true' : undefined}
+          title={displayLabel ? label : undefined}
+        >
+          {displayLabel ?? label}
+        </span>
         <input
           aria-activedescendant={
             open && matches[activeIndex] ? `${listboxId}-${matches[activeIndex].id}` : undefined

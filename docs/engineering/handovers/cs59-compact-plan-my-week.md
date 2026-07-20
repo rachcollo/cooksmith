@@ -15,6 +15,7 @@ Make the Plan my week review easier to scan on small screens while retaining the
 - Removed the repeated non-replacement instruction from the review dialog.
 - Kept the drag and keyboard guidance available to assistive technology without displaying it on every use.
 - Compacted proposal rows and retained a single stable row for the handle, date, recipe selector and actions.
+- Refined the mobile row after Preview review: each date is now a one-letter day marker with the full date retained accessibly, recipe titles are larger, and row/control spacing is tighter.
 - Replaced visible Replace and Remove labels with contextual icon-only controls that retain 44px targets and accessible names.
 - Added regression assertions for the removed copy, assistive guidance, contextual actions and existing keyboard reorder/replacement behaviour.
 
