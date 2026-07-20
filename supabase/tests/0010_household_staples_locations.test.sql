@@ -33,7 +33,7 @@ select is(
     where nspname = 'cooksmith'
       and typname = 'pantry_storage_location'
   ),
-  array['pantry','fridge','freezer']::text[],
+  array['pantry','fridge','freezer','produce_storage','household_supplies','other']::text[],
   'only approved storage locations exist'
 );
 select ok(

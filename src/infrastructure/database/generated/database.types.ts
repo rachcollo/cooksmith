@@ -250,6 +250,8 @@ export type Database = {
         Row: {
           available: boolean
           category: Database['cooksmith']['Enums']['pantry_item_category']
+          category_source: Database['cooksmith']['Enums']['pantry_classification_source']
+          classification_version: number | null
           created_at: string
           created_by: string | null
           household_id: string
@@ -259,6 +261,7 @@ export type Database = {
           normalised_name: string | null
           quantity: number | null
           storage_location: Database['cooksmith']['Enums']['pantry_storage_location']
+          storage_location_source: Database['cooksmith']['Enums']['pantry_classification_source']
           unit: string | null
           updated_at: string
           updated_by: string | null
@@ -266,6 +269,8 @@ export type Database = {
         Insert: {
           available?: boolean
           category: Database['cooksmith']['Enums']['pantry_item_category']
+          category_source?: Database['cooksmith']['Enums']['pantry_classification_source']
+          classification_version?: number | null
           created_at?: string
           created_by?: string | null
           household_id: string
@@ -275,6 +280,7 @@ export type Database = {
           normalised_name?: string | null
           quantity?: number | null
           storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
+          storage_location_source?: Database['cooksmith']['Enums']['pantry_classification_source']
           unit?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -282,6 +288,8 @@ export type Database = {
         Update: {
           available?: boolean
           category?: Database['cooksmith']['Enums']['pantry_item_category']
+          category_source?: Database['cooksmith']['Enums']['pantry_classification_source']
+          classification_version?: number | null
           created_at?: string
           created_by?: string | null
           household_id?: string
@@ -291,6 +299,7 @@ export type Database = {
           normalised_name?: string | null
           quantity?: number | null
           storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
+          storage_location_source?: Database['cooksmith']['Enums']['pantry_classification_source']
           unit?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -1023,6 +1032,7 @@ export type Database = {
       invitation_status: 'pending' | 'accepted' | 'cancelled' | 'expired'
       meal_type: 'breakfast' | 'lunch' | 'dinner'
       membership_status: 'active' | 'inactive'
+      pantry_classification_source: 'automatic' | 'explicit'
       pantry_item_category:
         | 'baking'
         | 'breakfast'
@@ -1034,7 +1044,15 @@ export type Database = {
         | 'snacks'
         | 'tea_coffee_and_drinks'
         | 'other'
-      pantry_storage_location: 'pantry' | 'fridge' | 'freezer'
+        | 'produce'
+        | 'dairy'
+        | 'meat_and_seafood'
+        | 'bakery'
+        | 'frozen'
+        | 'household'
+        | 'uncategorised'
+      pantry_storage_location:
+        'pantry' | 'fridge' | 'freezer' | 'produce_storage' | 'household_supplies' | 'other'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
       shopping_item_category:
         | 'produce'
@@ -1177,6 +1195,7 @@ export const Constants = {
       invitation_status: ['pending', 'accepted', 'cancelled', 'expired'],
       meal_type: ['breakfast', 'lunch', 'dinner'],
       membership_status: ['active', 'inactive'],
+      pantry_classification_source: ['automatic', 'explicit'],
       pantry_item_category: [
         'baking',
         'breakfast',
@@ -1188,8 +1207,22 @@ export const Constants = {
         'snacks',
         'tea_coffee_and_drinks',
         'other',
+        'produce',
+        'dairy',
+        'meat_and_seafood',
+        'bakery',
+        'frozen',
+        'household',
+        'uncategorised',
       ],
-      pantry_storage_location: ['pantry', 'fridge', 'freezer'],
+      pantry_storage_location: [
+        'pantry',
+        'fridge',
+        'freezer',
+        'produce_storage',
+        'household_supplies',
+        'other',
+      ],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
       shopping_item_category: [
         'produce',
