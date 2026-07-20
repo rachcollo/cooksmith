@@ -23,13 +23,23 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 - Pantry staples are a separate inventory-style model. CS-48 provides deterministic food classification rules that may be reused where the shopping category mapping is compatible.
 - Planner weeks are household-local Monday-to-Sunday date ranges. The shopping-list model does not yet have a week key, rollover lifecycle or recurring-item provenance.
 
+## Approved Product Decisions
+
+- The CS-56 shopping week is the household-local Monday-to-Sunday planner week.
+- Opening Shopping is the authorised reconciliation trigger. The first Shopping view in a new week considers every active recurring staple; repeat views, refreshes and concurrent requests remain idempotent.
+- An unchecked matching item is preserved. A completed recurring occurrence from an earlier week is reactivated by marking it unchecked for the new week.
+- Removing the current recurring occurrence suppresses that staple for the rest of the current week without deleting or pausing the saved preference. It becomes eligible again the following Monday.
+- Shopping is the primary setup and management entry point. Pantry provides a small shortcut to the same experience where practical; Pantry does not own a second management flow.
+- A matching item uses one visible shopping row. An explicit manual quantity/unit is authoritative. A recurring default may fill a missing value. Compatible recipe and recurring quantities may be converted and combined deterministically; incompatible or unrecognised units are never guessed, summed or overwritten.
+- No scheduler, background job, Edge Function or paid provider is authorised for this version.
+
 ## Scope
 
 ### Included
 
-- First-time **Everyday staples** setup, reachable from Shopping or Pantry, with a clear yes/no choice for each suggested fresh staple.
+- First-time **Everyday staples** setup and management from Shopping, with a small Pantry shortcut where practical, and a clear yes/no choice for each suggested fresh staple.
 - Household-scoped recurring staple create, edit, remove, pause and resume behaviour.
-- Automatic, idempotent insertion of active staples once per shopping week.
+- Automatic, idempotent reconciliation of active staples when Shopping is first opened in a household-local Monday-to-Sunday week.
 - Recurring provenance on generated shopping items and current-list removal without deleting the recurring preference.
 - Duplicate reconciliation with existing manual, planned-meal-generated and recurring items.
 - Mobile-first, accessible setup and compact management states.
@@ -42,6 +52,7 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 - Recipe ingredient generation beyond preserving the existing CS-22 contract.
 - Nutrition, allergy or food-safety inference.
 - Multiple independently named shopping lists.
+- Configurable week-start days or undated meal-slot planning, which are tracked separately in CS-61.
 
 ## Functional Requirements
 
@@ -49,7 +60,8 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 
 **Acceptance criteria**
 
-- [ ] A household member can open setup from Shopping or Pantry.
+- [ ] A household member can open setup and management from Shopping.
+- [ ] Pantry provides a compact shortcut to that same experience where practical and does not duplicate recurring-staple state or management UI.
 - [ ] First-time setup presents a concise curated list including common examples such as milk, yoghurt, fruit, bread, eggs, cheese, vegetables and lunchbox snacks.
 - [ ] Every suggestion has an explicit yes/no choice; only confirmed items are saved.
 - [ ] Setup is fast to complete by touch or keyboard at 320 CSS pixels without horizontal overflow.
@@ -65,14 +77,18 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 - [ ] Loading, empty, busy, success, validation-error and recoverable-failure states are explicit.
 - [ ] Accessible names, focus behaviour and 44-pixel touch targets support mobile and keyboard use.
 
-### FR-3 — Add active staples once per week
+### FR-3 — Reconcile active staples on the first Shopping view each week
 
 **Acceptance criteria**
 
-- [ ] At the approved shopping-week boundary, each active recurring staple is considered once for the household's current shopping list.
+- [ ] The household-local week key uses Monday as its start and Sunday as its end, consistently with the current meal planner.
+- [ ] Opening Shopping authorises reconciliation; the first view in a new week considers every active recurring staple for the current household list without requiring a scheduler.
 - [ ] Retrying, refreshing or concurrent attempts do not create duplicate items or repeat the same weekly contribution.
 - [ ] Paused or removed staples are not added in later weeks.
+- [ ] If a matching item is already unchecked, reconciliation leaves its completion state and user-authored values unchanged.
+- [ ] If a prior recurring occurrence remains completed when a new week begins, reconciliation reactivates it by marking it unchecked and records the new weekly occurrence.
 - [ ] Removing an automatically added item from the current list suppresses only that week's occurrence; it does not remove or pause the recurring staple.
+- [ ] A suppressed staple is not recreated by another view, refresh or household member during that week and becomes eligible again the following Monday.
 - [ ] A recurring-generated item is visibly and accessibly identifiable in Shopping.
 
 ### FR-4 — Reconcile duplicates without losing useful data
@@ -82,7 +98,10 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 - [ ] Name matching follows one deterministic normalisation rule across manual, recipe-generated and recurring sources.
 - [ ] An existing item is reused instead of creating an obvious duplicate.
 - [ ] Reconciliation preserves manual intent and existing CS-22 contribution behaviour.
-- [ ] Quantity/unit conflicts follow the product-owner-approved rule recorded before implementation; incompatible values are never silently summed or overwritten.
+- [ ] An explicit manual quantity/unit remains authoritative and is never silently overwritten or increased by recurrence.
+- [ ] A recurring default fills quantity/unit only when the reused shopping item has no authoritative displayed value.
+- [ ] Compatible CS-22 recipe and recurring quantities are converted to a deterministic common unit and combined, for example 2 L plus 500 ml becomes 2.5 L.
+- [ ] Incompatible, free-text or unrecognised units are not guessed, converted, summed or overwritten; the existing displayed quantity is preserved and the item remains identifiable as both recipe-generated and recurring.
 - [ ] Removing or pausing a recurring staple does not delete a manual or recipe contribution with the same name.
 
 ### FR-5 — Preserve household isolation
@@ -98,7 +117,7 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 - Add a household-owned recurring-staple model with validated name, optional default quantity/unit and shopping category, active/paused state and audit fields.
 - Record enough weekly contribution or suppression provenance to make insertion idempotent and distinguish removing the current occurrence from changing recurrence.
 - Preserve the existing shopping-item uniqueness and CS-22 contribution contracts, extending provenance rather than replacing them.
-- Use household-local calendar dates and the existing Monday week-start utility unless the open shopping-week decision approves a different boundary.
+- Use household-local calendar dates and the existing Monday week-start utility. Keep week-key calculation behind a shared typed boundary so future CS-61 configuration can replace the fixed boundary without rewriting recurrence persistence.
 - Keep migrations additive, schema-qualified and safe for existing households. Released migrations remain immutable.
 - Enforce RLS and least privilege at the database boundary; client-provided household identifiers are never authorisation evidence.
 
@@ -107,29 +126,30 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 - Keep recurrence and duplicate decisions in typed domain/application boundaries, with one authorised persistence operation for weekly insertion.
 - Reuse existing Shopping UI, validation and repository patterns; reuse CS-48 classification only through an explicit shopping-category mapping.
 - Prefer an idempotent database operation or constraint-backed transaction for weekly insertion and suppression.
-- Do not add a scheduler or hosted provider until the trigger decision below is approved.
+- Reconcile through one authorised operation invoked by Shopping load; do not add a scheduler, background job or Edge Function.
 - No new dependency or recurring cost is expected.
 
 ## Test Plan
 
 ### Unit and component
 
-- Suggested-item yes/no state, recurring validation, week-key calculation, matching and quantity/unit decision table.
+- Suggested-item yes/no state, recurring validation, Monday week-key calculation, matching and the approved quantity/unit decision table.
 - Setup and management loading, empty, busy, error and recovery states.
-- Pause/resume, current-week removal, provenance label, keyboard focus, accessible names and mobile reflow.
+- Pause/resume, new-week reactivation, current-week suppression, provenance label, keyboard focus, accessible names and mobile reflow.
 
 ### Integration, database and RLS
 
 - Setup persists household-scoped choices and management changes survive refresh.
-- First weekly insertion, repeat/concurrent insertion, pause, resume and current-week suppression.
-- Manual, CS-22 and recurring duplicate combinations preserve approved provenance and quantity/unit behaviour.
+- First weekly reconciliation, repeat/concurrent reconciliation, completed-item reactivation, pause, resume and current-week suppression through the next Monday boundary.
+- Manual, CS-22 and recurring duplicate combinations prove manual precedence, missing-value fill, compatible conversion/addition and incompatible-unit preservation.
 - Owner/member access plus inactive, unrelated, unauthenticated and forged-household denial using real RLS.
 - Fresh reset, database lint, pgTAP, API contracts and generated-type freshness.
 
 ### End-to-end and hosted preview
 
-- Complete first-time setup on mobile, manage a staple, trigger the approved weekly insertion path and identify the recurring item.
-- Remove the current occurrence, confirm the recurring preference remains, and verify it can be paused.
+- Complete first-time setup on mobile, manage a staple, open Shopping to trigger weekly reconciliation and identify the recurring item.
+- Remove the current occurrence, confirm repeat Shopping views respect suppression, confirm the recurring preference remains, and verify it can be paused.
+- Cross a synthetic Monday boundary and confirm a completed prior occurrence is reactivated while an unchecked matching item remains unchanged.
 - Exercise manual and recipe-generated duplicates and household switching with synthetic households.
 - Validate keyboard use, focus, axe, 320/375-pixel layouts and desktop layout on the exact Vercel Preview.
 
@@ -154,20 +174,19 @@ Let a household confirm the fresh basics it buys most weeks, then quietly add ac
 ## Release, Rollback and Cost
 
 - **Expected migration impact:** Yes, additive recurring-staple and weekly provenance/suppression storage with RLS.
-- **Expected Edge Function impact:** None unless a separately approved trigger design requires one.
+- **Expected Edge Function impact:** None. Shopping load invokes the authorised reconciliation operation.
 - **Production deployment:** This package PR does not deploy Production. After implementation is merged, release database migrations only through the protected Production database workflow using the exact approved `main` SHA, mandatory dry-run and migration-history verification. Fix released migrations with a new forward migration.
 - **Rollback:** Revert application behaviour before release; after database release, disable recurrence insertion and use an additive forward fix while preserving household preferences.
 - **Dependencies/provider:** No new dependency or provider expected.
 - **Recurring cost:** A$0 per month / A$0 per year.
 
-## Deferred Work / Open Questions
+## Deferred Work
 
-- Product owner must approve the shopping-week lifecycle and insertion trigger before implementation: first Shopping view, planner/list creation, or a scheduled/background process. Current `main` has one persistent active list and no weekly rollover, so this choice materially affects suppression and completed-item behaviour.
-- Product owner must define “most useful quantity/unit” when an existing manual or CS-22 item conflicts with a recurring default, including whether a missing value may be filled and how incompatible units are displayed. Implementation must use a documented decision table rather than guessing.
-- Confirm whether setup must be linked from both Shopping and Pantry or whether either location satisfies the story's “shopping or pantry” acceptance criterion.
+- CS-61 owns configurable week-start days and undated meal-slot planning. CS-56 implements the approved Monday-to-Sunday boundary now, while keeping week calculation behind a shared typed boundary so CS-61 can extend it later.
+- Retailer ordering, reminders, notifications, multiple named lists and Pantry inventory automation remain outside CS-56.
 
 ## PR Requirements
 
 PR title: `CS-56: Everyday staples shopping list`
 
-Include Jira/package links, approved trigger and quantity/unit decisions, delivered behaviour, migration and Edge Function declarations, RLS/security evidence, automated checks, Preview URL and mobile/accessibility evidence, limitations, rollback and A$0 cost impact.
+Include Jira/package links, the Shopping-view trigger, Monday week key, completed-item reactivation, current-week suppression and quantity/unit decision evidence, delivered behaviour, migration and Edge Function declarations, RLS/security evidence, automated checks, Preview URL and mobile/accessibility evidence, limitations, rollback and A$0 cost impact.
