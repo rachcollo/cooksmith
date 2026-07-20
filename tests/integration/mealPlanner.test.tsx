@@ -32,6 +32,95 @@ function meal(overrides: Partial<PlannedMeal>): PlannedMeal {
 }
 
 describe('weekly dinner planner', () => {
+  it('reviews and applies deterministic proposals only to empty days', async () => {
+    const existing = meal({ id: 'existing-dinner' })
+    const listWeek = vi.fn(async () => [existing]) satisfies PlannedMealRepository['listWeek']
+    const create = vi.fn(async (savedHouseholdId, input) =>
+      meal({ id: `generated-${input.mealDate}`, householdId: savedHouseholdId, ...input }),
+    ) satisfies PlannedMealRepository['create']
+    const repository: PlannedMealRepository = {
+      listWeek,
+      create,
+      update: async (id, input) => meal({ id, ...input }),
+      remove: async () => undefined,
+    }
+    const createFromPlan = vi.fn(async () => undefined)
+    const shoppingRepository = {
+      list: vi.fn(async () => []),
+      create: vi.fn(),
+      createFromPlan,
+      update: vi.fn(),
+      setCompleted: vi.fn(),
+      remove: vi.fn(),
+    }
+    const user = userEvent.setup()
+
+    renderApp(
+      '/plan',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      undefined,
+      shoppingRepository,
+    )
+
+    await screen.findByRole('heading', { name: testMondayLabel })
+    await user.click(screen.getByRole('button', { name: 'Plan my week' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Plan my week' })
+    expect(within(dialog).getByRole('heading', { name: 'Already planned' })).toBeVisible()
+    expect(within(dialog).getByText(/No permitted recipe is available/)).toBeVisible()
+    await user.click(within(dialog).getByRole('button', { name: 'Apply plan' }))
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(
+        householdId,
+        expect.objectContaining({
+          mealDate: testWeekStart,
+          title: 'Lentil soup',
+          recipeId: 'recipe-1',
+        }),
+      ),
+    )
+    expect(create).not.toHaveBeenCalledWith(
+      householdId,
+      expect.objectContaining({ mealDate: testFriday }),
+    )
+    expect(await screen.findByRole('dialog', { name: 'Your week is planned' })).toBeVisible()
+  })
+
+  it('requires a separate confirmation before reviewing a full-week replacement', async () => {
+    const fullWeek = Array.from({ length: 7 }, (_, index) =>
+      meal({ id: `meal-${index}`, mealDate: addDays(testWeekStart, index) }),
+    )
+    const remove = vi.fn(async () => undefined)
+    const repository: PlannedMealRepository = {
+      listWeek: async () => fullWeek,
+      create: async (_householdId, input) => meal({ id: `created-${input.mealDate}`, ...input }),
+      update: async (id, input) => meal({ id, ...input }),
+      remove,
+    }
+    const user = userEvent.setup()
+
+    renderApp('/plan', undefined, undefined, undefined, undefined, undefined, repository)
+    await screen.findByRole('heading', { name: testMondayLabel })
+    await user.click(screen.getByRole('button', { name: 'Plan my week' }))
+    expect(
+      await screen.findByText('This week is already planned. What would you like to do?'),
+    ).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Replace this week' }))
+    expect(screen.getByText(/Replace every dinner in this week/)).toBeVisible()
+    expect(remove).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Keep this week' }))
+    expect(
+      screen.getByText('This week is already planned. What would you like to do?'),
+    ).toBeVisible()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
   it('renders one calm dinner slot per day and navigates weeks', async () => {
     const listWeek = vi.fn(async () => []) satisfies PlannedMealRepository['listWeek']
     const repository: PlannedMealRepository = {
