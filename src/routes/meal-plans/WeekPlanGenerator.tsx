@@ -4,13 +4,14 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { GripVertical, RefreshCw } from 'lucide-react'
+import { GripVertical, RefreshCw, X } from 'lucide-react'
 
 import { usePlannedMealRepository } from '../../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../../app/recipes/recipeContext'
 import { useShoppingRepository } from '../../app/shopping/shoppingContext'
 import { Button } from '../../components/ui/Button'
 import { Dialog } from '../../components/ui/Dialog'
+import { IconButton } from '../../components/ui/IconButton'
 import {
   proposeWeekMeals,
   randomReplacementRecipe,
@@ -384,9 +385,7 @@ export function WeekPlanGenerator({
                   Review the replacement below. Applying it removes the existing dinners shown for
                   this week.
                 </p>
-              ) : (
-                <p>Existing dinners stay as they are. Cooksmith will fill only the empty days.</p>
-              )}
+              ) : null}
 
               {state.plan?.preservedMeals.length ? (
                 <section aria-labelledby="preserved-meals-heading">
@@ -417,7 +416,7 @@ export function WeekPlanGenerator({
               {state.plan?.proposals.length ? (
                 <section aria-labelledby="proposed-meals-heading">
                   <h3 id="proposed-meals-heading">Proposed dinners</h3>
-                  <p className="week-plan-drag-instructions" id="week-plan-drag-instructions">
+                  <p className="visually-hidden" id="week-plan-drag-instructions">
                     Drag the handle to swap dinners between days. With the handle focused, press Alt
                     with the up or down arrow.
                   </p>
@@ -455,23 +454,18 @@ export function WeekPlanGenerator({
                           onSelect={(recipeId) => changeProposal(proposal.mealDate, recipeId)}
                         />
                         <div className="week-plan-proposal-actions">
-                          <Button
-                            type="button"
-                            variant="quiet"
-                            aria-label={`Replace proposal for ${formatDisplayDate(proposal.mealDate)} with a random recipe`}
+                          <IconButton
+                            aria-label={`Replace dinner for ${formatDisplayDate(proposal.mealDate)} with a random recipe`}
                             onClick={() => replaceProposal(proposal.mealDate)}
                           >
                             <RefreshCw aria-hidden="true" />
-                            Replace
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="quiet"
-                            aria-label={`Remove proposal for ${formatDisplayDate(proposal.mealDate)}`}
+                          </IconButton>
+                          <IconButton
+                            aria-label={`Remove dinner for ${formatDisplayDate(proposal.mealDate)}`}
                             onClick={() => removeProposal(proposal.mealDate)}
                           >
-                            Remove
-                          </Button>
+                            <X aria-hidden="true" />
+                          </IconButton>
                         </div>
                       </div>
                     ))}
