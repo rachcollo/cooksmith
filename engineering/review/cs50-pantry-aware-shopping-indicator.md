@@ -6,11 +6,11 @@
 - **Title:** Show When Shopping Items May Already Be in the Pantry
 - **Jira issue:** CS-50
 - **Epic:** Shopping Lists (CS-6)
-- **Status:** Planned
+- **Status:** In Review
 - **Branch:** `feat/cs-50-pantry-aware-shopping-indicator`
 - **Depends on:** CS-14, CS-21 and CS-22
 - **Blocks:** None
-- **Package path:** `engineering/planned/cs50-pantry-aware-shopping-indicator.md`
+- **Package path:** `engineering/review/cs50-pantry-aware-shopping-indicator.md`
 
 ## Product Outcome
 
