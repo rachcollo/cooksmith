@@ -50,8 +50,10 @@
     "engineering:select-next": "node scripts/engineering/select-next-ready-issue.mjs"
   },
   "dependencies": {
+    "@sentry/react": "10.66.0",
     "@supabase/supabase-js": "2.110.5",
     "lucide-react": "1.24.0",
+    "posthog-js": "1.404.1",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-router-dom": "7.18.1",

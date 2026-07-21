@@ -5,11 +5,24 @@ export interface SupabasePublicConfig {
   url: string
 }
 
+export interface ObservabilityConfig {
+  sentryDsn: string
+}
+
+export interface AnalyticsConfig {
+  posthogHost: string
+  posthogKey: string
+}
+
 export interface PublicEnv {
+  analytics?: AnalyticsConfig
   appEnvironment: AppEnvironment
   buildCommit?: string
+  observability?: ObservabilityConfig
   supabase?: SupabasePublicConfig
 }
+
+const defaultPosthogHost = 'https://eu.i.posthog.com'
 
 type EnvSource = Record<string, string | boolean | undefined>
 
@@ -77,9 +90,15 @@ export function parsePublicEnv(source: EnvSource): PublicEnv {
   const buildCommit = readString(source, 'VITE_BUILD_COMMIT')
   const parsedUrl = hasUrl ? parseSupabaseUrl(rawUrl) : undefined
 
+  const sentryDsn = readString(source, 'VITE_SENTRY_DSN')
+  const posthogKey = readString(source, 'VITE_POSTHOG_KEY')
+  const posthogHost = readString(source, 'VITE_POSTHOG_HOST') || defaultPosthogHost
+
   return {
     appEnvironment: appEnvironment as AppEnvironment,
     ...(buildCommit ? { buildCommit } : {}),
+    ...(sentryDsn ? { observability: { sentryDsn } satisfies ObservabilityConfig } : {}),
+    ...(posthogKey ? { analytics: { posthogHost, posthogKey } satisfies AnalyticsConfig } : {}),
     ...(parsedUrl
       ? { supabase: { url: parsedUrl.url, publishableKey } satisfies SupabasePublicConfig }
       : {}),
