@@ -251,6 +251,20 @@ describe('weekly dinner planner', () => {
       screen.getByText('This week is already planned. What would you like to do?'),
     ).toBeVisible()
     expect(remove).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Replace this week' }))
+    await user.click(screen.getByRole('button', { name: 'Review replacement' }))
+    const replacementDialog = await screen.findByRole('dialog', { name: 'Replace my week' })
+    expect(
+      within(replacementDialog).queryByText(/Review the replacement below/),
+    ).not.toBeInTheDocument()
+    expect(
+      within(replacementDialog).queryByRole('heading', { name: 'Dinners to be replaced' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(replacementDialog).getByRole('heading', { name: 'Proposed dinners' }),
+    ).toBeVisible()
+    expect(remove).not.toHaveBeenCalled()
   })
 
   it('renders one calm dinner slot per day and navigates weeks', async () => {

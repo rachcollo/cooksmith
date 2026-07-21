@@ -335,7 +335,13 @@ export function WeekPlanGenerator({
       {state ? (
         <Dialog
           open
-          title={state.phase === 'success' ? 'Your week is planned' : 'Plan my week'}
+          title={
+            state.phase === 'success'
+              ? 'Your week is planned'
+              : state.phase === 'review' && state.replace
+                ? 'Replace my week'
+                : 'Plan my week'
+          }
           description={formatWeekRange(state.weekStart)}
           onOpenChange={(open) => {
             if (!open && !applying) setState(null)
@@ -387,31 +393,11 @@ export function WeekPlanGenerator({
 
           {state.phase === 'review' ? (
             <div className="week-plan-dialog">
-              {state.replace ? (
-                <p>
-                  Review the replacement below. Applying it removes the existing dinners shown for
-                  this week.
-                </p>
-              ) : null}
-
               {state.plan?.preservedMeals.length ? (
                 <section aria-labelledby="preserved-meals-heading">
                   <h3 id="preserved-meals-heading">Already planned</h3>
                   <ul>
                     {state.plan.preservedMeals.map((meal) => (
-                      <li key={meal.id}>
-                        {formatDisplayDate(meal.mealDate)}: {meal.title}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
-
-              {state.plan?.replacedMeals.length ? (
-                <section aria-labelledby="replaced-meals-heading">
-                  <h3 id="replaced-meals-heading">Dinners to be replaced</h3>
-                  <ul>
-                    {state.plan.replacedMeals.map((meal) => (
                       <li key={meal.id}>
                         {formatDisplayDate(meal.mealDate)}: {meal.title}
                       </li>
