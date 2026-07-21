@@ -18,6 +18,7 @@ Make the Plan my week review easier to scan on small screens while retaining the
 - Refined the mobile row after Preview review: removed the visible date and search icon, made the coloured leading edge the drag affordance, enlarged the recipe title, and tightened action spacing. Full dates remain in accessible control names.
 - Made the drag colour flush with the row frame and extended pointer dragging across the complete leading-edge and recipe-field region; tapping the recipe field continues to open search.
 - Simplified full-week replacement review by using the heading **Replace my week** and removing the repeated warning and existing-dinner list; the confirmation gate and apply behaviour are unchanged.
+- Removed the post-Apply success dialog: after all Plan and Shopping work succeeds, the planner closes immediately and returns the user to Plan without an unnecessary **Done** click. Errors still keep the review open for recovery.
 - Replaced visible Replace and Remove labels with contextual icon-only controls that retain 44px targets and accessible names.
 - Added regression assertions for the removed copy, assistive guidance, contextual actions and existing keyboard reorder/replacement behaviour.
 

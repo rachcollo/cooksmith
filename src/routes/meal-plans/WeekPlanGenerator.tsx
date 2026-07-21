@@ -25,7 +25,7 @@ import type { Recipe } from '../../domain/recipes/types'
 import { buildPlanAdditions } from '../../domain/shopping/planGeneration'
 import { RecipeSearchField } from './RecipeSearchField'
 
-type Phase = 'loading' | 'choice' | 'confirm-replace' | 'review' | 'success'
+type Phase = 'loading' | 'choice' | 'confirm-replace' | 'review'
 
 interface GenerationState {
   error: string | null
@@ -309,7 +309,7 @@ export function WeekPlanGenerator({
         await reconcileShopping(saved, proposal.recipe)
       }
       await onApplied?.()
-      setState((current) => (current ? { ...current, phase: 'success' } : current))
+      setState(null)
     } catch (error) {
       setState((current) =>
         current
@@ -335,13 +335,7 @@ export function WeekPlanGenerator({
       {state ? (
         <Dialog
           open
-          title={
-            state.phase === 'success'
-              ? 'Your week is planned'
-              : state.phase === 'review' && state.replace
-                ? 'Replace my week'
-                : 'Plan my week'
-          }
+          title={state.phase === 'review' && state.replace ? 'Replace my week' : 'Plan my week'}
           description={formatWeekRange(state.weekStart)}
           onOpenChange={(open) => {
             if (!open && !applying) setState(null)
@@ -505,17 +499,6 @@ export function WeekPlanGenerator({
                   onClick={() => setState(null)}
                 >
                   Cancel
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {state.phase === 'success' ? (
-            <div className="week-plan-dialog">
-              <p>Your reviewed dinners are now in Plan and Shopping has been reconciled.</p>
-              <div className="dialog-actions">
-                <Button type="button" onClick={() => setState(null)}>
-                  Done
                 </Button>
               </div>
             </div>

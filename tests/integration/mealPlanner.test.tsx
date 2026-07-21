@@ -89,7 +89,7 @@ describe('weekly dinner planner', () => {
       householdId,
       expect.objectContaining({ mealDate: testFriday }),
     )
-    expect(await screen.findByRole('dialog', { name: 'Your week is planned' })).toBeVisible()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('searches repeat recipes, replaces one proposal and reorders proposals by keyboard', async () => {
