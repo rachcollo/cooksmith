@@ -73,6 +73,7 @@ export function WeekPlanGenerator({
   const [draggingDate, setDraggingDate] = useState<string | null>(null)
   const [dropTargetDate, setDropTargetDate] = useState<string | null>(null)
   const proposalDrag = useRef<ProposalDragDetails | null>(null)
+  const suppressProposalClick = useRef(false)
 
   async function load(target: string) {
     if (!householdId) return
@@ -192,7 +193,7 @@ export function WeekPlanGenerator({
     })
   }
 
-  function startProposalDrag(mealDate: string, event: ReactPointerEvent<HTMLButtonElement>) {
+  function startProposalDrag(mealDate: string, event: ReactPointerEvent<HTMLElement>) {
     if (event.button !== 0) return
     proposalDrag.current = {
       active: false,
@@ -204,7 +205,7 @@ export function WeekPlanGenerator({
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
-  function continueProposalDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function continueProposalDrag(event: ReactPointerEvent<HTMLElement>) {
     const details = proposalDrag.current
     if (!details) return
     const distance = Math.hypot(event.clientX - details.startX, event.clientY - details.startY)
@@ -218,7 +219,7 @@ export function WeekPlanGenerator({
     setDropTargetDate(details.targetDate)
   }
 
-  function finishProposalDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function finishProposalDrag(event: ReactPointerEvent<HTMLElement>) {
     const details = proposalDrag.current
     proposalDrag.current = null
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
@@ -226,7 +227,13 @@ export function WeekPlanGenerator({
     }
     setDraggingDate(null)
     setDropTargetDate(null)
-    if (details?.active) swapProposalRecipes(details.sourceDate, details.targetDate)
+    if (details?.active) {
+      suppressProposalClick.current = true
+      window.setTimeout(() => {
+        suppressProposalClick.current = false
+      }, 0)
+      swapProposalRecipes(details.sourceDate, details.targetDate)
+    }
   }
 
   function moveProposalWithKeyboard(
@@ -433,24 +440,35 @@ export function WeekPlanGenerator({
                         data-proposal-date={proposal.mealDate}
                         key={proposal.mealDate}
                       >
-                        <button
-                          className="week-plan-drag-handle"
-                          type="button"
-                          aria-describedby="week-plan-drag-instructions"
-                          aria-label={`Move dinner for ${formatDisplayDate(proposal.mealDate)}`}
-                          onKeyDown={(event) => moveProposalWithKeyboard(proposal.mealDate, event)}
+                        <div
+                          className="week-plan-drag-zone"
                           onPointerDown={(event) => startProposalDrag(proposal.mealDate, event)}
                           onPointerMove={continueProposalDrag}
                           onPointerUp={finishProposalDrag}
                           onPointerCancel={finishProposalDrag}
-                        ></button>
-                        <RecipeSearchField
-                          key={`${proposal.mealDate}-${proposal.recipe.id}`}
-                          label={formatDisplayDate(proposal.mealDate)}
-                          recipe={proposal.recipe}
-                          recipes={state.recipes}
-                          onSelect={(recipeId) => changeProposal(proposal.mealDate, recipeId)}
-                        />
+                          onClickCapture={(event) => {
+                            if (!suppressProposalClick.current) return
+                            event.preventDefault()
+                            event.stopPropagation()
+                          }}
+                        >
+                          <button
+                            className="week-plan-drag-handle"
+                            type="button"
+                            aria-describedby="week-plan-drag-instructions"
+                            aria-label={`Move dinner for ${formatDisplayDate(proposal.mealDate)}`}
+                            onKeyDown={(event) =>
+                              moveProposalWithKeyboard(proposal.mealDate, event)
+                            }
+                          ></button>
+                          <RecipeSearchField
+                            key={`${proposal.mealDate}-${proposal.recipe.id}`}
+                            label={formatDisplayDate(proposal.mealDate)}
+                            recipe={proposal.recipe}
+                            recipes={state.recipes}
+                            onSelect={(recipeId) => changeProposal(proposal.mealDate, recipeId)}
+                          />
+                        </div>
                         <div className="week-plan-proposal-actions">
                           <IconButton
                             aria-label={`Replace dinner for ${formatDisplayDate(proposal.mealDate)} with a random recipe`}
