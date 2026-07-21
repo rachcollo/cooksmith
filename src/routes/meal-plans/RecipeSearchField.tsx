@@ -69,7 +69,6 @@ export function RecipeSearchField({
       }}
     >
       <label>
-        <span>{label}</span>
         <input
           aria-activedescendant={
             open && matches[activeIndex] ? `${listboxId}-${matches[activeIndex].id}` : undefined

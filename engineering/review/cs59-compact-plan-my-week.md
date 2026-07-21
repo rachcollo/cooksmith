@@ -4,11 +4,11 @@
 - **Milestone:** UX-P2
 - **Jira issue:** CS-59
 - **Epic:** Meal Planning (CS-4)
-- **Status:** Ready
+- **Status:** In Review
 - **Branch:** `feat/cs-59-compact-plan-my-week`
 - **Depends on:** CS-38
 - **Blocks:** None
-- **Package path:** `engineering/ready/cs59-compact-plan-my-week.md`
+- **Package path:** `engineering/review/cs59-compact-plan-my-week.md`
 
 ## Product Outcome
 Make the **Plan my week** proposal easy to scan on a phone by removing repeated instruction copy and presenting each day's proposal as one compact row. The screen should behave like the compact main Plan view: the information and actions needed for a day stay together without oversized cards or repeated labels.

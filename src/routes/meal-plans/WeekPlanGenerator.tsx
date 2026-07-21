@@ -4,13 +4,14 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { GripVertical, RefreshCw } from 'lucide-react'
+import { RefreshCw, X } from 'lucide-react'
 
 import { usePlannedMealRepository } from '../../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../../app/recipes/recipeContext'
 import { useShoppingRepository } from '../../app/shopping/shoppingContext'
 import { Button } from '../../components/ui/Button'
 import { Dialog } from '../../components/ui/Dialog'
+import { IconButton } from '../../components/ui/IconButton'
 import {
   proposeWeekMeals,
   randomReplacementRecipe,
@@ -24,7 +25,7 @@ import type { Recipe } from '../../domain/recipes/types'
 import { buildPlanAdditions } from '../../domain/shopping/planGeneration'
 import { RecipeSearchField } from './RecipeSearchField'
 
-type Phase = 'loading' | 'choice' | 'confirm-replace' | 'review' | 'success'
+type Phase = 'loading' | 'choice' | 'confirm-replace' | 'review'
 
 interface GenerationState {
   error: string | null
@@ -72,6 +73,7 @@ export function WeekPlanGenerator({
   const [draggingDate, setDraggingDate] = useState<string | null>(null)
   const [dropTargetDate, setDropTargetDate] = useState<string | null>(null)
   const proposalDrag = useRef<ProposalDragDetails | null>(null)
+  const suppressProposalClick = useRef(false)
 
   async function load(target: string) {
     if (!householdId) return
@@ -191,7 +193,7 @@ export function WeekPlanGenerator({
     })
   }
 
-  function startProposalDrag(mealDate: string, event: ReactPointerEvent<HTMLButtonElement>) {
+  function startProposalDrag(mealDate: string, event: ReactPointerEvent<HTMLElement>) {
     if (event.button !== 0) return
     proposalDrag.current = {
       active: false,
@@ -203,7 +205,7 @@ export function WeekPlanGenerator({
     event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
-  function continueProposalDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function continueProposalDrag(event: ReactPointerEvent<HTMLElement>) {
     const details = proposalDrag.current
     if (!details) return
     const distance = Math.hypot(event.clientX - details.startX, event.clientY - details.startY)
@@ -217,7 +219,7 @@ export function WeekPlanGenerator({
     setDropTargetDate(details.targetDate)
   }
 
-  function finishProposalDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function finishProposalDrag(event: ReactPointerEvent<HTMLElement>) {
     const details = proposalDrag.current
     proposalDrag.current = null
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
@@ -225,7 +227,13 @@ export function WeekPlanGenerator({
     }
     setDraggingDate(null)
     setDropTargetDate(null)
-    if (details?.active) swapProposalRecipes(details.sourceDate, details.targetDate)
+    if (details?.active) {
+      suppressProposalClick.current = true
+      window.setTimeout(() => {
+        suppressProposalClick.current = false
+      }, 0)
+      swapProposalRecipes(details.sourceDate, details.targetDate)
+    }
   }
 
   function moveProposalWithKeyboard(
@@ -301,7 +309,7 @@ export function WeekPlanGenerator({
         await reconcileShopping(saved, proposal.recipe)
       }
       await onApplied?.()
-      setState((current) => (current ? { ...current, phase: 'success' } : current))
+      setState(null)
     } catch (error) {
       setState((current) =>
         current
@@ -327,7 +335,7 @@ export function WeekPlanGenerator({
       {state ? (
         <Dialog
           open
-          title={state.phase === 'success' ? 'Your week is planned' : 'Plan my week'}
+          title={state.phase === 'review' && state.replace ? 'Replace my week' : 'Plan my week'}
           description={formatWeekRange(state.weekStart)}
           onOpenChange={(open) => {
             if (!open && !applying) setState(null)
@@ -379,15 +387,6 @@ export function WeekPlanGenerator({
 
           {state.phase === 'review' ? (
             <div className="week-plan-dialog">
-              {state.replace ? (
-                <p>
-                  Review the replacement below. Applying it removes the existing dinners shown for
-                  this week.
-                </p>
-              ) : (
-                <p>Existing dinners stay as they are. Cooksmith will fill only the empty days.</p>
-              )}
-
               {state.plan?.preservedMeals.length ? (
                 <section aria-labelledby="preserved-meals-heading">
                   <h3 id="preserved-meals-heading">Already planned</h3>
@@ -401,23 +400,10 @@ export function WeekPlanGenerator({
                 </section>
               ) : null}
 
-              {state.plan?.replacedMeals.length ? (
-                <section aria-labelledby="replaced-meals-heading">
-                  <h3 id="replaced-meals-heading">Dinners to be replaced</h3>
-                  <ul>
-                    {state.plan.replacedMeals.map((meal) => (
-                      <li key={meal.id}>
-                        {formatDisplayDate(meal.mealDate)}: {meal.title}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
-
               {state.plan?.proposals.length ? (
                 <section aria-labelledby="proposed-meals-heading">
                   <h3 id="proposed-meals-heading">Proposed dinners</h3>
-                  <p className="week-plan-drag-instructions" id="week-plan-drag-instructions">
+                  <p className="visually-hidden" id="week-plan-drag-instructions">
                     Drag the handle to swap dinners between days. With the handle focused, press Alt
                     with the up or down arrow.
                   </p>
@@ -434,44 +420,48 @@ export function WeekPlanGenerator({
                         data-proposal-date={proposal.mealDate}
                         key={proposal.mealDate}
                       >
-                        <button
-                          className="week-plan-drag-handle"
-                          type="button"
-                          aria-describedby="week-plan-drag-instructions"
-                          aria-label={`Move dinner for ${formatDisplayDate(proposal.mealDate)}`}
-                          onKeyDown={(event) => moveProposalWithKeyboard(proposal.mealDate, event)}
+                        <div
+                          className="week-plan-drag-zone"
                           onPointerDown={(event) => startProposalDrag(proposal.mealDate, event)}
                           onPointerMove={continueProposalDrag}
                           onPointerUp={finishProposalDrag}
                           onPointerCancel={finishProposalDrag}
+                          onClickCapture={(event) => {
+                            if (!suppressProposalClick.current) return
+                            event.preventDefault()
+                            event.stopPropagation()
+                          }}
                         >
-                          <GripVertical aria-hidden="true" />
-                        </button>
-                        <RecipeSearchField
-                          key={`${proposal.mealDate}-${proposal.recipe.id}`}
-                          label={formatDisplayDate(proposal.mealDate)}
-                          recipe={proposal.recipe}
-                          recipes={state.recipes}
-                          onSelect={(recipeId) => changeProposal(proposal.mealDate, recipeId)}
-                        />
-                        <div className="week-plan-proposal-actions">
-                          <Button
+                          <button
+                            className="week-plan-drag-handle"
                             type="button"
-                            variant="quiet"
-                            aria-label={`Replace proposal for ${formatDisplayDate(proposal.mealDate)} with a random recipe`}
+                            aria-describedby="week-plan-drag-instructions"
+                            aria-label={`Move dinner for ${formatDisplayDate(proposal.mealDate)}`}
+                            onKeyDown={(event) =>
+                              moveProposalWithKeyboard(proposal.mealDate, event)
+                            }
+                          ></button>
+                          <RecipeSearchField
+                            key={`${proposal.mealDate}-${proposal.recipe.id}`}
+                            label={formatDisplayDate(proposal.mealDate)}
+                            recipe={proposal.recipe}
+                            recipes={state.recipes}
+                            onSelect={(recipeId) => changeProposal(proposal.mealDate, recipeId)}
+                          />
+                        </div>
+                        <div className="week-plan-proposal-actions">
+                          <IconButton
+                            aria-label={`Replace dinner for ${formatDisplayDate(proposal.mealDate)} with a random recipe`}
                             onClick={() => replaceProposal(proposal.mealDate)}
                           >
                             <RefreshCw aria-hidden="true" />
-                            Replace
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="quiet"
-                            aria-label={`Remove proposal for ${formatDisplayDate(proposal.mealDate)}`}
+                          </IconButton>
+                          <IconButton
+                            aria-label={`Remove dinner for ${formatDisplayDate(proposal.mealDate)}`}
                             onClick={() => removeProposal(proposal.mealDate)}
                           >
-                            Remove
-                          </Button>
+                            <X aria-hidden="true" />
+                          </IconButton>
                         </div>
                       </div>
                     ))}
@@ -509,17 +499,6 @@ export function WeekPlanGenerator({
                   onClick={() => setState(null)}
                 >
                   Cancel
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {state.phase === 'success' ? (
-            <div className="week-plan-dialog">
-              <p>Your reviewed dinners are now in Plan and Shopping has been reconciled.</p>
-              <div className="dialog-actions">
-                <Button type="button" onClick={() => setState(null)}>
-                  Done
                 </Button>
               </div>
             </div>

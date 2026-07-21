@@ -89,7 +89,7 @@ describe('weekly dinner planner', () => {
       householdId,
       expect.objectContaining({ mealDate: testFriday }),
     )
-    expect(await screen.findByRole('dialog', { name: 'Your week is planned' })).toBeVisible()
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 
   it('searches repeat recipes, replaces one proposal and reorders proposals by keyboard', async () => {
@@ -125,6 +125,30 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Plan my week' }))
     const dialog = await screen.findByRole('dialog', { name: 'Plan my week' })
     const searches = within(dialog).getAllByRole('combobox')
+    expect(searches[0]).toHaveAccessibleName(
+      `Search recipe for ${formatDisplayDate(testWeekStart)}`,
+    )
+    expect(
+      within(dialog).getAllByRole('button', { name: /Move dinner for/ })[0],
+    ).toBeEmptyDOMElement()
+    expect(
+      within(dialog).queryByText(
+        'Existing dinners stay as they are. Cooksmith will fill only the empty days.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(within(dialog).getByText(/Drag the handle to swap dinners between days/)).toHaveClass(
+      'visually-hidden',
+    )
+    expect(within(dialog).getAllByRole('button', { name: /Move dinner for/ })[0]).toHaveAttribute(
+      'aria-describedby',
+      'week-plan-drag-instructions',
+    )
+    expect(within(dialog).getAllByRole('button', { name: /Replace dinner for/ })).toHaveLength(
+      searches.length,
+    )
+    expect(within(dialog).getAllByRole('button', { name: /Remove dinner for/ })).toHaveLength(
+      searches.length,
+    )
     const originalFirst = (searches[0] as HTMLInputElement).value
     const originalSecond = (searches[1] as HTMLInputElement).value
 
@@ -143,7 +167,7 @@ describe('weekly dinner planner', () => {
     expect(within(dialog).getAllByRole('combobox')[1]).toHaveValue(baseRecipe.name)
 
     await user.click(
-      within(dialog).getAllByRole('button', { name: /Replace proposal .* random recipe/ })[1]!,
+      within(dialog).getAllByRole('button', { name: /Replace dinner .* random recipe/ })[1]!,
     )
     expect(within(dialog).getAllByRole('combobox')[1]).toHaveValue(tacos.name)
     random.mockRestore()
@@ -225,6 +249,20 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Keep this week' }))
     expect(
       screen.getByText('This week is already planned. What would you like to do?'),
+    ).toBeVisible()
+    expect(remove).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Replace this week' }))
+    await user.click(screen.getByRole('button', { name: 'Review replacement' }))
+    const replacementDialog = await screen.findByRole('dialog', { name: 'Replace my week' })
+    expect(
+      within(replacementDialog).queryByText(/Review the replacement below/),
+    ).not.toBeInTheDocument()
+    expect(
+      within(replacementDialog).queryByRole('heading', { name: 'Dinners to be replaced' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(replacementDialog).getByRole('heading', { name: 'Proposed dinners' }),
     ).toBeVisible()
     expect(remove).not.toHaveBeenCalled()
   })
