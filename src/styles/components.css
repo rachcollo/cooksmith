@@ -1708,7 +1708,7 @@
 }
 
 .recipe-card {
-  padding-bottom: calc(var(--space-4) + var(--touch-target));
+  padding-bottom: calc(var(--space-5) + var(--space-2));
   position: relative;
 }
 
@@ -1735,27 +1735,27 @@
 
 .recipe-card-quick-add {
   align-items: center;
-  background: var(--colour-brand);
+  background: transparent;
   border: 0;
   border-radius: var(--radius-pill);
-  bottom: var(--space-3);
-  color: var(--colour-surface);
+  bottom: var(--space-1);
+  color: var(--colour-brand);
   cursor: pointer;
   display: inline-flex;
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 1.5rem;
+  font-weight: 850;
   justify-content: center;
-  min-height: var(--touch-target);
-  min-width: var(--touch-target);
-  padding: 0 var(--space-3);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
   position: absolute;
-  right: var(--space-3);
+  right: var(--space-1);
   z-index: 1;
 }
 
 .recipe-card-quick-add:disabled {
   cursor: wait;
-  opacity: 0.7;
+  opacity: 0.55;
 }
 
 .recipe-card-quick-add:focus-visible {
