@@ -20,9 +20,14 @@ Copy `.env.example` to `.env.local`. Values prefixed with `VITE_` are bundled in
 | `VITE_BUILD_COMMIT`                          | Public     | Optional                                      | Non-sensitive build reference shown on `/health`                              |
 | `VITE_SUPABASE_URL`                          | Public     | Paired with publishable key                   | Local or environment-specific Supabase URL                                    |
 | `VITE_SUPABASE_PUBLISHABLE_KEY`              | Public     | Paired with URL                               | Supabase publishable browser key, never the secret/service-role key           |
+| `VITE_SENTRY_DSN`                            | Public     | Optional; Preview/Production only             | Browser-safe Sentry DSN used by the Vite frontend                             |
+| `VITE_POSTHOG_KEY`                           | Public     | Optional; Preview/Production only             | Browser-safe PostHog project key used by the Vite frontend                    |
+| `VITE_POSTHOG_HOST`                          | Public     | Optional; defaults to EU cloud                | PostHog ingestion host, normally `https://eu.i.posthog.com`                   |
 | `COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS` | Build-only | Required for Preview                          | Comma-separated Production project references denied to non-production builds |
 
 Development may omit both Supabase public values while working on the shell. Preview and Production require both. One value without the other is invalid.
+
+Observability values are frontend build variables. Configure `VITE_SENTRY_DSN`, `VITE_POSTHOG_KEY` and, if needed, `VITE_POSTHOG_HOST` on the Vercel Preview and Production environments before building. Supabase project variables or Edge Function secrets are not visible to the Vite browser bundle, so setting the observability values only in Supabase will leave Sentry and PostHog disabled in the deployed app. After changing Vercel environment variables, redeploy the affected environment so the new public values are compiled into the bundle.
 
 ## Preview safety guard
 
@@ -62,6 +67,12 @@ npm run preview
 ```
 
 Playwright starts this preview server automatically for `npm run test:e2e`. The static `/health.json` asset supports platform probes.
+
+## Observability verification
+
+Sentry and PostHog initialise only when `VITE_APP_ENV` resolves to `preview` or `production`; they stay off in local development and tests. In the browser console, Cooksmith writes a non-sensitive structured `observability.initialised` log showing whether Sentry and analytics were enabled and whether the expected public keys were present. If the log shows `hasSentryDsn: false` or `hasPosthogKey: false`, check the Vercel environment variable scope and redeploy.
+
+PostHog sends page-view analytics with autocapture and session recording disabled. Sentry sends data when an error occurs; a quiet Sentry project does not by itself prove the DSN is missing.
 
 ## Failure behaviour
 
