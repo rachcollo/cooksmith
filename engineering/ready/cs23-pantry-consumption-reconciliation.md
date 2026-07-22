@@ -4,11 +4,11 @@
 - **Milestone:** M11A
 - **Jira issue:** CS-23
 - **Epic:** Pantry (CS-3)
-- **Status:** Planned
+- **Status:** `Ready`
 - **Branch:** `feat/cs-23-pantry-reconciliation`
 - **Depends on:** CS-14, CS-22 and CS-48
 - **Blocks:** CS-24
-- **Package path:** `engineering/planned/cs23-pantry-consumption-reconciliation.md`
+- **Package path:** `engineering/ready/cs23-pantry-consumption-reconciliation.md`
 
 ## Product Outcome
 Users explicitly review groceries being put away and ingredients used after cooking so Pantry becomes accurate without invisible assumptions.

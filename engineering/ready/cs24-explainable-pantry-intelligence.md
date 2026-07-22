@@ -4,11 +4,11 @@
 - **Milestone:** M11B
 - **Jira issue:** CS-24
 - **Epic:** Pantry (CS-3)
-- **Status:** Planned
+- **Status:** `Ready`
 - **Branch:** `feat/cs-24-pantry-intelligence`
 - **Depends on:** CS-23
 - **Blocks:** CS-25
-- **Package path:** `engineering/planned/cs24-explainable-pantry-intelligence.md`
+- **Package path:** `engineering/ready/cs24-explainable-pantry-intelligence.md`
 
 ## Product Outcome
 Offer explainable low-stock, likely-needed and recently-out-of-stock prompts from confirmed Pantry state, with confirmation before Shopping changes.
