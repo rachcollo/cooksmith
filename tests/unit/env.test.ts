@@ -108,14 +108,29 @@ describe('preview-to-production safety', () => {
     )
   })
 
-  it('uses Vercel production as the trusted environment when the public label is absent', () => {
-    expect(
+  it('fails the build when VITE_APP_ENV is not set for a Vercel production deployment', () => {
+    expect(() =>
       validateBuildEnv({
         VERCEL_ENV: 'production',
         VITE_SUPABASE_URL: 'https://zyxwvutsrqponmlkjihg.supabase.co',
         VITE_SUPABASE_PUBLISHABLE_KEY: 'synthetic-production-publishable-key',
-      }).appEnvironment,
-    ).toBe('production')
+      }),
+    ).toThrow('VITE_APP_ENV must be set to "production"')
+  })
+
+  it('fails the build when VITE_APP_ENV is not set for a Vercel preview deployment', () => {
+    expect(() =>
+      validateBuildEnv({
+        VERCEL_ENV: 'preview',
+        VITE_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'synthetic-staging-publishable-key',
+        COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS: 'zyxwvutsrqponmlkjihg',
+      }),
+    ).toThrow('VITE_APP_ENV must be set to "preview"')
+  })
+
+  it('does not require VITE_APP_ENV outside a Vercel deployment (local and CI builds)', () => {
+    expect(validateBuildEnv({}).appEnvironment).toBe('development')
   })
 
   it('still rejects an explicit environment mismatch', () => {
