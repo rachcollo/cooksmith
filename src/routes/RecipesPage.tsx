@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
+import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../app/recipes/recipeContext'
+import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
@@ -10,6 +12,7 @@ import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
+import { VisuallyHidden } from '../components/ui/VisuallyHidden'
 import {
   prepareMultilineRecipeInput,
   recipeToMultilineInput,
@@ -22,7 +25,12 @@ import type {
   RecipeInput,
 } from '../domain/recipes/types'
 import { recipeInputSchema } from '../domain/recipes/validationSchemas'
-import { currentWeek } from '../domain/meal-plans/week'
+import { snapshotTitleForRecipe } from '../domain/meal-plans/recipeLinks'
+import type { PlannedMeal } from '../domain/meal-plans/types'
+import { nextEmptyPlanDate, quickAddSearchWindowDays } from '../domain/meal-plans/quickAdd'
+import { addDays, currentWeek, formatDisplayDate } from '../domain/meal-plans/week'
+import { recipeSourceForPlan } from '../domain/meal-plans/weekGeneration'
+import { buildPlanAdditions } from '../domain/shopping/planGeneration'
 import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
 
 const emptyInput: RecipeInput = {
@@ -122,6 +130,8 @@ function RecipeMultilineEditor({
 export function RecipesPage() {
   const { state } = useOnboarding()
   const repository = useRecipeRepository()
+  const plannedMeals = usePlannedMealRepository()
+  const shopping = useShoppingRepository()
   const householdId = state.householdId
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -141,6 +151,8 @@ export function RecipesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [quickAddRecipeId, setQuickAddRecipeId] = useState<string | null>(null)
+  const [quickAddStatus, setQuickAddStatus] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -300,6 +312,55 @@ export function RecipesPage() {
     }
   }
 
+  async function quickAddRecipe(recipe: Recipe) {
+    if (!householdId || quickAddRecipeId) return
+    setQuickAddRecipeId(recipe.id)
+    setQuickAddStatus(null)
+    setError(null)
+    try {
+      const today = new Date()
+      const searchStart = currentWeek(today)
+      const searchEnd = addDays(searchStart, quickAddSearchWindowDays - 1)
+      const existingMeals = await plannedMeals.listWeek(householdId, searchStart, searchEnd)
+      const result = nextEmptyPlanDate(searchStart, existingMeals)
+      if (result.kind === 'exhausted') {
+        setError(
+          `We could not find an empty date before ${formatDisplayDate(result.searchedUntil)}. Open the planner to choose a date.`,
+        )
+        return
+      }
+      const saved = await plannedMeals.create(householdId, {
+        mealDate: result.mealDate,
+        mealType: 'dinner',
+        title: snapshotTitleForRecipe(recipe),
+        notes: null,
+        recipeId: recipe.id,
+        recipeSource: recipeSourceForPlan(recipe),
+      })
+      const linkedMeal: PlannedMeal = {
+        ...saved,
+        recipeId: recipe.id,
+        recipeSource: recipeSourceForPlan(recipe),
+        linkedRecipe: { id: recipe.id, name: recipe.name, archivedAt: recipe.archivedAt },
+        recipeState: {
+          kind: 'active',
+          recipe: { id: recipe.id, name: recipe.name, archivedAt: recipe.archivedAt },
+        },
+      }
+      const additions = buildPlanAdditions([linkedMeal], [recipe], []).additions
+      await shopping.createFromPlan?.(householdId, saved.id, additions)
+      setQuickAddStatus(`${recipe.name} added to ${formatDisplayDate(result.mealDate)}.`)
+    } catch (quickAddError) {
+      setError(
+        quickAddError instanceof Error
+          ? quickAddError.message
+          : 'Cooksmith could not add that recipe to the plan. Try again.',
+      )
+    } finally {
+      setQuickAddRecipeId(null)
+    }
+  }
+
   if (loading) return <LoadingState label="Loading your recipe library" />
 
   return (
@@ -312,6 +373,11 @@ export function RecipesPage() {
         </p>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
+      {quickAddStatus ? (
+        <VisuallyHidden aria-live="polite" role="status">
+          {quickAddStatus}
+        </VisuallyHidden>
+      ) : null}
 
       <Dialog
         open={creating}
@@ -551,20 +617,33 @@ export function RecipesPage() {
       ) : (
         <div className="pantry-grid recipe-library-grid">
           {filteredRecipes.map((recipe) => (
-            <button
-              aria-label={`Open ${recipe.name} recipe`}
-              className="pantry-card recipe-card"
-              key={recipe.id}
-              type="button"
-              onClick={() => setSelectedId(recipe.id)}
-            >
-              <span className="recipe-card-heading">{recipe.name}</span>
-              <span className="recipe-card-summary">
-                {[minutesLabel(recipe), recipe.servings ? `${recipe.servings} servings` : null]
-                  .filter(Boolean)
-                  .join(' · ') || 'Summary details not set'}
-              </span>
-            </button>
+            <article className="pantry-card recipe-card" key={recipe.id}>
+              <button
+                aria-label={`Open ${recipe.name} recipe`}
+                className="recipe-card-detail-action"
+                type="button"
+                onClick={() => setSelectedId(recipe.id)}
+              >
+                <span className="recipe-card-heading">{recipe.name}</span>
+                <span className="recipe-card-summary">
+                  {[minutesLabel(recipe), recipe.servings ? `${recipe.servings} servings` : null]
+                    .filter(Boolean)
+                    .join(' · ') || 'Summary details not set'}
+                </span>
+              </button>
+              <button
+                aria-label={`Add ${recipe.name} to next available date`}
+                className="recipe-card-quick-add"
+                disabled={quickAddRecipeId !== null}
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  void quickAddRecipe(recipe)
+                }}
+              >
+                {quickAddRecipeId === recipe.id ? 'Adding…' : '+'}
+              </button>
+            </article>
           ))}
         </div>
       )}
