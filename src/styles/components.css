@@ -1763,15 +1763,3 @@
   outline: 3px solid var(--colour-focus);
   outline-offset: 3px;
 }
-
-.quick-add-status {
-  align-items: center;
-  background: var(--colour-positive-soft);
-  border: 1px solid var(--colour-positive);
-  border-radius: var(--radius-large);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
-}

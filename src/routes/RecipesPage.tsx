@@ -12,6 +12,7 @@ import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
+import { VisuallyHidden } from '../components/ui/VisuallyHidden'
 import {
   prepareMultilineRecipeInput,
   recipeToMultilineInput,
@@ -151,11 +152,7 @@ export function RecipesPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickAddRecipeId, setQuickAddRecipeId] = useState<string | null>(null)
-  const [quickAddNotice, setQuickAddNotice] = useState<{
-    recipeName: string
-    mealDate: string
-    mealId: string
-  } | null>(null)
+  const [quickAddStatus, setQuickAddStatus] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -318,7 +315,7 @@ export function RecipesPage() {
   async function quickAddRecipe(recipe: Recipe) {
     if (!householdId || quickAddRecipeId) return
     setQuickAddRecipeId(recipe.id)
-    setQuickAddNotice(null)
+    setQuickAddStatus(null)
     setError(null)
     try {
       const today = new Date()
@@ -352,11 +349,7 @@ export function RecipesPage() {
       }
       const additions = buildPlanAdditions([linkedMeal], [recipe], []).additions
       await shopping.createFromPlan?.(householdId, saved.id, additions)
-      setQuickAddNotice({
-        mealId: saved.id,
-        mealDate: result.mealDate,
-        recipeName: recipe.name,
-      })
+      setQuickAddStatus(`${recipe.name} added to ${formatDisplayDate(result.mealDate)}.`)
     } catch (quickAddError) {
       setError(
         quickAddError instanceof Error
@@ -365,15 +358,6 @@ export function RecipesPage() {
       )
     } finally {
       setQuickAddRecipeId(null)
-    }
-  }
-
-  async function undoQuickAdd(mealId: string) {
-    try {
-      await plannedMeals.remove(mealId)
-      setQuickAddNotice(null)
-    } catch {
-      setError('Cooksmith could not undo that plan change. Open the planner to review it.')
     }
   }
 
@@ -389,20 +373,10 @@ export function RecipesPage() {
         </p>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
-      {quickAddNotice ? (
-        <div aria-live="polite" className="quick-add-status" role="status">
-          <span>
-            <strong>{quickAddNotice.recipeName}</strong> added to{' '}
-            {formatDisplayDate(quickAddNotice.mealDate)}.
-          </span>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => void undoQuickAdd(quickAddNotice.mealId)}
-          >
-            Undo
-          </Button>
-        </div>
+      {quickAddStatus ? (
+        <VisuallyHidden aria-live="polite" role="status">
+          {quickAddStatus}
+        </VisuallyHidden>
       ) : null}
 
       <Dialog
