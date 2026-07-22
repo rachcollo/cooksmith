@@ -6,6 +6,7 @@ import { usePantryRepository } from '../app/pantry/pantryContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { Button } from '../components/ui/Button'
+import { Dialog } from '../components/ui/Dialog'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
@@ -18,6 +19,11 @@ import {
 } from '../domain/shopping/types'
 import { shoppingItemInputSchema } from '../domain/shopping/validationSchemas'
 import type { PantryItem } from '../domain/pantry/types'
+import {
+  applyQuantityDelta,
+  buildPutAwayProposal,
+  type PantryReconciliationProposal,
+} from '../domain/pantry/reconciliation'
 import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
 
 const emptyInput: ShoppingItemInput = {
@@ -45,6 +51,11 @@ export function ShoppingPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openPantryInfoId, setOpenPantryInfoId] = useState<string | null>(null)
+  const [pantryReviewOpen, setPantryReviewOpen] = useState(false)
+  const [reviewedReconciliationKeys, setReviewedReconciliationKeys] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [reconcilingKey, setReconcilingKey] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -103,6 +114,29 @@ export function ShoppingPage() {
     () => buildPantryMatchIndex(items, pantryItems),
     [items, pantryItems],
   )
+  const putAwayProposals = useMemo(
+    () =>
+      completed.map((candidate) =>
+        buildPutAwayProposal(candidate, pantryItems, reviewedReconciliationKeys),
+      ),
+    [completed, pantryItems, reviewedReconciliationKeys],
+  )
+  const actionablePutAwayProposals = putAwayProposals.filter(
+    (proposal) => proposal.kind === 'create' || proposal.kind === 'increment',
+  )
+  const attentionPutAwayProposals = putAwayProposals.filter(
+    (proposal): proposal is Extract<PantryReconciliationProposal, { kind: 'skip' }> =>
+      proposal.kind === 'skip' && proposal.reason !== 'already-reviewed',
+  )
+  const reviewedPutAwayCount = putAwayProposals.filter(
+    (proposal) => proposal.kind === 'skip' && proposal.reason === 'already-reviewed',
+  ).length
+  const createPutAwayCount = actionablePutAwayProposals.filter(
+    (proposal) => proposal.kind === 'create',
+  ).length
+  const updatePutAwayCount = actionablePutAwayProposals.filter(
+    (proposal) => proposal.kind === 'increment',
+  ).length
 
   function validate(input: ShoppingItemInput, currentId?: string) {
     const result = shoppingItemInputSchema.safeParse(input)
@@ -203,6 +237,54 @@ export function ShoppingPage() {
     }
   }
 
+  async function applyPutAwayProposal(proposal: PantryReconciliationProposal) {
+    if (!householdId || proposal.kind === 'skip') return
+    setReconcilingKey(proposal.idempotencyKey)
+    setError(null)
+    try {
+      let saved: PantryItem | null
+      if (pantryRepository.reconcile) {
+        saved = await pantryRepository.reconcile(householdId, proposal)
+      } else if (proposal.kind === 'create') {
+        saved = await pantryRepository.create(householdId, proposal.input)
+      } else {
+        const pantryItem = pantryItems.find((item) => item.id === proposal.pantryItemId)
+        if (!pantryItem) throw new Error('Cooksmith could not find that pantry item.')
+        saved = await pantryRepository.update(
+          proposal.pantryItemId,
+          applyQuantityDelta(pantryItem, proposal.quantity),
+        )
+      }
+      if (saved) {
+        setPantryItems((current) => [...current.filter((item) => item.id !== saved.id), saved])
+      }
+      setReviewedReconciliationKeys((current) => new Set(current).add(proposal.idempotencyKey))
+    } catch (putAwayError) {
+      setError(
+        putAwayError instanceof Error
+          ? putAwayError.message
+          : 'Cooksmith could not update Pantry from that shopping item.',
+      )
+    } finally {
+      setReconcilingKey(null)
+    }
+  }
+
+  async function updatePantryFromShopping() {
+    if (actionablePutAwayProposals.length === 0) return
+    for (const proposal of actionablePutAwayProposals) {
+      await applyPutAwayProposal(proposal)
+    }
+  }
+
+  function markAttentionReviewed() {
+    setReviewedReconciliationKeys((current) => {
+      const next = new Set(current)
+      for (const proposal of attentionPutAwayProposals) next.add(proposal.idempotencyKey)
+      return next
+    })
+  }
+
   async function removeItem(item: ShoppingItem) {
     if (!window.confirm(`Remove ${item.name} from your shopping list?`)) return
     try {
@@ -239,6 +321,25 @@ export function ShoppingPage() {
       </header>
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
+
+      {putAwayProposals.length > 0 ? (
+        <Panel className="shopping-complete-panel">
+          <div>
+            <h2>Shopping complete?</h2>
+            <p>
+              Review pantry updates before anything changes: {createPutAwayCount} new,{' '}
+              {updatePutAwayCount} updated
+              {attentionPutAwayProposals.length > 0
+                ? `, ${attentionPutAwayProposals.length} needing attention`
+                : ''}
+              .
+            </p>
+          </div>
+          <Button type="button" onClick={() => setPantryReviewOpen(true)}>
+            Review pantry updates
+          </Button>
+        </Panel>
+      ) : null}
 
       <Panel className="shopping-add-panel">
         <h2 className="visually-hidden">Add an item</h2>
@@ -320,6 +421,99 @@ export function ShoppingPage() {
           </section>
         )
       })}
+
+      {pantryReviewOpen ? (
+        <Dialog
+          open
+          title="Update Pantry from shopping"
+          description="Cooksmith will only change Pantry after you confirm these completed shopping items."
+          onOpenChange={(open) => setPantryReviewOpen(open)}
+        >
+          <div className="pantry-update-dialog">
+            <div className="pantry-update-summary" aria-label="Pantry update summary">
+              <span>
+                <strong>{createPutAwayCount}</strong> new items
+              </span>
+              <span>
+                <strong>{updatePutAwayCount}</strong> updated items
+              </span>
+              <span>
+                <strong>{attentionPutAwayProposals.length}</strong> need attention
+              </span>
+            </div>
+
+            {actionablePutAwayProposals.length > 0 ? (
+              <section>
+                <h3>Ready to update</h3>
+                <ul className="reconciliation-list">
+                  {actionablePutAwayProposals.map((proposal) => (
+                    <li key={proposal.idempotencyKey} className="reconciliation-item">
+                      <div>
+                        <strong>{proposal.sourceText}</strong>
+                        <p>
+                          {proposal.kind === 'increment'
+                            ? `Update ${proposal.pantryItemName}`
+                            : `Add ${proposal.input.name} to Pantry`}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {attentionPutAwayProposals.length > 0 ? (
+              <section>
+                <h3>Needs attention</h3>
+                <p className="form-hint">
+                  These items were not guessed because the pantry match or quantity was unclear.
+                </p>
+                <ul className="reconciliation-list">
+                  {attentionPutAwayProposals.map((proposal) => (
+                    <li key={proposal.idempotencyKey} className="reconciliation-item">
+                      <div>
+                        <strong>{proposal.sourceText}</strong>
+                        <p>
+                          {proposal.reason === 'ambiguous-match'
+                            ? 'Multiple pantry items could match.'
+                            : proposal.reason === 'incompatible-quantity'
+                              ? 'The quantity or unit does not match an existing pantry item.'
+                              : 'Review this item manually.'}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {reviewedPutAwayCount > 0 ? (
+              <p className="form-hint">
+                {reviewedPutAwayCount} completed item has already been reviewed.
+              </p>
+            ) : null}
+
+            <div className="dialog-actions">
+              {attentionPutAwayProposals.length > 0 ? (
+                <Button type="button" variant="secondary" onClick={markAttentionReviewed}>
+                  Mark attention reviewed
+                </Button>
+              ) : null}
+              <Button type="button" variant="secondary" onClick={() => setPantryReviewOpen(false)}>
+                Not now
+              </Button>
+              <Button
+                type="button"
+                busy={reconcilingKey !== null}
+                disabled={actionablePutAwayProposals.length === 0}
+                onClick={() => void updatePantryFromShopping()}
+              >
+                Update the pantry
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
 
       {completed.length > 0 ? (
         <section
