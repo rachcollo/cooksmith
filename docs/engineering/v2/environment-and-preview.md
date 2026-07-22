@@ -14,16 +14,16 @@ During the temporary MVP workflow, `main` drives the existing Vercel project's p
 
 Copy `.env.example` to `.env.local`. Values prefixed with `VITE_` are bundled into browser code and must never contain a secret or service-role credential.
 
-| Variable                                     | Exposure   | Requirement                                   | Purpose                                                                       |
-| -------------------------------------------- | ---------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `VITE_APP_ENV`                               | Public     | Optional; Vercel derives it from `VERCEL_ENV` | `development`, `test`, `preview` or `production`                              |
-| `VITE_BUILD_COMMIT`                          | Public     | Optional                                      | Non-sensitive build reference shown on `/health`                              |
-| `VITE_SUPABASE_URL`                          | Public     | Paired with publishable key                   | Local or environment-specific Supabase URL                                    |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`              | Public     | Paired with URL                               | Supabase publishable browser key, never the secret/service-role key           |
-| `VITE_SENTRY_DSN`                            | Public     | Optional; Preview/Production only             | Browser-safe Sentry DSN used by the Vite frontend                             |
-| `VITE_POSTHOG_KEY`                           | Public     | Optional; Preview/Production only             | Browser-safe PostHog project key used by the Vite frontend                    |
-| `VITE_POSTHOG_HOST`                          | Public     | Optional; defaults to EU cloud                | PostHog ingestion host, normally `https://eu.i.posthog.com`                   |
-| `COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS` | Build-only | Required for Preview                          | Comma-separated Production project references denied to non-production builds |
+| Variable                                     | Exposure   | Requirement                               | Purpose                                                                       |
+| -------------------------------------------- | ---------- | ----------------------------------------- | ----------------------------------------------------------------------------- |
+| `VITE_APP_ENV`                               | Public     | Required on Vercel Preview and Production | `development`, `test`, `preview` or `production`                              |
+| `VITE_BUILD_COMMIT`                          | Public     | Optional                                  | Non-sensitive build reference shown on `/health`                              |
+| `VITE_SUPABASE_URL`                          | Public     | Paired with publishable key               | Local or environment-specific Supabase URL                                    |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`              | Public     | Paired with URL                           | Supabase publishable browser key, never the secret/service-role key           |
+| `VITE_SENTRY_DSN`                            | Public     | Optional; Preview/Production only         | Browser-safe Sentry DSN used by the Vite frontend                             |
+| `VITE_POSTHOG_KEY`                           | Public     | Optional; Preview/Production only         | Browser-safe PostHog project key used by the Vite frontend                    |
+| `VITE_POSTHOG_HOST`                          | Public     | Optional; defaults to EU cloud            | PostHog ingestion host, normally `https://eu.i.posthog.com`                   |
+| `COOKSMITH_PRODUCTION_SUPABASE_PROJECT_REFS` | Build-only | Required for Preview                      | Comma-separated Production project references denied to non-production builds |
 
 Development may omit both Supabase public values while working on the shell. Preview and Production require both. One value without the other is invalid.
 
@@ -33,7 +33,7 @@ Observability values are frontend build variables. Configure `VITE_SENTRY_DSN`, 
 
 Vite validates environment configuration before building:
 
-- Vercel derives the environment from its trusted `VERCEL_ENV` value when `VITE_APP_ENV` is absent.
+- `VITE_APP_ENV` must be set explicitly, scoped to the matching Vercel environment, whenever `VERCEL_ENV` is `preview` or `production`; an unset value fails the build rather than being silently inferred. This is deliberate: Vercel's `VERCEL_ENV` is a build-time-only signal, not something Vite can bake into the deployed browser bundle, so a derived value would validate the build correctly while the live app still read an unset `VITE_APP_ENV` as `development` and silently disabled every environment-gated feature (this happened in practice with CS-57 observability).
 - An explicitly configured `VITE_APP_ENV` must match `VERCEL_ENV` or the build fails.
 - Preview requires a hosted staging URL, not localhost.
 - Preview requires the build-only Production project deny-list.
