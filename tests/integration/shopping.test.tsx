@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -172,13 +172,13 @@ describe('shopping list foundation', () => {
     const user = userEvent.setup()
     renderShopping(repository, pantryRepository)
 
-    expect(await screen.findByRole('heading', { name: 'Shopping complete?' })).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Review pantry updates' }))
+    await screen.findByRole('heading', { name: 'Done' })
+    fireEvent.contextMenu(screen.getAllByRole('link', { name: /Shopping/ })[0]!)
+    await user.click(await screen.findByRole('menuitem', { name: 'Restock pantry' }))
     const dialog = await screen.findByRole('dialog', { name: 'Update Pantry from shopping' })
-    expect(within(dialog).getByText('Update Milk')).toBeVisible()
-    expect(within(dialog).getByLabelText('Pantry update summary')).toHaveTextContent(
-      '0 need attention',
-    )
+    expect(within(dialog).getByRole('heading', { name: 'Updated' })).toBeVisible()
+    expect(within(dialog).getByRole('heading', { name: 'New' })).toBeVisible()
+    expect(within(dialog).getByText('Milk')).toBeVisible()
     await user.click(within(dialog).getByRole('button', { name: 'Update the pantry' }))
 
     expect(reconcile).toHaveBeenCalledWith(

@@ -22,9 +22,12 @@ import type { PantryItem } from '../domain/pantry/types'
 import {
   applyQuantityDelta,
   buildPutAwayProposal,
+  numericQuantity,
+  quantitiesAreCompatible,
   type PantryReconciliationProposal,
 } from '../domain/pantry/reconciliation'
-import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
+import { classifyPantryItem } from '../domain/pantry/classification'
+import { buildPantryMatchIndex, normalisePantryMatchName } from '../domain/shopping/pantryMatching'
 
 const emptyInput: ShoppingItemInput = {
   name: '',
@@ -52,6 +55,7 @@ export function ShoppingPage() {
   const [error, setError] = useState<string | null>(null)
   const [openPantryInfoId, setOpenPantryInfoId] = useState<string | null>(null)
   const [pantryReviewOpen, setPantryReviewOpen] = useState(false)
+  const [attentionResolutions, setAttentionResolutions] = useState<Record<string, string>>({})
   const [reviewedReconciliationKeys, setReviewedReconciliationKeys] = useState<Set<string>>(
     () => new Set(),
   )
@@ -100,6 +104,18 @@ export function ShoppingPage() {
     return () => document.removeEventListener('pointerdown', closeOnOutsidePress)
   }, [openPantryInfoId])
 
+  useEffect(() => {
+    function openPantryReview() {
+      window.sessionStorage.removeItem('cooksmith:open-pantry-restock')
+      setPantryReviewOpen(true)
+    }
+    window.addEventListener('cooksmith:open-pantry-restock', openPantryReview)
+    if (window.sessionStorage.getItem('cooksmith:open-pantry-restock') === 'true') {
+      openPantryReview()
+    }
+    return () => window.removeEventListener('cooksmith:open-pantry-restock', openPantryReview)
+  }, [])
+
   const outstanding = items.filter((item) => !item.completed)
   const completed = items.filter((item) => item.completed)
   const grouped = useMemo(
@@ -135,6 +151,39 @@ export function ShoppingPage() {
     (proposal) => proposal.kind === 'create',
   ).length
   const updatePutAwayCount = actionablePutAwayProposals.filter(
+    (proposal) => proposal.kind === 'increment',
+  ).length
+  const attentionCandidates = useMemo(
+    () =>
+      new Map(
+        attentionPutAwayProposals.map((proposal) => {
+          const sourceTokens = normalisePantryMatchName(proposal.sourceText)
+            .split(' ')
+            .filter(Boolean)
+          const candidates = pantryItems.filter((item) => {
+            const pantryTokens = normalisePantryMatchName(item.name).split(' ').filter(Boolean)
+            return (
+              item.available &&
+              pantryTokens.length > 0 &&
+              sourceTokens.length > 0 &&
+              (pantryTokens.every((token) => sourceTokens.includes(token)) ||
+                sourceTokens.every((token) => pantryTokens.includes(token)))
+            )
+          })
+          return [proposal.idempotencyKey, candidates]
+        }),
+      ),
+    [attentionPutAwayProposals, pantryItems],
+  )
+  const resolvedAttentionProposals = attentionPutAwayProposals
+    .map((proposal) => resolveAttentionProposal(proposal))
+    .filter((proposal): proposal is Exclude<PantryReconciliationProposal, { kind: 'skip' }> =>
+      Boolean(proposal),
+    )
+  const resolvedNewCount = resolvedAttentionProposals.filter(
+    (proposal) => proposal.kind === 'create',
+  ).length
+  const resolvedUpdatedCount = resolvedAttentionProposals.filter(
     (proposal) => proposal.kind === 'increment',
   ).length
 
@@ -271,9 +320,54 @@ export function ShoppingPage() {
   }
 
   async function updatePantryFromShopping() {
-    if (actionablePutAwayProposals.length === 0) return
-    for (const proposal of actionablePutAwayProposals) {
+    const proposals = [...actionablePutAwayProposals, ...resolvedAttentionProposals]
+    if (proposals.length === 0) return
+    for (const proposal of proposals) {
       await applyPutAwayProposal(proposal)
+    }
+  }
+
+  function resolveAttentionProposal(
+    proposal: Extract<PantryReconciliationProposal, { kind: 'skip' }>,
+  ): Exclude<PantryReconciliationProposal, { kind: 'skip' }> | null {
+    const source = completed.find((item) => item.id === proposal.sourceId)
+    if (!source) return null
+    const choice = attentionResolutions[proposal.idempotencyKey] ?? 'separate'
+    if (choice === 'separate') {
+      const classification = classifyPantryItem(source.name)
+      return {
+        kind: 'create',
+        source: 'shopping-put-away',
+        sourceId: source.id,
+        sourceText: source.name,
+        input: {
+          name: source.name.trim(),
+          category: classification.category,
+          categorySource: 'automatic',
+          storageLocation: classification.storageLocation,
+          storageLocationSource: 'automatic',
+          classificationVersion: classification.version,
+          quantity: numericQuantity(source.quantity),
+          unit: source.unit?.trim() || null,
+          available: true,
+        },
+        idempotencyKey: proposal.idempotencyKey,
+      }
+    }
+    const pantryItem = pantryItems.find((item) => item.id === choice)
+    if (!pantryItem) return null
+    const unit = source.unit?.trim() || null
+    if (!quantitiesAreCompatible(unit, pantryItem.unit)) return null
+    return {
+      kind: 'increment',
+      source: 'shopping-put-away',
+      sourceId: source.id,
+      sourceText: source.name,
+      pantryItemId: pantryItem.id,
+      pantryItemName: pantryItem.name,
+      quantity: numericQuantity(source.quantity),
+      unit,
+      idempotencyKey: proposal.idempotencyKey,
     }
   }
 
@@ -321,25 +415,6 @@ export function ShoppingPage() {
       </header>
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
-
-      {putAwayProposals.length > 0 ? (
-        <Panel className="shopping-complete-panel">
-          <div>
-            <h2>Shopping complete?</h2>
-            <p>
-              Review pantry updates before anything changes: {createPutAwayCount} new,{' '}
-              {updatePutAwayCount} updated
-              {attentionPutAwayProposals.length > 0
-                ? `, ${attentionPutAwayProposals.length} needing attention`
-                : ''}
-              .
-            </p>
-          </div>
-          <Button type="button" onClick={() => setPantryReviewOpen(true)}>
-            Review pantry updates
-          </Button>
-        </Panel>
-      ) : null}
 
       <Panel className="shopping-add-panel">
         <h2 className="visually-hidden">Add an item</h2>
@@ -430,59 +505,97 @@ export function ShoppingPage() {
           onOpenChange={(open) => setPantryReviewOpen(open)}
         >
           <div className="pantry-update-dialog">
-            <div className="pantry-update-summary" aria-label="Pantry update summary">
-              <span>
-                <strong>{createPutAwayCount}</strong> new items
-              </span>
-              <span>
-                <strong>{updatePutAwayCount}</strong> updated items
-              </span>
-              <span>
-                <strong>{attentionPutAwayProposals.length}</strong> need attention
-              </span>
-            </div>
-
-            {actionablePutAwayProposals.length > 0 ? (
+            <div className="pantry-update-columns" aria-label="Pantry update summary">
               <section>
-                <h3>Ready to update</h3>
+                <h3>Updated</h3>
                 <ul className="reconciliation-list">
-                  {actionablePutAwayProposals.map((proposal) => (
-                    <li key={proposal.idempotencyKey} className="reconciliation-item">
-                      <div>
-                        <strong>{proposal.sourceText}</strong>
-                        <p>
-                          {proposal.kind === 'increment'
-                            ? `Update ${proposal.pantryItemName}`
-                            : `Add ${proposal.input.name} to Pantry`}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
+                  {actionablePutAwayProposals
+                    .filter((proposal) => proposal.kind === 'increment')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {resolvedAttentionProposals
+                    .filter((proposal) => proposal.kind === 'increment')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {updatePutAwayCount + resolvedUpdatedCount === 0 ? <li>None</li> : null}
                 </ul>
               </section>
-            ) : null}
+              <section>
+                <h3>New</h3>
+                <ul className="reconciliation-list">
+                  {actionablePutAwayProposals
+                    .filter((proposal) => proposal.kind === 'create')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {resolvedAttentionProposals
+                    .filter((proposal) => proposal.kind === 'create')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {createPutAwayCount + resolvedNewCount === 0 ? <li>None</li> : null}
+                </ul>
+              </section>
+            </div>
 
             {attentionPutAwayProposals.length > 0 ? (
               <section>
                 <h3>Needs attention</h3>
                 <p className="form-hint">
-                  These items were not guessed because the pantry match or quantity was unclear.
+                  Cooksmith has suggested whether to match each item or keep it separate.
                 </p>
                 <ul className="reconciliation-list">
-                  {attentionPutAwayProposals.map((proposal) => (
-                    <li key={proposal.idempotencyKey} className="reconciliation-item">
-                      <div>
-                        <strong>{proposal.sourceText}</strong>
-                        <p>
-                          {proposal.reason === 'ambiguous-match'
-                            ? 'Multiple pantry items could match.'
-                            : proposal.reason === 'incompatible-quantity'
-                              ? 'The quantity or unit does not match an existing pantry item.'
-                              : 'Review this item manually.'}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
+                  {attentionPutAwayProposals.map((proposal) => {
+                    const candidates = attentionCandidates.get(proposal.idempotencyKey) ?? []
+                    return (
+                      <li key={proposal.idempotencyKey} className="reconciliation-attention-item">
+                        <span>{proposal.sourceText}</span>
+                        <label>
+                          <span className="visually-hidden">
+                            How should Pantry handle {proposal.sourceText}?
+                          </span>
+                          <select
+                            value={attentionResolutions[proposal.idempotencyKey] ?? 'separate'}
+                            onChange={(event) =>
+                              setAttentionResolutions((current) => ({
+                                ...current,
+                                [proposal.idempotencyKey]: event.target.value,
+                              }))
+                            }
+                          >
+                            <option value="separate">Keep separate as new</option>
+                            {candidates.map((candidate) => {
+                              const source = completed.find((item) => item.id === proposal.sourceId)
+                              const compatible = quantitiesAreCompatible(
+                                source?.unit?.trim() || null,
+                                candidate.unit,
+                              )
+                              return (
+                                <option
+                                  key={candidate.id}
+                                  value={candidate.id}
+                                  disabled={!compatible}
+                                >
+                                  Match {candidate.name}
+                                  {!compatible ? ' (unit needs manual edit)' : ''}
+                                </option>
+                              )
+                            })}
+                          </select>
+                        </label>
+                      </li>
+                    )
+                  })}
                 </ul>
               </section>
             ) : null}
@@ -505,7 +618,9 @@ export function ShoppingPage() {
               <Button
                 type="button"
                 busy={reconcilingKey !== null}
-                disabled={actionablePutAwayProposals.length === 0}
+                disabled={
+                  actionablePutAwayProposals.length + resolvedAttentionProposals.length === 0
+                }
                 onClick={() => void updatePantryFromShopping()}
               >
                 Update the pantry
