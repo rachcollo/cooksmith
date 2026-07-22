@@ -18,6 +18,11 @@ import {
 } from '../domain/shopping/types'
 import { shoppingItemInputSchema } from '../domain/shopping/validationSchemas'
 import type { PantryItem } from '../domain/pantry/types'
+import {
+  applyQuantityDelta,
+  buildPutAwayProposal,
+  type PantryReconciliationProposal,
+} from '../domain/pantry/reconciliation'
 import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
 
 const emptyInput: ShoppingItemInput = {
@@ -45,6 +50,10 @@ export function ShoppingPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openPantryInfoId, setOpenPantryInfoId] = useState<string | null>(null)
+  const [reviewedReconciliationKeys, setReviewedReconciliationKeys] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [reconcilingKey, setReconcilingKey] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -102,6 +111,13 @@ export function ShoppingPage() {
   const pantryMatches = useMemo(
     () => buildPantryMatchIndex(items, pantryItems),
     [items, pantryItems],
+  )
+  const putAwayProposals = useMemo(
+    () =>
+      completed.map((candidate) =>
+        buildPutAwayProposal(candidate, pantryItems, reviewedReconciliationKeys),
+      ),
+    [completed, pantryItems, reviewedReconciliationKeys],
   )
 
   function validate(input: ShoppingItemInput, currentId?: string) {
@@ -201,6 +217,43 @@ export function ShoppingPage() {
           : 'Cooksmith could not update that item.',
       )
     }
+  }
+
+  async function acceptPutAway(proposal: PantryReconciliationProposal) {
+    if (!householdId || proposal.kind === 'skip') return
+    setReconcilingKey(proposal.idempotencyKey)
+    setError(null)
+    try {
+      let saved: PantryItem | null
+      if (pantryRepository.reconcile) {
+        saved = await pantryRepository.reconcile(householdId, proposal)
+      } else if (proposal.kind === 'create') {
+        saved = await pantryRepository.create(householdId, proposal.input)
+      } else {
+        const pantryItem = pantryItems.find((item) => item.id === proposal.pantryItemId)
+        if (!pantryItem) throw new Error('Cooksmith could not find that pantry item.')
+        saved = await pantryRepository.update(
+          proposal.pantryItemId,
+          applyQuantityDelta(pantryItem, proposal.quantity),
+        )
+      }
+      if (saved) {
+        setPantryItems((current) => [...current.filter((item) => item.id !== saved.id), saved])
+      }
+      setReviewedReconciliationKeys((current) => new Set(current).add(proposal.idempotencyKey))
+    } catch (putAwayError) {
+      setError(
+        putAwayError instanceof Error
+          ? putAwayError.message
+          : 'Cooksmith could not update Pantry from that shopping item.',
+      )
+    } finally {
+      setReconcilingKey(null)
+    }
+  }
+
+  function skipPutAway(proposal: PantryReconciliationProposal) {
+    setReviewedReconciliationKeys((current) => new Set(current).add(proposal.idempotencyKey))
   }
 
   async function removeItem(item: ShoppingItem) {
@@ -320,6 +373,47 @@ export function ShoppingPage() {
           </section>
         )
       })}
+
+      {putAwayProposals.length > 0 ? (
+        <Panel className="pantry-reconciliation-panel">
+          <div className="pantry-panel-heading">
+            <h2>Put away shopping</h2>
+            <p>Review completed groceries before Pantry changes. Nothing is added automatically.</p>
+          </div>
+          <ul className="reconciliation-list">
+            {putAwayProposals.map((proposal) => (
+              <li key={proposal.idempotencyKey} className="reconciliation-item">
+                <div>
+                  <strong>{proposal.sourceText}</strong>
+                  <p>
+                    {proposal.kind === 'increment'
+                      ? `Add to ${proposal.pantryItemName}`
+                      : proposal.kind === 'create'
+                        ? `Create ${proposal.input.name} in Pantry`
+                        : proposal.reason === 'already-reviewed'
+                          ? 'Reviewed'
+                          : 'Needs manual pantry check'}
+                  </p>
+                </div>
+                <div className="reconciliation-actions">
+                  {proposal.kind === 'skip' ? null : (
+                    <Button
+                      type="button"
+                      busy={reconcilingKey === proposal.idempotencyKey}
+                      onClick={() => void acceptPutAway(proposal)}
+                    >
+                      Accept
+                    </Button>
+                  )}
+                  <Button type="button" variant="secondary" onClick={() => skipPutAway(proposal)}>
+                    {proposal.kind === 'skip' ? 'Mark reviewed' : 'Skip'}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      ) : null}
 
       {completed.length > 0 ? (
         <section

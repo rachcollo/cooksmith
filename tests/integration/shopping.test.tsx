@@ -123,6 +123,70 @@ describe('shopping list foundation', () => {
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
+  it('reviews completed shopping before putting groceries into Pantry', async () => {
+    const reconcile = vi.fn(async (_householdId, proposal) => ({
+      id: proposal.kind === 'increment' ? proposal.pantryItemId : 'pantry-created',
+      householdId,
+      name: 'Milk',
+      category: 'dairy' as const,
+      categorySource: 'explicit' as const,
+      storageLocation: 'fridge' as const,
+      storageLocationSource: 'explicit' as const,
+      classificationVersion: null,
+      quantity: 3,
+      unit: 'L',
+      available: true,
+      isDefault: false,
+      updatedAt: '2026-01-01T00:00:00Z',
+    })) satisfies PantryRepository['reconcile']
+    const repository: ShoppingRepository = {
+      list: async () => [item({ completed: true })],
+      create: async () => item(),
+      update: async () => item(),
+      setCompleted: async () => item(),
+      remove: async () => undefined,
+    }
+    const pantryRepository: PantryRepository = {
+      list: async () => [
+        {
+          id: 'pantry-milk',
+          householdId,
+          name: 'Milk',
+          category: 'dairy',
+          categorySource: 'explicit',
+          storageLocation: 'fridge',
+          storageLocationSource: 'explicit',
+          classificationVersion: null,
+          quantity: 1,
+          unit: 'L',
+          available: true,
+          isDefault: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      create: async () => defaultPantryRepository.create(householdId, {} as never),
+      update: async () => defaultPantryRepository.update('', {} as never),
+      reconcile,
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+    renderShopping(repository, pantryRepository)
+
+    expect(await screen.findByRole('heading', { name: 'Put away shopping' })).toBeVisible()
+    expect(screen.getByText('Add to Milk')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Accept' }))
+
+    expect(reconcile).toHaveBeenCalledWith(
+      householdId,
+      expect.objectContaining({
+        kind: 'increment',
+        pantryItemId: 'pantry-milk',
+        idempotencyKey: 'shopping-put-away:shopping-milk',
+      }),
+    )
+    expect(screen.getByText('Reviewed')).toBeVisible()
+  })
+
   it('quickly adds a household item with safe defaults for hidden fields', async () => {
     const create = vi.fn(async (nextHouseholdId, input) => ({
       id: 'shopping-apples',
