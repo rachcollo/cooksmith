@@ -108,21 +108,26 @@ export function parsePublicEnv(source: EnvSource): PublicEnv {
 export function validateBuildEnv(source: EnvSource): PublicEnv {
   const vercelEnvironment = readString(source, 'VERCEL_ENV')
   const configuredEnvironment = readString(source, 'VITE_APP_ENV')
+  const isVercelDeployment = vercelEnvironment === 'preview' || vercelEnvironment === 'production'
 
-  if (
-    (vercelEnvironment === 'preview' || vercelEnvironment === 'production') &&
-    configuredEnvironment &&
-    configuredEnvironment !== vercelEnvironment
-  ) {
+  if (isVercelDeployment && configuredEnvironment && configuredEnvironment !== vercelEnvironment) {
     throw new Error(`VITE_APP_ENV must be ${vercelEnvironment} for this Vercel deployment.`)
   }
 
-  const resolvedSource =
-    !configuredEnvironment &&
-    (vercelEnvironment === 'preview' || vercelEnvironment === 'production')
-      ? { ...source, VITE_APP_ENV: vercelEnvironment }
-      : source
-  const config = parsePublicEnv(resolvedSource)
+  // VITE_APP_ENV must be set explicitly, scoped per Vercel environment, rather
+  // than inferred here: this function only validates the build, it cannot
+  // change which env vars Vite bakes into the deployed browser bundle. A
+  // silent fallback previously let the build succeed while the live app still
+  // read an unset VITE_APP_ENV as "development" and stayed there, silently
+  // disabling every environment-gated feature (for example CS-57
+  // observability) with no error anywhere.
+  if (isVercelDeployment && !configuredEnvironment) {
+    throw new Error(
+      `VITE_APP_ENV must be set to "${vercelEnvironment}" for this Vercel ${vercelEnvironment} deployment. Add it in Vercel under Settings -> Environment Variables, scoped to ${vercelEnvironment}.`,
+    )
+  }
+
+  const config = parsePublicEnv(source)
   const productionRefs = parseProductionProjectRefs(source)
 
   if (config.supabase && config.appEnvironment !== 'production') {
