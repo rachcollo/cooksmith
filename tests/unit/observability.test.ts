@@ -83,6 +83,18 @@ describe('sanitisePosthogProperties', () => {
     expect(result.contact).toBeUndefined()
     expect(result.keep).toBe('ok')
   })
+
+  it('keeps the PostHog project token so ingest does not reject the event with 401', () => {
+    const result = sanitisePosthogProperties({
+      token: 'phc_synthetic_project_token',
+      auth_token: 'should-still-be-stripped',
+      keep: 'ok',
+    })
+
+    expect(result.token).toBe('phc_synthetic_project_token')
+    expect(result.auth_token).toBeUndefined()
+    expect(result.keep).toBe('ok')
+  })
 })
 
 describe('initObservability', () => {
