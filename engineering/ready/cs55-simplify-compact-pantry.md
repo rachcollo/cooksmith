@@ -5,11 +5,11 @@
 - **Milestone:** UX-P1
 - **Jira issue:** CS-55
 - **Epic:** Pantry (CS-3)
-- **Status:** Planned
+- **Status:** `Ready`
 - **Branch:** `feat/cs-55-compact-pantry`
 - **Depends on:** CS-14 and CS-48
 - **Blocks:** None
-- **Package path:** `engineering/planned/cs55-simplify-compact-pantry.md`
+- **Package path:** `engineering/ready/cs55-simplify-compact-pantry.md`
 
 ## Product Outcome
 
