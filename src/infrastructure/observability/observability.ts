@@ -106,7 +106,15 @@ export function initObservability(
   const mode = options.mode ?? import.meta.env.MODE
   const result: ObservabilityResult = { analytics: false, sentry: false }
 
-  if (!shouldActivate(env, mode)) return result
+  if (!shouldActivate(env, mode)) {
+    logger.info('observability.disabled', {
+      appEnvironment: env.appEnvironment,
+      mode,
+      hasSentryDsn: Boolean(env.observability?.sentryDsn),
+      hasPosthogKey: Boolean(env.analytics?.posthogKey),
+    })
+    return result
+  }
 
   const sentryClient: SentryLike = options.sentry ?? Sentry
   const posthogClient: PosthogLike = options.posthog ?? posthog
@@ -147,6 +155,14 @@ export function initObservability(
       reason: error instanceof Error ? error.message : 'unknown',
     })
   }
+
+  logger.info('observability.initialised', {
+    appEnvironment: env.appEnvironment,
+    sentry: result.sentry,
+    analytics: result.analytics,
+    hasSentryDsn: Boolean(env.observability?.sentryDsn),
+    hasPosthogKey: Boolean(env.analytics?.posthogKey),
+  })
 
   return result
 }
