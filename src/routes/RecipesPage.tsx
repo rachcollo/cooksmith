@@ -27,7 +27,7 @@ import { recipeInputSchema } from '../domain/recipes/validationSchemas'
 import { snapshotTitleForRecipe } from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal } from '../domain/meal-plans/types'
 import { nextEmptyPlanDate, quickAddSearchWindowDays } from '../domain/meal-plans/quickAdd'
-import { addDays, currentWeek, formatDisplayDate, toLocalIsoDate } from '../domain/meal-plans/week'
+import { addDays, currentWeek, formatDisplayDate } from '../domain/meal-plans/week'
 import { recipeSourceForPlan } from '../domain/meal-plans/weekGeneration'
 import { buildPlanAdditions } from '../domain/shopping/planGeneration'
 import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
@@ -151,9 +151,11 @@ export function RecipesPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickAddRecipeId, setQuickAddRecipeId] = useState<string | null>(null)
-  const [quickAddNotice, setQuickAddNotice] = useState<{ message: string; mealId: string } | null>(
-    null,
-  )
+  const [quickAddNotice, setQuickAddNotice] = useState<{
+    recipeName: string
+    mealDate: string
+    mealId: string
+  } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -319,10 +321,11 @@ export function RecipesPage() {
     setQuickAddNotice(null)
     setError(null)
     try {
-      const today = toLocalIsoDate(new Date())
-      const searchEnd = addDays(today, quickAddSearchWindowDays - 1)
-      const existingMeals = await plannedMeals.listWeek(householdId, today, searchEnd)
-      const result = nextEmptyPlanDate(today, existingMeals)
+      const today = new Date()
+      const searchStart = currentWeek(today)
+      const searchEnd = addDays(searchStart, quickAddSearchWindowDays - 1)
+      const existingMeals = await plannedMeals.listWeek(householdId, searchStart, searchEnd)
+      const result = nextEmptyPlanDate(searchStart, existingMeals)
       if (result.kind === 'exhausted') {
         setError(
           `We could not find an empty date before ${formatDisplayDate(result.searchedUntil)}. Open the planner to choose a date.`,
@@ -351,7 +354,8 @@ export function RecipesPage() {
       await shopping.createFromPlan?.(householdId, saved.id, additions)
       setQuickAddNotice({
         mealId: saved.id,
-        message: `${recipe.name} added to ${formatDisplayDate(result.mealDate)}`,
+        mealDate: result.mealDate,
+        recipeName: recipe.name,
       })
     } catch (quickAddError) {
       setError(
@@ -386,8 +390,11 @@ export function RecipesPage() {
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
       {quickAddNotice ? (
-        <div className="quick-add-status" role="status">
-          <span>{quickAddNotice.message}</span>
+        <div aria-live="polite" className="quick-add-status" role="status">
+          <span>
+            <strong>{quickAddNotice.recipeName}</strong> added to{' '}
+            {formatDisplayDate(quickAddNotice.mealDate)}.
+          </span>
           <Button
             type="button"
             variant="secondary"
