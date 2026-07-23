@@ -221,6 +221,112 @@ describe('household staples experience', () => {
     )
   })
 
+  it('opens compact pantry suggestions and adds without a confirmation click', async () => {
+    const createShopping = vi.fn(async (householdId, input) => ({
+      id: 'shopping-milk',
+      householdId,
+      ...input,
+      completed: false,
+      position: 0,
+      updatedAt: '2026-01-01T00:00:00Z',
+    }))
+    const confirm = vi.spyOn(window, 'confirm')
+    const repository: PantryRepository = {
+      list: async () => [
+        pantryItem({
+          id: 'pantry-milk',
+          name: 'Milk',
+          category: 'dairy',
+          storageLocation: 'fridge',
+          quantity: 1,
+          unit: 'item',
+        }),
+      ],
+      create: async () => pantryItem({ id: 'created' }),
+      update: async (itemId, input) => pantryItem({ id: itemId, ...input }),
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+
+    renderApp(
+      '/pantry',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      undefined,
+      undefined,
+      {
+        list: async () => [],
+        create: createShopping,
+        update: async () => {
+          throw new Error('unused')
+        },
+        setCompleted: async () => {
+          throw new Error('unused')
+        },
+        remove: async () => undefined,
+      },
+    )
+
+    expect(await screen.findByRole('button', { name: 'Review pantry suggestions' })).toBeVisible()
+    expect(screen.queryByText(/explicit low-stock rule/)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Review pantry suggestions' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Pantry suggestions' })
+    expect(await within(dialog).findByText('Milk')).toBeVisible()
+    expect(within(dialog).queryByText(/explicit low-stock rule/)).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Got it' })).toBeVisible()
+    expect(within(dialog).getByRole('button', { name: 'Ignore' })).toBeVisible()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Add' }))
+
+    expect(confirm).not.toHaveBeenCalled()
+    expect(createShopping).toHaveBeenCalledWith(householdId, {
+      name: 'Milk',
+      quantity: null,
+      unit: null,
+      category: 'dairy_and_eggs',
+    })
+    expect(await within(dialog).findByText(/No pantry suggestions right now/)).toBeVisible()
+  })
+
+  it('marks an item as available with Got it and ignores suggestions for the generated list', async () => {
+    const update = vi.fn(async (itemId, input) => pantryItem({ id: itemId, ...input }))
+    const repository: PantryRepository = {
+      list: async () => [
+        pantryItem({
+          id: 'pantry-milk',
+          name: 'Milk',
+          category: 'dairy',
+          storageLocation: 'fridge',
+          quantity: null,
+          unit: null,
+          available: false,
+        }),
+        pantryItem({ id: 'pantry-rice', name: 'Rice', quantity: 1, unit: 'item' }),
+      ],
+      create: async () => pantryItem({ id: 'created' }),
+      update,
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+
+    renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
+
+    await user.click(await screen.findByRole('button', { name: 'Review pantry suggestions' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Pantry suggestions' })
+    await user.click(within(dialog).getAllByRole('button', { name: 'Got it' })[0]!)
+
+    expect(update).toHaveBeenCalledWith('pantry-milk', expect.objectContaining({ available: true }))
+    expect(await screen.findAllByRole('button', { name: 'Mark out of stock' })).toHaveLength(2)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Ignore' }))
+    expect(within(dialog).queryByText('Rice')).not.toBeInTheDocument()
+  })
+
   it('preserves remove and availability regressions', async () => {
     const update = vi.fn(async (itemId, input) => ({
       id: itemId,
