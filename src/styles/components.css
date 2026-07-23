@@ -605,6 +605,32 @@
   color: var(--colour-text-muted);
 }
 
+.pantry-insights-panel {
+  border-color: var(--colour-brand);
+}
+
+.pantry-insight-list {
+  display: grid;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pantry-insight-card {
+  align-items: start;
+  background: var(--colour-surface-subtle);
+  border: var(--border-default);
+  border-radius: var(--radius-medium);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.pantry-insight-card p {
+  margin: var(--space-1) 0 0;
+}
+
 .pantry-form {
   display: grid;
   gap: var(--space-4);

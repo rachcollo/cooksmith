@@ -221,6 +221,71 @@ describe('household staples experience', () => {
     )
   })
 
+  it('explains a pantry suggestion and only adds it to shopping after confirmation', async () => {
+    const createShopping = vi.fn(async (householdId, input) => ({
+      id: 'shopping-milk',
+      householdId,
+      ...input,
+      completed: false,
+      position: 0,
+      updatedAt: '2026-01-01T00:00:00Z',
+    }))
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const repository: PantryRepository = {
+      list: async () => [
+        pantryItem({
+          id: 'pantry-milk',
+          name: 'Milk',
+          category: 'dairy',
+          storageLocation: 'fridge',
+          quantity: 1,
+          unit: 'item',
+        }),
+      ],
+      create: async () => pantryItem({ id: 'created' }),
+      update: async (itemId, input) => pantryItem({ id: itemId, ...input }),
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+
+    renderApp(
+      '/pantry',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      undefined,
+      undefined,
+      {
+        list: async () => [],
+        create: createShopping,
+        update: async () => {
+          throw new Error('unused')
+        },
+        setCompleted: async () => {
+          throw new Error('unused')
+        },
+        remove: async () => undefined,
+      },
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Pantry suggestions' })).toBeVisible()
+    expect(await screen.findByText(/explicit low-stock rule/)).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Add to shopping' }))
+
+    expect(window.confirm).toHaveBeenCalledWith('Add Milk to your shopping list?')
+    expect(createShopping).toHaveBeenCalledWith(householdId, {
+      name: 'Milk',
+      quantity: null,
+      unit: null,
+      category: 'dairy_and_eggs',
+    })
+    expect(await screen.findByText(/No pantry suggestions right now/)).toBeVisible()
+  })
+
   it('preserves remove and availability regressions', async () => {
     const update = vi.fn(async (itemId, input) => ({
       id: itemId,
