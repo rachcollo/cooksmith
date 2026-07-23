@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import { Dialog } from '../components/ui/Dialog'
 
+import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePantryRepository } from '../app/pantry/pantryContext'
+import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
 import { ErrorState } from '../components/ui/ErrorState'
@@ -19,6 +21,7 @@ import {
   type PantryStorageLocation,
 } from '../domain/pantry/types'
 import { classifyPantryItem } from '../domain/pantry/classification'
+import { createPantryInsights, type PantryInsight } from '../domain/pantry/intelligence'
 import { pantryItemInputSchema } from '../domain/pantry/validationSchemas'
 
 const emptyInput: PantryItemInput = {
@@ -41,6 +44,8 @@ type LocationFilter = 'all' | PantryStorageLocation
 export function PantryPage() {
   const { state } = useOnboarding()
   const repository = usePantryRepository()
+  const shoppingRepository = useShoppingRepository()
+  const plannedMealRepository = usePlannedMealRepository()
   const householdId = state.householdId
   const [items, setItems] = useState<PantryItem[]>([])
   const [draft, setDraft] = useState<PantryItemInput>(emptyInput)
@@ -57,6 +62,12 @@ export function PantryPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editingSaving, setEditingSaving] = useState(false)
+  const [insights, setInsights] = useState<PantryInsight[]>([])
+  const [ignoredInsightIds, setIgnoredInsightIds] = useState<Set<string>>(() => new Set())
+  const [insightError, setInsightError] = useState<string | null>(null)
+  const [pantrySuggestionsOpen, setPantrySuggestionsOpen] = useState(false)
+  const [addingInsightId, setAddingInsightId] = useState<string | null>(null)
+  const [savingInsightId, setSavingInsightId] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -76,6 +87,96 @@ export function PantryPage() {
       active = false
     }
   }, [householdId, repository])
+
+  const visibleInsights = useMemo(
+    () => insights.filter((insight) => !ignoredInsightIds.has(insight.id)),
+    [ignoredInsightIds, insights],
+  )
+
+  async function generatePantrySuggestions() {
+    if (!householdId) return
+    const today = new Date()
+    const weekEnd = new Date(today)
+    weekEnd.setDate(today.getDate() + 7)
+    setInsightError(null)
+    try {
+      const [shoppingItems, plannedMeals] = await Promise.all([
+        shoppingRepository.list(householdId),
+        plannedMealRepository.listWeek(
+          householdId,
+          today.toISOString().slice(0, 10),
+          weekEnd.toISOString().slice(0, 10),
+        ),
+      ])
+      const nextInsights = createPantryInsights({ pantryItems: items, shoppingItems, plannedMeals })
+      setInsights(nextInsights)
+      setIgnoredInsightIds(new Set())
+      setPantrySuggestionsOpen(true)
+    } catch (suggestionError) {
+      setInsightError(
+        suggestionError instanceof Error
+          ? suggestionError.message
+          : 'Pantry suggestions are unavailable right now.',
+      )
+    }
+  }
+
+  async function addInsightToShopping(insight: PantryInsight) {
+    if (!householdId) return
+    setAddingInsightId(insight.id)
+    setInsightError(null)
+    try {
+      await shoppingRepository.create(householdId, insight.shoppingInput)
+      setIgnoredInsightIds((current) => new Set(current).add(insight.id))
+    } catch (addError) {
+      setInsightError(
+        addError instanceof Error ? addError.message : 'Cooksmith could not add that item.',
+      )
+    } finally {
+      setAddingInsightId(null)
+    }
+  }
+
+  async function markInsightGotIt(insight: PantryInsight) {
+    const item = items.find((candidate) => candidate.id === insight.pantryItemId)
+    if (!item) return
+    if (item.available) {
+      setIgnoredInsightIds((current) => new Set(current).add(insight.id))
+      return
+    }
+    const input: PantryItemInput = {
+      name: item.name,
+      category: item.category,
+      categorySource: item.categorySource,
+      storageLocation: item.storageLocation,
+      storageLocationSource: item.storageLocationSource,
+      classificationVersion: item.classificationVersion,
+      quantity: item.quantity,
+      unit: item.unit,
+      available: true,
+    }
+    setSavingInsightId(insight.id)
+    setInsightError(null)
+    try {
+      const saved = await repository.update(item.id, input)
+      setItems((current) =>
+        current.map((candidate) => (candidate.id === saved.id ? saved : candidate)),
+      )
+      setIgnoredInsightIds((current) => new Set(current).add(insight.id))
+    } catch (quantityError) {
+      setInsightError(
+        quantityError instanceof Error
+          ? quantityError.message
+          : 'Cooksmith could not update that pantry item.',
+      )
+    } finally {
+      setSavingInsightId(null)
+    }
+  }
+
+  function ignoreInsight(insightId: string) {
+    setIgnoredInsightIds((current) => new Set(current).add(insightId))
+  }
 
   const filteredItems = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase()
@@ -298,6 +399,15 @@ export function PantryPage() {
       </div>
 
       {error ? <ErrorState title="Pantry needs a quick check" message={error} /> : null}
+      {insightError ? (
+        <ErrorState title="Pantry suggestions need a quick check" message={insightError} />
+      ) : null}
+
+      <div className="pantry-suggestions-trigger">
+        <Button variant="secondary" type="button" onClick={() => void generatePantrySuggestions()}>
+          Review pantry suggestions
+        </Button>
+      </div>
 
       <Panel className="pantry-form-panel">
         <div className="pantry-panel-heading">
@@ -473,6 +583,50 @@ export function PantryPage() {
           )
         },
       )}
+
+      <Dialog
+        description="One compact line per suggestion. Add it to Shopping, mark you have it, or ignore it for this generated list."
+        onOpenChange={setPantrySuggestionsOpen}
+        open={pantrySuggestionsOpen}
+        title="Pantry suggestions"
+      >
+        <div className="pantry-suggestions-dialog">
+          {visibleInsights.length === 0 ? (
+            <p>
+              No pantry suggestions right now. Generate again later when your Pantry or meal plan
+              changes.
+            </p>
+          ) : (
+            <ul className="pantry-suggestion-lines" aria-label="Generated pantry suggestions">
+              {visibleInsights.map((insight) => (
+                <li key={insight.id} className="pantry-suggestion-line">
+                  <strong className="pantry-suggestion-name">{insight.itemName}</strong>
+                  <div className="pantry-suggestion-actions">
+                    <Button
+                      type="button"
+                      onClick={() => void addInsightToShopping(insight)}
+                      busy={addingInsightId === insight.id}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => void markInsightGotIt(insight)}
+                      busy={savingInsightId === insight.id}
+                    >
+                      Got it
+                    </Button>
+                    <Button variant="quiet" type="button" onClick={() => ignoreInsight(insight.id)}>
+                      Ignore
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Dialog>
 
       {editingItem ? (
         <Dialog
