@@ -287,7 +287,7 @@ export function ShoppingPage() {
   }
 
   async function applyPutAwayProposal(proposal: PantryReconciliationProposal) {
-    if (!householdId || proposal.kind === 'skip') return
+    if (!householdId || proposal.kind === 'skip') return false
     setReconcilingKey(proposal.idempotencyKey)
     setError(null)
     try {
@@ -308,6 +308,7 @@ export function ShoppingPage() {
         setPantryItems((current) => [...current.filter((item) => item.id !== saved.id), saved])
       }
       setReviewedReconciliationKeys((current) => new Set(current).add(proposal.idempotencyKey))
+      return true
     } catch (putAwayError) {
       setError(
         putAwayError instanceof Error
@@ -317,13 +318,28 @@ export function ShoppingPage() {
     } finally {
       setReconcilingKey(null)
     }
+    return false
   }
 
   async function updatePantryFromShopping() {
     const proposals = [...actionablePutAwayProposals, ...resolvedAttentionProposals]
     if (proposals.length === 0) return
+    const restockedShoppingIds = new Set<string>()
     for (const proposal of proposals) {
-      await applyPutAwayProposal(proposal)
+      const updated = await applyPutAwayProposal(proposal)
+      if (updated) restockedShoppingIds.add(proposal.sourceId)
+    }
+    if (restockedShoppingIds.size === 0) return
+    try {
+      await Promise.all(Array.from(restockedShoppingIds, (itemId) => repository.remove(itemId)))
+      setItems((current) => current.filter((item) => !restockedShoppingIds.has(item.id)))
+      setPantryReviewOpen(false)
+    } catch (removeError) {
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : 'Cooksmith updated Pantry, but could not clear every shopping item.',
+      )
     }
   }
 

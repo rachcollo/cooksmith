@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -139,12 +139,13 @@ describe('shopping list foundation', () => {
       isDefault: false,
       updatedAt: '2026-01-01T00:00:00Z',
     })) satisfies PantryRepository['reconcile']
+    const remove = vi.fn(async () => undefined)
     const repository: ShoppingRepository = {
       list: async () => [item({ completed: true })],
       create: async () => item(),
       update: async () => item(),
       setCompleted: async () => item(),
-      remove: async () => undefined,
+      remove,
     }
     const pantryRepository: PantryRepository = {
       list: async () => [
@@ -189,7 +190,8 @@ describe('shopping list foundation', () => {
         idempotencyKey: 'shopping-put-away:shopping-milk',
       }),
     )
-    expect(await screen.findByText('1 completed item has already been reviewed.')).toBeVisible()
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('shopping-milk'))
+    expect(screen.queryByRole('heading', { name: 'Done' })).not.toBeInTheDocument()
   })
 
   it('quickly adds a household item with safe defaults for hidden fields', async () => {

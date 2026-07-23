@@ -232,6 +232,13 @@
   z-index: 20;
 }
 
+.navigation-mobile .navigation-submenu {
+  bottom: calc(100% + var(--space-2));
+  left: auto;
+  right: 0;
+  top: auto;
+}
+
 .navigation-desktop .navigation-submenu {
   left: calc(100% + var(--space-2));
   right: auto;
