@@ -61,6 +61,11 @@ for how selection connects to actually starting a build.
 | 17 | Onboarding feature guidance | CS-60 | `engineering/planned/cs60-onboarding-how-to.md` | Planned; product decisions required before Ready | Stable MVP navigation | `feat/cs-60-onboarding-how-to` |
 | 18 | M12A MVP Beta Readiness | CS-25 | `engineering/planned/cs25-mvp-beta-readiness.md` | Planned; final gate | Approved core MVP and E01 | `chore/cs-25-beta-readiness` |
 | 19 | M12B Beta Feedback | CS-26 | Not authored | Backlog | CS-25 | `chore/cs-26-beta-feedback` |
+| 20 | Get Ahead Opportunity Detection | CS-65 | `engineering/ready/cs65-preparation-opportunity-detection.md` | Ready | Recipes and Meal Planner | `feat/cs-65-preparation-opportunity-detection` |
+| 21 | Get Ahead Session | CS-66 | `engineering/ready/cs66-get-ahead-session.md` | Ready; blocked until CS-65 Done | CS-65 | `feat/cs-66-get-ahead-session` |
+| 22 | Intelligent Task Prioritisation | CS-67 | `engineering/ready/cs67-intelligent-task-prioritisation.md` | Ready; blocked until CS-65 and CS-66 Done | CS-65, CS-66 | `feat/cs-67-intelligent-task-prioritisation` |
+| 23 | Task Consolidation | CS-68 | `engineering/ready/cs68-task-consolidation.md` | Ready; blocked until CS-65 and CS-66 Done | CS-65, CS-66 | `feat/cs-68-task-consolidation` |
+| 24 | Smart Prep Checklist | CS-69 | `engineering/ready/cs69-smart-prep-checklist.md` | Ready; blocked until CS-66 and CS-67 Done | CS-66, CS-67 | `feat/cs-69-smart-prep-checklist` |
 
 ## Completed Milestones
 
@@ -84,6 +89,7 @@ for how selection connects to actually starting a build.
 - **Intelligence and release:** CS-24 follows accepted CS-23 reconciliation. CS-60 remains Planned until its onboarding product decisions are approved. CS-25 is the final beta gate after the approved MVP scope and critical defects are complete.
 - CS-50 is in review. CS-52 retains its existing package; Jira/package lifecycle drift must be resolved before autonomous pickup.
 - E01 may continue in parallel without rewriting unrelated product behaviour.
+- **Get Ahead core:** CS-65 must be accepted before CS-66. After CS-66, CS-67 and CS-68 may be developed concurrently because ranking and consolidation own separate domain contracts. CS-69 follows CS-67 and should consume CS-68 when available without being blocked by it.
 
 ## Jira-to-Package Contract
 Every implementation issue should contain:
