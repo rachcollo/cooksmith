@@ -276,7 +276,10 @@ describe('household staples experience', () => {
 
     await user.click(screen.getByRole('button', { name: 'Review pantry suggestions' }))
     const dialog = await screen.findByRole('dialog', { name: 'Pantry suggestions' })
-    expect(await within(dialog).findByText(/explicit low-stock rule/)).toBeVisible()
+    expect(await within(dialog).findByText('Milk')).toBeVisible()
+    expect(within(dialog).queryByText(/explicit low-stock rule/)).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Got it' })).toBeVisible()
+    expect(within(dialog).getByRole('button', { name: 'Ignore' })).toBeVisible()
 
     await user.click(within(dialog).getByRole('button', { name: 'Add' }))
 
@@ -290,7 +293,7 @@ describe('household staples experience', () => {
     expect(await within(dialog).findByText(/No pantry suggestions right now/)).toBeVisible()
   })
 
-  it('updates pantry quantity inline and ignores suggestions for the generated list', async () => {
+  it('marks an item as available with Got it and ignores suggestions for the generated list', async () => {
     const update = vi.fn(async (itemId, input) => pantryItem({ id: itemId, ...input }))
     const repository: PantryRepository = {
       list: async () => [
@@ -299,8 +302,9 @@ describe('household staples experience', () => {
           name: 'Milk',
           category: 'dairy',
           storageLocation: 'fridge',
-          quantity: 1,
-          unit: 'item',
+          quantity: null,
+          unit: null,
+          available: false,
         }),
         pantryItem({ id: 'pantry-rice', name: 'Rice', quantity: 1, unit: 'item' }),
       ],
@@ -314,15 +318,10 @@ describe('household staples experience', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Review pantry suggestions' }))
     const dialog = await screen.findByRole('dialog', { name: 'Pantry suggestions' })
-    await user.clear(within(dialog).getByLabelText(/Quantity for Milk/))
-    await user.type(within(dialog).getByLabelText(/Quantity for Milk/), '3')
-    await user.click(within(dialog).getAllByRole('button', { name: 'Update qty' })[0]!)
+    await user.click(within(dialog).getAllByRole('button', { name: 'Got it' })[0]!)
 
-    expect(update).toHaveBeenCalledWith(
-      'pantry-milk',
-      expect.objectContaining({ quantity: 3, available: true }),
-    )
-    expect(await screen.findByText('3 item')).toBeVisible()
+    expect(update).toHaveBeenCalledWith('pantry-milk', expect.objectContaining({ available: true }))
+    expect(await screen.findAllByRole('button', { name: 'Mark out of stock' })).toHaveLength(2)
 
     await user.click(within(dialog).getByRole('button', { name: 'Ignore' }))
     expect(within(dialog).queryByText('Rice')).not.toBeInTheDocument()

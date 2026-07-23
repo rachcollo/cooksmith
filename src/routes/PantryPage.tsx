@@ -68,7 +68,6 @@ export function PantryPage() {
   const [pantrySuggestionsOpen, setPantrySuggestionsOpen] = useState(false)
   const [addingInsightId, setAddingInsightId] = useState<string | null>(null)
   const [savingInsightId, setSavingInsightId] = useState<string | null>(null)
-  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({})
 
   useEffect(() => {
     let active = true
@@ -112,17 +111,6 @@ export function PantryPage() {
       const nextInsights = createPantryInsights({ pantryItems: items, shoppingItems, plannedMeals })
       setInsights(nextInsights)
       setIgnoredInsightIds(new Set())
-      setQuantityDrafts(
-        Object.fromEntries(
-          nextInsights.map((insight) => {
-            const item = items.find((candidate) => candidate.id === insight.pantryItemId)
-            return [
-              insight.id,
-              item?.quantity === null || item?.quantity === undefined ? '' : String(item.quantity),
-            ]
-          }),
-        ),
-      )
       setPantrySuggestionsOpen(true)
     } catch (suggestionError) {
       setInsightError(
@@ -149,13 +137,11 @@ export function PantryPage() {
     }
   }
 
-  async function saveInsightQuantity(insight: PantryInsight) {
+  async function markInsightGotIt(insight: PantryInsight) {
     const item = items.find((candidate) => candidate.id === insight.pantryItemId)
     if (!item) return
-    const draft = quantityDrafts[insight.id]?.trim() ?? ''
-    const quantity = draft === '' ? null : Number(draft)
-    if (Number.isNaN(quantity)) {
-      setInsightError('Use a number for the pantry quantity, or leave it blank.')
+    if (item.available) {
+      setIgnoredInsightIds((current) => new Set(current).add(insight.id))
       return
     }
     const input: PantryItemInput = {
@@ -165,9 +151,9 @@ export function PantryPage() {
       storageLocation: item.storageLocation,
       storageLocationSource: item.storageLocationSource,
       classificationVersion: item.classificationVersion,
-      quantity,
+      quantity: item.quantity,
       unit: item.unit,
-      available: quantity === null ? item.available : quantity > 0,
+      available: true,
     }
     setSavingInsightId(insight.id)
     setInsightError(null)
@@ -181,7 +167,7 @@ export function PantryPage() {
       setInsightError(
         quantityError instanceof Error
           ? quantityError.message
-          : 'Cooksmith could not update that pantry quantity.',
+          : 'Cooksmith could not update that pantry item.',
       )
     } finally {
       setSavingInsightId(null)
@@ -599,7 +585,7 @@ export function PantryPage() {
       )}
 
       <Dialog
-        description="One compact line per suggestion. Add to Shopping, update the Pantry quantity, or ignore it for this generated list."
+        description="One compact line per suggestion. Add it to Shopping, mark you have it, or ignore it for this generated list."
         onOpenChange={setPantrySuggestionsOpen}
         open={pantrySuggestionsOpen}
         title="Pantry suggestions"
@@ -614,19 +600,7 @@ export function PantryPage() {
             <ul className="pantry-suggestion-lines" aria-label="Generated pantry suggestions">
               {visibleInsights.map((insight) => (
                 <li key={insight.id} className="pantry-suggestion-line">
-                  <div className="pantry-suggestion-copy">
-                    <strong>{insight.itemName}</strong>
-                    <span>{insight.reason}</span>
-                  </div>
-                  <TextField
-                    label={`Quantity for ${insight.itemName}`}
-                    inputMode="decimal"
-                    optional
-                    value={quantityDrafts[insight.id] ?? ''}
-                    onChange={(event) =>
-                      setQuantityDrafts({ ...quantityDrafts, [insight.id]: event.target.value })
-                    }
-                  />
+                  <strong className="pantry-suggestion-name">{insight.itemName}</strong>
                   <div className="pantry-suggestion-actions">
                     <Button
                       type="button"
@@ -638,10 +612,10 @@ export function PantryPage() {
                     <Button
                       variant="secondary"
                       type="button"
-                      onClick={() => void saveInsightQuantity(insight)}
+                      onClick={() => void markInsightGotIt(insight)}
                       busy={savingInsightId === insight.id}
                     >
-                      Update qty
+                      Got it
                     </Button>
                     <Button variant="quiet" type="button" onClick={() => ignoreInsight(insight.id)}>
                       Ignore
