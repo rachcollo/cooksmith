@@ -13,6 +13,8 @@ export function PrimaryNavigation({ variant }: PrimaryNavigationProps) {
   const navigate = useNavigate()
   const [shoppingMenuOpen, setShoppingMenuOpen] = useState(false)
   const longPressTimer = useRef<number | null>(null)
+  const shoppingLongPressed = useRef(false)
+  const shoppingActive = location.pathname.startsWith('/shopping')
 
   function clearLongPressTimer() {
     if (longPressTimer.current !== null) {
@@ -23,12 +25,24 @@ export function PrimaryNavigation({ variant }: PrimaryNavigationProps) {
 
   function openShoppingMenu() {
     clearLongPressTimer()
+    shoppingLongPressed.current = true
     setShoppingMenuOpen(true)
   }
 
   function startShoppingLongPress() {
+    shoppingLongPressed.current = false
     clearLongPressTimer()
-    longPressTimer.current = window.setTimeout(openShoppingMenu, 550)
+    longPressTimer.current = window.setTimeout(openShoppingMenu, 450)
+  }
+
+  function finishShoppingPress() {
+    clearLongPressTimer()
+    if (shoppingLongPressed.current) {
+      shoppingLongPressed.current = false
+      return
+    }
+    setShoppingMenuOpen(false)
+    navigate('/shopping')
   }
 
   function requestPantryRestock() {
@@ -46,23 +60,42 @@ export function PrimaryNavigation({ variant }: PrimaryNavigationProps) {
       {items.map(({ end, icon: Icon, label, path }) =>
         label === 'Shopping' ? (
           <div className="navigation-item-with-menu" key={path}>
-            <NavLink
-              end={end}
-              to={path}
+            <button
+              type="button"
+              className="navigation-link"
+              aria-current={shoppingActive ? 'page' : undefined}
               aria-haspopup="menu"
               aria-expanded={shoppingMenuOpen}
+              onBlur={(event) => {
+                if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                  setShoppingMenuOpen(false)
+                }
+              }}
+              onClick={finishShoppingPress}
               onContextMenu={(event) => {
                 event.preventDefault()
                 openShoppingMenu()
               }}
               onPointerCancel={clearLongPressTimer}
-              onPointerDown={startShoppingLongPress}
+              onPointerDown={(event) => {
+                if (event.pointerType === 'mouse' && event.button !== 0) return
+                startShoppingLongPress()
+              }}
               onPointerLeave={clearLongPressTimer}
               onPointerUp={clearLongPressTimer}
+              onTouchStart={(event) => {
+                event.preventDefault()
+                startShoppingLongPress()
+              }}
+              onTouchEnd={(event) => {
+                event.preventDefault()
+                finishShoppingPress()
+              }}
+              onTouchCancel={clearLongPressTimer}
             >
               <Icon aria-hidden="true" />
               <span>{label}</span>
-            </NavLink>
+            </button>
             {shoppingMenuOpen ? (
               <div className="navigation-submenu" role="menu">
                 <button type="button" role="menuitem" onClick={requestPantryRestock}>

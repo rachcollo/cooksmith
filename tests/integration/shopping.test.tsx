@@ -173,7 +173,7 @@ describe('shopping list foundation', () => {
     renderShopping(repository, pantryRepository)
 
     await screen.findByRole('heading', { name: 'Done' })
-    fireEvent.contextMenu(screen.getAllByRole('link', { name: /Shopping/ })[0]!)
+    fireEvent.contextMenu(screen.getAllByRole('button', { name: /Shopping/ })[0]!)
     await user.click(await screen.findByRole('menuitem', { name: 'Restock pantry' }))
     const dialog = await screen.findByRole('dialog', { name: 'Update Pantry from shopping' })
     expect(within(dialog).getByRole('heading', { name: 'Updated' })).toBeVisible()
