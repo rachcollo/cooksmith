@@ -13,6 +13,14 @@ import { logger } from '../logging/logger'
 const SENSITIVE_KEY = /(authorization|cookie|email|password|secret|token)/i
 const EMAIL_VALUE = /[^\s@]+@[^\s@]+\.[^\s@]+/
 
+// PostHog embeds its own project API key as event.properties.token (see
+// knownUnsafeEditableEventProperty in @posthog/core) and ingest rejects any
+// event that arrives without it. It is a public project identifier, not a
+// credential, so it must survive scrubbing even though the key name matches
+// SENSITIVE_KEY. Everything else matching /token/i (auth_token, session_token,
+// etc.) is still stripped.
+const POSTHOG_PROJECT_TOKEN_KEY = 'token'
+
 interface SentryLike {
   init(options: Record<string, unknown>): void
 }
@@ -49,9 +57,13 @@ export function scrubUrl(rawUrl: unknown): string | undefined {
   }
 }
 
-function scrubRecord(record: Record<string, unknown>): Record<string, unknown> {
+function scrubRecord(
+  record: Record<string, unknown>,
+  exemptKeys: readonly string[] = [],
+): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(record).filter(([key, value]) => {
+      if (exemptKeys.includes(key)) return true
       if (SENSITIVE_KEY.test(key)) return false
       if (typeof value === 'string' && EMAIL_VALUE.test(value)) return false
       return true
@@ -92,7 +104,7 @@ export function scrubSentryEvent(event: Record<string, unknown>): Record<string,
 export function sanitisePosthogProperties(
   properties: Record<string, unknown>,
 ): Record<string, unknown> {
-  const scrubbed = scrubRecord(properties)
+  const scrubbed = scrubRecord(properties, [POSTHOG_PROJECT_TOKEN_KEY])
   for (const key of ['$current_url', '$referrer', '$pathname']) {
     if (typeof scrubbed[key] === 'string') scrubbed[key] = scrubUrl(scrubbed[key])
   }
