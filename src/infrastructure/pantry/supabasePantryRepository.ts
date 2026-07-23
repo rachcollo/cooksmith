@@ -1,6 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 
 import type { PantryRepository } from '../../application/pantry/pantryRepository'
+import { applyQuantityDelta } from '../../domain/pantry/reconciliation'
 import type { PantryItem } from '../../domain/pantry/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
@@ -107,6 +108,21 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
       pantryError(result.error)
       if (!result.data) throw new Error('Cooksmith could not update the pantry item.')
       return mapRow(result.data as unknown as PantryRow)
+    },
+
+    async reconcile(householdId, proposal) {
+      if (proposal.kind === 'skip') return null
+      if (proposal.kind === 'create') return this.create(householdId, proposal.input)
+      const existing = await database
+        .from('household_pantry_items')
+        .select(selection)
+        .eq('household_id', householdId)
+        .eq('id', proposal.pantryItemId)
+        .single()
+      pantryError(existing.error)
+      if (!existing.data) throw new Error('Cooksmith could not find that pantry item.')
+      const pantryItem = mapRow(existing.data as unknown as PantryRow)
+      return this.update(proposal.pantryItemId, applyQuantityDelta(pantryItem, proposal.quantity))
     },
 
     async remove(itemId) {

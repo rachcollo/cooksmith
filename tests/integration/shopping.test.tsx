@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -123,6 +123,77 @@ describe('shopping list foundation', () => {
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
+  it('reviews completed shopping before putting groceries into Pantry', async () => {
+    const reconcile = vi.fn(async (_householdId, proposal) => ({
+      id: proposal.kind === 'increment' ? proposal.pantryItemId : 'pantry-created',
+      householdId,
+      name: 'Milk',
+      category: 'dairy' as const,
+      categorySource: 'explicit' as const,
+      storageLocation: 'fridge' as const,
+      storageLocationSource: 'explicit' as const,
+      classificationVersion: null,
+      quantity: 3,
+      unit: 'L',
+      available: true,
+      isDefault: false,
+      updatedAt: '2026-01-01T00:00:00Z',
+    })) satisfies PantryRepository['reconcile']
+    const remove = vi.fn(async () => undefined)
+    const repository: ShoppingRepository = {
+      list: async () => [item({ completed: true })],
+      create: async () => item(),
+      update: async () => item(),
+      setCompleted: async () => item(),
+      remove,
+    }
+    const pantryRepository: PantryRepository = {
+      list: async () => [
+        {
+          id: 'pantry-milk',
+          householdId,
+          name: 'Milk',
+          category: 'dairy',
+          categorySource: 'explicit',
+          storageLocation: 'fridge',
+          storageLocationSource: 'explicit',
+          classificationVersion: null,
+          quantity: 1,
+          unit: 'L',
+          available: true,
+          isDefault: false,
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      create: async () => defaultPantryRepository.create(householdId, {} as never),
+      update: async () => defaultPantryRepository.update('', {} as never),
+      reconcile,
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+    renderShopping(repository, pantryRepository)
+
+    await screen.findByRole('heading', { name: 'Done' })
+    fireEvent.contextMenu(screen.getAllByRole('button', { name: /Shopping/ })[0]!)
+    await user.click(await screen.findByRole('menuitem', { name: 'Restock pantry' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Update Pantry from shopping' })
+    expect(within(dialog).getByRole('heading', { name: 'Updated' })).toBeVisible()
+    expect(within(dialog).getByRole('heading', { name: 'New' })).toBeVisible()
+    expect(within(dialog).getByText('Milk')).toBeVisible()
+    await user.click(within(dialog).getByRole('button', { name: 'Update the pantry' }))
+
+    expect(reconcile).toHaveBeenCalledWith(
+      householdId,
+      expect.objectContaining({
+        kind: 'increment',
+        pantryItemId: 'pantry-milk',
+        idempotencyKey: 'shopping-put-away:shopping-milk',
+      }),
+    )
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('shopping-milk'))
+    expect(screen.queryByRole('heading', { name: 'Done' })).not.toBeInTheDocument()
+  })
+
   it('quickly adds a household item with safe defaults for hidden fields', async () => {
     const create = vi.fn(async (nextHouseholdId, input) => ({
       id: 'shopping-apples',

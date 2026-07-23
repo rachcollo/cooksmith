@@ -6,6 +6,7 @@ import { usePantryRepository } from '../app/pantry/pantryContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { Button } from '../components/ui/Button'
+import { Dialog } from '../components/ui/Dialog'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
@@ -18,7 +19,15 @@ import {
 } from '../domain/shopping/types'
 import { shoppingItemInputSchema } from '../domain/shopping/validationSchemas'
 import type { PantryItem } from '../domain/pantry/types'
-import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
+import {
+  applyQuantityDelta,
+  buildPutAwayProposal,
+  numericQuantity,
+  quantitiesAreCompatible,
+  type PantryReconciliationProposal,
+} from '../domain/pantry/reconciliation'
+import { classifyPantryItem } from '../domain/pantry/classification'
+import { buildPantryMatchIndex, normalisePantryMatchName } from '../domain/shopping/pantryMatching'
 
 const emptyInput: ShoppingItemInput = {
   name: '',
@@ -45,6 +54,12 @@ export function ShoppingPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [openPantryInfoId, setOpenPantryInfoId] = useState<string | null>(null)
+  const [pantryReviewOpen, setPantryReviewOpen] = useState(false)
+  const [attentionResolutions, setAttentionResolutions] = useState<Record<string, string>>({})
+  const [reviewedReconciliationKeys, setReviewedReconciliationKeys] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [reconcilingKey, setReconcilingKey] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -89,6 +104,18 @@ export function ShoppingPage() {
     return () => document.removeEventListener('pointerdown', closeOnOutsidePress)
   }, [openPantryInfoId])
 
+  useEffect(() => {
+    function openPantryReview() {
+      window.sessionStorage.removeItem('cooksmith:open-pantry-restock')
+      setPantryReviewOpen(true)
+    }
+    window.addEventListener('cooksmith:open-pantry-restock', openPantryReview)
+    if (window.sessionStorage.getItem('cooksmith:open-pantry-restock') === 'true') {
+      openPantryReview()
+    }
+    return () => window.removeEventListener('cooksmith:open-pantry-restock', openPantryReview)
+  }, [])
+
   const outstanding = items.filter((item) => !item.completed)
   const completed = items.filter((item) => item.completed)
   const grouped = useMemo(
@@ -103,6 +130,62 @@ export function ShoppingPage() {
     () => buildPantryMatchIndex(items, pantryItems),
     [items, pantryItems],
   )
+  const putAwayProposals = useMemo(
+    () =>
+      completed.map((candidate) =>
+        buildPutAwayProposal(candidate, pantryItems, reviewedReconciliationKeys),
+      ),
+    [completed, pantryItems, reviewedReconciliationKeys],
+  )
+  const actionablePutAwayProposals = putAwayProposals.filter(
+    (proposal) => proposal.kind === 'create' || proposal.kind === 'increment',
+  )
+  const attentionPutAwayProposals = putAwayProposals.filter(
+    (proposal): proposal is Extract<PantryReconciliationProposal, { kind: 'skip' }> =>
+      proposal.kind === 'skip' && proposal.reason !== 'already-reviewed',
+  )
+  const reviewedPutAwayCount = putAwayProposals.filter(
+    (proposal) => proposal.kind === 'skip' && proposal.reason === 'already-reviewed',
+  ).length
+  const createPutAwayCount = actionablePutAwayProposals.filter(
+    (proposal) => proposal.kind === 'create',
+  ).length
+  const updatePutAwayCount = actionablePutAwayProposals.filter(
+    (proposal) => proposal.kind === 'increment',
+  ).length
+  const attentionCandidates = useMemo(
+    () =>
+      new Map(
+        attentionPutAwayProposals.map((proposal) => {
+          const sourceTokens = normalisePantryMatchName(proposal.sourceText)
+            .split(' ')
+            .filter(Boolean)
+          const candidates = pantryItems.filter((item) => {
+            const pantryTokens = normalisePantryMatchName(item.name).split(' ').filter(Boolean)
+            return (
+              item.available &&
+              pantryTokens.length > 0 &&
+              sourceTokens.length > 0 &&
+              (pantryTokens.every((token) => sourceTokens.includes(token)) ||
+                sourceTokens.every((token) => pantryTokens.includes(token)))
+            )
+          })
+          return [proposal.idempotencyKey, candidates]
+        }),
+      ),
+    [attentionPutAwayProposals, pantryItems],
+  )
+  const resolvedAttentionProposals = attentionPutAwayProposals
+    .map((proposal) => resolveAttentionProposal(proposal))
+    .filter((proposal): proposal is Exclude<PantryReconciliationProposal, { kind: 'skip' }> =>
+      Boolean(proposal),
+    )
+  const resolvedNewCount = resolvedAttentionProposals.filter(
+    (proposal) => proposal.kind === 'create',
+  ).length
+  const resolvedUpdatedCount = resolvedAttentionProposals.filter(
+    (proposal) => proposal.kind === 'increment',
+  ).length
 
   function validate(input: ShoppingItemInput, currentId?: string) {
     const result = shoppingItemInputSchema.safeParse(input)
@@ -201,6 +284,115 @@ export function ShoppingPage() {
           : 'Cooksmith could not update that item.',
       )
     }
+  }
+
+  async function applyPutAwayProposal(proposal: PantryReconciliationProposal) {
+    if (!householdId || proposal.kind === 'skip') return false
+    setReconcilingKey(proposal.idempotencyKey)
+    setError(null)
+    try {
+      let saved: PantryItem | null
+      if (pantryRepository.reconcile) {
+        saved = await pantryRepository.reconcile(householdId, proposal)
+      } else if (proposal.kind === 'create') {
+        saved = await pantryRepository.create(householdId, proposal.input)
+      } else {
+        const pantryItem = pantryItems.find((item) => item.id === proposal.pantryItemId)
+        if (!pantryItem) throw new Error('Cooksmith could not find that pantry item.')
+        saved = await pantryRepository.update(
+          proposal.pantryItemId,
+          applyQuantityDelta(pantryItem, proposal.quantity),
+        )
+      }
+      if (saved) {
+        setPantryItems((current) => [...current.filter((item) => item.id !== saved.id), saved])
+      }
+      setReviewedReconciliationKeys((current) => new Set(current).add(proposal.idempotencyKey))
+      return true
+    } catch (putAwayError) {
+      setError(
+        putAwayError instanceof Error
+          ? putAwayError.message
+          : 'Cooksmith could not update Pantry from that shopping item.',
+      )
+    } finally {
+      setReconcilingKey(null)
+    }
+    return false
+  }
+
+  async function updatePantryFromShopping() {
+    const proposals = [...actionablePutAwayProposals, ...resolvedAttentionProposals]
+    if (proposals.length === 0) return
+    const restockedShoppingIds = new Set<string>()
+    for (const proposal of proposals) {
+      const updated = await applyPutAwayProposal(proposal)
+      if (updated) restockedShoppingIds.add(proposal.sourceId)
+    }
+    if (restockedShoppingIds.size === 0) return
+    try {
+      await Promise.all(Array.from(restockedShoppingIds, (itemId) => repository.remove(itemId)))
+      setItems((current) => current.filter((item) => !restockedShoppingIds.has(item.id)))
+      setPantryReviewOpen(false)
+    } catch (removeError) {
+      setError(
+        removeError instanceof Error
+          ? removeError.message
+          : 'Cooksmith updated Pantry, but could not clear every shopping item.',
+      )
+    }
+  }
+
+  function resolveAttentionProposal(
+    proposal: Extract<PantryReconciliationProposal, { kind: 'skip' }>,
+  ): Exclude<PantryReconciliationProposal, { kind: 'skip' }> | null {
+    const source = completed.find((item) => item.id === proposal.sourceId)
+    if (!source) return null
+    const choice = attentionResolutions[proposal.idempotencyKey] ?? 'separate'
+    if (choice === 'separate') {
+      const classification = classifyPantryItem(source.name)
+      return {
+        kind: 'create',
+        source: 'shopping-put-away',
+        sourceId: source.id,
+        sourceText: source.name,
+        input: {
+          name: source.name.trim(),
+          category: classification.category,
+          categorySource: 'automatic',
+          storageLocation: classification.storageLocation,
+          storageLocationSource: 'automatic',
+          classificationVersion: classification.version,
+          quantity: numericQuantity(source.quantity),
+          unit: source.unit?.trim() || null,
+          available: true,
+        },
+        idempotencyKey: proposal.idempotencyKey,
+      }
+    }
+    const pantryItem = pantryItems.find((item) => item.id === choice)
+    if (!pantryItem) return null
+    const unit = source.unit?.trim() || null
+    if (!quantitiesAreCompatible(unit, pantryItem.unit)) return null
+    return {
+      kind: 'increment',
+      source: 'shopping-put-away',
+      sourceId: source.id,
+      sourceText: source.name,
+      pantryItemId: pantryItem.id,
+      pantryItemName: pantryItem.name,
+      quantity: numericQuantity(source.quantity),
+      unit,
+      idempotencyKey: proposal.idempotencyKey,
+    }
+  }
+
+  function markAttentionReviewed() {
+    setReviewedReconciliationKeys((current) => {
+      const next = new Set(current)
+      for (const proposal of attentionPutAwayProposals) next.add(proposal.idempotencyKey)
+      return next
+    })
   }
 
   async function removeItem(item: ShoppingItem) {
@@ -320,6 +512,139 @@ export function ShoppingPage() {
           </section>
         )
       })}
+
+      {pantryReviewOpen ? (
+        <Dialog
+          open
+          title="Update Pantry from shopping"
+          description="Cooksmith will only change Pantry after you confirm these completed shopping items."
+          onOpenChange={(open) => setPantryReviewOpen(open)}
+        >
+          <div className="pantry-update-dialog">
+            <div className="pantry-update-columns" aria-label="Pantry update summary">
+              <section>
+                <h3>Updated</h3>
+                <ul className="reconciliation-list">
+                  {actionablePutAwayProposals
+                    .filter((proposal) => proposal.kind === 'increment')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {resolvedAttentionProposals
+                    .filter((proposal) => proposal.kind === 'increment')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {updatePutAwayCount + resolvedUpdatedCount === 0 ? <li>None</li> : null}
+                </ul>
+              </section>
+              <section>
+                <h3>New</h3>
+                <ul className="reconciliation-list">
+                  {actionablePutAwayProposals
+                    .filter((proposal) => proposal.kind === 'create')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {resolvedAttentionProposals
+                    .filter((proposal) => proposal.kind === 'create')
+                    .map((proposal) => (
+                      <li key={proposal.idempotencyKey} className="reconciliation-item compact">
+                        <span>{proposal.sourceText}</span>
+                      </li>
+                    ))}
+                  {createPutAwayCount + resolvedNewCount === 0 ? <li>None</li> : null}
+                </ul>
+              </section>
+            </div>
+
+            {attentionPutAwayProposals.length > 0 ? (
+              <section>
+                <h3>Needs attention</h3>
+                <p className="form-hint">
+                  Cooksmith has suggested whether to match each item or keep it separate.
+                </p>
+                <ul className="reconciliation-list">
+                  {attentionPutAwayProposals.map((proposal) => {
+                    const candidates = attentionCandidates.get(proposal.idempotencyKey) ?? []
+                    return (
+                      <li key={proposal.idempotencyKey} className="reconciliation-attention-item">
+                        <span>{proposal.sourceText}</span>
+                        <label>
+                          <span className="visually-hidden">
+                            How should Pantry handle {proposal.sourceText}?
+                          </span>
+                          <select
+                            value={attentionResolutions[proposal.idempotencyKey] ?? 'separate'}
+                            onChange={(event) =>
+                              setAttentionResolutions((current) => ({
+                                ...current,
+                                [proposal.idempotencyKey]: event.target.value,
+                              }))
+                            }
+                          >
+                            <option value="separate">Keep separate as new</option>
+                            {candidates.map((candidate) => {
+                              const source = completed.find((item) => item.id === proposal.sourceId)
+                              const compatible = quantitiesAreCompatible(
+                                source?.unit?.trim() || null,
+                                candidate.unit,
+                              )
+                              return (
+                                <option
+                                  key={candidate.id}
+                                  value={candidate.id}
+                                  disabled={!compatible}
+                                >
+                                  Match {candidate.name}
+                                  {!compatible ? ' (unit needs manual edit)' : ''}
+                                </option>
+                              )
+                            })}
+                          </select>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            ) : null}
+
+            {reviewedPutAwayCount > 0 ? (
+              <p className="form-hint">
+                {reviewedPutAwayCount} completed item has already been reviewed.
+              </p>
+            ) : null}
+
+            <div className="dialog-actions">
+              {attentionPutAwayProposals.length > 0 ? (
+                <Button type="button" variant="secondary" onClick={markAttentionReviewed}>
+                  Mark attention reviewed
+                </Button>
+              ) : null}
+              <Button type="button" variant="secondary" onClick={() => setPantryReviewOpen(false)}>
+                Not now
+              </Button>
+              <Button
+                type="button"
+                busy={reconcilingKey !== null}
+                disabled={
+                  actionablePutAwayProposals.length + resolvedAttentionProposals.length === 0
+                }
+                onClick={() => void updatePantryFromShopping()}
+              >
+                Update the pantry
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
 
       {completed.length > 0 ? (
         <section
