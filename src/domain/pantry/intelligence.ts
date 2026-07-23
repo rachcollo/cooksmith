@@ -7,6 +7,7 @@ export type PantryInsightKind = 'recently_out' | 'low_stock' | 'upcoming_need'
 export interface PantryInsight {
   id: string
   kind: PantryInsightKind
+  pantryItemId: string
   itemName: string
   reason: string
   ruleVersion: 'pantry-intelligence-v1'
@@ -77,6 +78,7 @@ export function createPantryInsights(input: {
         add({
           id: `upcoming-need:${meal.id}:${item.id}`,
           kind: 'upcoming_need',
+          pantryItemId: item.id,
           itemName: item.name,
           reason: `${item.name} appears in ${meal.title}, but your pantry marks it out of stock.`,
           ruleVersion,
@@ -91,6 +93,7 @@ export function createPantryInsights(input: {
       add({
         id: `recently-out:${item.id}`,
         kind: 'recently_out',
+        pantryItemId: item.id,
         itemName: item.name,
         reason: `${item.name} is marked out of stock in your confirmed pantry.`,
         ruleVersion,
@@ -102,6 +105,7 @@ export function createPantryInsights(input: {
       add({
         id: `low-stock:${item.id}`,
         kind: 'low_stock',
+        pantryItemId: item.id,
         itemName: item.name,
         reason: `${item.name} has ${item.quantity} ${item.unit ?? 'item'} left, using the explicit low-stock rule for counted items.`,
         ruleVersion,

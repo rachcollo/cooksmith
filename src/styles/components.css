@@ -605,30 +605,53 @@
   color: var(--colour-text-muted);
 }
 
-.pantry-insights-panel {
-  border-color: var(--colour-brand);
+.pantry-suggestions-trigger {
+  display: flex;
+  justify-content: flex-start;
 }
 
-.pantry-insight-list {
+.pantry-suggestions-dialog {
   display: grid;
   gap: var(--space-3);
+}
+
+.pantry-suggestion-lines {
+  display: grid;
+  gap: var(--space-2);
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.pantry-insight-card {
-  align-items: start;
-  background: var(--colour-surface-subtle);
-  border: var(--border-default);
-  border-radius: var(--radius-medium);
+.pantry-suggestion-line {
+  align-items: end;
+  border-bottom: var(--border-default);
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  grid-template-columns: minmax(8rem, 1fr) minmax(5rem, 7rem) auto;
+  padding: var(--space-2) 0;
 }
 
-.pantry-insight-card p {
-  margin: var(--space-1) 0 0;
+.pantry-suggestion-copy {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pantry-suggestion-copy span {
+  color: var(--colour-text-muted);
+  font-size: 0.9rem;
+}
+
+.pantry-suggestion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+@media (max-width: 42rem) {
+  .pantry-suggestion-line {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pantry-form {

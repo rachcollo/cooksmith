@@ -221,7 +221,7 @@ describe('household staples experience', () => {
     )
   })
 
-  it('explains a pantry suggestion and only adds it to shopping after confirmation', async () => {
+  it('opens compact pantry suggestions and adds without a confirmation click', async () => {
     const createShopping = vi.fn(async (householdId, input) => ({
       id: 'shopping-milk',
       householdId,
@@ -230,7 +230,7 @@ describe('household staples experience', () => {
       position: 0,
       updatedAt: '2026-01-01T00:00:00Z',
     }))
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const confirm = vi.spyOn(window, 'confirm')
     const repository: PantryRepository = {
       list: async () => [
         pantryItem({
@@ -271,19 +271,61 @@ describe('household staples experience', () => {
       },
     )
 
-    expect(await screen.findByRole('heading', { name: 'Pantry suggestions' })).toBeVisible()
-    expect(await screen.findByText(/explicit low-stock rule/)).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Review pantry suggestions' })).toBeVisible()
+    expect(screen.queryByText(/explicit low-stock rule/)).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Add to shopping' }))
+    await user.click(screen.getByRole('button', { name: 'Review pantry suggestions' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Pantry suggestions' })
+    expect(await within(dialog).findByText(/explicit low-stock rule/)).toBeVisible()
 
-    expect(window.confirm).toHaveBeenCalledWith('Add Milk to your shopping list?')
+    await user.click(within(dialog).getByRole('button', { name: 'Add' }))
+
+    expect(confirm).not.toHaveBeenCalled()
     expect(createShopping).toHaveBeenCalledWith(householdId, {
       name: 'Milk',
       quantity: null,
       unit: null,
       category: 'dairy_and_eggs',
     })
-    expect(await screen.findByText(/No pantry suggestions right now/)).toBeVisible()
+    expect(await within(dialog).findByText(/No pantry suggestions right now/)).toBeVisible()
+  })
+
+  it('updates pantry quantity inline and ignores suggestions for the generated list', async () => {
+    const update = vi.fn(async (itemId, input) => pantryItem({ id: itemId, ...input }))
+    const repository: PantryRepository = {
+      list: async () => [
+        pantryItem({
+          id: 'pantry-milk',
+          name: 'Milk',
+          category: 'dairy',
+          storageLocation: 'fridge',
+          quantity: 1,
+          unit: 'item',
+        }),
+        pantryItem({ id: 'pantry-rice', name: 'Rice', quantity: 1, unit: 'item' }),
+      ],
+      create: async () => pantryItem({ id: 'created' }),
+      update,
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+
+    renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
+
+    await user.click(await screen.findByRole('button', { name: 'Review pantry suggestions' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Pantry suggestions' })
+    await user.clear(within(dialog).getByLabelText(/Quantity for Milk/))
+    await user.type(within(dialog).getByLabelText(/Quantity for Milk/), '3')
+    await user.click(within(dialog).getAllByRole('button', { name: 'Update qty' })[0]!)
+
+    expect(update).toHaveBeenCalledWith(
+      'pantry-milk',
+      expect.objectContaining({ quantity: 3, available: true }),
+    )
+    expect(await screen.findByText('3 item')).toBeVisible()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Ignore' }))
+    expect(within(dialog).queryByText('Rice')).not.toBeInTheDocument()
   })
 
   it('preserves remove and availability regressions', async () => {

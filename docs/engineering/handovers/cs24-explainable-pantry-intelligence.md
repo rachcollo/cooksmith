@@ -12,15 +12,15 @@ Implemented locally; remote baseline, hosted preview and GitHub Actions validati
 
 ## Scope summary
 
-CS-24 adds deterministic, explainable pantry suggestions from confirmed pantry, shopping and meal-plan state. The experience shows low-stock, upcoming-need and recently-out-of-stock prompts, suppresses already-listed shopping items, documents the reset for dismissed suggestions and requires confirmation before adding anything to Shopping.
+CS-24 adds deterministic, explainable pantry suggestions from confirmed pantry, shopping and meal-plan state. The experience now keeps the Pantry page clean with a compact Review pantry suggestions button that opens a one-item-per-line dialog for low-stock, upcoming-need and recently-out-of-stock prompts. Already-listed Shopping items are suppressed, Ignore hides a row for the generated list, Add writes straight to Shopping without a second confirmation, and inline quantity edits update Pantry.
 
 ## Files changed
 
 - `src/domain/pantry/intelligence.ts` — typed deterministic pantry insight rules.
-- `src/routes/PantryPage.tsx` — pantry suggestion panel, dismissal and confirmed add-to-shopping action.
-- `src/styles/components.css` — mobile-first suggestion card styling.
+- `src/routes/PantryPage.tsx` — compact suggestion trigger/dialog, generated-list Ignore, direct add-to-shopping action and inline Pantry quantity update.
+- `src/styles/components.css` — mobile-first compact suggestion dialog styling.
 - `tests/unit/pantryIntelligence.test.ts` — rule coverage for explanations, suppression and dismissals.
-- `tests/integration/pantry.test.tsx` — user-visible confirmation and shopping add flow.
+- `tests/integration/pantry.test.tsx` — compact suggestion review, direct shopping add, inline quantity update and ignore flow.
 - `docs/engineering/handovers/cs24-explainable-pantry-intelligence.md` — this handover.
 
 ## Validation
@@ -52,7 +52,7 @@ Not performed. No Git remote or hosted preview URL is available in this environm
 
 ## Security, privacy and accessibility
 
-The implementation uses existing authenticated repositories and household-scoped data reads. No secrets, real household data, new dependencies, paid providers, migrations or Edge Functions were added. The UI uses semantic headings, lists and buttons, preserves explicit confirmation before Shopping mutation and avoids colour-only meaning.
+The implementation uses existing authenticated repositories and household-scoped data reads. No secrets, real household data, new dependencies, paid providers, migrations or Edge Functions were added. The UI uses semantic headings, lists, labelled quantity fields and buttons, keeps the page clean behind a compact trigger and avoids colour-only meaning.
 
 ## Pull request metadata
 

@@ -63,9 +63,12 @@ export function PantryPage() {
   const [saving, setSaving] = useState(false)
   const [editingSaving, setEditingSaving] = useState(false)
   const [insights, setInsights] = useState<PantryInsight[]>([])
-  const [dismissedInsightIds, setDismissedInsightIds] = useState<Set<string>>(() => new Set())
+  const [ignoredInsightIds, setIgnoredInsightIds] = useState<Set<string>>(() => new Set())
   const [insightError, setInsightError] = useState<string | null>(null)
+  const [pantrySuggestionsOpen, setPantrySuggestionsOpen] = useState(false)
   const [addingInsightId, setAddingInsightId] = useState<string | null>(null)
+  const [savingInsightId, setSavingInsightId] = useState<string | null>(null)
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({})
 
   useEffect(() => {
     let active = true
@@ -86,49 +89,57 @@ export function PantryPage() {
     }
   }, [householdId, repository])
 
-  useEffect(() => {
-    let active = true
+  const visibleInsights = useMemo(
+    () => insights.filter((insight) => !ignoredInsightIds.has(insight.id)),
+    [ignoredInsightIds, insights],
+  )
+
+  async function generatePantrySuggestions() {
     if (!householdId) return
     const today = new Date()
     const weekEnd = new Date(today)
     weekEnd.setDate(today.getDate() + 7)
-    Promise.all([
-      shoppingRepository.list(householdId),
-      plannedMealRepository.listWeek(
-        householdId,
-        today.toISOString().slice(0, 10),
-        weekEnd.toISOString().slice(0, 10),
-      ),
-    ])
-      .then(([shoppingItems, plannedMeals]) => {
-        if (!active) return
-        setInsights(
-          createPantryInsights({
-            pantryItems: items,
-            shoppingItems,
-            plannedMeals,
-            dismissedInsightIds,
+    setInsightError(null)
+    try {
+      const [shoppingItems, plannedMeals] = await Promise.all([
+        shoppingRepository.list(householdId),
+        plannedMealRepository.listWeek(
+          householdId,
+          today.toISOString().slice(0, 10),
+          weekEnd.toISOString().slice(0, 10),
+        ),
+      ])
+      const nextInsights = createPantryInsights({ pantryItems: items, shoppingItems, plannedMeals })
+      setInsights(nextInsights)
+      setIgnoredInsightIds(new Set())
+      setQuantityDrafts(
+        Object.fromEntries(
+          nextInsights.map((insight) => {
+            const item = items.find((candidate) => candidate.id === insight.pantryItemId)
+            return [
+              insight.id,
+              item?.quantity === null || item?.quantity === undefined ? '' : String(item.quantity),
+            ]
           }),
-        )
-        setInsightError(null)
-      })
-      .catch(() => {
-        if (active) setInsightError('Pantry suggestions are unavailable right now.')
-      })
-    return () => {
-      active = false
+        ),
+      )
+      setPantrySuggestionsOpen(true)
+    } catch (suggestionError) {
+      setInsightError(
+        suggestionError instanceof Error
+          ? suggestionError.message
+          : 'Pantry suggestions are unavailable right now.',
+      )
     }
-  }, [dismissedInsightIds, householdId, items, plannedMealRepository, shoppingRepository])
+  }
 
   async function addInsightToShopping(insight: PantryInsight) {
     if (!householdId) return
-    const confirmed = window.confirm(`Add ${insight.itemName} to your shopping list?`)
-    if (!confirmed) return
     setAddingInsightId(insight.id)
     setInsightError(null)
     try {
       await shoppingRepository.create(householdId, insight.shoppingInput)
-      setDismissedInsightIds((current) => new Set(current).add(insight.id))
+      setIgnoredInsightIds((current) => new Set(current).add(insight.id))
     } catch (addError) {
       setInsightError(
         addError instanceof Error ? addError.message : 'Cooksmith could not add that item.',
@@ -138,8 +149,47 @@ export function PantryPage() {
     }
   }
 
-  function dismissInsight(insightId: string) {
-    setDismissedInsightIds((current) => new Set(current).add(insightId))
+  async function saveInsightQuantity(insight: PantryInsight) {
+    const item = items.find((candidate) => candidate.id === insight.pantryItemId)
+    if (!item) return
+    const draft = quantityDrafts[insight.id]?.trim() ?? ''
+    const quantity = draft === '' ? null : Number(draft)
+    if (Number.isNaN(quantity)) {
+      setInsightError('Use a number for the pantry quantity, or leave it blank.')
+      return
+    }
+    const input: PantryItemInput = {
+      name: item.name,
+      category: item.category,
+      categorySource: item.categorySource,
+      storageLocation: item.storageLocation,
+      storageLocationSource: item.storageLocationSource,
+      classificationVersion: item.classificationVersion,
+      quantity,
+      unit: item.unit,
+      available: quantity === null ? item.available : quantity > 0,
+    }
+    setSavingInsightId(insight.id)
+    setInsightError(null)
+    try {
+      const saved = await repository.update(item.id, input)
+      setItems((current) =>
+        current.map((candidate) => (candidate.id === saved.id ? saved : candidate)),
+      )
+      setIgnoredInsightIds((current) => new Set(current).add(insight.id))
+    } catch (quantityError) {
+      setInsightError(
+        quantityError instanceof Error
+          ? quantityError.message
+          : 'Cooksmith could not update that pantry quantity.',
+      )
+    } finally {
+      setSavingInsightId(null)
+    }
+  }
+
+  function ignoreInsight(insightId: string) {
+    setIgnoredInsightIds((current) => new Set(current).add(insightId))
   }
 
   const filteredItems = useMemo(() => {
@@ -367,45 +417,11 @@ export function PantryPage() {
         <ErrorState title="Pantry suggestions need a quick check" message={insightError} />
       ) : null}
 
-      <Panel className="pantry-insights-panel">
-        <div className="pantry-panel-heading">
-          <h2>Pantry suggestions</h2>
-          <p>
-            Deterministic prompts from confirmed pantry and meal-plan state. Dismissed suggestions
-            reset when you reload Cooksmith.
-          </p>
-        </div>
-        {insights.length === 0 ? (
-          <p>
-            No pantry suggestions right now. Cooksmith only suggests items when the rule can explain
-            why.
-          </p>
-        ) : (
-          <ul className="pantry-insight-list" aria-label="Pantry suggestions">
-            {insights.map((insight) => (
-              <li key={insight.id} className="pantry-insight-card">
-                <div>
-                  <strong>{insight.itemName}</strong>
-                  <p>{insight.reason}</p>
-                  <p className="pantry-classification-note">Rule {insight.ruleVersion}</p>
-                </div>
-                <div className="pantry-actions">
-                  <Button
-                    type="button"
-                    onClick={() => void addInsightToShopping(insight)}
-                    busy={addingInsightId === insight.id}
-                  >
-                    Add to shopping
-                  </Button>
-                  <Button variant="quiet" type="button" onClick={() => dismissInsight(insight.id)}>
-                    Dismiss
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
+      <div className="pantry-suggestions-trigger">
+        <Button variant="secondary" type="button" onClick={() => void generatePantrySuggestions()}>
+          Review pantry suggestions
+        </Button>
+      </div>
 
       <Panel className="pantry-form-panel">
         <div className="pantry-panel-heading">
@@ -581,6 +597,62 @@ export function PantryPage() {
           )
         },
       )}
+
+      <Dialog
+        description="One compact line per suggestion. Add to Shopping, update the Pantry quantity, or ignore it for this generated list."
+        onOpenChange={setPantrySuggestionsOpen}
+        open={pantrySuggestionsOpen}
+        title="Pantry suggestions"
+      >
+        <div className="pantry-suggestions-dialog">
+          {visibleInsights.length === 0 ? (
+            <p>
+              No pantry suggestions right now. Generate again later when your Pantry or meal plan
+              changes.
+            </p>
+          ) : (
+            <ul className="pantry-suggestion-lines" aria-label="Generated pantry suggestions">
+              {visibleInsights.map((insight) => (
+                <li key={insight.id} className="pantry-suggestion-line">
+                  <div className="pantry-suggestion-copy">
+                    <strong>{insight.itemName}</strong>
+                    <span>{insight.reason}</span>
+                  </div>
+                  <TextField
+                    label={`Quantity for ${insight.itemName}`}
+                    inputMode="decimal"
+                    optional
+                    value={quantityDrafts[insight.id] ?? ''}
+                    onChange={(event) =>
+                      setQuantityDrafts({ ...quantityDrafts, [insight.id]: event.target.value })
+                    }
+                  />
+                  <div className="pantry-suggestion-actions">
+                    <Button
+                      type="button"
+                      onClick={() => void addInsightToShopping(insight)}
+                      busy={addingInsightId === insight.id}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => void saveInsightQuantity(insight)}
+                      busy={savingInsightId === insight.id}
+                    >
+                      Update qty
+                    </Button>
+                    <Button variant="quiet" type="button" onClick={() => ignoreInsight(insight.id)}>
+                      Ignore
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Dialog>
 
       {editingItem ? (
         <Dialog
