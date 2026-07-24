@@ -12,6 +12,7 @@ import { OnboardingGate } from '../onboarding/OnboardingGate'
 import { RouteErrorPage } from '../errors/RouteErrorPage'
 import { LoadingState } from '../../components/ui/LoadingState'
 import {
+  GetAheadPage,
   HealthPage,
   HomePage,
   NotFoundPage,
@@ -77,6 +78,7 @@ export const appRoutes: RouteObject[] = [
                   { path: 'recipes', element: <RecipesPage /> },
                   { path: 'plan', element: <PlanPage /> },
                   { path: 'shopping', element: <ShoppingPage /> },
+                  { path: 'get-ahead', element: <GetAheadPage /> },
                   { path: 'settings', element: <SettingsPage /> },
                   { path: '*', element: <NotFoundPage /> },
                 ],

@@ -20,6 +20,11 @@ export const PlanPage = lazy(async () => {
   return { default: module.PlanPage }
 })
 
+export const GetAheadPage = lazy(async () => {
+  const module = await import('../../routes/GetAheadPage')
+  return { default: module.GetAheadPage }
+})
+
 export const ShoppingPage = lazy(async () => {
   const module = await import('../../routes/ShoppingPage')
   return { default: module.ShoppingPage }
