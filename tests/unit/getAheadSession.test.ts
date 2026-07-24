@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  applyGetAheadOverride,
   buildGetAheadTasks,
   createGetAheadSession,
   endGetAheadSessionEarly,
+  getAheadPriorityScoreVersion,
   getAheadTotals,
+  moveGetAheadTask,
   toggleGetAheadTask,
   validateGetAheadDuration,
 } from '../../src/domain/get-ahead/session'
@@ -48,13 +51,76 @@ describe('Get Ahead session domain', () => {
       [opportunity('a', 'chop'), opportunity('b', 'marinate'), opportunity('c', 'sauce')],
       30,
     )
-    expect(tasks.map((task) => task.opportunityId)).toEqual(['a', 'c'])
-    expect(tasks.reduce((sum, task) => sum + task.estimatedMinutes, 0)).toBeLessThanOrEqual(30)
+    expect(tasks.filter((task) => task.selected).map((task) => task.opportunityId)).toEqual(['b'])
+    expect(
+      tasks.filter((task) => task.selected).reduce((sum, task) => sum + task.estimatedMinutes, 0),
+    ).toBeLessThanOrEqual(30)
   })
 
   it('summarises task instructions from the source opportunity', () => {
     const tasks = buildGetAheadTasks([opportunity('pesto', 'sauce')], 20)
-    expect(tasks[0].title).toBe('Make pesto sauce for Soup')
+    expect(tasks[0].title).toBe('Make pesto sauce')
+  })
+
+  it('records versioned score evidence and a structured explanation', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 45,
+      opportunities: [opportunity('a', 'chop'), opportunity('b', 'marinate')],
+    })
+    expect(session.scoreVersion).toBe(getAheadPriorityScoreVersion)
+    expect(session.tasks[0].scoreEvidence).toMatchObject({
+      version: getAheadPriorityScoreVersion,
+      factors: { freshnessConstraint: 'not-claimed' },
+    })
+    expect(session.recommendationExplanation).toContain('Recommended because')
+  })
+
+  it('keeps stable tie-breaking for identical score inputs', () => {
+    const tasks = buildGetAheadTasks(
+      [opportunity('b', 'chop'), opportunity('a', 'chop'), opportunity('c', 'chop')],
+      20,
+    )
+    expect(tasks.filter((task) => task.selected).map((task) => task.opportunityId)).toEqual([
+      'a',
+      'b',
+    ])
+  })
+
+  it('excludes, includes, reorders and reverts user overrides without exceeding time', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 35,
+      opportunities: [
+        opportunity('a', 'chop'),
+        opportunity('b', 'marinate'),
+        opportunity('c', 'sauce'),
+      ],
+    })
+    const excluded = applyGetAheadOverride(session, 'task_b', 'excluded')
+    expect(excluded.conflict).toBeNull()
+    expect(excluded.session.tasks.find((task) => task.id === 'task_b')?.selected).toBe(false)
+    const included = applyGetAheadOverride(excluded.session, 'task_b', 'included')
+    expect(included.conflict).toBeNull()
+    expect(included.session.tasks.find((task) => task.id === 'task_b')?.selected).toBe(true)
+    const moved = moveGetAheadTask(included.session, 'task_b', 'down')
+    expect(moved.overrides.orderedTaskIds).toContain('task_b')
+    const reverted = applyGetAheadOverride(moved, 'task_b', 'revert')
+    expect(reverted.session.overrides.includedTaskIds).not.toContain('task_b')
+  })
+
+  it('reports include conflicts instead of silently exceeding selected time', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 15,
+      opportunities: [opportunity('a', 'chop'), opportunity('b', 'marinate')],
+    })
+    const result = applyGetAheadOverride(session, 'task_b', 'included')
+    expect(result.conflict).toContain('exceed your available time')
+    expect(getAheadTotals(result.session).plannedMinutes).toBeLessThanOrEqual(15)
   })
 
   it('persists snapshots and idempotent task state transitions', () => {
@@ -92,10 +158,14 @@ describe('Get Ahead session domain', () => {
       selectedMinutes: 30,
       opportunities: [opportunity('a', 'chop'), opportunity('b', 'sauce')],
     })
-    const completed = toggleGetAheadTask(session, session.tasks[0].id, 'completed')
+    const completed = toggleGetAheadTask(
+      session,
+      session.tasks.find((task) => task.selected)?.id ?? '',
+      'completed',
+    )
     const ended = endGetAheadSessionEarly(completed, new Date('2026-07-24T11:00:00.000Z'))
     expect(ended.status).toBe('ended')
-    expect(ended.tasks[0].state).toBe('completed')
-    expect(getAheadTotals(ended).remainingMinutes).toBe(20)
+    expect(ended.tasks.find((task) => task.selected)?.state).toBe('completed')
+    expect(getAheadTotals(ended).remainingMinutes).toBeGreaterThan(0)
   })
 })

@@ -13,6 +13,7 @@ import { Panel } from '../components/ui/Panel'
 import { FormError } from '../components/ui/FormField'
 import { analysePreparationOpportunities } from '../domain/get-ahead/preparationOpportunities'
 import {
+  applyGetAheadOverride,
   createGetAheadSession,
   endGetAheadSessionEarly,
   getAheadDurationPresets,
@@ -22,7 +23,7 @@ import {
   validateGetAheadDuration,
   type GetAheadSession,
 } from '../domain/get-ahead/session'
-import { addDays, currentWeek, formatDisplayDate } from '../domain/meal-plans/week'
+import { addDays, currentWeek } from '../domain/meal-plans/week'
 import type { PlannedMeal } from '../domain/meal-plans/types'
 import type { Recipe } from '../domain/recipes/types'
 
@@ -53,6 +54,7 @@ export function GetAheadPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [overrideError, setOverrideError] = useState<string | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
 
   useEffect(() => {
@@ -103,7 +105,9 @@ export function GetAheadPage() {
     const next = createGetAheadSession({ householdId, planId, selectedMinutes, opportunities })
     persist(next)
     setShowChecklist(true)
-    setAnnouncement(`Get Ahead session created with ${next.tasks.length} tasks.`)
+    setAnnouncement(
+      `Get Ahead session created with ${next.tasks.filter((task) => task.selected).length} tasks.`,
+    )
   }
 
   function startFresh() {
@@ -214,49 +218,83 @@ export function GetAheadPage() {
             </strong>
             <span>{getAheadTotals(visibleSession).plannedMinutes} minutes planned.</span>
           </div>
-          {visibleSession.tasks.length === 0 ? (
+          {visibleSession.tasks.filter((task) => task.selected).length === 0 ? (
             <EmptyState
               title="No preparation tasks found"
               message="Your current plan has no supported Get Ahead opportunities yet."
             />
           ) : null}
+          <p>{visibleSession.recommendationExplanation}</p>
+          {overrideError ? (
+            <FormError id="get-ahead-override-error">{overrideError}</FormError>
+          ) : null}
           <ul className="plain-list flow-stack">
-            {visibleSession.tasks.map((task) => {
-              const currentRecipe = recipeList.find((recipe) => recipe.id === task.recipeId) ?? null
-              const stale = isTaskStale(task, currentRecipe?.updatedAt ?? null)
-              return (
-                <li className="task-row" key={task.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={task.state === 'completed'}
-                      disabled={stale}
-                      onChange={(event) => {
-                        const next = toggleGetAheadTask(
-                          visibleSession,
-                          task.id,
-                          event.target.checked ? 'completed' : 'open',
-                        )
-                        persist(next)
-                        setAnnouncement(
-                          `${task.title} ${event.target.checked ? 'completed' : 'reopened'}.`,
-                        )
-                      }}
-                    />
-                    <span>
-                      <strong>{task.title}</strong>
-                      <small>
-                        {task.estimatedMinutes} min estimate, {formatDisplayDate(task.mealDate)}
-                      </small>
-                      {stale ? (
-                        <small role="status">Source changed since this session was created.</small>
-                      ) : null}
-                    </span>
-                  </label>
-                </li>
-              )
-            })}
+            {visibleSession.tasks
+              .filter((task) => task.selected)
+              .map((task) => {
+                const currentRecipe =
+                  recipeList.find((recipe) => recipe.id === task.recipeId) ?? null
+                const stale = isTaskStale(task, currentRecipe?.updatedAt ?? null)
+                return (
+                  <li className="task-row" key={task.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={task.state === 'completed'}
+                        disabled={stale}
+                        onChange={(event) => {
+                          const next = toggleGetAheadTask(
+                            visibleSession,
+                            task.id,
+                            event.target.checked ? 'completed' : 'open',
+                          )
+                          persist(next)
+                          setAnnouncement(
+                            `${task.title} ${event.target.checked ? 'completed' : 'reopened'}.`,
+                          )
+                        }}
+                      />
+                      <span>
+                        <strong>{task.title}</strong>
+                        <small>{task.estimatedMinutes} min estimate</small>
+                        {stale ? (
+                          <small role="status">
+                            Source changed since this session was created.
+                          </small>
+                        ) : null}
+                      </span>
+                    </label>
+                  </li>
+                )
+              })}
           </ul>
+          {visibleSession.tasks.some((task) => !task.selected) ? (
+            <div className="flow-stack">
+              <h2>Eligible alternatives</h2>
+              <ul className="plain-list flow-stack">
+                {visibleSession.tasks
+                  .filter((task) => !task.selected)
+                  .map((task) => (
+                    <li className="task-row" key={task.id}>
+                      <span>
+                        <strong>{task.title}</strong>
+                        <small>{task.estimatedMinutes} min estimate</small>
+                      </span>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          const result = applyGetAheadOverride(visibleSession, task.id, 'included')
+                          setOverrideError(result.conflict)
+                          persist(result.session)
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="cluster">
             <Button
               variant="secondary"
