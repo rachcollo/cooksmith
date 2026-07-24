@@ -25,7 +25,12 @@ function opportunity(id: string, type: PreparationOpportunity['type']): Preparat
     recipeId: 'recipe-1',
     recipeName: 'Soup',
     recipeUpdatedAt: '2026-07-24T00:00:00.000Z',
-    source: { kind: 'step', stepId: `step-${id}`, position: 1, text: 'Chop onions' },
+    source: {
+      kind: 'step',
+      stepId: `step-${id}`,
+      position: 1,
+      text: type === 'sauce' ? 'Make the pesto sauce' : 'Chop onions',
+    },
     reason: 'Recipe instruction includes preparation.',
   }
 }
@@ -45,6 +50,11 @@ describe('Get Ahead session domain', () => {
     )
     expect(tasks.map((task) => task.opportunityId)).toEqual(['a', 'c'])
     expect(tasks.reduce((sum, task) => sum + task.estimatedMinutes, 0)).toBeLessThanOrEqual(30)
+  })
+
+  it('summarises task instructions from the source opportunity', () => {
+    const tasks = buildGetAheadTasks([opportunity('pesto', 'sauce')], 20)
+    expect(tasks[0].title).toBe('Make pesto sauce for Soup')
   })
 
   it('persists snapshots and idempotent task state transitions', () => {

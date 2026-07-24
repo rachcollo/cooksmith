@@ -5,13 +5,12 @@ import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../app/recipes/recipeContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
-import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
-import { TextField } from '../components/ui/TextField'
+import { FormError } from '../components/ui/FormField'
 import { analysePreparationOpportunities } from '../domain/get-ahead/preparationOpportunities'
 import {
   createGetAheadSession,
@@ -117,6 +116,17 @@ export function GetAheadPage() {
     setAnnouncement('Fresh Get Ahead session started.')
   }
 
+  function updatePreset(event: ChangeEvent<HTMLSelectElement>) {
+    if (event.target.value === 'custom') {
+      setCustomMinutes(String(selectedMinutes))
+      return
+    }
+    const next = Number(event.target.value)
+    setCustomMinutes('')
+    setSelectedMinutes(next)
+    setDurationError(null)
+  }
+
   function updateCustom(event: ChangeEvent<HTMLInputElement>) {
     setCustomMinutes(event.target.value)
     const next = Number(event.target.value)
@@ -130,52 +140,52 @@ export function GetAheadPage() {
   return (
     <>
       <DocumentTitle title="Get Ahead" />
-      <PageHeader
-        eyebrow="Get Ahead"
-        title="How much time do you have today?"
-        description="Choose a calm preparation session for this week’s planned dinners. Estimates are guides, not food-safety guarantees."
-      />
+      <header className="page-header compact-page-header">
+        <div className="page-header-copy">
+          <h1>How much time do you have today?</h1>
+        </div>
+      </header>
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
       {!visibleSession || visibleSession.status !== 'active' ? (
         <Panel className="flow-stack">
-          <form className="flow-stack" onSubmit={startSession}>
-            <fieldset className="duration-grid">
-              <legend>Choose available time</legend>
-              {getAheadDurationPresets.map((minutes) => (
-                <label className="choice-card" key={minutes}>
-                  <input
-                    type="radio"
-                    name="duration"
-                    value={minutes}
-                    checked={selectedMinutes === minutes && customMinutes === ''}
-                    onChange={() => {
-                      setCustomMinutes('')
-                      setSelectedMinutes(minutes)
-                      setDurationError(null)
-                    }}
-                  />
-                  <span>{durationLabels.get(minutes)}</span>
-                </label>
-              ))}
-            </fieldset>
-            <div>
-              <TextField
+          <form className="duration-inline-form" onSubmit={startSession}>
+            <label className="duration-select-label" htmlFor="duration-preset">
+              <span className="sr-only">Preset duration</span>
+              <select
+                id="duration-preset"
+                value={customMinutes ? 'custom' : selectedMinutes}
+                onChange={updatePreset}
+              >
+                {getAheadDurationPresets.map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {durationLabels.get(minutes)}
+                  </option>
+                ))}
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <label className="custom-duration-label" htmlFor="custom-duration">
+              <span className="sr-only">Custom minutes</span>
+              <input
                 id="custom-duration"
-                label="Custom minutes"
+                aria-describedby={durationError ? 'custom-duration-error' : undefined}
+                aria-invalid={Boolean(durationError)}
                 inputMode="numeric"
                 min={5}
                 max={240}
+                placeholder="Mins"
                 step={1}
                 type="number"
                 value={customMinutes}
                 onChange={updateCustom}
-                error={durationError ?? undefined}
-                hint="Use whole minutes from 5 to 240."
               />
-            </div>
-            <Button type="submit">Start Get Ahead</Button>
+            </label>
+            <Button type="submit">Start</Button>
+            {durationError ? (
+              <FormError id="custom-duration-error">{durationError}</FormError>
+            ) : null}
           </form>
         </Panel>
       ) : (

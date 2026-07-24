@@ -186,6 +186,39 @@ export function isTaskStale(task: GetAheadTaskSnapshot, currentRecipeUpdatedAt: 
 }
 
 function titleForOpportunity(opportunity: PreparationOpportunity) {
-  const source = opportunity.source.kind === 'ingredient' ? 'ingredient prep' : 'recipe step'
-  return `Prepare ${source} for ${opportunity.recipeName}`
+  const sourceText = summariseSourceText(opportunity.source.text)
+  switch (opportunity.type) {
+    case 'chop':
+    case 'duplicate-preparation-signal':
+      return `Chop and prep ${removeLeadingAction(sourceText, ['chop', 'dice', 'slice', 'mince', 'shred', 'grate'])} for ${opportunity.recipeName}`
+    case 'marinate':
+      return `Marinate ${removeLeadingAction(sourceText, ['marinate'])} for ${opportunity.recipeName}`
+    case 'sauce':
+      return `Make ${removeLeadingAction(sourceText, ['make', 'prepare', 'mix', 'stir', 'whisk', 'blend'])} for ${opportunity.recipeName}`
+    case 'cook-component':
+      return `Cook ${removeLeadingAction(sourceText, ['cook', 'roast', 'bake', 'boil', 'steam', 'simmer', 'toast'])} ahead for ${opportunity.recipeName}`
+    case 'leftover-signal':
+      return `Set aside ${sourceText} for ${opportunity.recipeName}`
+    case 'freezer-signal':
+      return `Prepare freezer step: ${sourceText}`
+  }
+}
+
+function summariseSourceText(text: string) {
+  return text
+    .replace(/^[0-9]+[.)]?\s*/, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[.!?]+$/, '')
+    .trim()
+    .slice(0, 90)
+}
+
+function removeLeadingAction(text: string, verbs: string[]) {
+  const pattern = new RegExp(`^(${verbs.join('|')})(?:ed|ing)?\\s+`, 'i')
+  return (
+    text
+      .replace(pattern, '')
+      .replace(/^the\s+/i, '')
+      .trim() || text
+  )
 }
