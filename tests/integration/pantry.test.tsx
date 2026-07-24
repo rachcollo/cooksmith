@@ -75,8 +75,10 @@ describe('household staples experience', () => {
     expect(screen.queryByRole('heading', { name: 'Milk' })).not.toBeInTheDocument()
 
     await userEvent.clear(screen.getByLabelText('Search staples'))
-    await userEvent.type(screen.getByLabelText('Item name'), 'Greek yoghurt')
-    await userEvent.click(screen.getByRole('button', { name: 'Add item' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add pantry item' }))
+    const addDialog = screen.getByRole('dialog', { name: 'Add pantry item' })
+    await userEvent.type(within(addDialog).getByLabelText('Item name'), 'Greek yoghurt')
+    await userEvent.click(within(addDialog).getByRole('button', { name: 'Add item' }))
 
     expect(create).toHaveBeenCalledWith(householdId, {
       name: 'Greek yoghurt',
@@ -90,6 +92,29 @@ describe('household staples experience', () => {
       available: true,
     })
     expect(await screen.findByRole('heading', { name: 'Greek yoghurt' })).toBeVisible()
+  })
+
+  it('keeps add pantry item fields in a compact modal until requested', async () => {
+    const repository: PantryRepository = {
+      list: async () => [pantryItem({})],
+      create: async () => pantryItem({ id: 'created' }),
+      update: async (itemId, input) => pantryItem({ id: itemId, ...input }),
+      remove: async () => undefined,
+    }
+    const user = userEvent.setup()
+
+    renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
+    expect(await screen.findByRole('button', { name: 'Add pantry item' })).toBeVisible()
+    expect(screen.queryByRole('textbox', { name: /Item name/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Add pantry item' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add pantry item' })
+    expect(within(dialog).getByLabelText('Item name')).toBeVisible()
+    expect(within(dialog).getByLabelText(/Quantity/)).toBeVisible()
+    expect(within(dialog).getByLabelText(/Unit/)).toBeVisible()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog', { name: 'Add pantry item' })).not.toBeInTheDocument()
   })
 
   it('edits an existing item in a modal and updates only that pantry card', async () => {

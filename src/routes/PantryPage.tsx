@@ -60,6 +60,7 @@ export function PantryPage() {
   const [category, setCategory] = useState<'all' | PantryItem['category']>('all')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [addingOpen, setAddingOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingSaving, setEditingSaving] = useState(false)
   const [insights, setInsights] = useState<PantryInsight[]>([])
@@ -280,6 +281,7 @@ export function PantryPage() {
       setItems((current) => [...current, saved])
       setDraft(emptyInput)
       setFieldErrors({})
+      setAddingOpen(false)
     } catch (saveError) {
       setItemError(
         saveError instanceof Error ? saveError.message : 'Cooksmith could not save that item.',
@@ -409,52 +411,14 @@ export function PantryPage() {
         </Button>
       </div>
 
-      <Panel className="pantry-form-panel">
+      <Panel className="pantry-quick-actions" aria-labelledby="pantry-actions-title">
         <div className="pantry-panel-heading">
-          <h2>Add a pantry item</h2>
-          <p>Track the staples your household expects to have on hand.</p>
+          <h2 id="pantry-actions-title">Keep pantry tidy</h2>
+          <p>Add a staple only when you need it, without pushing the list down the page.</p>
         </div>
-        <form className="pantry-form" onSubmit={(event) => void submit(event)}>
-          <TextField
-            error={fieldErrors.name}
-            label="Item name"
-            required
-            value={draft.name}
-            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-          />
-          <TextField
-            error={fieldErrors.quantity}
-            label="Quantity"
-            inputMode="decimal"
-            optional
-            value={draft.quantity === null ? '' : String(draft.quantity)}
-            onChange={(event) =>
-              setDraft({
-                ...draft,
-                quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
-              })
-            }
-          />
-          <TextField
-            error={fieldErrors.unit}
-            label="Unit"
-            optional
-            value={draft.unit ?? ''}
-            onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
-          />
-          <label className="checkbox-field">
-            <input
-              type="checkbox"
-              checked={draft.available}
-              onChange={(event) => setDraft({ ...draft, available: event.target.checked })}
-            />
-            Available now
-          </label>
-          {itemError ? <p className="form-error">{itemError}</p> : null}
-          <Button type="submit" busy={saving} disabled={draft.name.trim() === ''}>
-            Add item
-          </Button>
-        </form>
+        <Button type="button" onClick={() => setAddingOpen(true)}>
+          Add pantry item
+        </Button>
       </Panel>
 
       <Panel>
@@ -626,6 +590,76 @@ export function PantryPage() {
             </ul>
           )}
         </div>
+      </Dialog>
+
+      <Dialog
+        description="Add the staple name and, if useful, a quantity. Cooksmith will suggest the best category and storage location."
+        onOpenChange={(open) => {
+          if (saving) return
+          setAddingOpen(open)
+          if (!open) {
+            setDraft(emptyInput)
+            setFieldErrors({})
+            setItemError(null)
+          }
+        }}
+        open={addingOpen}
+        title="Add pantry item"
+      >
+        <form className="pantry-form pantry-compact-form" onSubmit={(event) => void submit(event)}>
+          <TextField
+            data-autofocus
+            error={fieldErrors.name}
+            label="Item name"
+            required
+            value={draft.name}
+            onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+          />
+          <div className="pantry-quantity-fields">
+            <TextField
+              error={fieldErrors.quantity}
+              label="Quantity"
+              inputMode="decimal"
+              optional
+              value={draft.quantity === null ? '' : String(draft.quantity)}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+                })
+              }
+            />
+            <TextField
+              error={fieldErrors.unit}
+              label="Unit"
+              optional
+              value={draft.unit ?? ''}
+              onChange={(event) => setDraft({ ...draft, unit: event.target.value })}
+            />
+          </div>
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={draft.available}
+              onChange={(event) => setDraft({ ...draft, available: event.target.checked })}
+            />
+            Available now
+          </label>
+          {itemError ? <p className="form-error">{itemError}</p> : null}
+          <div className="dialog-actions">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setAddingOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" busy={saving} disabled={draft.name.trim() === ''}>
+              Add item
+            </Button>
+          </div>
+        </form>
       </Dialog>
 
       {editingItem ? (

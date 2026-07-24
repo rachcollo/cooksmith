@@ -610,6 +610,12 @@
   justify-content: flex-start;
 }
 
+.pantry-quick-actions {
+  align-items: start;
+  display: grid;
+  gap: var(--space-4);
+}
+
 .pantry-suggestions-dialog {
   display: grid;
   gap: var(--space-3);
@@ -742,6 +748,22 @@
 
 .pantry-edit-form {
   grid-template-columns: 1fr;
+}
+
+.pantry-compact-form {
+  grid-template-columns: 1fr;
+}
+
+.pantry-quantity-fields {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+@media (max-width: 30rem) {
+  .pantry-quantity-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .recipe-form {
