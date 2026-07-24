@@ -7,9 +7,10 @@ export const getAheadSessionVersion = 'get-ahead-session-v1' as const
 export const getAheadPriorityScoreVersion = 'get-ahead-priority-v1' as const
 export const getAheadConsolidationVersion = 'get-ahead-consolidation-v1' as const
 
-export type GetAheadTaskState = 'open' | 'completed'
+export type GetAheadTaskState = 'remaining' | 'completed' | 'skipped' | 'deferred'
 export type GetAheadSessionStatus = 'active' | 'ended' | 'completed'
 export type GetAheadOverrideKind = 'excluded' | 'included'
+export type GetAheadChecklistAction = 'complete' | 'reopen' | 'skip' | 'defer'
 
 export interface GetAheadScoreEvidence {
   version: typeof getAheadPriorityScoreVersion
@@ -94,6 +95,15 @@ export interface GetAheadTotals {
   remainingMinutes: number
   completedMinutes: number
   estimatedTimeSavedMinutes: number
+  remainingPotentialMinutes: number
+  progressPercent: number
+  progressLabel: string
+  progressMode: 'duration' | 'task-count'
+}
+
+export interface GetAheadTransitionResult {
+  session: GetAheadSession
+  error: string | null
 }
 
 export function validateGetAheadDuration(minutes: number): string | null {
@@ -180,8 +190,59 @@ export function toggleGetAheadTask(
   state: GetAheadTaskState,
   now = new Date(),
 ): GetAheadSession {
-  const tasks = session.tasks.map((task) => (task.id === taskId ? { ...task, state } : task))
-  return withUpdatedTasks(session, tasks, now)
+  return transitionGetAheadTask(session, taskId, state === 'completed' ? 'complete' : 'reopen', now)
+    .session
+}
+
+export function transitionGetAheadTask(
+  session: GetAheadSession,
+  taskId: string,
+  action: GetAheadChecklistAction,
+  now = new Date(),
+): GetAheadTransitionResult {
+  const task = session.tasks.find((candidate) => candidate.id === taskId)
+  if (!task) return { session, error: 'That task is not available in this session.' }
+  const nextState = stateForChecklistAction(action)
+  if (!isLegalTaskTransition(task.state, nextState)) {
+    return { session, error: `That task cannot move from ${task.state} to ${nextState}.` }
+  }
+  const overrides = removeOverride(session.overrides, taskId)
+  if (nextState === 'skipped' || nextState === 'deferred') overrides.excludedTaskIds.push(taskId)
+  const changedTasks = session.tasks.map((candidate) =>
+    candidate.id === taskId ? { ...candidate, state: nextState } : candidate,
+  )
+  const selectedIds = selectWithOverrides(changedTasks, session.selectedMinutes, overrides)
+  return {
+    session: withUpdatedTasks(
+      session,
+      orderTasks(changedTasks, selectedIds, overrides),
+      now,
+      overrides,
+    ),
+    error: null,
+  }
+}
+
+export function isLegalTaskTransition(
+  current: GetAheadTaskState,
+  next: GetAheadTaskState,
+): boolean {
+  if (current === next) return true
+  if (next === 'remaining') return true
+  return current === 'remaining'
+}
+
+function stateForChecklistAction(action: GetAheadChecklistAction): GetAheadTaskState {
+  switch (action) {
+    case 'complete':
+      return 'completed'
+    case 'reopen':
+      return 'remaining'
+    case 'skip':
+      return 'skipped'
+    case 'defer':
+      return 'deferred'
+  }
 }
 
 export function applyGetAheadOverride(
@@ -215,7 +276,7 @@ export function moveGetAheadTask(
   now = new Date(),
 ): GetAheadSession {
   const selectedOpenIds = session.tasks
-    .filter((task) => task.selected && task.state !== 'completed')
+    .filter((task) => task.selected && task.state === 'remaining')
     .sort((a, b) => a.order - b.order)
     .map((task) => task.id)
   const index = selectedOpenIds.indexOf(taskId)
@@ -240,21 +301,36 @@ export function endGetAheadSessionEarly(
 }
 
 export function getAheadTotals(session: GetAheadSession): GetAheadTotals {
+  const actionableTasks = session.tasks.filter(
+    (task) => task.selected || task.state === 'completed',
+  )
   const selectedTasks = session.tasks.filter((task) => task.selected)
-  const plannedMinutes = selectedTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0)
-  const completedMinutes = selectedTasks
-    .filter((task) => task.state === 'completed')
-    .reduce((sum, task) => sum + task.estimatedMinutes, 0)
-  const estimatedTimeSavedMinutes = selectedTasks.reduce(
+  const completedTasks = actionableTasks.filter((task) => task.state === 'completed')
+  const plannedMinutes = actionableTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0)
+  const completedMinutes = completedTasks.reduce((sum, task) => sum + task.estimatedMinutes, 0)
+  const estimatedTimeSavedMinutes = completedTasks.reduce(
     (sum, task) => sum + task.estimatedTimeSavedMinutes,
     0,
   )
+  const remainingPotentialMinutes = selectedTasks
+    .filter((task) => task.state === 'remaining')
+    .reduce((sum, task) => sum + task.estimatedTimeSavedMinutes, 0)
+  const canUseDurationProgress = actionableTasks.every((task) => task.estimatedMinutes > 0)
+  const progressPercent = canUseDurationProgress
+    ? percentage(completedMinutes, plannedMinutes)
+    : percentage(completedTasks.length, actionableTasks.length)
   return {
     selectedMinutes: session.selectedMinutes,
     plannedMinutes,
     remainingMinutes: Math.max(0, session.selectedMinutes - completedMinutes),
     completedMinutes,
     estimatedTimeSavedMinutes,
+    remainingPotentialMinutes,
+    progressPercent,
+    progressLabel: canUseDurationProgress
+      ? `${completedMinutes} of ${plannedMinutes} planned prep minutes complete`
+      : `${completedTasks.length} of ${actionableTasks.length} tasks complete`,
+    progressMode: canUseDurationProgress ? 'duration' : 'task-count',
   }
 }
 
@@ -282,7 +358,7 @@ function toTaskSnapshot(opportunity: PreparationOpportunity): GetAheadTaskSnapsh
     reason: opportunity.reason,
     estimatedMinutes,
     estimatedTimeSavedMinutes,
-    state: 'open',
+    state: 'remaining',
     order: 0,
     selected: false,
     consolidation: null,
@@ -418,7 +494,7 @@ function selectWithOverrides(
   overrides: GetAheadUserOverrides,
 ): string[] {
   const completedIds = new Set(
-    tasks.filter((task) => task.state === 'completed').map((task) => task.id),
+    tasks.filter((task) => task.state !== 'remaining').map((task) => task.id),
   )
   const excludedIds = new Set(overrides.excludedTaskIds)
   const selectedIds = new Set<string>()
@@ -434,7 +510,10 @@ function selectWithOverrides(
   tasks
     .filter(
       (task) =>
-        !completedIds.has(task.id) && !excludedIds.has(task.id) && !selectedIds.has(task.id),
+        task.state === 'remaining' &&
+        !completedIds.has(task.id) &&
+        !excludedIds.has(task.id) &&
+        !selectedIds.has(task.id),
     )
     .sort(compareTasks)
     .forEach((task) => {
@@ -508,15 +587,16 @@ function withUpdatedTasks(
     tasks,
     overrides,
     recommendationExplanation: explainRecommendation(tasks),
-    status:
-      tasks.some((task) => task.selected) &&
-      tasks.filter((task) => task.selected).every((task) => task.state === 'completed')
-        ? 'completed'
-        : tasks.some((task) => task.selected)
-          ? 'active'
-          : 'completed',
+    status: tasks.some((task) => task.selected || task.state === 'completed')
+      ? 'active'
+      : 'completed',
     updatedAt: now.toISOString(),
   }
+}
+
+function percentage(value: number, total: number) {
+  if (total <= 0) return 0
+  return Math.max(0, Math.min(100, Math.round((value / total) * 100)))
 }
 
 function explainRecommendation(tasks: GetAheadTaskSnapshot[]) {

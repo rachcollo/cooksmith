@@ -1958,6 +1958,11 @@
   color: var(--color-text-muted);
 }
 
+.task-row-completed .task-row-title strong {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
 .compact-page-header {
   margin-bottom: var(--space-3);
 }

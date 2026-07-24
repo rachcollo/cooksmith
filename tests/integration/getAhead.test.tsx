@@ -94,7 +94,7 @@ const recipeRepository: RecipeRepository = {
 }
 
 describe('Get Ahead page', () => {
-  it('keeps per-item rows simple and only shows total time saved in the summary', async () => {
+  it('keeps prep rows compact and strikes through completed checklist items', async () => {
     const user = userEvent.setup()
     renderApp(
       '/get-ahead',
@@ -115,8 +115,17 @@ describe('Get Ahead page', () => {
     const instruction = await screen.findByText('Diced')
     const task = instruction.closest('li')
     if (!task) throw new Error('Expected the Get Ahead instruction to render inside a task row.')
-    expect(within(task).getByText('10 min estimate')).toBeVisible()
-    expect(within(task).queryByText(/saves \d+ min later/u)).not.toBeInTheDocument()
-    expect(within(task).queryByText(/minutes later/u)).not.toBeInTheDocument()
+    expect(within(task).queryByText('10 min estimate')).not.toBeInTheDocument()
+    expect(within(task).queryByText(/Saves \d+ min later/u)).not.toBeInTheDocument()
+    expect(within(task).queryByText(/For .+ on/u)).not.toBeInTheDocument()
+    expect(within(task).queryByText(/More actions/u)).not.toBeInTheDocument()
+
+    const checkbox = within(task).getByRole('checkbox')
+    await user.click(checkbox)
+    expect(checkbox).toBeChecked()
+    expect(task).toHaveClass('task-row-completed')
+
+    await user.click(checkbox)
+    expect(checkbox).not.toBeChecked()
   })
 })

@@ -19,7 +19,7 @@ import {
   getAheadDurationPresets,
   getAheadTotals,
   isTaskStale,
-  toggleGetAheadTask,
+  transitionGetAheadTask,
   validateGetAheadDuration,
   type GetAheadSession,
 } from '../domain/get-ahead/session'
@@ -95,6 +95,17 @@ export function GetAheadPage() {
     if (!householdId) return
     localStorage.setItem(storageKey(householdId, planId), JSON.stringify(next))
     setSession(next)
+  }
+
+  function updateTask(taskId: string, action: 'complete' | 'reopen') {
+    if (!visibleSession) return
+    const result = transitionGetAheadTask(visibleSession, taskId, action)
+    setOverrideError(result.error)
+    if (result.error) return
+    persist(result.session)
+    const label = result.session.tasks.find((task) => task.id === taskId)?.title ?? 'Task'
+    const verb = action === 'complete' ? 'completed' : 'reopened'
+    setAnnouncement(`${label} ${verb}.`)
   }
 
   function startSession(event: FormEvent<HTMLFormElement>) {
@@ -211,14 +222,9 @@ export function GetAheadPage() {
         </Panel>
       ) : (
         <Panel className="flow-stack">
-          <div className="cluster">
-            <Sparkles aria-hidden="true" />
-            <strong>
-              {getAheadTotals(visibleSession).estimatedTimeSavedMinutes} minutes saved this week
-            </strong>
-            <span>{getAheadTotals(visibleSession).plannedMinutes} minutes planned.</span>
-          </div>
-          {visibleSession.tasks.filter((task) => task.selected).length === 0 ? (
+          <GetAheadProgressSummary session={visibleSession} />
+          {visibleSession.tasks.filter((task) => task.selected || task.state === 'completed')
+            .length === 0 ? (
             <EmptyState
               title="No preparation tasks found"
               message="Your current plan has no supported Get Ahead opportunities yet."
@@ -228,64 +234,20 @@ export function GetAheadPage() {
           {overrideError ? (
             <FormError id="get-ahead-override-error">{overrideError}</FormError>
           ) : null}
-          <ul className="plain-list flow-stack">
+          <ul className="plain-list flow-stack" aria-label="Prep checklist">
             {visibleSession.tasks
-              .filter((task) => task.selected)
+              .filter((task) => task.selected || task.state === 'completed')
               .map((task) => {
                 const currentRecipe =
                   recipeList.find((recipe) => recipe.id === task.recipeId) ?? null
                 const stale = isTaskStale(task, currentRecipe?.updatedAt ?? null)
                 return (
-                  <li className="task-row" key={task.id}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={task.state === 'completed'}
-                        disabled={stale}
-                        onChange={(event) => {
-                          const next = toggleGetAheadTask(
-                            visibleSession,
-                            task.id,
-                            event.target.checked ? 'completed' : 'open',
-                          )
-                          persist(next)
-                          setAnnouncement(
-                            `${task.title} ${event.target.checked ? 'completed' : 'reopened'}.`,
-                          )
-                        }}
-                      />
-                      <span>
-                        <strong>{task.title}</strong>
-                        <small>{task.estimatedMinutes} min estimate</small>
-                        {task.consolidation ? (
-                          <details>
-                            <summary>
-                              Supports {task.consolidation.sources.length} planned meals
-                            </summary>
-                            <ul>
-                              {task.consolidation.sources.map((source) => (
-                                <li key={source.opportunityId}>
-                                  {source.recipeName} on {source.mealDate}
-                                  {source.sourceQuantity ? (
-                                    <span>
-                                      {' '}
-                                      — {source.sourceQuantity}
-                                      {source.sourceUnit ? ` ${source.sourceUnit}` : ''}
-                                    </span>
-                                  ) : null}
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        ) : null}
-                        {stale ? (
-                          <small role="status">
-                            Source changed since this session was created.
-                          </small>
-                        ) : null}
-                      </span>
-                    </label>
-                  </li>
+                  <GetAheadTaskRow
+                    key={task.id}
+                    task={task}
+                    stale={stale}
+                    onToggle={(checked) => updateTask(task.id, checked ? 'complete' : 'reopen')}
+                  />
                 )
               })}
           </ul>
@@ -299,7 +261,6 @@ export function GetAheadPage() {
                     <li className="task-row" key={task.id}>
                       <span>
                         <strong>{task.title}</strong>
-                        <small>{task.estimatedMinutes} min estimate</small>
                       </span>
                       <Button
                         variant="secondary"
@@ -330,5 +291,50 @@ export function GetAheadPage() {
         </Panel>
       )}
     </>
+  )
+}
+
+function GetAheadProgressSummary({ session }: { session: GetAheadSession }) {
+  const totals = getAheadTotals(session)
+  return (
+    <div className="flow-stack" aria-label="Get Ahead progress summary">
+      <div className="cluster">
+        <Sparkles aria-hidden="true" />
+        <strong>{totals.estimatedTimeSavedMinutes} minutes saved this week</strong>
+        <span>{totals.remainingPotentialMinutes} minutes still possible.</span>
+      </div>
+      <progress aria-label="Prep progress" max={100} value={totals.progressPercent} />
+      <p>{totals.progressLabel}.</p>
+    </div>
+  )
+}
+
+function GetAheadTaskRow({
+  task,
+  stale,
+  onToggle,
+}: {
+  task: GetAheadSession['tasks'][number]
+  stale: boolean
+  onToggle: (checked: boolean) => void
+}) {
+  const completed = task.state === 'completed'
+  return (
+    <li className={completed ? 'task-row task-row-completed' : 'task-row'}>
+      <label>
+        <input
+          type="checkbox"
+          checked={completed}
+          disabled={stale}
+          onChange={(event) => onToggle(event.target.checked)}
+        />
+        <span className="task-row-title">
+          <strong>{task.title}</strong>
+          {stale ? (
+            <small role="status">Source changed since this session was created.</small>
+          ) : null}
+        </span>
+      </label>
+    </li>
   )
 }
