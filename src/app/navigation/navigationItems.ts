@@ -1,4 +1,12 @@
-import { BookOpen, CalendarDays, CookingPot, House, Settings, ShoppingBasket } from 'lucide-react'
+import {
+  BookOpen,
+  CalendarDays,
+  CookingPot,
+  House,
+  Settings,
+  ShoppingBasket,
+  Sparkles,
+} from 'lucide-react'
 
 export const navigationItems = [
   { label: 'Home', path: '/', icon: House, end: true },
@@ -6,6 +14,7 @@ export const navigationItems = [
   { label: 'Recipes', path: '/recipes', icon: BookOpen, end: false },
   { label: 'Plan', path: '/plan', icon: CalendarDays, end: false },
   { label: 'Shopping', path: '/shopping', icon: ShoppingBasket, end: false },
+  { label: 'Get Ahead', path: '/get-ahead', icon: Sparkles, end: false },
   { label: 'Settings', path: '/settings', icon: Settings, end: false },
 ] as const
 

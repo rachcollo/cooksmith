@@ -264,3 +264,21 @@
   outline: 3px solid var(--colour-focus);
   outline-offset: 2px;
 }
+
+.navigation-mobile .navigation-item-with-menu {
+  display: flex;
+  flex: 1 1 0;
+  justify-content: center;
+  max-width: 5rem;
+}
+
+.navigation-mobile .navigation-item-with-menu > .navigation-link {
+  width: 100%;
+}
+
+.navigation-mobile a span,
+.navigation-mobile .navigation-link span {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
