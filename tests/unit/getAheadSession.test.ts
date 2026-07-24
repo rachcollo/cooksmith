@@ -34,7 +34,39 @@ function opportunity(id: string, type: PreparationOpportunity['type']): Preparat
       position: 1,
       text: type === 'sauce' ? 'Make the pesto sauce' : 'Chop onions',
     },
+    ingredient: null,
     reason: 'Recipe instruction includes preparation.',
+  }
+}
+
+function ingredientOpportunity(input: {
+  id: string
+  recipeId: string
+  mealId: string
+  quantity: string
+  unit: string | null
+  name?: string
+  preparation?: string
+}): PreparationOpportunity {
+  const name = input.name ?? 'onion'
+  const preparation = input.preparation ?? 'diced'
+  return {
+    ...opportunity(input.id, 'chop'),
+    recipeId: input.recipeId,
+    recipeName: input.recipeId,
+    plannedMealId: input.mealId,
+    source: {
+      kind: 'ingredient',
+      ingredientId: `ingredient-${input.id}`,
+      position: 1,
+      text: preparation,
+    },
+    ingredient: {
+      name,
+      quantity: input.quantity,
+      unit: input.unit,
+      preparation,
+    },
   }
 }
 
@@ -167,5 +199,71 @@ describe('Get Ahead session domain', () => {
     expect(ended.status).toBe('ended')
     expect(ended.tasks.find((task) => task.selected)?.state).toBe('completed')
     expect(getAheadTotals(ended).remainingMinutes).toBeGreaterThan(0)
+  })
+
+  it('consolidates compatible ingredient preparation into one stable multi-source task', () => {
+    const tasks = buildGetAheadTasks(
+      [
+        ingredientOpportunity({
+          id: 'b',
+          recipeId: 'tacos',
+          mealId: 'meal-2',
+          quantity: '1',
+          unit: null,
+        }),
+        ingredientOpportunity({
+          id: 'a',
+          recipeId: 'pasta',
+          mealId: 'meal-1',
+          quantity: '2',
+          unit: null,
+        }),
+      ],
+      30,
+    )
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0]).toMatchObject({
+      title: 'Dice 3 Onion',
+      consolidation: {
+        version: 'get-ahead-consolidation-v1',
+        displayQuantity: '3',
+        displayUnit: null,
+      },
+    })
+    expect(tasks[0].consolidation?.sources.map((source) => source.opportunityId)).toEqual([
+      'a',
+      'b',
+    ])
+  })
+
+  it('keeps ambiguous or incompatible quantities separate', () => {
+    const tasks = buildGetAheadTasks(
+      [
+        ingredientOpportunity({
+          id: 'a',
+          recipeId: 'pasta',
+          mealId: 'meal-1',
+          quantity: 'a pinch',
+          unit: null,
+        }),
+        ingredientOpportunity({
+          id: 'b',
+          recipeId: 'tacos',
+          mealId: 'meal-2',
+          quantity: '1',
+          unit: null,
+        }),
+        ingredientOpportunity({
+          id: 'c',
+          recipeId: 'curry',
+          mealId: 'meal-3',
+          quantity: '100',
+          unit: 'g',
+        }),
+      ],
+      30,
+    )
+    expect(tasks).toHaveLength(3)
+    expect(tasks.every((task) => task.consolidation === null)).toBe(true)
   })
 })

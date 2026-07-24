@@ -43,6 +43,12 @@ export interface PreparationOpportunity {
   recipeName: string
   recipeUpdatedAt: string
   source: PreparationOpportunitySource
+  ingredient: {
+    name: string
+    quantity: string | null
+    unit: string | null
+    preparation: string | null
+  } | null
   reason: string
 }
 
@@ -128,7 +134,7 @@ export function analysePreparationOpportunities(
 
     const ingredientOpportunities = recipe.ingredientRows.flatMap((ingredient) =>
       ingredientMatches(ingredient).map((match) =>
-        createOpportunity(plannedMeal, recipe, ingredientSource(ingredient), match),
+        createOpportunity(plannedMeal, recipe, ingredientSource(ingredient), match, ingredient),
       ),
     )
     const stepOpportunities = recipe.steps.flatMap((step) =>
@@ -190,11 +196,17 @@ function duplicatePreparationSignals(
       return []
     }
     return ingredients.map((ingredient) =>
-      createOpportunity(plannedMeal, recipe, ingredientSource(ingredient), {
-        type: 'duplicate-preparation-signal',
-        reason:
-          'Multiple ingredients in this planned recipe use the same explicit preparation text.',
-      }),
+      createOpportunity(
+        plannedMeal,
+        recipe,
+        ingredientSource(ingredient),
+        {
+          type: 'duplicate-preparation-signal',
+          reason:
+            'Multiple ingredients in this planned recipe use the same explicit preparation text.',
+        },
+        ingredient,
+      ),
     )
   })
 }
@@ -222,6 +234,7 @@ function createOpportunity(
   recipe: Recipe,
   source: PreparationOpportunitySource,
   match: RuleMatch,
+  ingredient: RecipeIngredient | null = null,
 ): PreparationOpportunity {
   return {
     id: stableOpportunityId(plannedMeal.id, recipe.id, source, match.type),
@@ -235,6 +248,14 @@ function createOpportunity(
     recipeName: recipe.name,
     recipeUpdatedAt: recipe.updatedAt,
     source,
+    ingredient: ingredient
+      ? {
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+          preparation: ingredient.preparation,
+        }
+      : null,
     reason: match.reason,
   }
 }

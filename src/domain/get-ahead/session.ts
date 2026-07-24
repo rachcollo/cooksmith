@@ -5,6 +5,7 @@ export const minCustomGetAheadMinutes = 5
 export const maxCustomGetAheadMinutes = 240
 export const getAheadSessionVersion = 'get-ahead-session-v1' as const
 export const getAheadPriorityScoreVersion = 'get-ahead-priority-v1' as const
+export const getAheadConsolidationVersion = 'get-ahead-consolidation-v1' as const
 
 export type GetAheadTaskState = 'open' | 'completed'
 export type GetAheadSessionStatus = 'active' | 'ended' | 'completed'
@@ -48,7 +49,27 @@ export interface GetAheadTaskSnapshot {
   state: GetAheadTaskState
   order: number
   selected: boolean
+  consolidation: GetAheadConsolidation | null
   scoreEvidence: GetAheadScoreEvidence
+}
+
+export interface GetAheadConsolidationSource {
+  opportunityId: string
+  recipeName: string
+  plannedMealId: string
+  mealDate: string
+  mealType: string
+  sourceText: string
+  sourceQuantity: string | null
+  sourceUnit: string | null
+}
+
+export interface GetAheadConsolidation {
+  version: typeof getAheadConsolidationVersion
+  signature: string
+  displayQuantity: string | null
+  displayUnit: string | null
+  sources: GetAheadConsolidationSource[]
 }
 
 export interface GetAheadSession {
@@ -116,7 +137,7 @@ export function buildGetAheadTasks(
   opportunities: PreparationOpportunity[],
   selectedMinutes: number,
 ): GetAheadTaskSnapshot[] {
-  const taskPool = opportunities.map((opportunity) => toTaskSnapshot(opportunity))
+  const taskPool = consolidateTasks(opportunities)
   const selectedIds = selectTaskIdsForDuration(taskPool, selectedMinutes)
   return orderTasks(taskPool, selectedIds, {
     excludedTaskIds: [],
@@ -264,7 +285,81 @@ function toTaskSnapshot(opportunity: PreparationOpportunity): GetAheadTaskSnapsh
     state: 'open',
     order: 0,
     selected: false,
+    consolidation: null,
     scoreEvidence: scoreOpportunity(opportunity, estimatedMinutes, estimatedTimeSavedMinutes),
+  }
+}
+
+function consolidateTasks(opportunities: PreparationOpportunity[]): GetAheadTaskSnapshot[] {
+  const groups = new Map<string, PreparationOpportunity[]>()
+  const singles: PreparationOpportunity[] = []
+  for (const opportunity of opportunities) {
+    const signature = consolidationSignature(opportunity)
+    if (!signature) {
+      singles.push(opportunity)
+      continue
+    }
+    groups.set(signature, [...(groups.get(signature) ?? []), opportunity])
+  }
+
+  return [
+    ...singles.map((opportunity) => toTaskSnapshot(opportunity)),
+    ...[...groups.entries()].flatMap(([signature, group]) => {
+      const sortedGroup = [...group].sort(compareOpportunitiesById)
+      if (sortedGroup.length < 2)
+        return sortedGroup.map((opportunity) => toTaskSnapshot(opportunity))
+      return [toConsolidatedTask(signature, sortedGroup)]
+    }),
+  ]
+}
+
+function toConsolidatedTask(
+  signature: string,
+  opportunities: PreparationOpportunity[],
+): GetAheadTaskSnapshot {
+  const first = opportunities[0]
+  if (!first) throw new Error('Cannot consolidate an empty opportunity group.')
+  const base = toTaskSnapshot(first)
+  const quantity = sumQuantities(opportunities)
+  const sources = opportunities.map((opportunity) => ({
+    opportunityId: opportunity.id,
+    recipeName: opportunity.recipeName,
+    plannedMealId: opportunity.plannedMealId,
+    mealDate: opportunity.mealDate,
+    mealType: opportunity.mealType,
+    sourceText: opportunity.source.text,
+    sourceQuantity: opportunity.ingredient?.quantity ?? null,
+    sourceUnit: opportunity.ingredient?.unit ?? null,
+  }))
+  const mealsSupported = new Set(opportunities.map((opportunity) => opportunity.plannedMealId)).size
+  return {
+    ...base,
+    id: `task_group_${hashParts([getAheadConsolidationVersion, signature])}`,
+    opportunityId: `group_${hashParts([signature])}`,
+    title: consolidatedTitle(first, quantity),
+    reason: 'Compatible preparation was consolidated across planned meals.',
+    estimatedMinutes: Math.max(
+      ...opportunities.map((opportunity) => taskEstimateMinutes(opportunity.type)),
+    ),
+    estimatedTimeSavedMinutes: opportunities.reduce(
+      (sum, opportunity) => sum + taskTimeSavedMinutes(opportunity.type),
+      0,
+    ),
+    consolidation: {
+      version: getAheadConsolidationVersion,
+      signature,
+      displayQuantity: quantity?.displayQuantity ?? null,
+      displayUnit: quantity?.displayUnit ?? null,
+      sources,
+    },
+    scoreEvidence: {
+      ...base.scoreEvidence,
+      factors: { ...base.scoreEvidence.factors, mealsSupported },
+      explanationFactors: [
+        ...base.scoreEvidence.explanationFactors,
+        `supports ${mealsSupported} meals`,
+      ],
+    },
   }
 }
 
@@ -483,4 +578,108 @@ function removeLeadingAction(text: string, verbs: string[]) {
       .replace(/^the\s+/i, '')
       .trim() || text
   )
+}
+
+function consolidationSignature(opportunity: PreparationOpportunity): string | null {
+  if (opportunity.source.kind !== 'ingredient' || opportunity.type !== 'chop') return null
+  const ingredient = opportunity.ingredient
+  if (!ingredient?.preparation || !ingredient.quantity) return null
+  if (quantityToBase(ingredient.quantity, ingredient.unit) === null) return null
+  const operation = normalisePreparation(ingredient.preparation)
+  const name = normaliseIngredientName(ingredient.name)
+  const unit = normaliseUnit(ingredient.unit)
+  if (!operation || !name || unit === 'unsupported') return null
+  return [
+    getAheadConsolidationVersion,
+    opportunity.householdId,
+    operation,
+    name,
+    unit.kind,
+    unit.unit,
+  ].join('|')
+}
+
+function consolidatedTitle(
+  opportunity: PreparationOpportunity,
+  quantity: { displayQuantity: string; displayUnit: string | null } | null,
+) {
+  const operation = normalisePreparation(opportunity.ingredient?.preparation ?? '') ?? 'Prep'
+  const name = sentenceCase(opportunity.ingredient?.name ?? 'ingredients')
+  if (!quantity) return `${sentenceCase(operation)} ${name}`
+  return `${sentenceCase(operation)} ${quantity.displayQuantity}${quantity.displayUnit ? ` ${quantity.displayUnit}` : ''} ${name}`
+}
+
+function normalisePreparation(value: string): string | null {
+  const lower = value.trim().toLocaleLowerCase('en-AU')
+  if (/\b(dic(?:e|ed|ing))\b/u.test(lower)) return 'dice'
+  if (/\b(chopp?ed?|chopping)\b/u.test(lower)) return 'chop'
+  if (/\b(slic(?:e|ed|ing))\b/u.test(lower)) return 'slice'
+  if (/\b(minc(?:e|ed|ing))\b/u.test(lower)) return 'mince'
+  if (/\b(shred(?:ded|ding)?|grated?)\b/u.test(lower)) return 'shred'
+  return null
+}
+
+function normaliseIngredientName(value: string) {
+  return value.trim().toLocaleLowerCase('en-AU').replace(/\s+/gu, ' ').replace(/s$/u, '')
+}
+
+type NormalisedUnit =
+  | { kind: 'count'; unit: null }
+  | { kind: 'metric-weight'; unit: 'g' }
+  | { kind: 'metric-volume'; unit: 'ml' }
+  | 'unsupported'
+
+function normaliseUnit(unit: string | null): NormalisedUnit {
+  if (unit === null || unit.trim() === '') return { kind: 'count', unit: null }
+  const lower = unit.trim().toLocaleLowerCase('en-AU')
+  if (['g', 'gram', 'grams'].includes(lower)) return { kind: 'metric-weight', unit: 'g' }
+  if (['kg', 'kilogram', 'kilograms'].includes(lower)) return { kind: 'metric-weight', unit: 'g' }
+  if (['ml', 'millilitre', 'millilitres'].includes(lower))
+    return { kind: 'metric-volume', unit: 'ml' }
+  if (['l', 'litre', 'litres'].includes(lower)) return { kind: 'metric-volume', unit: 'ml' }
+  return 'unsupported'
+}
+
+function quantityToBase(quantity: string, unit: string | null): number | null {
+  if (!/^\d+(?:\.\d+)?$/u.test(quantity.trim())) return null
+  const amount = Number(quantity)
+  if (!Number.isFinite(amount)) return null
+  const lower = unit?.trim().toLocaleLowerCase('en-AU') ?? ''
+  if (['kg', 'kilogram', 'kilograms'].includes(lower)) return amount * 1000
+  if (['l', 'litre', 'litres'].includes(lower)) return amount * 1000
+  return amount
+}
+
+function sumQuantities(
+  opportunities: PreparationOpportunity[],
+): { displayQuantity: string; displayUnit: string | null } | null {
+  const firstUnit = normaliseUnit(opportunities[0]?.ingredient?.unit ?? null)
+  if (firstUnit === 'unsupported') return null
+  let total = 0
+  for (const opportunity of opportunities) {
+    const quantity = opportunity.ingredient?.quantity
+    if (!quantity) return null
+    const amount = quantityToBase(quantity, opportunity.ingredient?.unit ?? null)
+    if (amount === null) return null
+    total += amount
+  }
+  return {
+    displayQuantity: Number.isInteger(total)
+      ? String(total)
+      : total.toFixed(2).replace(/0+$/u, '').replace(/\.$/u, ''),
+    displayUnit: firstUnit.unit,
+  }
+}
+
+function compareOpportunitiesById(a: PreparationOpportunity, b: PreparationOpportunity) {
+  return a.id.localeCompare(b.id)
+}
+
+function hashParts(parts: string[]): string {
+  let hash = 0x811c9dc5
+  for (const character of parts.join('|')) {
+    hash ^= character.charCodeAt(0)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(36).padStart(7, '0')
 }
