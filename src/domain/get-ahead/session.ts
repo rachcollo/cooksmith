@@ -587,15 +587,9 @@ function withUpdatedTasks(
     tasks,
     overrides,
     recommendationExplanation: explainRecommendation(tasks),
-    status:
-      tasks.some((task) => task.selected || task.state === 'completed') &&
-      tasks
-        .filter((task) => task.selected || task.state === 'completed')
-        .every((task) => task.state === 'completed')
-        ? 'completed'
-        : tasks.some((task) => task.selected)
-          ? 'active'
-          : 'completed',
+    status: tasks.some((task) => task.selected || task.state === 'completed')
+      ? 'active'
+      : 'completed',
     updatedAt: now.toISOString(),
   }
 }

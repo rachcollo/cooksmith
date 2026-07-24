@@ -230,7 +230,7 @@ describe('Get Ahead session domain', () => {
       new Date('2026-07-24T10:02:00.000Z'),
     )
     expect(completedAgain.tasks[0].state).toBe('completed')
-    expect(completedAgain.status).toBe('completed')
+    expect(completedAgain.status).toBe('active')
     expect(getAheadTotals(completedAgain)).toMatchObject({
       completedMinutes: 10,
       estimatedTimeSavedMinutes: 10,

@@ -55,7 +55,6 @@ export function GetAheadPage() {
   const [error, setError] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const [overrideError, setOverrideError] = useState<string | null>(null)
-  const [lastHiddenTaskId, setLastHiddenTaskId] = useState<string | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
 
   useEffect(() => {
@@ -98,29 +97,15 @@ export function GetAheadPage() {
     setSession(next)
   }
 
-  function updateTask(taskId: string, action: 'complete' | 'reopen' | 'skip' | 'defer') {
+  function updateTask(taskId: string, action: 'complete' | 'reopen') {
     if (!visibleSession) return
     const result = transitionGetAheadTask(visibleSession, taskId, action)
     setOverrideError(result.error)
     if (result.error) return
     persist(result.session)
-    if (action === 'skip' || action === 'defer') setLastHiddenTaskId(taskId)
     const label = result.session.tasks.find((task) => task.id === taskId)?.title ?? 'Task'
-    const verb =
-      action === 'complete'
-        ? 'completed'
-        : action === 'reopen'
-          ? 'reopened'
-          : action === 'skip'
-            ? 'skipped'
-            : 'deferred'
+    const verb = action === 'complete' ? 'completed' : 'reopened'
     setAnnouncement(`${label} ${verb}.`)
-  }
-
-  function undoLastHiddenTask() {
-    if (!lastHiddenTaskId) return
-    updateTask(lastHiddenTaskId, 'reopen')
-    setLastHiddenTaskId(null)
   }
 
   function startSession(event: FormEvent<HTMLFormElement>) {
@@ -238,7 +223,7 @@ export function GetAheadPage() {
       ) : (
         <Panel className="flow-stack">
           <GetAheadProgressSummary session={visibleSession} />
-          {visibleSession.tasks.filter((task) => task.selected && task.state === 'remaining')
+          {visibleSession.tasks.filter((task) => task.selected || task.state === 'completed')
             .length === 0 ? (
             <EmptyState
               title="No preparation tasks found"
@@ -249,9 +234,9 @@ export function GetAheadPage() {
           {overrideError ? (
             <FormError id="get-ahead-override-error">{overrideError}</FormError>
           ) : null}
-          <ul className="plain-list flow-stack" aria-label="Remaining prep tasks">
+          <ul className="plain-list flow-stack" aria-label="Prep checklist">
             {visibleSession.tasks
-              .filter((task) => task.selected && task.state === 'remaining')
+              .filter((task) => task.selected || task.state === 'completed')
               .map((task) => {
                 const currentRecipe =
                   recipeList.find((recipe) => recipe.id === task.recipeId) ?? null
@@ -261,64 +246,11 @@ export function GetAheadPage() {
                     key={task.id}
                     task={task}
                     stale={stale}
-                    onComplete={() => updateTask(task.id, 'complete')}
-                    onSkip={() => updateTask(task.id, 'skip')}
-                    onDefer={() => updateTask(task.id, 'defer')}
+                    onToggle={(checked) => updateTask(task.id, checked ? 'complete' : 'reopen')}
                   />
                 )
               })}
           </ul>
-          {lastHiddenTaskId ? (
-            <Button variant="quiet" onClick={undoLastHiddenTask}>
-              Undo last skip or defer
-            </Button>
-          ) : null}
-          {visibleSession.tasks.some((task) => task.state === 'completed') ? (
-            <details>
-              <summary>Completed prep</summary>
-              <ul className="plain-list flow-stack">
-                {visibleSession.tasks
-                  .filter((task) => task.state === 'completed')
-                  .map((task) => (
-                    <li className="task-row" key={task.id}>
-                      <span>
-                        <strong>{task.title}</strong>
-                        <small>{task.estimatedMinutes} min estimate</small>
-                      </span>
-                      <Button variant="secondary" onClick={() => updateTask(task.id, 'reopen')}>
-                        Reopen
-                      </Button>
-                    </li>
-                  ))}
-              </ul>
-            </details>
-          ) : null}
-          {visibleSession.tasks.some(
-            (task) => task.state === 'skipped' || task.state === 'deferred',
-          ) ? (
-            <details>
-              <summary>Skipped and deferred prep</summary>
-              <ul className="plain-list flow-stack">
-                {visibleSession.tasks
-                  .filter((task) => task.state === 'skipped' || task.state === 'deferred')
-                  .map((task) => (
-                    <li className="task-row" key={task.id}>
-                      <span>
-                        <strong>{task.title}</strong>
-                        <small>
-                          {task.state === 'skipped'
-                            ? 'Skipped for this session'
-                            : 'Deferred for later'}
-                        </small>
-                      </span>
-                      <Button variant="secondary" onClick={() => updateTask(task.id, 'reopen')}>
-                        Restore
-                      </Button>
-                    </li>
-                  ))}
-              </ul>
-            </details>
-          ) : null}
           {visibleSession.tasks.some((task) => !task.selected) ? (
             <div className="flow-stack">
               <h2>Eligible alternatives</h2>
@@ -329,7 +261,6 @@ export function GetAheadPage() {
                     <li className="task-row" key={task.id}>
                       <span>
                         <strong>{task.title}</strong>
-                        <small>{task.estimatedMinutes} min estimate</small>
                       </span>
                       <Button
                         variant="secondary"
@@ -381,62 +312,29 @@ function GetAheadProgressSummary({ session }: { session: GetAheadSession }) {
 function GetAheadTaskRow({
   task,
   stale,
-  onComplete,
-  onSkip,
-  onDefer,
+  onToggle,
 }: {
   task: GetAheadSession['tasks'][number]
   stale: boolean
-  onComplete: () => void
-  onSkip: () => void
-  onDefer: () => void
+  onToggle: (checked: boolean) => void
 }) {
+  const completed = task.state === 'completed'
   return (
-    <li className="task-row">
+    <li className={completed ? 'task-row task-row-completed' : 'task-row'}>
       <label>
-        <input type="checkbox" checked={false} disabled={stale} onChange={onComplete} />
-        <span>
+        <input
+          type="checkbox"
+          checked={completed}
+          disabled={stale}
+          onChange={(event) => onToggle(event.target.checked)}
+        />
+        <span className="task-row-title">
           <strong>{task.title}</strong>
-          <small>{task.estimatedMinutes} min estimate</small>
-          <small>Saves {task.estimatedTimeSavedMinutes} min later</small>
-          <small>
-            For {task.recipeName} on {task.mealDate}
-          </small>
-          {task.consolidation ? (
-            <details>
-              <summary>Supports {task.consolidation.sources.length} planned meals</summary>
-              <ul>
-                {task.consolidation.sources.map((source) => (
-                  <li key={source.opportunityId}>
-                    {source.recipeName} on {source.mealDate}
-                    {source.sourceQuantity ? (
-                      <span>
-                        {' '}
-                        — {source.sourceQuantity}
-                        {source.sourceUnit ? ` ${source.sourceUnit}` : ''}
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ) : null}
           {stale ? (
             <small role="status">Source changed since this session was created.</small>
           ) : null}
         </span>
       </label>
-      <details>
-        <summary>More actions for {task.title}</summary>
-        <div className="cluster">
-          <Button variant="quiet" onClick={onSkip} disabled={stale}>
-            Skip
-          </Button>
-          <Button variant="quiet" onClick={onDefer} disabled={stale}>
-            Defer
-          </Button>
-        </div>
-      </details>
     </li>
   )
 }

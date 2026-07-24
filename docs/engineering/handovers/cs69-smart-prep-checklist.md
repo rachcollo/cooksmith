@@ -2,7 +2,7 @@
 
 ## Review focus
 
-Confirm the Get Ahead working screen stays calm on mobile while making complete, reopen, skip, defer, undo and progress states understandable by touch and keyboard.
+Confirm the Get Ahead working screen stays calm on mobile while making complete, reopen and progress states understandable by touch and keyboard.
 
 ## Changed areas
 
@@ -18,7 +18,7 @@ Focused Get Ahead unit and integration coverage passed. The repository test suit
 
 ## Preview validation to complete
 
-On the exact Vercel Preview, start a Get Ahead session on a 390 px mobile viewport, complete one prep item, reopen it from the completed section, skip and defer separate items from the secondary actions disclosure, undo the most recent hidden item and refresh to verify local durable resume state. Repeat the core interaction with keyboard only and verify the progress element exposes its accessible name and text equivalent.
+On the exact Vercel Preview, start a Get Ahead session on a 390 px mobile viewport, complete one prep item, confirm it stays in the checklist with strikethrough styling, untick it to reopen by mistake recovery and refresh to verify local durable resume state. Repeat the core interaction with keyboard only and verify the progress element exposes its accessible name and text equivalent.
 
 ## Deployment notes
 
