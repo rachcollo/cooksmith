@@ -257,6 +257,27 @@ export function GetAheadPage() {
                       <span>
                         <strong>{task.title}</strong>
                         <small>{task.estimatedMinutes} min estimate</small>
+                        {task.consolidation ? (
+                          <details>
+                            <summary>
+                              Supports {task.consolidation.sources.length} planned meals
+                            </summary>
+                            <ul>
+                              {task.consolidation.sources.map((source) => (
+                                <li key={source.opportunityId}>
+                                  {source.recipeName} on {source.mealDate}
+                                  {source.sourceQuantity ? (
+                                    <span>
+                                      {' '}
+                                      — {source.sourceQuantity}
+                                      {source.sourceUnit ? ` ${source.sourceUnit}` : ''}
+                                    </span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        ) : null}
                         {stale ? (
                           <small role="status">
                             Source changed since this session was created.
