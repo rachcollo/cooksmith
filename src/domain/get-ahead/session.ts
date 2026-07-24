@@ -169,9 +169,10 @@ export function getAheadTotals(session: GetAheadSession): GetAheadTotals {
   const completedMinutes = session.tasks
     .filter((task) => task.state === 'completed')
     .reduce((sum, task) => sum + task.estimatedMinutes, 0)
-  const estimatedTimeSavedMinutes = session.tasks
-    .filter((task) => task.state === 'completed')
-    .reduce((sum, task) => sum + task.estimatedTimeSavedMinutes, 0)
+  const estimatedTimeSavedMinutes = session.tasks.reduce(
+    (sum, task) => sum + task.estimatedTimeSavedMinutes,
+    0,
+  )
   return {
     selectedMinutes: session.selectedMinutes,
     plannedMinutes,

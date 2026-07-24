@@ -142,7 +142,7 @@ export function GetAheadPage() {
       <DocumentTitle title="Get Ahead" />
       <header className="page-header compact-page-header">
         <div className="page-header-copy">
-          <h1>How much time do you have today?</h1>
+          <h1>How much prep time do you have today?</h1>
         </div>
       </header>
       <p className="sr-only" aria-live="polite">
@@ -192,12 +192,10 @@ export function GetAheadPage() {
         <Panel className="flow-stack">
           <div className="cluster">
             <Sparkles aria-hidden="true" />
-            <strong>{getAheadTotals(visibleSession).plannedMinutes} minutes planned</strong>
-            <span>
-              {getAheadTotals(visibleSession).selectedMinutes -
-                getAheadTotals(visibleSession).plannedMinutes}{' '}
-              minutes left unfilled.
-            </span>
+            <strong>
+              {getAheadTotals(visibleSession).estimatedTimeSavedMinutes} minutes saved this week
+            </strong>
+            <span>{getAheadTotals(visibleSession).plannedMinutes} minutes planned.</span>
           </div>
           {visibleSession.tasks.length === 0 ? (
             <EmptyState
@@ -231,9 +229,7 @@ export function GetAheadPage() {
                     <span>
                       <strong>{task.title}</strong>
                       <small>
-                        {task.estimatedMinutes} min estimate, saves about{' '}
-                        {task.estimatedTimeSavedMinutes} min later,{' '}
-                        {formatDisplayDate(task.mealDate)}
+                        {task.estimatedMinutes} min estimate, {formatDisplayDate(task.mealDate)}
                       </small>
                       {stale ? (
                         <small role="status">Source changed since this session was created.</small>
