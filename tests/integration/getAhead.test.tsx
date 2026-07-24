@@ -94,7 +94,7 @@ const recipeRepository: RecipeRepository = {
 }
 
 describe('Get Ahead page', () => {
-  it('keeps per-item rows simple and only shows total time saved in the summary', async () => {
+  it('shows checklist progress, per-task benefit and secondary skip or defer actions', async () => {
     const user = userEvent.setup()
     renderApp(
       '/get-ahead',
@@ -116,7 +116,11 @@ describe('Get Ahead page', () => {
     const task = instruction.closest('li')
     if (!task) throw new Error('Expected the Get Ahead instruction to render inside a task row.')
     expect(within(task).getByText('10 min estimate')).toBeVisible()
-    expect(within(task).queryByText(/saves \d+ min later/u)).not.toBeInTheDocument()
-    expect(within(task).queryByText(/minutes later/u)).not.toBeInTheDocument()
+    expect(within(task).getByText(/Saves \d+ min later/u)).toBeVisible()
+    expect(within(task).getByText(/For .+ on/u)).toBeVisible()
+
+    await user.click(within(task).getByText(/More actions/u))
+    expect(within(task).getByRole('button', { name: 'Skip' })).toBeVisible()
+    expect(within(task).getByRole('button', { name: 'Defer' })).toBeVisible()
   })
 })

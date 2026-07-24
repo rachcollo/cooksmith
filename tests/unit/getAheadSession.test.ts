@@ -9,6 +9,7 @@ import {
   getAheadTotals,
   moveGetAheadTask,
   toggleGetAheadTask,
+  transitionGetAheadTask,
   validateGetAheadDuration,
 } from '../../src/domain/get-ahead/session'
 import {
@@ -155,6 +156,59 @@ describe('Get Ahead session domain', () => {
     expect(getAheadTotals(result.session).plannedMinutes).toBeLessThanOrEqual(15)
   })
 
+  it('skips and defers tasks while preserving completed progress and future eligibility state', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 35,
+      opportunities: [
+        opportunity('a', 'chop'),
+        opportunity('b', 'marinate'),
+        opportunity('c', 'sauce'),
+      ],
+    })
+
+    const completed = transitionGetAheadTask(session, 'task_b', 'complete')
+    expect(completed.error).toBeNull()
+    const skipped = transitionGetAheadTask(completed.session, 'task_c', 'skip')
+    expect(skipped.error).toBeNull()
+    expect(skipped.session.tasks.find((task) => task.id === 'task_c')).toMatchObject({
+      state: 'skipped',
+      selected: false,
+    })
+    const deferred = transitionGetAheadTask(skipped.session, 'task_a', 'defer')
+
+    expect(deferred.error).toBeNull()
+    expect(deferred.session.tasks.find((task) => task.id === 'task_a')).toMatchObject({
+      state: 'deferred',
+      selected: false,
+    })
+    expect(getAheadTotals(deferred.session)).toMatchObject({
+      completedMinutes: 25,
+      estimatedTimeSavedMinutes: 30,
+      remainingPotentialMinutes: 0,
+      progressPercent: 100,
+      progressMode: 'duration',
+    })
+  })
+
+  it('reopens skipped and deferred tasks into legal remaining recommendations', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 15,
+      opportunities: [opportunity('a', 'chop')],
+    })
+    const deferred = transitionGetAheadTask(session, 'task_a', 'defer')
+    const reopened = transitionGetAheadTask(deferred.session, 'task_a', 'reopen')
+
+    expect(reopened.error).toBeNull()
+    expect(reopened.session.tasks.find((task) => task.id === 'task_a')).toMatchObject({
+      state: 'remaining',
+      selected: true,
+    })
+  })
+
   it('persists snapshots and idempotent task state transitions', () => {
     const session = createGetAheadSession({
       householdId: 'household-1',
@@ -190,14 +244,11 @@ describe('Get Ahead session domain', () => {
       selectedMinutes: 30,
       opportunities: [opportunity('a', 'chop'), opportunity('b', 'sauce')],
     })
-    const completed = toggleGetAheadTask(
-      session,
-      session.tasks.find((task) => task.selected)?.id ?? '',
-      'completed',
-    )
+    const completedTaskId = session.tasks.find((task) => task.selected)?.id ?? ''
+    const completed = toggleGetAheadTask(session, completedTaskId, 'completed')
     const ended = endGetAheadSessionEarly(completed, new Date('2026-07-24T11:00:00.000Z'))
     expect(ended.status).toBe('ended')
-    expect(ended.tasks.find((task) => task.selected)?.state).toBe('completed')
+    expect(ended.tasks.find((task) => task.id === completedTaskId)?.state).toBe('completed')
     expect(getAheadTotals(ended).remainingMinutes).toBeGreaterThan(0)
   })
 
