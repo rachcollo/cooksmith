@@ -19,7 +19,6 @@ import {
   getAheadDurationPresets,
   getAheadTotals,
   isTaskStale,
-  moveGetAheadTask,
   toggleGetAheadTask,
   validateGetAheadDuration,
   type GetAheadSession,
@@ -265,30 +264,6 @@ export function GetAheadPage() {
                         ) : null}
                       </span>
                     </label>
-                    <div className="cluster" aria-label={`Override ${task.title}`}>
-                      <Button
-                        variant="quiet"
-                        onClick={() => {
-                          const result = applyGetAheadOverride(visibleSession, task.id, 'excluded')
-                          setOverrideError(result.conflict)
-                          persist(result.session)
-                        }}
-                      >
-                        Exclude
-                      </Button>
-                      <Button
-                        variant="quiet"
-                        onClick={() => persist(moveGetAheadTask(visibleSession, task.id, 'up'))}
-                      >
-                        Move up
-                      </Button>
-                      <Button
-                        variant="quiet"
-                        onClick={() => persist(moveGetAheadTask(visibleSession, task.id, 'down'))}
-                      >
-                        Move down
-                      </Button>
-                    </div>
                   </li>
                 )
               })}
