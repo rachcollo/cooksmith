@@ -53,6 +53,7 @@ export function GetAheadPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [showChecklist, setShowChecklist] = useState(false)
 
   useEffect(() => {
     if (!householdId) return
@@ -101,6 +102,7 @@ export function GetAheadPage() {
     if (error || !householdId) return
     const next = createGetAheadSession({ householdId, planId, selectedMinutes, opportunities })
     persist(next)
+    setShowChecklist(true)
     setAnnouncement(`Get Ahead session created with ${next.tasks.length} tasks.`)
   }
 
@@ -113,6 +115,7 @@ export function GetAheadPage() {
       opportunities,
     })
     persist(next)
+    setShowChecklist(true)
     setAnnouncement('Fresh Get Ahead session started.')
   }
 
@@ -140,7 +143,7 @@ export function GetAheadPage() {
   return (
     <>
       <DocumentTitle title="Get Ahead" />
-      <header className="page-header compact-page-header">
+      <header className="page-header compact-page-header get-ahead-page-header">
         <div className="page-header-copy">
           <h1>How much prep time do you have today?</h1>
         </div>
@@ -148,8 +151,22 @@ export function GetAheadPage() {
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
-      {!visibleSession || visibleSession.status !== 'active' ? (
+      {!visibleSession || visibleSession.status !== 'active' || !showChecklist ? (
         <Panel className="flow-stack">
+          {visibleSession?.status === 'active' ? (
+            <div className="resume-session-card">
+              <div>
+                <strong>Prep session waiting</strong>
+                <p>
+                  Resume where you left off, or choose more time below and Cooksmith will replan the
+                  session.
+                </p>
+              </div>
+              <Button variant="secondary" onClick={() => setShowChecklist(true)}>
+                Resume
+              </Button>
+            </div>
+          ) : null}
           <form className="duration-inline-form" onSubmit={startSession}>
             <label className="duration-select-label" htmlFor="duration-preset">
               <span className="sr-only">Preset duration</span>

@@ -275,3 +275,10 @@
 .navigation-mobile .navigation-item-with-menu > .navigation-link {
   width: 100%;
 }
+
+.navigation-mobile a span,
+.navigation-mobile .navigation-link span {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
