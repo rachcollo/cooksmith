@@ -441,31 +441,38 @@ function formatList(items: string[]) {
 }
 
 function titleForOpportunity(opportunity: PreparationOpportunity) {
-  const sourceText = summariseSourceText(opportunity.source.text)
+  const sourceText = summariseInstruction(opportunity.source.text)
   switch (opportunity.type) {
     case 'chop':
     case 'duplicate-preparation-signal':
-      return `Chop and prep ${removeLeadingAction(sourceText, ['chop', 'dice', 'slice', 'mince', 'shred', 'grate'])} for ${opportunity.recipeName}`
+      return sentenceCase(
+        removeLeadingAction(sourceText, ['chop', 'dice', 'slice', 'mince', 'shred', 'grate']),
+      )
     case 'marinate':
-      return `Marinate ${removeLeadingAction(sourceText, ['marinate'])} for ${opportunity.recipeName}`
+      return `Marinate ${removeLeadingAction(sourceText, ['marinate'])}`
     case 'sauce':
-      return `Make ${removeLeadingAction(sourceText, ['make', 'prepare', 'mix', 'stir', 'whisk', 'blend'])} for ${opportunity.recipeName}`
+      return `Make ${removeLeadingAction(sourceText, ['make', 'prepare', 'mix', 'stir', 'whisk', 'blend'])}`
     case 'cook-component':
-      return `Cook ${removeLeadingAction(sourceText, ['cook', 'roast', 'bake', 'boil', 'steam', 'simmer', 'toast'])} ahead for ${opportunity.recipeName}`
+      return `Cook ${removeLeadingAction(sourceText, ['cook', 'roast', 'bake', 'boil', 'steam', 'simmer', 'toast'])}`
     case 'leftover-signal':
-      return `Set aside ${sourceText} for ${opportunity.recipeName}`
+      return `Set aside ${sourceText}`
     case 'freezer-signal':
       return `Prepare freezer step: ${sourceText}`
   }
 }
 
-function summariseSourceText(text: string) {
+function summariseInstruction(text: string) {
   return text
     .replace(/^[0-9]+[.)]?\s*/, '')
     .replace(/\s+/g, ' ')
     .replace(/[.!?]+$/, '')
+    .replace(/\bfor\s+[A-Z][^,.]{0,40}$/u, '')
     .trim()
-    .slice(0, 90)
+    .slice(0, 80)
+}
+
+function sentenceCase(text: string) {
+  return text.charAt(0).toLocaleUpperCase('en-AU') + text.slice(1)
 }
 
 function removeLeadingAction(text: string, verbs: string[]) {

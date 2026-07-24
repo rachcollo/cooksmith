@@ -59,7 +59,7 @@ describe('Get Ahead session domain', () => {
 
   it('summarises task instructions from the source opportunity', () => {
     const tasks = buildGetAheadTasks([opportunity('pesto', 'sauce')], 20)
-    expect(tasks[0].title).toBe('Make pesto sauce for Soup')
+    expect(tasks[0].title).toBe('Make pesto sauce')
   })
 
   it('records versioned score evidence and a structured explanation', () => {

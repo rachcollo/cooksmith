@@ -24,7 +24,7 @@ import {
   validateGetAheadDuration,
   type GetAheadSession,
 } from '../domain/get-ahead/session'
-import { addDays, currentWeek, formatDisplayDate } from '../domain/meal-plans/week'
+import { addDays, currentWeek } from '../domain/meal-plans/week'
 import type { PlannedMeal } from '../domain/meal-plans/types'
 import type { Recipe } from '../domain/recipes/types'
 
@@ -257,13 +257,7 @@ export function GetAheadPage() {
                       />
                       <span>
                         <strong>{task.title}</strong>
-                        <small>
-                          {task.estimatedMinutes} min estimate, {formatDisplayDate(task.mealDate)}
-                        </small>
-                        <small>
-                          Estimated to save {task.estimatedTimeSavedMinutes} minutes later for{' '}
-                          {task.recipeName}.
-                        </small>
+                        <small>{task.estimatedMinutes} min estimate</small>
                         {stale ? (
                           <small role="status">
                             Source changed since this session was created.
@@ -309,10 +303,7 @@ export function GetAheadPage() {
                     <li className="task-row" key={task.id}>
                       <span>
                         <strong>{task.title}</strong>
-                        <small>
-                          {task.estimatedMinutes} min estimate, saves{' '}
-                          {task.estimatedTimeSavedMinutes} min later.
-                        </small>
+                        <small>{task.estimatedMinutes} min estimate</small>
                       </span>
                       <Button
                         variant="secondary"
@@ -322,7 +313,7 @@ export function GetAheadPage() {
                           persist(result.session)
                         }}
                       >
-                        Include
+                        Add
                       </Button>
                     </li>
                   ))}
