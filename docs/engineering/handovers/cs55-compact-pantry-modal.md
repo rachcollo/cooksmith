@@ -1,7 +1,7 @@
 # CS-55 Compact Pantry Modal Handover
 
 - **Date:** 2026-07-24
-- **Branch:** `cs-55-compact-pantry-modal`
+- **Branch:** `feat/cs-55-compact-pantry`
 - **Target:** `main`
 - **Baseline commit:** `17044fbfc15ea0fe48d0e64bfc5cec9426ec2781`
 - **Status:** Ready for review; hosted validation pending
@@ -54,6 +54,10 @@ checks remain pending and must not be treated as passed.
 | `npm run preflight`                                 | Environment-limited: runner Node/npm versions differ from the pins and no Git remote is configured.                      |
 | `npm run test:e2e`                                  | Environment-limited: the Playwright Chromium executable is absent.                                                       |
 | `npm run test:e2e:install`                          | Environment-limited: the browser CDN returned HTTP 403.                                                                  |
+
+The review follow-up also verified that each Pantry card now contains exactly two actions, keeps
+its quantity inside the information column, and keeps the Pantry title and Add item action on one
+compact row.
 
 ## Accessibility, Security, Privacy and Cost
 

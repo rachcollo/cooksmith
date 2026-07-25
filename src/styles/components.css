@@ -610,8 +610,16 @@
   justify-content: flex-start;
 }
 
+.pantry-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .pantry-header h1 {
   margin-bottom: 0;
+}
+
+.pantry-header .page-header-actions {
+  justify-self: end;
 }
 
 .pantry-discovery {
@@ -744,10 +752,10 @@
   color: var(--colour-text-muted);
 }
 
-.pantry-quantity {
+.pantry-card .pantry-quantity {
   color: var(--colour-text-muted);
   font-size: var(--font-size-small);
-  grid-column: 1;
+  margin-top: var(--space-1);
 }
 
 .pantry-stock-action {

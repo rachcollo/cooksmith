@@ -536,12 +536,12 @@ export function PantryPage() {
                       item.storageLocationSource === 'automatic' ? (
                         <p className="pantry-classification-note">Cooksmith suggested</p>
                       ) : null}
+                      <p className="pantry-quantity">
+                        {item.quantity === null
+                          ? 'Quantity not set'
+                          : `${item.quantity} ${item.unit ?? ''}`.trim()}
+                      </p>
                     </div>
-                    <p className="pantry-quantity">
-                      {item.quantity === null
-                        ? 'Quantity not set'
-                        : `${item.quantity} ${item.unit ?? ''}`.trim()}
-                    </p>
                     <Button
                       aria-label={
                         item.available

@@ -62,6 +62,7 @@ describe('household staples experience', () => {
 
     renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
     expect(await screen.findByRole('heading', { level: 1, name: 'Pantry' })).toBeVisible()
+    expect(screen.queryByText('Your household staples')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Plain flour' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Milk' })).toBeVisible()
 
@@ -140,6 +141,11 @@ describe('household staples experience', () => {
     renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
     const card = (await screen.findByRole('heading', { name: 'Plain flour' })).closest('article')
     expect(card).not.toBeNull()
+    expect(within(card as HTMLElement).getAllByRole('button')).toHaveLength(2)
+    expect(
+      within(card as HTMLElement).getByRole('button', { name: 'Mark Plain flour out of stock' }),
+    ).toHaveTextContent('×')
+    expect(within(card as HTMLElement).queryByRole('button', { name: /Delete|Remove/ })).toBeNull()
 
     await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Plain flour' })
