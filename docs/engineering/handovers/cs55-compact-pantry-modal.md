@@ -40,24 +40,25 @@ checks remain pending and must not be treated as passed.
 
 ## Local Validation
 
-| Command                                             | Result                                                                                                                   |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `npm run format` / `npm run format:check`           | Passed.                                                                                                                  |
-| `npm run lint`                                      | Passed.                                                                                                                  |
-| `npm run typecheck`                                 | Passed.                                                                                                                  |
-| `npm run test -- tests/integration/pantry.test.tsx` | Passed: 8 tests.                                                                                                         |
-| `npm run build`                                     | Passed with the existing large-chunk advisory.                                                                           |
-| `npm run docs:commands:check`                       | Passed.                                                                                                                  |
-| `npm run engineering:check-secrets`                 | Passed.                                                                                                                  |
-| `npm run engineering:validate-package -- CS-55`     | Passed against the ready package.                                                                                        |
-| `npm run test`                                      | 238 passed; 6 integration tests failed only in the parallel full run, including two Pantry tests that pass in isolation. |
-| `npm run preflight`                                 | Environment-limited: runner Node/npm versions differ from the pins and no Git remote is configured.                      |
-| `npm run test:e2e`                                  | Environment-limited: the Playwright Chromium executable is absent.                                                       |
-| `npm run test:e2e:install`                          | Environment-limited: the browser CDN returned HTTP 403.                                                                  |
+| Command                                             | Result                                                                                              |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `npm run format` / `npm run format:check`           | Passed.                                                                                             |
+| `npm run lint`                                      | Passed.                                                                                             |
+| `npm run typecheck`                                 | Passed.                                                                                             |
+| `npm run test -- tests/integration/pantry.test.tsx` | Passed: 8 tests.                                                                                    |
+| `npm run build`                                     | Passed with the existing large-chunk advisory.                                                      |
+| `npm run docs:commands:check`                       | Passed.                                                                                             |
+| `npm run engineering:check-secrets`                 | Passed.                                                                                             |
+| `npm run engineering:validate-package -- CS-55`     | Passed against the ready package.                                                                   |
+| `npm run test`                                      | Passed: 244 tests after bounding Testing Library's async retry window for parallel CI contention.   |
+| `npm run preflight`                                 | Environment-limited: runner Node/npm versions differ from the pins and no Git remote is configured. |
+| `npm run test:e2e`                                  | Environment-limited: the Playwright Chromium executable is absent.                                  |
+| `npm run test:e2e:install`                          | Environment-limited: the browser CDN returned HTTP 403.                                             |
 
 The review follow-up also verified that each Pantry card now contains exactly two actions, keeps
 its quantity inside the information column, and keeps the Pantry title and Add item action on one
-compact row.
+compact row. Testing Library now uses a bounded three-second async retry window so route-level lazy
+imports do not produce one-second false negatives when all integration files run concurrently.
 
 ## Accessibility, Security, Privacy and Cost
 
