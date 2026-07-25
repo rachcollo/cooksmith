@@ -65,6 +65,7 @@ describe('household staples experience', () => {
     expect(screen.getByRole('heading', { name: 'Plain flour' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Milk' })).toBeVisible()
 
+    await userEvent.click(screen.getByRole('button', { name: 'Filters' }))
     await userEvent.selectOptions(screen.getByLabelText('Location filter'), 'fridge')
     expect(screen.queryByRole('heading', { name: 'Plain flour' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Milk' })).toBeVisible()
@@ -75,7 +76,7 @@ describe('household staples experience', () => {
     expect(screen.queryByRole('heading', { name: 'Milk' })).not.toBeInTheDocument()
 
     await userEvent.clear(screen.getByLabelText('Search staples'))
-    await userEvent.click(screen.getByRole('button', { name: 'Add pantry item' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add item' }))
     const addDialog = screen.getByRole('dialog', { name: 'Add pantry item' })
     await userEvent.type(within(addDialog).getByLabelText('Item name'), 'Greek yoghurt')
     await userEvent.click(within(addDialog).getByRole('button', { name: 'Add item' }))
@@ -104,10 +105,10 @@ describe('household staples experience', () => {
     const user = userEvent.setup()
 
     renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
-    expect(await screen.findByRole('button', { name: 'Add pantry item' })).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Add item' })).toBeVisible()
     expect(screen.queryByRole('textbox', { name: /Item name/ })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Add pantry item' }))
+    await user.click(screen.getByRole('button', { name: 'Add item' }))
     const dialog = screen.getByRole('dialog', { name: 'Add pantry item' })
     expect(within(dialog).getByLabelText('Item name')).toBeVisible()
     expect(within(dialog).getByLabelText(/Quantity/)).toBeVisible()
@@ -115,6 +116,9 @@ describe('household staples experience', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('dialog', { name: 'Add pantry item' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Add item' }))
+    expect(screen.getByRole('textbox', { name: /Item name/ })).toHaveValue('')
   })
 
   it('edits an existing item in a modal and updates only that pantry card', async () => {
@@ -346,7 +350,7 @@ describe('household staples experience', () => {
     await user.click(within(dialog).getAllByRole('button', { name: 'Got it' })[0]!)
 
     expect(update).toHaveBeenCalledWith('pantry-milk', expect.objectContaining({ available: true }))
-    expect(await screen.findAllByRole('button', { name: 'Mark out of stock' })).toHaveLength(2)
+    expect(await screen.findAllByRole('button', { name: /Mark .+ out of stock/ })).toHaveLength(2)
 
     await user.click(within(dialog).getByRole('button', { name: 'Ignore' }))
     expect(within(dialog).queryByText('Rice')).not.toBeInTheDocument()
@@ -372,14 +376,19 @@ describe('household staples experience', () => {
 
     renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
     await screen.findByRole('heading', { name: 'Plain flour' })
-    await user.click(screen.getByRole('button', { name: 'Mark out of stock' }))
+    await user.click(screen.getByRole('button', { name: 'Mark Plain flour out of stock' }))
     expect(update).toHaveBeenCalledWith(
       'default-flour',
       expect.objectContaining({ available: false }),
     )
-    expect(await screen.findByRole('button', { name: 'Mark available' })).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Mark Plain flour available' })).toBeVisible()
 
-    await user.click(screen.getByRole('button', { name: 'Remove' }))
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Edit Plain flour' })).getByRole('button', {
+        name: 'Delete item',
+      }),
+    )
     expect(remove).toHaveBeenCalledWith('default-flour')
     expect(await screen.findByRole('heading', { name: 'Start your pantry' })).toBeVisible()
   })

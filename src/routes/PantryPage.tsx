@@ -58,6 +58,7 @@ export function PantryPage() {
   const [location, setLocation] = useState<LocationFilter>('all')
   const [availability, setAvailability] = useState<AvailabilityFilter>('all')
   const [category, setCategory] = useState<'all' | PantryItem['category']>('all')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [addingOpen, setAddingOpen] = useState(false)
@@ -291,6 +292,16 @@ export function PantryPage() {
     }
   }
 
+  function setAddDialogOpen(open: boolean) {
+    if (saving) return
+    setAddingOpen(open)
+    if (!open) {
+      setDraft(emptyInput)
+      setFieldErrors({})
+      setItemError(null)
+    }
+  }
+
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!editingItem) return
@@ -388,10 +399,13 @@ export function PantryPage() {
   return (
     <main className="page-stack">
       <DocumentTitle title="Pantry" />
-      <header className="page-header">
-        <p className="eyebrow">Your household staples</p>
+      <header className="page-header pantry-header">
         <h1>Pantry</h1>
-        <p>Keep everyday staples organised across your pantry, fridge and freezer.</p>
+        <div className="page-header-actions">
+          <Button type="button" onClick={() => setAddDialogOpen(true)}>
+            Add item
+          </Button>
+        </div>
       </header>
 
       <div className="pantry-summary" aria-label="Household staples summary">
@@ -411,57 +425,60 @@ export function PantryPage() {
         </Button>
       </div>
 
-      <Panel className="pantry-quick-actions" aria-labelledby="pantry-actions-title">
-        <div className="pantry-panel-heading">
-          <h2 id="pantry-actions-title">Keep pantry tidy</h2>
-          <p>Add a staple only when you need it, without pushing the list down the page.</p>
-        </div>
-        <Button type="button" onClick={() => setAddingOpen(true)}>
-          Add pantry item
-        </Button>
-      </Panel>
-
-      <Panel>
-        <div className="pantry-filters">
+      <Panel className="pantry-discovery">
+        <div className="pantry-discovery-row">
           <TextField
             label="Search staples"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <SelectField
-            label="Location filter"
-            value={location}
-            onChange={(event) => setLocation(event.target.value as LocationFilter)}
+          <Button
+            aria-controls="pantry-filters"
+            aria-expanded={filtersOpen}
+            variant="secondary"
+            type="button"
+            onClick={() => setFiltersOpen((open) => !open)}
           >
-            <option value="all">All locations</option>
-            {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectField>
-          <SelectField
-            label="Availability filter"
-            value={availability}
-            onChange={(event) => setAvailability(event.target.value as AvailabilityFilter)}
-          >
-            <option value="all">All items</option>
-            <option value="available">Available</option>
-            <option value="unavailable">Out of stock</option>
-          </SelectField>
-          <SelectField
-            label="Category filter"
-            value={category}
-            onChange={(event) => setCategory(event.target.value as typeof category)}
-          >
-            <option value="all">All categories</option>
-            {Object.entries(pantryCategoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </SelectField>
+            Filters
+          </Button>
         </div>
+        {filtersOpen ? (
+          <div className="pantry-filters" id="pantry-filters">
+            <SelectField
+              label="Location filter"
+              value={location}
+              onChange={(event) => setLocation(event.target.value as LocationFilter)}
+            >
+              <option value="all">All locations</option>
+              {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              label="Availability filter"
+              value={availability}
+              onChange={(event) => setAvailability(event.target.value as AvailabilityFilter)}
+            >
+              <option value="all">All items</option>
+              <option value="available">Available</option>
+              <option value="unavailable">Out of stock</option>
+            </SelectField>
+            <SelectField
+              label="Category filter"
+              value={category}
+              onChange={(event) => setCategory(event.target.value as typeof category)}
+            >
+              <option value="all">All categories</option>
+              {Object.entries(pantryCategoryLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+        ) : null}
       </Panel>
 
       {filteredItems.length === 0 ? (
@@ -526,20 +543,21 @@ export function PantryPage() {
                         : `${item.quantity} ${item.unit ?? ''}`.trim()}
                     </p>
                     <Button
+                      aria-label={
+                        item.available
+                          ? `Mark ${item.name} out of stock`
+                          : `Mark ${item.name} available`
+                      }
+                      className="pantry-stock-action"
                       variant="secondary"
                       type="button"
                       onClick={() => void toggleAvailability(item)}
                     >
-                      {item.available ? 'Mark out of stock' : 'Mark available'}
+                      {item.available ? '×' : 'Mark available'}
                     </Button>
-                    <div className="pantry-actions">
-                      <Button variant="secondary" type="button" onClick={() => openEdit(item)}>
-                        Edit
-                      </Button>
-                      <Button variant="quiet" type="button" onClick={() => void remove(item)}>
-                        Remove
-                      </Button>
-                    </div>
+                    <Button variant="secondary" type="button" onClick={() => openEdit(item)}>
+                      Edit
+                    </Button>
                   </article>
                 ))}
               </div>
@@ -594,15 +612,7 @@ export function PantryPage() {
 
       <Dialog
         description="Add the staple name and, if useful, a quantity. Cooksmith will suggest the best category and storage location."
-        onOpenChange={(open) => {
-          if (saving) return
-          setAddingOpen(open)
-          if (!open) {
-            setDraft(emptyInput)
-            setFieldErrors({})
-            setItemError(null)
-          }
-        }}
+        onOpenChange={setAddDialogOpen}
         open={addingOpen}
         title="Add pantry item"
       >
@@ -650,7 +660,7 @@ export function PantryPage() {
             <Button
               variant="secondary"
               type="button"
-              onClick={() => setAddingOpen(false)}
+              onClick={() => setAddDialogOpen(false)}
               disabled={saving}
             >
               Cancel
@@ -750,6 +760,15 @@ export function PantryPage() {
               Available now
             </label>
             {editErrors.duplicate ? <p className="form-error">{editErrors.duplicate}</p> : null}
+            <Button
+              className="pantry-delete-action"
+              variant="quiet"
+              type="button"
+              onClick={() => void remove(editingItem)}
+              disabled={editingSaving}
+            >
+              Delete item
+            </Button>
             <div className="dialog-actions">
               <Button
                 variant="secondary"
