@@ -25,7 +25,9 @@ automatic categorisation contract.
 
 - **Migrations:** None.
 - **Edge Functions:** None.
-- **Dependencies:** None.
+- **Dependencies:** `react-router-dom` and its exact `react-router` dependency are pinned to 7.11.0,
+  the non-vulnerable version selected by `npm audit` for GHSA-qwww-vcr4-c8h2. No new dependency was
+  added.
 - **Production access or release:** None; merging to `main` remains a separate reviewed action.
 
 ## Preview Verification
@@ -50,6 +52,7 @@ checks remain pending and must not be treated as passed.
 | `npm run docs:commands:check`                       | Passed.                                                                                             |
 | `npm run engineering:check-secrets`                 | Passed.                                                                                             |
 | `npm run engineering:validate-package -- CS-55`     | Passed against the ready package.                                                                   |
+| `npm audit --omit=dev --audit-level=high`           | Registry endpoint returned HTTP 403 locally; CI must verify the pinned non-vulnerable versions.     |
 | `npm run test`                                      | Passed: 244 tests after bounding Testing Library's async retry window for parallel CI contention.   |
 | `npm run preflight`                                 | Environment-limited: runner Node/npm versions differ from the pins and no Git remote is configured. |
 | `npm run test:e2e`                                  | Environment-limited: the Playwright Chromium executable is absent.                                  |
