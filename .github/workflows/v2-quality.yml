@@ -92,7 +92,7 @@ jobs:
       - name: Check for tracked environment files and high-confidence secret patterns
         run: npm run engineering:check-secrets
       - name: Audit production dependencies for known vulnerabilities
-        run: npm audit --omit=dev --audit-level=high
+        run: npm run security:audit-production
 
   format:
     name: Format and docs

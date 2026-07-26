@@ -44,6 +44,7 @@
     "docs:commands:check": "node scripts/audit-documentation-commands.mjs",
     "engineering:validate-pr": "node scripts/engineering/validate-pr-governance.mjs",
     "engineering:check-secrets": "node scripts/engineering/check-secrets-and-env-files.mjs",
+    "security:audit-production": "node scripts/engineering/audit-production-dependencies.mjs",
     "engineering:verify-deployment": "node scripts/engineering/verify-deployment.mjs",
     "engineering:delivery-summary": "node scripts/engineering/create-delivery-summary.mjs",
     "engineering:validate-package": "node scripts/engineering/validate-package-readiness.mjs",

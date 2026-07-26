@@ -605,9 +605,48 @@
   color: var(--colour-text-muted);
 }
 
-.pantry-suggestions-trigger {
-  display: flex;
-  justify-content: flex-start;
+.pantry-header {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pantry-header h1 {
+  margin-bottom: 0;
+}
+
+.pantry-discovery {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pantry-discovery-row {
+  align-items: end;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: minmax(5.5rem, 1fr) repeat(3, var(--touch-target));
+  min-width: 0;
+}
+
+.pantry-discovery-row .form-label {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.pantry-discovery-row .button {
+  padding: 0;
+}
+
+.pantry-filters {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
 }
 
 .pantry-suggestions-dialog {
@@ -668,28 +707,39 @@
   gap: var(--space-4);
 }
 
+.pantry-category {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pantry-category > h3 {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  margin: 0;
+}
+
 .pantry-grid {
   display: grid;
-  gap: var(--space-4);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 }
 
 .pantry-card {
+  aspect-ratio: 1;
   background: var(--colour-surface);
   border: var(--border-default);
-  border-radius: var(--radius-large);
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  border-radius: var(--radius-small);
+  padding: var(--space-3);
+  position: relative;
 }
 
-.pantry-card h3,
+.pantry-card h4,
 .pantry-card p {
   margin: 0;
 }
 
-.pantry-card h3 + p {
-  color: var(--colour-text-muted);
+.pantry-card h4 {
+  overflow-wrap: anywhere;
 }
 
 .recipe-card {
@@ -719,15 +769,54 @@
   color: var(--colour-text-muted);
 }
 
-.pantry-quantity {
-  font-size: 1.1rem;
-  font-weight: 800;
+.pantry-card .pantry-quantity {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  margin-top: var(--space-1);
 }
 
-.pantry-actions {
+.pantry-stock-action {
+  bottom: 0;
+  font-size: var(--font-size-small);
+  min-width: var(--touch-target);
+  position: absolute;
+  right: 0;
+  z-index: 1;
+}
+
+.pantry-card > .button,
+.pantry-card-edit-action {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.pantry-card-edit-action {
+  align-items: flex-start;
+  color: inherit;
+  cursor: pointer;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  flex-direction: column;
+  height: 100%;
+  padding: 0 0 var(--touch-target);
+  text-align: left;
+  width: 100%;
+}
+
+.pantry-card > .button:hover:not(:disabled),
+.pantry-card-edit-action:hover {
+  background: var(--colour-brand-soft);
+}
+
+.pantry-card-edit-action:focus-visible {
+  border-radius: var(--radius-small);
+  outline: 3px solid var(--colour-focus);
+  outline-offset: 3px;
+}
+
+.pantry-delete-action {
+  color: var(--colour-error);
+  justify-self: start;
 }
 
 .empty-state {
@@ -741,7 +830,56 @@
 }
 
 .pantry-edit-form {
+  gap: var(--space-3);
   grid-template-columns: 1fr;
+}
+
+.pantry-edit-field-row {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pantry-compact-form {
+  grid-template-columns: 1fr;
+}
+
+.pantry-quantity-fields {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+@media (max-width: 30rem) {
+  .pantry-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .pantry-card {
+    padding: var(--space-1);
+  }
+
+  .pantry-card h4 {
+    display: -webkit-box;
+    font-size: var(--font-size-caption);
+    line-height: 1.1;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .pantry-card .pantry-quantity {
+    font-size: var(--font-size-caption);
+  }
+
+  .pantry-card > .button {
+    font-size: var(--font-size-caption);
+    padding: 0;
+  }
+
+  .pantry-quantity-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .recipe-form {

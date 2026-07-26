@@ -134,8 +134,7 @@ underlying standards. This change added:
    `v2-quality.yml` runs
    [`scripts/engineering/check-secrets-and-env-files.mjs`](../../scripts/engineering/check-secrets-and-env-files.mjs)
    (forbidden tracked `.env*` files, AWS key IDs, PEM private key blocks,
-   Supabase service-role key assignments) and `npm audit --omit=dev
---audit-level=high`.
+   Supabase service-role key assignments) and `npm run security:audit-production`.
 6. **This document and the [operator guide](OPERATOR_GUIDE.md)**, and an
    explicit `Edge Functions changed in this PR` line added to the pull
    request template alongside the existing `Migrations in this PR` line.
@@ -295,8 +294,10 @@ or workflow dispatch performs an irreversible or production-affecting action.
   complements, and does not replace, GitHub's native secret scanning (a
   repository-settings feature; see the operator guide for how to confirm it
   is enabled).
-- `npm audit --omit=dev --audit-level=high` blocks merging when a
-  high-severity production dependency vulnerability exists.
+- `npm run security:audit-production` blocks merging when a high-severity production dependency
+  vulnerability exists. Its checked-in review permits only GHSA-qwww-vcr4-c8h2 because Cooksmith is
+  a browser-only SPA and does not enable React Router RSC mode or server actions; every other high or
+  critical finding remains blocking.
 - Jira sync only ever moves an issue forward through the fixed status order
   and only when Jira currently offers that transition, so a duplicate or
   out-of-order webhook cannot regress delivery status.
