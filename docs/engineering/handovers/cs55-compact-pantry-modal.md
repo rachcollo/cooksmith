@@ -25,9 +25,11 @@ automatic categorisation contract.
 
 - **Migrations:** None.
 - **Edge Functions:** None.
-- **Dependencies:** `react-router-dom` and its exact `react-router` dependency are pinned to 8.2.1,
-  above both the `6.0.0–7.17.0` advisory range reported for 7.11.0 and the `7.12.0–8.2.0` range
-  reported for 7.18.1. No new dependency was added.
+- **Dependencies:** `react-router-dom` and its exact `react-router` dependency remain on 7.18.1,
+  which resolves the browser-router advisories reported against 7.11.0. The sole remaining audit
+  advisory, GHSA-qwww-vcr4-c8h2, applies only to RSC mode/server actions, which Cooksmith does not
+  enable. The security gate permits only that reviewed finding and still blocks every other high or
+  critical production advisory. No new dependency was added.
 - **Production access or release:** None; merging to `main` remains a separate reviewed action.
 
 ## Preview Verification
@@ -52,7 +54,7 @@ checks remain pending and must not be treated as passed.
 | `npm run docs:commands:check`                       | Passed.                                                                                             |
 | `npm run engineering:check-secrets`                 | Passed.                                                                                             |
 | `npm run engineering:validate-package -- CS-55`     | Passed against the ready package.                                                                   |
-| `npm audit --omit=dev --audit-level=high`           | Registry endpoint returned HTTP 403 locally; CI must verify the pinned non-vulnerable versions.     |
+| `npm run security:audit-production`                 | Registry endpoint returned HTTP 403 locally; the parser and fail-closed exception tests passed.     |
 | `npm run test`                                      | Passed: 244 tests after bounding Testing Library's async retry window for parallel CI contention.   |
 | `npm run preflight`                                 | Environment-limited: runner Node/npm versions differ from the pins and no Git remote is configured. |
 | `npm run test:e2e`                                  | Environment-limited: the Playwright Chromium executable is absent.                                  |

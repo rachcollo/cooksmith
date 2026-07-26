@@ -35,6 +35,12 @@ declare module '*.mjs' {
   export const assessPackageReadiness: (options: Record<string, unknown>) => Check[]
   export const formatReadinessReport: (checks: Check[]) => Report
 
+  type AuditVulnerability = { severity: string; via: unknown[] }
+  type AuditEntry = [string, AuditVulnerability]
+  export const assessProductionAudit: (report: {
+    vulnerabilities?: Record<string, AuditVulnerability>
+  }) => { accepted: AuditEntry[]; blocking: AuditEntry[] }
+
   type SelectionEvaluation = { key: string; eligible: boolean; reason: string | null }
   type SelectionResult = {
     selected: string | null
