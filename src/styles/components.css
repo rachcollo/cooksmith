@@ -1961,7 +1961,7 @@
 
 .reconciliation-item {
   align-items: center;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-lg);
   display: grid;
   gap: var(--space-3);
@@ -1970,7 +1970,7 @@
 }
 
 .reconciliation-item p {
-  color: var(--color-text-muted);
+  color: var(--colour-text-muted);
   margin: var(--space-1) 0 0;
 }
 
@@ -1998,7 +1998,7 @@
 
 .reconciliation-attention-item {
   align-items: center;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-lg);
   display: grid;
   gap: var(--space-3);
@@ -2064,14 +2064,14 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--colour-surface);
 }
 
 .choice-card:has(input:checked) {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px var(--color-accent-soft);
+  border-color: var(--colour-focus);
+  box-shadow: 0 0 0 2px var(--colour-focus-soft);
 }
 
 .plain-list {
@@ -2082,7 +2082,7 @@
 
 .task-row {
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-md);
 }
 
@@ -2093,11 +2093,11 @@
 
 .task-row small {
   display: block;
-  color: var(--color-text-muted);
+  color: var(--colour-text-muted);
 }
 
 .task-row-completed .task-row-title strong {
-  color: var(--color-text-muted);
+  color: var(--colour-text-muted);
   text-decoration: line-through;
 }
 
@@ -2116,10 +2116,10 @@
 .duration-inline-form input {
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: var(--colour-surface);
+  color: var(--colour-text);
   font: inherit;
 }
 
@@ -2148,12 +2148,12 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface-subtle);
+  background: var(--colour-surface-subtle);
 }
 
 .resume-session-card p {
   margin: var(--space-1) 0 0;
-  color: var(--color-text-muted);
+  color: var(--colour-text-muted);
 }
