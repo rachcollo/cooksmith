@@ -541,14 +541,19 @@ export function PantryPage() {
                     <div className="pantry-grid">
                       {categoryItems.map((item) => (
                         <article className="pantry-card" key={item.id}>
-                          <div>
+                          <button
+                            aria-label={`Edit ${item.name}`}
+                            className="pantry-card-edit-action"
+                            type="button"
+                            onClick={() => openEdit(item)}
+                          >
                             <h4>{item.name}</h4>
                             {item.quantity !== null ? (
                               <p className="pantry-quantity">
                                 {`${item.quantity} ${item.unit ?? ''}`.trim()}
                               </p>
                             ) : null}
-                          </div>
+                          </button>
                           <Button
                             aria-label={
                               item.available
@@ -561,9 +566,6 @@ export function PantryPage() {
                             onClick={() => void toggleAvailability(item)}
                           >
                             {item.available ? 'A' : 'NA'}
-                          </Button>
-                          <Button variant="secondary" type="button" onClick={() => openEdit(item)}>
-                            Edit
                           </Button>
                         </article>
                       ))}

@@ -170,7 +170,7 @@ describe('household staples experience', () => {
     ).toHaveTextContent('A')
     expect(within(card as HTMLElement).queryByRole('button', { name: /Delete|Remove/ })).toBeNull()
 
-    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit' }))
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Plain flour' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Plain flour' })
     expect(within(dialog).getByLabelText('Item name')).toHaveValue('Plain flour')
 
@@ -208,7 +208,7 @@ describe('household staples experience', () => {
     const card = (await screen.findByRole('heading', { name: 'Plain flour' })).closest('article')
     expect(card).not.toBeNull()
 
-    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit' }))
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Plain flour' }))
     let dialog = screen.getByRole('dialog', { name: 'Edit Plain flour' })
     await user.clear(within(dialog).getByLabelText('Item name'))
     await user.type(within(dialog).getByLabelText('Item name'), 'Milk')
@@ -228,7 +228,7 @@ describe('household staples experience', () => {
     expect(screen.getByRole('heading', { name: 'Plain flour' })).toBeVisible()
     expect(screen.queryByRole('heading', { name: 'Unsaved flour' })).not.toBeInTheDocument()
 
-    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit' }))
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Plain flour' }))
     dialog = screen.getByRole('dialog', { name: 'Edit Plain flour' })
     within(dialog).getByRole('button', { name: 'Close Edit Plain flour' }).click()
     expect(screen.queryByRole('dialog', { name: 'Edit Plain flour' })).not.toBeInTheDocument()
@@ -261,7 +261,7 @@ describe('household staples experience', () => {
 
     renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
     const card = (await screen.findByRole('heading', { name: 'Milk' })).closest('article')
-    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit' }))
+    await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Milk' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Milk' })
     await user.clear(within(dialog).getByLabelText('Item name'))
     await user.type(within(dialog).getByLabelText('Item name'), 'Apples')
@@ -418,7 +418,7 @@ describe('household staples experience', () => {
       await screen.findByRole('button', { name: 'Plain flour not available. Mark available' }),
     ).toHaveTextContent('NA')
 
-    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    await user.click(screen.getByRole('button', { name: 'Edit Plain flour' }))
     await user.click(
       within(screen.getByRole('dialog', { name: 'Edit Plain flour' })).getByRole('button', {
         name: 'Delete item',
