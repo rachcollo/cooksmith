@@ -10,6 +10,7 @@ import { Dialog } from '../components/ui/Dialog'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
+import { Tag } from '../components/ui/Tag'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
 import { VisuallyHidden } from '../components/ui/VisuallyHidden'
@@ -624,11 +625,28 @@ export function RecipesPage() {
                 type="button"
                 onClick={() => setSelectedId(recipe.id)}
               >
-                <span className="recipe-card-heading">{recipe.name}</span>
-                <span className="recipe-card-summary">
-                  {[minutesLabel(recipe), recipe.servings ? `${recipe.servings} servings` : null]
-                    .filter(Boolean)
-                    .join(' · ') || 'Summary details not set'}
+                <span className="photo-frame recipe-card-photo" aria-hidden="true">
+                  <span className="photo-frame-backdrop" />
+                  {recipe.imageUrl ? (
+                    <img className="photo-frame-media" src={recipe.imageUrl} alt="" />
+                  ) : (
+                    <span className="photo-frame-media is-empty" />
+                  )}
+                </span>
+                <span className="recipe-card-content">
+                  <span className="recipe-card-heading">{recipe.name}</span>
+                  <span className="recipe-card-summary">
+                    {[minutesLabel(recipe), recipe.servings ? `${recipe.servings} servings` : null]
+                      .filter(Boolean)
+                      .join(' · ') || 'Summary details not set'}
+                  </span>
+                  {recipe.tags.length > 0 ? (
+                    <span className="recipe-tags" aria-label="Recipe tags">
+                      {recipe.tags.map((tag) => (
+                        <Tag key={tag} label={tag} />
+                      ))}
+                    </span>
+                  ) : null}
                 </span>
               </button>
               <button
@@ -664,6 +682,21 @@ export function RecipesPage() {
           }}
         >
           <div className="recipe-detail-dialog">
+            <div className="photo-frame recipe-detail-photo" aria-hidden="true">
+              <span className="photo-frame-backdrop" />
+              {selectedRecipe.imageUrl ? (
+                <img className="photo-frame-media" src={selectedRecipe.imageUrl} alt="" />
+              ) : (
+                <span className="photo-frame-media is-empty" />
+              )}
+            </div>
+            {selectedRecipe.tags.length > 0 ? (
+              <div className="recipe-tags" aria-label="Recipe tags">
+                {selectedRecipe.tags.map((tag) => (
+                  <Tag key={tag} label={tag} />
+                ))}
+              </div>
+            ) : null}
             <h3>Ingredients</h3>
             {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length > 0 ? (
               <ul>

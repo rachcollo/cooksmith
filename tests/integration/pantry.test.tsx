@@ -81,10 +81,9 @@ describe('household staples experience', () => {
     expect(
       within(discoveryControls as HTMLElement).getByRole('button', { name: 'Add pantry item' }),
     ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Review pantry suggestions' })).toBeVisible()
     expect(
-      within(discoveryControls as HTMLElement).getByRole('button', {
-        name: 'Review pantry suggestions',
-      }),
+      screen.getByRole('heading', { name: 'Useful suggestions, when you need them' }),
     ).toBeVisible()
 
     await userEvent.click(screen.getByRole('button', { name: 'Filters' }))
@@ -168,6 +167,7 @@ describe('household staples experience', () => {
         name: 'Plain flour available. Mark not available',
       }),
     ).toHaveTextContent('A')
+    expect(within(card as HTMLElement).getByText('Available')).toBeVisible()
     expect(within(card as HTMLElement).queryByRole('button', { name: /Delete|Remove/ })).toBeNull()
 
     await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Plain flour' }))

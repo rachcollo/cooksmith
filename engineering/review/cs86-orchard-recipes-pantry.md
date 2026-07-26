@@ -5,11 +5,11 @@
 - **Milestone:** Orchard Editorial
 - **Jira issue:** CS-86
 - **Epic:** CS-82 — Orchard Editorial design-system migration
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Branch:** `feat/cs-86-orchard-recipes-pantry`
 - **Depends on:** CS-83, CS-84 and CS-85
 - **Blocks:** CS-89
-- **Package path:** `engineering/ready/cs86-orchard-recipes-pantry.md`
+- **Package path:** `engineering/review/cs86-orchard-recipes-pantry.md`
 
 ## Product Outcome
 
