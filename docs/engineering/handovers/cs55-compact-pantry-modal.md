@@ -25,8 +25,8 @@ automatic categorisation contract.
 
 - **Migrations:** None.
 - **Edge Functions:** None.
-- **Dependencies:** `react-router-dom` and its exact `react-router` dependency are pinned to 7.18.1,
-  the version selected by the latest PR audit for the current React Router advisory set. No new
+- **Dependencies:** `react-router-dom` and its exact `react-router` dependency are pinned to 7.11.0,
+  the non-vulnerable version selected by the latest PR audit for GHSA-qwww-vcr4-c8h2. No new
   dependency was added.
 - **Production access or release:** None; merging to `main` remains a separate reviewed action.
 
@@ -68,6 +68,10 @@ category labels on cards. Empty quantities render no placeholder, availability t
 and NA, item buttons are borderless, cards use a square recipe-style shape, and Search, Filters, Add
 and Suggestions share one compact icon-led toolbar. At mobile widths the cards use a four-column
 grid with condensed card typography and actions.
+
+The edit dialog keeps Location and Category together on one row, followed by Quantity and Unit on
+one row, and uses tighter vertical spacing so the complete form is easier to review on a mobile
+screen.
 
 ## Accessibility, Security, Privacy and Cost
 

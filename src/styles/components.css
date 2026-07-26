@@ -830,7 +830,14 @@
 }
 
 .pantry-edit-form {
+  gap: var(--space-3);
   grid-template-columns: 1fr;
+}
+
+.pantry-edit-field-row {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .pantry-compact-form {

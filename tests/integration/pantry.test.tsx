@@ -173,6 +173,14 @@ describe('household staples experience', () => {
     await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Plain flour' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Plain flour' })
     expect(within(dialog).getByLabelText('Item name')).toHaveValue('Plain flour')
+    expect(within(dialog).getByLabelText('Location').closest('.pantry-edit-field-row')).toBe(
+      within(dialog).getByLabelText('Category').closest('.pantry-edit-field-row'),
+    )
+    expect(
+      within(dialog)
+        .getByLabelText(/Quantity/)
+        .closest('.pantry-edit-field-row'),
+    ).toBe(within(dialog).getByLabelText(/Unit/).closest('.pantry-edit-field-row'))
 
     await user.clear(within(dialog).getByLabelText('Item name'))
     await user.type(within(dialog).getByLabelText('Item name'), 'Bread flour')

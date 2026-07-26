@@ -705,62 +705,66 @@ export function PantryPage() {
               value={editDraft.name}
               onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
             />
-            <SelectField
-              error={editErrors.storageLocation}
-              label="Location"
-              value={editDraft.storageLocation}
-              onChange={(event) =>
-                setEditDraft({
-                  ...editDraft,
-                  storageLocation: event.target.value as PantryStorageLocation,
-                  storageLocationSource: 'explicit',
-                })
-              }
-            >
-              {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              error={editErrors.category}
-              label="Category"
-              value={editDraft.category}
-              onChange={(event) =>
-                setEditDraft({
-                  ...editDraft,
-                  category: event.target.value as PantryItemInput['category'],
-                  categorySource: 'explicit',
-                })
-              }
-            >
-              {Object.entries(pantryCategoryLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </SelectField>
-            <TextField
-              error={editErrors.quantity}
-              label="Quantity"
-              inputMode="decimal"
-              optional
-              value={editDraft.quantity === null ? '' : String(editDraft.quantity)}
-              onChange={(event) =>
-                setEditDraft({
-                  ...editDraft,
-                  quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
-                })
-              }
-            />
-            <TextField
-              error={editErrors.unit}
-              label="Unit"
-              optional
-              value={editDraft.unit ?? ''}
-              onChange={(event) => setEditDraft({ ...editDraft, unit: event.target.value })}
-            />
+            <div className="pantry-edit-field-row">
+              <SelectField
+                error={editErrors.storageLocation}
+                label="Location"
+                value={editDraft.storageLocation}
+                onChange={(event) =>
+                  setEditDraft({
+                    ...editDraft,
+                    storageLocation: event.target.value as PantryStorageLocation,
+                    storageLocationSource: 'explicit',
+                  })
+                }
+              >
+                {Object.entries(pantryStorageLocationLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField
+                error={editErrors.category}
+                label="Category"
+                value={editDraft.category}
+                onChange={(event) =>
+                  setEditDraft({
+                    ...editDraft,
+                    category: event.target.value as PantryItemInput['category'],
+                    categorySource: 'explicit',
+                  })
+                }
+              >
+                {Object.entries(pantryCategoryLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+            <div className="pantry-edit-field-row">
+              <TextField
+                error={editErrors.quantity}
+                label="Quantity"
+                inputMode="decimal"
+                optional
+                value={editDraft.quantity === null ? '' : String(editDraft.quantity)}
+                onChange={(event) =>
+                  setEditDraft({
+                    ...editDraft,
+                    quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+                  })
+                }
+              />
+              <TextField
+                error={editErrors.unit}
+                label="Unit"
+                optional
+                value={editDraft.unit ?? ''}
+                onChange={(event) => setEditDraft({ ...editDraft, unit: event.target.value })}
+              />
+            </div>
             <label className="checkbox-field">
               <input
                 type="checkbox"
