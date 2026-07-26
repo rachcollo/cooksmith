@@ -1,5 +1,7 @@
 # Milestone handovers
 
+- [CS-83 Orchard foundations, fonts and token migration](cs83-orchard-foundations-tokens.md)
+
 - [Production database release workflow](production-database-release-workflow.md)
 - [CS-30 — URL Recipe Import](cs30-url-recipe-import.md)
 
