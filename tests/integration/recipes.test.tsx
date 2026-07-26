@@ -241,9 +241,11 @@ describe('recipe library experience', () => {
     expect(screen.getByRole('heading', { name: 'No matching recipes' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Clear search' }))
     expect(screen.getByRole('button', { name: 'Open Apple crumble recipe' })).toBeVisible()
+    expect(screen.getByText('sweet')).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Open Apple crumble recipe' }))
     const detailDialog = screen.getByRole('dialog', { name: 'Apple crumble' })
+    expect(within(detailDialog).getByText('sweet')).toBeVisible()
     expect(within(detailDialog).getByText('No instructions added yet.')).toBeVisible()
     expect(within(detailDialog).queryByText('Family note')).not.toBeInTheDocument()
     expect(within(detailDialog).queryByText('Dessert')).not.toBeInTheDocument()
