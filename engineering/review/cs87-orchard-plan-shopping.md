@@ -5,11 +5,11 @@
 - **Milestone:** Orchard Editorial
 - **Jira issue:** CS-87
 - **Epic:** CS-82 — Orchard Editorial design-system migration
-- **Status:** `Ready`
+- **Status:** `Review`
 - **Branch:** `feat/cs-87-orchard-plan-shopping`
 - **Depends on:** CS-83, CS-84 and CS-85
 - **Blocks:** CS-89
-- **Package path:** `engineering/ready/cs87-orchard-plan-shopping.md`
+- **Package path:** `engineering/review/cs87-orchard-plan-shopping.md`
 
 ## Product Outcome
 

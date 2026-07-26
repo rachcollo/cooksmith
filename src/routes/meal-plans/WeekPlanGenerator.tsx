@@ -329,7 +329,7 @@ export function WeekPlanGenerator({
 
   return (
     <>
-      <Button type="button" variant="secondary" onClick={() => void load(targetWeek)}>
+      <Button type="button" variant="accent" onClick={() => void load(targetWeek)}>
         Plan my week
       </Button>
       {state ? (
