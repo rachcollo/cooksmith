@@ -5,11 +5,11 @@
 - **Milestone:** Orchard Editorial
 - **Jira issue:** CS-85
 - **Epic:** CS-82 — Orchard Editorial design-system migration
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Branch:** `feat/cs-85-orchard-navigation-shell`
 - **Depends on:** CS-83 and CS-84
 - **Blocks:** CS-86, CS-87 and CS-88
-- **Package path:** `engineering/ready/cs85-orchard-navigation-shell.md`
+- **Package path:** `engineering/review/cs85-orchard-navigation-shell.md`
 
 ## Product Outcome
 
