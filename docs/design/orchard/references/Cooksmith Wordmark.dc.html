@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#e5ddcd;font-family:'Space Grotesk',system-ui,sans-serif;color:#22261f}
+  .cap{font:700 10px 'Space Mono',monospace;letter-spacing:.14em;color:#5b6b52;margin:0 0 14px 2px;text-transform:uppercase}
+  .card{background:#fffdf7;border:1px solid #e0d6c5;border-radius:18px}
+  .lab{font:400 9px 'Space Mono';letter-spacing:.14em;color:#8a8272;text-transform:uppercase}
+  .oo{display:inline-block;border-radius:50%;vertical-align:-.12em}
+  .row{display:flex;flex-wrap:wrap;gap:24px;align-items:stretch}
+</style>
+</helmet>
+
+<div style="padding:48px 56px 6px">
+  <div style="font:600 40px 'Cormorant Garamond';color:#2e4a34;letter-spacing:.02em">COOKSMITH — WORDMARK</div>
+  <div style="font:400 11px 'Space Mono';letter-spacing:.2em;color:#5b6b52;margin-top:8px">ORCHARD EDITORIAL · CORMORANT GARAMOND SIGNATURE</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:40px;padding:30px 56px 64px;max-width:1180px">
+
+  <!-- PRIMARY -->
+  <div><p class="cap">01 · Primary lockup — final</p>
+  <div class="card" style="padding:60px;display:flex;flex-direction:column;align-items:center;gap:24px">
+    <div style="display:flex;align-items:center;gap:24px">
+      <span style="width:78px;height:78px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 46px 'Cormorant Garamond';color:#2e4a34">C</span>
+      <div style="font:600 72px 'Cormorant Garamond';color:#2e4a34;letter-spacing:.14em;padding-left:.14em">COOKSMITH</div>
+    </div>
+    <div style="width:64px;height:1.5px;background:#d7e85a"></div>
+    <div style="font:400 13px 'Space Mono';letter-spacing:.42em;color:#5b6b52;padding-left:.42em">MEALS, QUIETLY SORTED</div>
+  </div></div>
+
+  <!-- VARIANTS -->
+  <div><p class="cap">02 · Variants</p>
+  <div class="row">
+    <div class="card" style="flex:1;min-width:300px;padding:44px 40px;display:flex;flex-direction:column;gap:20px;justify-content:center">
+      <div class="lab">All-caps, letterspaced</div>
+      <div style="font:600 42px 'Cormorant Garamond';color:#2e4a34;letter-spacing:.16em;padding-left:.16em">COOKSMITH</div>
+    </div>
+    <div class="card" style="flex:1;min-width:300px;padding:44px 40px;display:flex;flex-direction:column;gap:20px;justify-content:center">
+      <div class="lab">Italic accent</div>
+      <div style="font:600 46px 'Cormorant Garamond';color:#2e4a34">Cook<span style="font-style:italic;font-weight:500">smith</span></div>
+    </div>
+    <div class="card" style="flex:1;min-width:300px;padding:44px 40px;display:flex;flex-direction:column;gap:20px;justify-content:center">
+      <div class="lab">Playful blob "oo"</div>
+      <div style="font:600 46px 'Cormorant Garamond';color:#2e4a34;display:flex;align-items:center">C<span class="oo" style="width:.5em;height:.5em;border:2.5px solid #2e4a34;margin:0 .02em"></span><span class="oo" style="width:.5em;height:.5em;background:#d7e85a;margin:0 .04em 0 0"></span>ksmith</div>
+    </div>
+  </div></div>
+
+  <!-- MARK + STACKED -->
+  <div><p class="cap">03 · With mark &amp; stacked</p>
+  <div class="row">
+    <div class="card" style="flex:1;min-width:300px;padding:40px;display:flex;align-items:center;gap:18px;justify-content:center">
+      <div style="width:52px;height:52px;flex:none;background:#c7b6e6;border-radius:52% 48% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 26px 'Cormorant Garamond';color:#2e4a34">C</div>
+      <div style="font:600 44px 'Cormorant Garamond';color:#2e4a34">Cooksmith</div>
+    </div>
+    <div class="card" style="flex:1;min-width:300px;padding:36px 40px;display:flex;flex-direction:column;align-items:center;gap:12px;justify-content:center">
+      <div style="width:44px;height:44px;background:#d7e85a;border-radius:52% 48% 44% 56%/58% 42% 58% 42%"></div>
+      <div style="font:600 40px 'Cormorant Garamond';color:#2e4a34">Cooksmith</div>
+      <div style="font:400 10px 'Space Mono';letter-spacing:.34em;color:#5b6b52;padding-left:.34em">QUIETLY SORTED</div>
+    </div>
+    <div class="card" style="flex:1;min-width:300px;padding:40px;display:flex;flex-direction:column;justify-content:center;gap:8px">
+      <div style="font:600 40px 'Cormorant Garamond';color:#2e4a34;line-height:.98">Cook<br>smith</div>
+      <div style="font:400 10px 'Space Mono';letter-spacing:.2em;color:#5b6b52">EST. 2026 · YOUR KITCHEN</div>
+    </div>
+  </div></div>
+
+  <!-- APP ICONS -->
+  <div><p class="cap">04 · Monogram &amp; app icons</p>
+  <div class="row" style="align-items:center">
+    <div style="text-align:center"><div style="width:112px;height:112px;border-radius:26px;background:#2e4a34;display:flex;align-items:center;justify-content:center;position:relative"><span style="font:600 64px 'Cormorant Garamond';color:#f5ecde">C</span><span style="position:absolute;right:22px;bottom:26px;width:11px;height:11px;border-radius:50%;background:#d7e85a"></span></div><div class="lab" style="margin-top:10px">FOREST · ICON</div></div>
+    <div style="text-align:center"><div style="width:112px;height:112px;border-radius:26px;background:#d7e85a;display:flex;align-items:center;justify-content:center"><span style="font:600 64px 'Cormorant Garamond';color:#2e4a34">C</span></div><div class="lab" style="margin-top:10px">LIME · ICON</div></div>
+    <div style="text-align:center"><div style="width:112px;height:112px;border-radius:50%;background:#c7b6e6;display:flex;align-items:center;justify-content:center"><span style="font:600 60px 'Cormorant Garamond';color:#2e4a34">C</span></div><div class="lab" style="margin-top:10px">LILAC · ROUND</div></div>
+    <div style="text-align:center"><div style="width:112px;height:112px;border-radius:26px;background:#fffdf7;border:1.5px solid #2e4a34;display:flex;align-items:center;justify-content:center"><span style="font:600 40px 'Cormorant Garamond';color:#2e4a34;letter-spacing:.02em">Cs</span></div><div class="lab" style="margin-top:10px">OUTLINE · CS</div></div>
+    <div style="text-align:center"><div style="width:56px;height:56px;border-radius:13px;background:#2e4a34;display:flex;align-items:center;justify-content:center"><span style="font:600 30px 'Cormorant Garamond';color:#f5ecde">C</span></div><div class="lab" style="margin-top:10px">FAVICON 32</div></div>
+  </div></div>
+
+  <!-- COLOURWAYS -->
+  <div><p class="cap">05 · Colourways</p>
+  <div class="row">
+    <div style="flex:1;min-width:220px;background:#f5ecde;border:1px solid #e0d6c5;border-radius:18px;padding:44px 30px;text-align:center"><div style="font:600 38px 'Cormorant Garamond';color:#2e4a34">Cooksmith</div><div class="lab" style="margin-top:14px">FOREST ON CREAM</div></div>
+    <div style="flex:1;min-width:220px;background:#2e4a34;border-radius:18px;padding:44px 30px;text-align:center"><div style="font:600 38px 'Cormorant Garamond';color:#f5ecde">Cooksmith</div><div class="lab" style="margin-top:14px;color:#a9b8a0">CREAM ON FOREST</div></div>
+    <div style="flex:1;min-width:220px;background:#c7b6e6;border-radius:18px;padding:44px 30px;text-align:center"><div style="font:600 38px 'Cormorant Garamond';color:#2e4a34">Cooksmith</div><div class="lab" style="margin-top:14px;color:#5b4a78">FOREST ON LILAC</div></div>
+    <div style="flex:1;min-width:220px;background:#d7e85a;border-radius:18px;padding:44px 30px;text-align:center"><div style="font:600 38px 'Cormorant Garamond';color:#2e4a34">Cooksmith</div><div class="lab" style="margin-top:14px;color:#5f6a2a">FOREST ON LIME</div></div>
+  </div></div>
+
+</div>
+</x-dc>
+</body>
+</html>

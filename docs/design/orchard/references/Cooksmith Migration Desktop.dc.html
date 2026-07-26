@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#e5ddcd;font-family:'Space Grotesk',system-ui,sans-serif;color:#22261f}
+  a{color:#2e4a34;text-decoration:none}a:hover{opacity:.75}
+  .cap{font:700 10px 'Space Mono',monospace;letter-spacing:.14em;color:#5b6b52;margin:0 0 12px 4px;text-transform:uppercase}
+  .win{width:1180px;background:#f5ecde;border-radius:16px;overflow:hidden;box-shadow:0 26px 70px rgba(0,0,0,.26);border:1px solid rgba(0,0,0,.08)}
+  .chrome{height:44px;background:#e9e0cf;border-bottom:1px solid #ddd3c1;display:flex;align-items:center;padding:0 16px;gap:8px}
+  .tl{width:11px;height:11px;border-radius:50%}
+  .url{margin:0 auto;background:#f5ecde;border:1px solid #ddd3c1;border-radius:999px;font:400 11px 'Space Mono';color:#7a8470;padding:5px 20px}
+  .shell{display:flex;min-height:660px}
+  .rail{width:236px;flex:none;background:#efe6d5;border-right:1px solid #e0d6c5;padding:26px 20px;display:flex;flex-direction:column}
+  .wm{font:600 21px 'Cormorant Garamond';letter-spacing:.14em;color:#2e4a34;margin-bottom:30px}
+  .ni{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:11px;font:500 14px 'Space Grotesk';color:#5b6b52}
+  .ni .b{width:8px;height:8px;border-radius:3px;background:#cabfa9}
+  .ni.on{background:#e6edcd;color:#2e4a34;font-weight:600}.ni.on .b{background:#a9c73f}
+  .main{flex:1;padding:38px 44px}
+  .eyebrow{font:400 10px 'Space Mono';letter-spacing:.2em;color:#5b6b52}
+  .pill-o{display:inline-block;border:1.5px solid #2e4a34;color:#2e4a34;font:600 14px 'Space Grotesk';padding:12px 24px;border-radius:999px}
+  .pill-f{display:inline-block;background:#2e4a34;color:#f5ecde;font:600 14px 'Space Grotesk';padding:13px 26px;border-radius:999px}
+  .pill-l{display:inline-block;background:#d7e85a;color:#22261f;font:600 14px 'Space Grotesk';padding:13px 26px;border-radius:999px}
+  .strp{display:flex;align-items:center;justify-content:center;font:700 9px 'Space Mono',monospace;letter-spacing:.14em;color:#8a7d5f;background:repeating-linear-gradient(135deg,#efe6d3,#efe6d3 10px,#e6dcc4 10px,#e6dcc4 20px)}
+  .chip{font:400 10px 'Space Mono';padding:5px 11px;border-radius:999px}
+</style>
+</helmet>
+
+<div style="padding:44px 52px 8px">
+  <div style="font:600 38px 'Cormorant Garamond';color:#2e4a34;letter-spacing:.02em">COOKSMITH — DESKTOP WEB</div>
+  <div style="font:400 11px 'Space Mono';letter-spacing:.2em;color:#5b6b52;margin-top:8px">MIGRATION REFERENCE · CURRENT FUNCTIONALITY · 7-DEST RAIL</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:46px;padding:26px 52px 60px">
+
+  <!-- ===== HOME DESKTOP ===== -->
+  <div><p class="cap">01 · Home — foundation (current)</p>
+  <div class="win" data-shot="desktop-01-home">
+    <div class="chrome"><div class="tl" style="background:#e0796a"></div><div class="tl" style="background:#e7c65a"></div><div class="tl" style="background:#8fbf7e"></div><div class="url">cooksmith.app</div></div>
+    <div class="shell">
+      <aside class="rail">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:30px"><span style="width:30px;height:30px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 18px 'Cormorant Garamond';color:#2e4a34">C</span><span style="font:600 19px 'Cormorant Garamond';letter-spacing:.13em;color:#2e4a34">COOKSMITH</span></div>
+        <div class="ni on"><span class="b"></span>Home</div>
+        <div class="ni"><span class="b"></span>Pantry</div>
+        <div class="ni"><span class="b"></span>Recipes</div>
+        <div class="ni"><span class="b"></span>Plan</div>
+        <div class="ni"><span class="b"></span>Shopping</div>
+        <div class="ni"><span class="b"></span>Get ahead</div>
+        <div class="ni"><span class="b"></span>Settings</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e0d6c5;border-radius:12px;background:#f5ecde">
+          <div style="width:34px;height:34px;border-radius:50%;background:#c7b6e6"></div>
+          <div><div style="font:600 13px 'Space Grotesk';color:#22261f">The Ortiz house</div><div style="font:400 9px 'Space Mono';color:#7a8470">4 PEOPLE · SWITCH</div></div>
+        </div>
+      </aside>
+      <div class="main">
+        <div style="max-width:640px">
+          <div class="eyebrow">COOKSMITH V2 · FOUNDATION</div>
+          <div style="font:500 56px/.96 'Cormorant Garamond';color:#2e4a34;margin:12px 0 16px">Dinner decisions,<br><span style="font-style:italic">made lighter</span></div>
+          <div style="font:400 15px/1.55 'Space Grotesk';color:#5b6b52;max-width:440px;margin-bottom:24px">Cooksmith will quietly organise meals, ingredients and shopping. For now this preview establishes the calm frame those tools will share.</div>
+          <div style="display:flex;gap:12px"><span class="pill-f">Explore the pantry</span><span class="pill-o">About this preview</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px">
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:18px;padding:22px"><div style="font:600 20px 'Cormorant Garamond';color:#22261f;margin-bottom:6px">One clear next step</div><div style="font:400 13px/1.5 'Space Grotesk';color:#5b6b52">Stable routes and restrained actions make it obvious where to go next.</div></div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:18px;padding:22px"><div style="font:600 20px 'Cormorant Garamond';color:#22261f;margin-bottom:6px">Safe foundations</div><div style="font:400 13px/1.5 'Space Grotesk';color:#5b6b52">Preview data stays isolated while later household features remain deliberately absent.</div></div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:18px;padding:22px"><div style="font:600 20px 'Cormorant Garamond';color:#22261f;margin-bottom:6px">Built to include</div><div style="font:400 13px/1.5 'Space Grotesk';color:#5b6b52">Keyboard, focus, reduced motion and responsive behaviour are part of the frame.</div></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- ===== MEAL PLAN DESKTOP ===== -->
+  <div><p class="cap">02 · Meal plan — this week (current)</p>
+  <div class="win" data-shot="desktop-02-plan">
+    <div class="chrome"><div class="tl" style="background:#e0796a"></div><div class="tl" style="background:#e7c65a"></div><div class="tl" style="background:#8fbf7e"></div><div class="url">cooksmith.app/plan</div></div>
+    <div class="shell">
+      <aside class="rail">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:30px"><span style="width:30px;height:30px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 18px 'Cormorant Garamond';color:#2e4a34">C</span><span style="font:600 19px 'Cormorant Garamond';letter-spacing:.13em;color:#2e4a34">COOKSMITH</span></div>
+        <div class="ni"><span class="b"></span>Home</div>
+        <div class="ni"><span class="b"></span>Pantry</div>
+        <div class="ni"><span class="b"></span>Recipes</div>
+        <div class="ni on"><span class="b"></span>Plan</div>
+        <div class="ni"><span class="b"></span>Shopping</div>
+        <div class="ni"><span class="b"></span>Get ahead</div>
+        <div class="ni"><span class="b"></span>Settings</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e0d6c5;border-radius:12px;background:#f5ecde">
+          <div style="width:34px;height:34px;border-radius:50%;background:#c7b6e6"></div>
+          <div><div style="font:600 13px 'Space Grotesk';color:#22261f">The Ortiz house</div><div style="font:400 9px 'Space Mono';color:#7a8470">4 PEOPLE · SWITCH</div></div>
+        </div>
+      </aside>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+          <div><div class="eyebrow">MON–SUN · 5 OF 7 PLANNED</div><div style="font:500 40px 'Cormorant Garamond';color:#2e4a34;margin-top:6px">This week</div></div>
+          <div style="display:flex;gap:12px;align-items:center"><span class="pill-o" style="padding:11px 20px">‹ Prev</span><span class="pill-o" style="padding:11px 20px">Next ›</span><span class="pill-l">Generate my week</span></div>
+        </div>
+        <div style="font:400 9px 'Space Mono';color:#9a9482;margin:6px 0 20px">Seven-day week · previous/next navigation · drag or arrow-key to move meals</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:12px">
+          <div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">MON</div><div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">TUE</div><div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">WED</div><div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">THU</div><div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">FRI</div><div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">SAT</div><div style="font:400 9px 'Space Mono';color:#7a8470;text-align:center">SUN</div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;overflow:hidden"><div style="height:4px;background:#c7b6e6"></div><div class="strp" style="height:62px">PHOTO</div><div style="padding:9px 10px"><div style="font:600 13px/1.08 'Cormorant Garamond';color:#22261f">Miso salmon</div><div style="font:400 8px 'Space Mono';color:#7a8470;margin-top:3px">35 MIN</div></div></div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;overflow:hidden"><div style="height:4px;background:#d7e85a"></div><div class="strp" style="height:62px">PHOTO</div><div style="padding:9px 10px"><div style="font:600 13px/1.08 'Cormorant Garamond';color:#22261f">Roast chicken</div><div style="font:400 8px 'Space Mono';color:#7a8470;margin-top:3px">45 MIN</div></div></div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;overflow:hidden"><div style="height:4px;background:#a9c0d6"></div><div class="strp" style="height:62px">PHOTO</div><div style="padding:9px 10px"><div style="font:600 13px/1.08 'Cormorant Garamond';color:#22261f">Sesame noodles</div><div style="font:400 8px 'Space Mono';color:#7a8470;margin-top:3px">20 MIN</div></div></div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;overflow:hidden"><div style="height:4px;background:#d7e85a"></div><div class="strp" style="height:62px">PHOTO</div><div style="padding:9px 10px"><div style="font:600 13px/1.08 'Cormorant Garamond';color:#22261f">Butter bean stew</div><div style="font:400 8px 'Space Mono';color:#7a8470;margin-top:3px">30 MIN</div></div></div>
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;overflow:hidden"><div style="height:4px;background:#c7b6e6"></div><div class="strp" style="height:62px">PHOTO</div><div style="padding:9px 10px"><div style="font:600 13px/1.08 'Cormorant Garamond';color:#22261f">Halloumi wraps</div><div style="font:400 8px 'Space Mono';color:#7a8470;margin-top:3px">25 MIN</div></div></div>
+          <div style="border:1.5px dashed #cabfa9;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9a9482;min-height:120px"><div style="font:400 22px 'Space Grotesk'">+</div><div style="font:500 12px 'Cormorant Garamond';font-style:italic">Add</div></div>
+          <div style="border:1.5px dashed #cabfa9;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9a9482;min-height:120px"><div style="font:400 22px 'Space Grotesk'">+</div><div style="font:500 12px 'Cormorant Garamond';font-style:italic">Add</div></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- ===== RECIPES DESKTOP ===== -->
+  <div><p class="cap">03 · Recipe library</p>
+  <div class="win" data-shot="desktop-03-recipes">
+    <div class="chrome"><div class="tl" style="background:#e0796a"></div><div class="tl" style="background:#e7c65a"></div><div class="tl" style="background:#8fbf7e"></div><div class="url">cooksmith.app/recipes</div></div>
+    <div class="shell">
+      <aside class="rail">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:30px"><span style="width:30px;height:30px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 18px 'Cormorant Garamond';color:#2e4a34">C</span><span style="font:600 19px 'Cormorant Garamond';letter-spacing:.13em;color:#2e4a34">COOKSMITH</span></div>
+        <div class="ni"><span class="b"></span>Home</div>
+        <div class="ni"><span class="b"></span>Pantry</div>
+        <div class="ni on"><span class="b"></span>Recipes</div>
+        <div class="ni"><span class="b"></span>Plan</div>
+        <div class="ni"><span class="b"></span>Shopping</div>
+        <div class="ni"><span class="b"></span>Get ahead</div>
+        <div class="ni"><span class="b"></span>Settings</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e0d6c5;border-radius:12px;background:#f5ecde">
+          <div style="width:34px;height:34px;border-radius:50%;background:#c7b6e6"></div>
+          <div><div style="font:600 13px 'Space Grotesk';color:#22261f">The Ortiz house</div><div style="font:400 9px 'Space Mono';color:#7a8470">4 PEOPLE · SWITCH</div></div>
+        </div>
+      </aside>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px">
+          <div><div class="eyebrow">48 RECIPES · 12 FROM YOUR HOUSEHOLD</div><div style="font:500 40px 'Cormorant Garamond';color:#2e4a34;margin-top:6px">Recipes</div></div>
+          <span class="pill-f">+ New recipe</span>
+        </div>
+        <div style="margin-bottom:20px">
+          <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:999px;padding:12px 20px;font:400 14px 'Space Grotesk';color:#9a9482">Search recipes by name…</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#d7e85a;color:#22261f;font-size:8px">VEGGIE</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Sesame noodle bowl</div><div style="font:400 9px 'Space Mono';color:#7a8470">20 MIN · FEEDS 4</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#c7b6e6;color:#3a2f60;font-size:8px">FAMILY</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Charred lemon chicken</div><div style="font:400 9px 'Space Mono';color:#7a8470">45 MIN · FEEDS 4</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#a9c0d6;color:#22323f;font-size:8px">PANTRY</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Miso salmon traybake</div><div style="font:400 9px 'Space Mono';color:#7a8470">35 MIN · FEEDS 4</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#d7e85a;color:#22261f;font-size:8px">VEGGIE</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Butter bean stew</div><div style="font:400 9px 'Space Mono';color:#7a8470">30 MIN · FEEDS 6</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#c7b6e6;color:#3a2f60;font-size:8px">QUICK</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Halloumi wraps</div><div style="font:400 9px 'Space Mono';color:#7a8470">25 MIN · FEEDS 4</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#a9c0d6;color:#22323f;font-size:8px">PANTRY</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Tomato orzo</div><div style="font:400 9px 'Space Mono';color:#7a8470">30 MIN · FEEDS 4</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#d7e85a;color:#22261f;font-size:8px">VEGGIE</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Coconut dhal</div><div style="font:400 9px 'Space Mono';color:#7a8470">35 MIN · FEEDS 6</div></div>
+          <div><div style="height:150px;border-radius:16px;overflow:hidden;position:relative"><div class="strp" style="height:100%;border-radius:16px">PHOTO</div><div class="chip" style="position:absolute;left:9px;bottom:9px;background:#c7b6e6;color:#3a2f60;font-size:8px">FAMILY</div></div><div style="font:600 18px/1.08 'Cormorant Garamond';color:#22261f;margin-top:9px">Beef ragu</div><div style="font:400 9px 'Space Mono';color:#7a8470">2 HR · FEEDS 6</div></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+</div>
+
+
+<div style="display:flex;flex-direction:column;gap:46px;padding:0 52px 60px">
+
+  <!-- ===== SHOPPING DESKTOP ===== -->
+  <div><p class="cap">04 · Shopping list</p>
+  <div class="win" data-shot="desktop-04-shopping">
+    <div class="chrome"><div class="tl" style="background:#e0796a"></div><div class="tl" style="background:#e7c65a"></div><div class="tl" style="background:#8fbf7e"></div><div class="url">cooksmith.app/shopping</div></div>
+    <div class="shell">
+      <aside class="rail">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:30px"><span style="width:30px;height:30px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 18px 'Cormorant Garamond';color:#2e4a34">C</span><span style="font:600 19px 'Cormorant Garamond';letter-spacing:.13em;color:#2e4a34">COOKSMITH</span></div>
+        <div class="ni"><span class="b"></span>Home</div><div class="ni"><span class="b"></span>Pantry</div><div class="ni"><span class="b"></span>Recipes</div><div class="ni"><span class="b"></span>Plan</div><div class="ni on"><span class="b"></span>Shopping</div><div class="ni"><span class="b"></span>Get ahead</div><div class="ni"><span class="b"></span>Settings</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e0d6c5;border-radius:12px;background:#f5ecde"><div style="width:34px;height:34px;border-radius:50%;background:#c7b6e6"></div><div><div style="font:600 13px 'Space Grotesk';color:#22261f">The Ortiz house</div><div style="font:400 9px 'Space Mono';color:#7a8470">4 PEOPLE · SWITCH</div></div></div>
+      </aside>
+      <div class="main">
+        <div style="max-width:620px">
+          <div class="eyebrow">FROM THIS WEEK'S PLAN · 12 TO BUY</div>
+          <div style="font:500 40px 'Cormorant Garamond';color:#2e4a34;margin:6px 0 22px">Your list</div>
+          <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:12px">PRODUCE</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:26px">
+            <div style="display:flex;gap:13px;align-items:center"><div style="width:22px;height:22px;border-radius:6px;background:#2e4a34;color:#d7e85a;display:flex;align-items:center;justify-content:center;font:700 12px 'Space Grotesk'">✓</div><div style="flex:1;font:400 16px 'Space Grotesk';color:#9a9482;text-decoration:line-through">Baby potatoes 600g</div></div>
+            <div style="display:flex;gap:13px;align-items:center"><div style="width:22px;height:22px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 16px 'Space Grotesk';color:#22261f">Lemons ×3</div></div>
+            <div style="display:flex;gap:13px;align-items:center"><div style="width:22px;height:22px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 16px 'Space Grotesk';color:#22261f">Spring onions</div><span class="chip" style="background:#e4eee3;color:#3f6043;font-size:9px">HALF IN PANTRY</span></div>
+          </div>
+          <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:12px">CHILLED</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:13px;align-items:center"><div style="width:22px;height:22px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 16px 'Space Grotesk';color:#22261f">Whole chicken</div></div>
+            <div style="display:flex;gap:13px;align-items:center"><div style="width:22px;height:22px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 16px 'Space Grotesk';color:#22261f">Salmon fillets ×4</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- ===== PANTRY DESKTOP ===== -->
+  <div><p class="cap">05 · Pantry</p>
+  <div class="win" data-shot="desktop-05-pantry">
+    <div class="chrome"><div class="tl" style="background:#e0796a"></div><div class="tl" style="background:#e7c65a"></div><div class="tl" style="background:#8fbf7e"></div><div class="url">cooksmith.app/pantry</div></div>
+    <div class="shell">
+      <aside class="rail">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:30px"><span style="width:30px;height:30px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 18px 'Cormorant Garamond';color:#2e4a34">C</span><span style="font:600 19px 'Cormorant Garamond';letter-spacing:.13em;color:#2e4a34">COOKSMITH</span></div>
+        <div class="ni"><span class="b"></span>Home</div><div class="ni on"><span class="b"></span>Pantry</div><div class="ni"><span class="b"></span>Recipes</div><div class="ni"><span class="b"></span>Plan</div><div class="ni"><span class="b"></span>Shopping</div><div class="ni"><span class="b"></span>Get ahead</div><div class="ni"><span class="b"></span>Settings</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e0d6c5;border-radius:12px;background:#f5ecde"><div style="width:34px;height:34px;border-radius:50%;background:#c7b6e6"></div><div><div style="font:600 13px 'Space Grotesk';color:#22261f">The Ortiz house</div><div style="font:400 9px 'Space Mono';color:#7a8470">4 PEOPLE · SWITCH</div></div></div>
+      </aside>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px">
+          <div><div class="eyebrow">42 STAPLES · 38 AVAILABLE</div><div style="font:500 40px 'Cormorant Garamond';color:#2e4a34;margin-top:6px">Pantry</div></div>
+          <div style="display:flex;gap:10px"><div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:999px;padding:10px 18px;font:400 13px 'Space Grotesk';color:#9a9482">Search staples…</div><span class="chip" style="border:1.5px solid #2e4a34;color:#2e4a34;padding:9px 14px">Filters</span></div>
+        </div>
+        <div style="background:#c7b6e6;border-radius:18px;padding:18px 22px;margin-bottom:22px;display:flex;gap:14px;align-items:center">
+          <span style="font:400 9px 'Space Mono';letter-spacing:.14em;color:#3a2f60">INSIGHT</span>
+          <span style="font:400 15px 'Space Grotesk';color:#22133f;flex:1">3 staples look low based on recent plans — review before you shop.</span>
+          <span style="background:#2e4a34;color:#f5ecde;font:600 12px 'Space Grotesk';padding:8px 16px;border-radius:999px">Review</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
+          <div>
+            <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:12px">GRAINS, RICE &amp; PASTA</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 15px 'Space Grotesk';color:#22261f">Pasta</span><span class="chip" style="background:#e4eee3;color:#3f6043;font-size:9px">IN STOCK</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 15px 'Space Grotesk';color:#22261f">Rice</span><span class="chip" style="background:#f7ebd0;color:#74550f;font-size:9px">UNAVAILABLE</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 15px 'Space Grotesk';color:#22261f">Couscous</span><span class="chip" style="background:#e4eee3;color:#3f6043;font-size:9px">IN STOCK</span></div>
+            </div>
+          </div>
+          <div>
+            <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:12px">OILS &amp; VINEGARS</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 15px 'Space Grotesk';color:#22261f">Olive oil</span><span class="chip" style="background:#f7ebd0;color:#74550f;font-size:9px">UNAVAILABLE</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 15px 'Space Grotesk';color:#22261f">Soy sauce</span><span class="chip" style="background:#e4eee3;color:#3f6043;font-size:9px">IN STOCK</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- ===== GET AHEAD DESKTOP ===== -->
+  <div><p class="cap">06 · Get ahead — prep session</p>
+  <div class="win" data-shot="desktop-06-get-ahead">
+    <div class="chrome"><div class="tl" style="background:#e0796a"></div><div class="tl" style="background:#e7c65a"></div><div class="tl" style="background:#8fbf7e"></div><div class="url">cooksmith.app/get-ahead</div></div>
+    <div class="shell">
+      <aside class="rail">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:30px"><span style="width:30px;height:30px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 18px 'Cormorant Garamond';color:#2e4a34">C</span><span style="font:600 19px 'Cormorant Garamond';letter-spacing:.13em;color:#2e4a34">COOKSMITH</span></div>
+        <div class="ni"><span class="b"></span>Home</div><div class="ni"><span class="b"></span>Pantry</div><div class="ni"><span class="b"></span>Recipes</div><div class="ni"><span class="b"></span>Plan</div><div class="ni"><span class="b"></span>Shopping</div><div class="ni on"><span class="b"></span>Get ahead</div><div class="ni"><span class="b"></span>Settings</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e0d6c5;border-radius:12px;background:#f5ecde"><div style="width:34px;height:34px;border-radius:50%;background:#c7b6e6"></div><div><div style="font:600 13px 'Space Grotesk';color:#22261f">The Ortiz house</div><div style="font:400 9px 'Space Mono';color:#7a8470">4 PEOPLE · SWITCH</div></div></div>
+      </aside>
+      <div class="main">
+        <div style="max-width:660px">
+          <div class="eyebrow">THIS WEEK'S PLAN</div>
+          <div style="font:500 40px 'Cormorant Garamond';color:#2e4a34;margin:6px 0 18px">Get ahead</div>
+          <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:10px">TIME YOU HAVE</div>
+          <div style="display:flex;gap:9px;margin-bottom:24px">
+            <span class="chip" style="border:1.5px solid #cabfa9;color:#5b6b52;padding:9px 15px">15</span>
+            <span class="chip" style="background:#2e4a34;color:#f5ecde;padding:9px 15px">30 min</span>
+            <span class="chip" style="border:1.5px solid #cabfa9;color:#5b6b52;padding:9px 15px">45</span>
+            <span class="chip" style="border:1.5px solid #cabfa9;color:#5b6b52;padding:9px 15px">60</span>
+            <span class="chip" style="border:1.5px solid #cabfa9;color:#5b6b52;padding:9px 15px">Custom</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px"><div style="font:500 22px 'Cormorant Garamond';color:#2e4a34">3 tasks · 1 done</div><div style="font:400 9px 'Space Mono';color:#7a8470">28 OF 30 MIN USED</div></div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;gap:14px;align-items:flex-start;background:#fffdf7;border:1px solid #e0d6c5;border-radius:16px;padding:16px 18px"><div style="width:24px;height:24px;border-radius:7px;background:#2e4a34;color:#d7e85a;display:flex;align-items:center;justify-content:center;font:700 13px 'Space Grotesk'">✓</div><div style="flex:1"><div style="font:600 18px 'Cormorant Garamond';color:#22261f;text-decoration:line-through;opacity:.6">Roast chicken &amp; extra veg</div><div style="font:400 9px 'Space Mono';color:#7a8470">COVERS 2 MEALS · 25 MIN</div></div></div>
+            <div style="display:flex;gap:14px;align-items:flex-start;background:#fffdf7;border:1px solid #e0d6c5;border-radius:16px;padding:16px 18px"><div style="width:24px;height:24px;border-radius:7px;border:1.5px solid #b7ad99"></div><div style="flex:1"><div style="font:600 18px 'Cormorant Garamond';color:#22261f">Cook a batch of rice</div><div style="font:400 9px 'Space Mono';color:#7a8470">COVERS 2 MEALS · 8 MIN</div></div><span style="font:400 9px 'Space Mono';color:#7a8470">skip</span></div>
+            <div style="display:flex;gap:14px;align-items:flex-start;background:#fffdf7;border:1px solid #e0d6c5;border-radius:16px;padding:16px 18px"><div style="width:24px;height:24px;border-radius:7px;border:1.5px solid #b7ad99"></div><div style="flex:1"><div style="font:600 18px 'Cormorant Garamond';color:#22261f">Chop onions &amp; herbs</div><div style="font:400 9px 'Space Mono';color:#7a8470">USED ACROSS 4 MEALS · 7 MIN</div></div><span style="font:400 9px 'Space Mono';color:#7a8470">defer</span></div>
+          </div>
+          <div style="margin-top:22px;display:flex;gap:12px"><span class="pill-l">Start prep session</span><span style="display:inline-block;color:#5b6b52;font:600 14px 'Space Grotesk';padding:13px 6px">End early</span></div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+</div></x-dc>
+</body>
+</html>

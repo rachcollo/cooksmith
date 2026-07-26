@@ -42,6 +42,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - Production database releases: [Protected GitHub workflow and runbook](engineering/v2/production-database-releases.md)
 - Supabase staging setup: [Staging project guide](engineering/v2/staging-supabase-setup.md)
 - v2 design system and routing: [Design, routing and navigation](engineering/v2/design-system-and-routing.md)
+- Orchard Editorial handoff: [Design-system migration specification and references](design/orchard/README.md)
 - v2 core household schema: [Core household schema](engineering/v2/core-household-schema.md)
 - v2 authorisation and RLS: [Authorisation and row level security](engineering/v2/authorisation-and-row-level-security.md)
 - v2 shopping list foundation: [Shopping list foundation](engineering/v2/shopping-list-foundation.md)
