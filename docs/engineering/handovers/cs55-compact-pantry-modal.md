@@ -25,9 +25,9 @@ automatic categorisation contract.
 
 - **Migrations:** None.
 - **Edge Functions:** None.
-- **Dependencies:** `react-router-dom` and its exact `react-router` dependency are pinned to 7.11.0,
-  the non-vulnerable version selected by the latest PR audit for GHSA-qwww-vcr4-c8h2. No new
-  dependency was added.
+- **Dependencies:** `react-router-dom` and its exact `react-router` dependency are pinned to 8.2.1,
+  above both the `6.0.0–7.17.0` advisory range reported for 7.11.0 and the `7.12.0–8.2.0` range
+  reported for 7.18.1. No new dependency was added.
 - **Production access or release:** None; merging to `main` remains a separate reviewed action.
 
 ## Preview Verification
