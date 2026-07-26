@@ -103,6 +103,8 @@ describe('shopping list foundation', () => {
     const info = await screen.findByRole('button', {
       name: 'Why should I check my pantry for Milk?',
     })
+    expect(screen.getByText('One useful list · 2 to buy')).toHaveClass('eyebrow')
+    expect(screen.getByRole('heading', { name: 'Dairy and eggs' })).toBeVisible()
     expect(info.closest('li')).toHaveClass('shopping-item-pantry-match')
     expect(screen.queryByText('May already have')).not.toBeInTheDocument()
     expect(
