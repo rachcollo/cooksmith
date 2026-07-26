@@ -1,40 +1,76 @@
 :root {
   color-scheme: light;
 
-  /* Colour */
-  --colour-text: #282722;
-  --colour-text-muted: #69645b;
+  /* Colour: surfaces and text */
+  --colour-text: #22261f;
+  --colour-text-muted: #5b6b52;
+  --colour-text-inverse: #f5ecde;
   --colour-surface: #fffdf7;
-  --colour-surface-subtle: #f7f3ea;
+  --colour-surface-subtle: #f5ecde;
+  --colour-surface-sunken: #efe6d5;
   --colour-surface-raised: #ffffff;
-  --colour-brand: #9e3f23;
-  --colour-brand-hover: #79301d;
-  --colour-brand-soft: #f6e4dc;
+
+  /* Colour: brand and accents */
+  --colour-brand: #2e4a34;
+  --colour-brand-hover: #223a29;
+  --colour-brand-soft: #e0e7d8;
+  --colour-accent-lime: #d7e85a;
+  --colour-accent-lime-strong: #c7d84e;
+  --colour-accent-lime-soft: #e6edcd;
+  --colour-accent-lilac: #c7b6e6;
+  --colour-accent-lilac-strong: #b7a4de;
+  --colour-accent-lilac-ink: #3a2f60;
+  --colour-accent-slate: #a9c0d6;
+  --colour-accent-slate-ink: #22323f;
+
+  /* Colour: semantic status */
   --colour-positive: #3f6043;
   --colour-positive-soft: #e4eee3;
   --colour-attention: #74550f;
-  --colour-attention-soft: #f7eccb;
+  --colour-attention-soft: #f7ebd0;
   --colour-error: #982f23;
   --colour-error-soft: #f9e3df;
-  --colour-border: #d8d0c2;
-  --colour-border-strong: #aaa092;
-  --colour-focus: #0b57d0;
+
+  /* Colour: lines and interaction */
+  --colour-border: #e0d6c5;
+  --colour-border-strong: #cabfa9;
+  --colour-focus: #1f5fd6;
+  --colour-focus-soft: rgb(31 95 214 / 22%);
   --colour-overlay: rgb(27 25 22 / 58%);
+  --colour-selected: var(--colour-accent-lime-soft);
+
+  /* Colour: image placeholder */
+  --colour-placeholder-stripe-a: #efe6d3;
+  --colour-placeholder-stripe-b: #e6dcc4;
+  --colour-placeholder-ink: #4e4736;
 
   /* Typography */
-  --font-display: Georgia, 'Times New Roman', serif;
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
   --font-body:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    'Space Grotesk', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-display-weight: 600;
+  --font-display-weight-soft: 500;
   --font-size-caption: 0.75rem;
   --font-size-small: 0.875rem;
   --font-size-body: 1rem;
   --font-size-lead: clamp(1.05rem, 1rem + 0.3vw, 1.2rem);
-  --font-size-heading-2: clamp(1.5rem, 1.25rem + 1.2vw, 2.25rem);
-  --font-size-heading-1: clamp(2.35rem, 1.85rem + 3vw, 4.75rem);
-  --line-height-tight: 1.08;
+  --font-size-heading-2: clamp(1.6rem, 1.3rem + 1.2vw, 2.4rem);
+  --font-size-heading-1: clamp(2.5rem, 1.9rem + 3vw, 4.5rem);
+  --font-size-eyebrow: 0.6875rem;
+  --line-height-tight: 1.02;
+  --line-height-snug: 1.15;
   --line-height-body: 1.55;
+  --letter-spacing-display: 0.01em;
+  --letter-spacing-caps: 0.14em;
+  --letter-spacing-eyebrow: 0.2em;
 
-  /* Space */
+  /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -45,24 +81,46 @@
   --space-8: 4rem;
   --space-9: 6rem;
 
+  /* Borders and line weights */
+  --line-weight-hairline: 1px;
+  --line-weight-medium: 1.5px;
+  --line-weight-heavy: 2px;
+  --border-default: var(--line-weight-hairline) solid var(--colour-border);
+  --border-strong: var(--line-weight-medium) solid var(--colour-border-strong);
+  --border-outline-action: var(--line-weight-medium) solid var(--colour-brand);
+  --border-dashed-slot: var(--line-weight-medium) dashed var(--colour-border-strong);
+
   /* Shape and depth */
-  --radius-small: 0.5rem;
+  --radius-small: 0.625rem;
   --radius-medium: 0.875rem;
-  --radius-large: 1.25rem;
+  --radius-large: 1.375rem;
   --radius-pill: 999px;
-  --border-default: 1px solid var(--colour-border);
-  --shadow-soft: 0 0.75rem 2.5rem rgb(40 39 34 / 8%);
+  --shape-blob: 54% 46% 44% 56% / 58% 42% 58% 42%;
+  --shape-blob-alt: 46% 54% 52% 48% / 56% 44% 56% 44%;
+  --shape-arch: 999px 999px var(--radius-medium) var(--radius-medium);
+  --shape-lozenge: 999px;
+  --shadow-soft: 0 1px 3px rgb(40 39 34 / 6%);
+  --shadow-raise: 0 8px 24px rgb(40 39 34 / 8%);
   --shadow-overlay: 0 1.5rem 5rem rgb(20 18 16 / 22%);
 
-  /* Motion */
+  /* Focus and motion */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 3px;
+  --focus-ring: var(--focus-ring-width) solid var(--colour-focus);
   --motion-fast: 120ms;
   --motion-standard: 180ms;
+  --motion-slow: 260ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
 
-  /* Layout */
+  /* Layout and navigation */
   --layout-content: 72rem;
   --layout-reading: 42rem;
-  --layout-rail: 15.5rem;
+  --layout-rail: 15rem;
+  --breakpoint-tablet: 48rem;
+  --breakpoint-desktop: 64rem;
+  --nav-rail-width: var(--layout-rail);
+  --nav-mobile-height: 4rem;
+  --nav-item-min: 3.6rem;
   --touch-target: 3rem;
 
   /* Layers */
