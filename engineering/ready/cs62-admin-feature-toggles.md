@@ -1,23 +1,23 @@
-# Engineering Package — CS-85: Orchard navigation and application shell
+# Engineering Package — CS-62: Admin portal and feature toggles
 
 ## Metadata
 
-- **Milestone:** Orchard Editorial
-- **Jira issue:** CS-85
-- **Epic:** CS-82 — Orchard Editorial design-system migration
+- **Milestone:** Administration
+- **Jira issue:** CS-62
+- **Epic:** CS-33 — Administration & Public Content
 - **Status:** `Ready`
-- **Branch:** `feat/cs-85-orchard-navigation-shell`
-- **Depends on:** CS-83 and CS-84
-- **Blocks:** CS-86, CS-87 and CS-88
-- **Package path:** `engineering/ready/cs85-orchard-navigation-shell.md`
+- **Branch:** `feat/cs-62-admin-feature-toggles`
+- **Depends on:** Existing authentication, routing and planner Apply behaviour
+- **Blocks:** Operational rollout controls for future features
+- **Package path:** `engineering/ready/cs62-admin-feature-toggles.md`
 
 ## Product Outcome
 
-Give Cooksmith one coherent Orchard frame across mobile and desktop while preserving every current route, icon, order and accessible active state.
+Provide one secure administration surface for typed feature toggles, beginning with the post-Apply planner confirmation screen, while keeping normal household users out and preserving the current low-friction default.
 
 ## Current Baseline
 
-Cooksmith has six mobile destinations and seven desktop destinations including Settings. The migration-safe references demonstrate the approved rail, bottom navigation, brand mark and responsive frame.
+The planner confirmation screen is currently hidden to remove an unnecessary click. Cooksmith does not yet have an approved server-authorised admin role or durable feature-flag contract.
 
 Implementation must begin from the latest accepted `main`, recheck all referenced files and dependencies, and follow `docs/engineering/CODEX_BUILD_RULES.md`, the AIEOS lifecycle, Product Principles and relevant specialist standards.
 
@@ -25,38 +25,40 @@ Implementation must begin from the latest accepted `main`, recheck all reference
 
 ### Included
 
-- Mobile bottom navigation, desktop rail, header, canonical brand mark and responsive page frame.
-- Six mobile destinations and seven desktop destinations in verified order.
-- Existing Lucide icons, aria-current behaviour, active lime treatment and Orchard spacing.
-- Narrow-mobile accommodation for all six labelled destinations.
+- Define and implement a server-enforced administrator authorisation source.
+- Protected admin route with a Feature toggles section.
+- Typed, secure-default flag contract with name, explanation, state and audit metadata.
+- Initial post-Apply confirmation flag defaulting off.
+- Predictable reads/writes and tests for allowed and denied access.
 
 ### Explicitly Out of Scope
 
-- Adding, removing or renaming routes.
-- Changing route behaviour or feature availability.
-- Route content redesign.
+- A paid feature-flag provider, percentage rollouts or experimentation analytics.
+- Household-admin permissions or general user-role redesign.
+- Changing planner persistence, Shopping reconciliation or failure recovery.
+- Building unrelated admin tools.
 
 ## Functional Requirements and Acceptance Criteria
 
 ### FR-1 — Approved outcome and preserved behaviour
 
-- [ ] Deliver the Jira-approved outcome for CS-85 without expanding into excluded work.
+- [ ] Deliver the Jira-approved outcome for CS-62 without expanding into excluded work.
 - [ ] Preserve all existing workflows, routing, validation, permissions, accessible names and automation identifiers not explicitly changed by this package.
 - [ ] Failure, empty and unavailable states remain safe, understandable and recoverable.
 
 ### FR-2 — Implementation contract
 
-- [ ] Preserve House, CookingPot, BookOpen, CalendarDays, ShoppingBasket, Sparkles and Settings icons.
-- [ ] Keep route composition in existing app/router boundaries and visual rules in navigation/layout styles.
-- [ ] Respect safe areas, direct navigation, refresh/history and desktop Settings-only presentation.
-- [ ] Do not hide labels or depend on colour alone to fit narrow widths.
+- [ ] Record an ADR if the administrator identity/authorisation source is a new durable architecture decision.
+- [ ] Authorise on a trusted server/database boundary; never from email, editable metadata or hidden client UI.
+- [ ] Prefer an additive database model with least-privilege functions/RLS and append-only audit evidence.
+- [ ] Expose flags through a small typed configuration service with explicit defaults when unavailable.
 
 ### FR-3 — Quality and evidence
 
-- [ ] Every route activates exactly one correct destination.
-- [ ] Keyboard, focus-visible, accessible names and aria-current coverage.
-- [ ] Small-mobile, mobile, tablet and desktop overflow/safe-area checks.
-- [ ] Direct URL, refresh and history regression tests plus full quality suite.
+- [ ] Admin read/write success and non-admin, unrelated, inactive and unauthenticated denial.
+- [ ] Default-off and persistence behaviour for the planner confirmation flag.
+- [ ] Apply-plan success closes immediately when off; failure remains visible and recoverable.
+- [ ] Route protection, keyboard/focus behaviour, mobile layout and audit-record assertions.
 - [ ] Record exact baseline and implementation commits, changed files, validation evidence, Preview status, migration/Edge declarations, security/privacy review and cost impact in the PR and handover.
 
 ## UX and Accessibility
@@ -74,17 +76,17 @@ Implementation must begin from the latest accepted `main`, recheck all reference
 
 ## Technical Direction
 
-- Preserve House, CookingPot, BookOpen, CalendarDays, ShoppingBasket, Sparkles and Settings icons.
-- Keep route composition in existing app/router boundaries and visual rules in navigation/layout styles.
-- Respect safe areas, direct navigation, refresh/history and desktop Settings-only presentation.
-- Do not hide labels or depend on colour alone to fit narrow widths.
+- Record an ADR if the administrator identity/authorisation source is a new durable architecture decision.
+- Authorise on a trusted server/database boundary; never from email, editable metadata or hidden client UI.
+- Prefer an additive database model with least-privilege functions/RLS and append-only audit evidence.
+- Expose flags through a small typed configuration service with explicit defaults when unavailable.
 
 ## Test Plan
 
-- Every route activates exactly one correct destination.
-- Keyboard, focus-visible, accessible names and aria-current coverage.
-- Small-mobile, mobile, tablet and desktop overflow/safe-area checks.
-- Direct URL, refresh and history regression tests plus full quality suite.
+- Admin read/write success and non-admin, unrelated, inactive and unauthenticated denial.
+- Default-off and persistence behaviour for the planner confirmation flag.
+- Apply-plan success closes immediately when off; failure remains visible and recoverable.
+- Route protection, keyboard/focus behaviour, mobile layout and audit-record assertions.
 
 ## Quality Gates
 
@@ -112,6 +114,6 @@ Implementation must begin from the latest accepted `main`, recheck all reference
 
 ## PR Requirements
 
-PR title: `CS-85: Orchard navigation and application shell`
+PR title: `CS-62: Admin portal and feature toggles`
 
 Link Jira and this package; state the approved outcome, preserved behaviour, exact baseline, changed files, tests and real results, Preview/manual evidence, migrations, Edge Functions, production release needs, rollback, security/privacy and monthly/annual cost.

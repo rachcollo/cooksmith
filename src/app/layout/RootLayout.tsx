@@ -1,6 +1,5 @@
-import { Settings } from 'lucide-react'
 import { Suspense } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 
 import { PrimaryNavigation } from '../navigation/PrimaryNavigation'
 import { RouteAnnouncer } from '../navigation/RouteAnnouncer'
@@ -23,13 +22,9 @@ export function RootLayout() {
           <span className="brand-mark" aria-hidden="true">
             C
           </span>
-          <span>
-            <strong>Cooksmith</strong>
-            <small>A calmer fortnight</small>
-          </span>
+          <strong>Cooksmith</strong>
         </Link>
         <PrimaryNavigation variant="desktop" />
-        <p className="rail-note">v2 foundation preview</p>
       </aside>
 
       <header className="site-header">
@@ -38,15 +33,9 @@ export function RootLayout() {
             <span className="brand-mark" aria-hidden="true">
               C
             </span>
-            <span>
-              <strong>Cooksmith</strong>
-              <small>A calmer fortnight</small>
-            </span>
+            <strong>Cooksmith</strong>
           </Link>
 
-          <NavLink className="header-settings" to="/settings" aria-label="Settings">
-            <Settings aria-hidden="true" />
-          </NavLink>
           <Button variant="quiet" onClick={() => void signOut()}>
             Sign out
           </Button>
