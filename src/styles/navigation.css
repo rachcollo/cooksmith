@@ -220,8 +220,8 @@
 }
 
 .navigation-submenu {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-subtle);
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
   border-radius: var(--radius-medium);
   box-shadow: var(--shadow-soft);
   min-width: 11rem;
@@ -249,7 +249,7 @@
   background: transparent;
   border: 0;
   border-radius: var(--radius-small);
-  color: var(--color-text);
+  color: var(--colour-text);
   cursor: pointer;
   font: inherit;
   min-height: 44px;
@@ -260,7 +260,7 @@
 
 .navigation-submenu button:focus-visible,
 .navigation-submenu button:hover {
-  background: var(--color-surface-subtle);
+  background: var(--colour-surface-subtle);
   outline: 3px solid var(--colour-focus);
   outline-offset: 2px;
 }

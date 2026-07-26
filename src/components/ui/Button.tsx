@@ -1,11 +1,13 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type ButtonVariant = 'primary' | 'secondary' | 'quiet'
+type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'accent'
+type ButtonTone = 'default' | 'destructive'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   busy?: boolean
   busyLabel?: string
   children: ReactNode
+  tone?: ButtonTone
   variant?: ButtonVariant
 }
 
@@ -15,6 +17,7 @@ export function Button({
   children,
   className = '',
   disabled,
+  tone = 'default',
   type = 'button',
   variant = 'primary',
   ...props
@@ -22,7 +25,7 @@ export function Button({
   return (
     <button
       aria-busy={busy || undefined}
-      className={`button button-${variant} ${className}`.trim()}
+      className={`button button-${variant} button-${tone} ${className}`.trim()}
       disabled={disabled || busy}
       type={type}
       {...props}
