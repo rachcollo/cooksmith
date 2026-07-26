@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#e5ddcd;font-family:'Space Grotesk',system-ui,sans-serif;color:#22261f}
+  a{color:#2e4a34;text-decoration:none}
+  a:hover{color:#5b6b52}
+  .cap{font:700 10px 'Space Mono',monospace;letter-spacing:.14em;color:#5b6b52;margin:0 0 11px 6px;text-transform:uppercase}
+  .ph{width:300px;background:#141210;border-radius:42px;padding:9px;box-shadow:0 22px 55px rgba(0,0,0,.3)}
+  .scr{border-radius:34px;overflow:hidden;height:620px;position:relative;background:#f5ecde}
+  .sb{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 4px;font:600 13px 'Space Grotesk';color:#2e4a34}
+  .sig{display:flex;gap:3px}.sig span{display:block;width:4px;height:9px;border-radius:1px;background:#2e4a34}
+  .top{padding:8px 22px 0;display:flex;justify-content:space-between;align-items:center}
+  .burg{display:flex;flex-direction:column;gap:4px}.burg span{width:20px;height:1.5px;background:#2e4a34;display:block}
+  .wm{font:600 16px 'Cormorant Garamond';letter-spacing:.14em;color:#2e4a34}
+  .dot{width:9px;height:9px;border-radius:50%;background:#d7e85a}
+  .nav{position:absolute;left:0;right:0;bottom:0;background:#f5ecde;border-top:1px solid #e0d6c5;padding:12px 8px 22px;display:flex;justify-content:space-between;gap:2px}
+  .nav b{font:400 7px 'Space Mono';letter-spacing:.02em;color:#9a9482;font-weight:400;text-align:center;white-space:nowrap}
+  .nav .on{color:#2e4a34;border-bottom:1.5px solid #d7e85a;padding-bottom:2px}
+  .strp{display:flex;align-items:center;justify-content:center;font:700 9px 'Space Mono',monospace;letter-spacing:.14em;color:#5b4a78;background:repeating-linear-gradient(135deg,#c7b6e6,#c7b6e6 9px,#bda9e0 9px,#bda9e0 18px)}
+  .strp.cream{background:repeating-linear-gradient(135deg,#efe6d3,#efe6d3 9px,#e6dcc4 9px,#e6dcc4 18px);color:#8a7d5f}
+  .strp.lime{background:repeating-linear-gradient(135deg,#d7e85a,#d7e85a 9px,#cad84e 9px,#cad84e 18px);color:#3c4636}
+  .pill-o{border:1.5px solid #2e4a34;color:#2e4a34;font:600 13px 'Space Grotesk';padding:11px 0;border-radius:999px;text-align:center}
+  .pill-f{background:#2e4a34;color:#f5ecde;font:600 13px 'Space Grotesk';padding:12px 0;border-radius:999px;text-align:center}
+  .eyebrow{font:400 9px 'Space Mono';letter-spacing:.2em;color:#5b6b52}
+  .gal{display:flex;flex-wrap:wrap;gap:40px 34px;padding:0 52px 56px}
+</style>
+</helmet>
+
+<div style="padding:46px 52px 30px">
+  <div style="font:600 40px/.95 'Cormorant Garamond';color:#2e4a34;letter-spacing:.02em">COOKSMITH</div>
+  <div style="font:400 11px 'Space Mono';letter-spacing:.22em;color:#5b6b52;margin:8px 0 22px">MIGRATION REFERENCE · CURRENT FUNCTIONALITY · 6-DEST NAV</div>
+  <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;gap:7px">
+      <div style="width:40px;height:40px;border-radius:8px;background:#2e4a34"></div>
+      <div style="width:40px;height:40px;border-radius:8px;background:#c7b6e6"></div>
+      <div style="width:40px;height:40px;border-radius:8px;background:#d7e85a"></div>
+      <div style="width:40px;height:40px;border-radius:8px;background:#f5ecde;border:1px solid #d8cdb9"></div>
+      <div style="width:40px;height:40px;border-radius:8px;background:#22261f"></div>
+    </div>
+    <div style="font:500 20px 'Cormorant Garamond';color:#2e4a34">Cormorant Garamond <span style="font-family:'Space Grotesk';font-size:13px;color:#5b6b52">· Space Grotesk</span> <span style="font-family:'Space Mono';font-size:11px;color:#5b6b52">· Space Mono</span></div>
+  </div>
+</div>
+
+<div style="max-width:760px;margin:18px 52px 0;font:400 13px/1.6 'Space Grotesk';color:#5b6b52">Colour lives in the <b style="color:#2e4a34">frame</b>, not the photo — lilac &amp; lime sit as shapes <i>behind</i> imagery, as accent tags, and as one bold action per screen. Drop real food shots in and the pops stay. <b style="color:#2e4a34">These screens depict current functionality</b>; the aspirational dashboard &amp; fortnight live in <code>references/future-concepts/</code>.</div>
+
+<div class="gal">
+
+  <!-- ===== 1 ONBOARDING ===== -->
+  <div><p class="cap">01 · Welcome / onboarding</p>
+  <div class="ph" data-shot="mobile-01-welcome"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:9px;padding:16px 0 0"><span style="width:24px;height:24px;flex:none;background:#c7b6e6;border-radius:54% 46% 44% 56%/58% 42% 58% 42%;display:flex;align-items:center;justify-content:center;font:600 14px 'Cormorant Garamond';color:#2e4a34">C</span><span class="wm" style="font-size:17px">COOKSMITH</span></div>
+    <div style="padding:34px 30px 0">
+      <div class="eyebrow" style="text-align:center">MEALS, QUIETLY SORTED</div>
+      <div style="font:500 42px/.98 'Cormorant Garamond';color:#2e4a34;text-align:center;margin-top:14px">Feeding a<br>household,<br><span style="font-style:italic">made calm</span></div>
+    </div>
+    <div style="margin:26px auto 0;width:196px;height:196px;position:relative">
+      <div style="position:absolute;inset:-8px -12px 10px 0;background:#c7b6e6;border-radius:46% 54% 52% 48%/56% 44% 56% 44%"></div>
+      <div class="strp cream" style="position:absolute;inset:0;border-radius:44% 56% 52% 48%/56% 44% 56% 44%">FOOD PHOTO</div>
+      <div style="position:absolute;right:-6px;bottom:4px;width:54px;height:54px;background:#d7e85a;border-radius:46% 54% 60% 40%/48% 52% 48% 52%"></div>
+    </div>
+    <div style="position:absolute;left:30px;right:30px;bottom:34px">
+      <div class="pill-f" style="margin-bottom:10px">Set up my household</div>
+      <div style="text-align:center;font:400 12px 'Space Grotesk';color:#5b6b52">I already have an account</div>
+    </div>
+  </div></div></div>
+
+  <!-- ===== 2 HOME ===== -->
+  <div><p class="cap">02 · Home — foundation (current)</p>
+  <div class="ph" data-shot="mobile-02-home"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div class="top"><div class="burg"><span></span><span></span></div><div class="wm">COOKSMITH</div><div class="dot"></div></div>
+    <div style="padding:22px 24px 0">
+      <div class="eyebrow">COOKSMITH V2 · FOUNDATION</div>
+      <div style="font:500 34px/.98 'Cormorant Garamond';color:#2e4a34;margin-top:8px">Dinner decisions,<br><span style="font-style:italic">made lighter</span></div>
+      <div style="font:400 13.5px/1.5 'Space Grotesk';color:#5b6b52;margin-top:12px">Cooksmith will quietly organise meals, ingredients and shopping. For now this preview establishes the calm frame those tools share.</div>
+      <div style="display:flex;gap:10px;margin-top:18px"><span style="background:#2e4a34;color:#f5ecde;font:600 13px 'Space Grotesk';padding:11px 18px;border-radius:999px">Explore the pantry</span><span style="border:1.5px solid #2e4a34;color:#2e4a34;font:600 13px 'Space Grotesk';padding:10px 16px;border-radius:999px">About</span></div>
+    </div>
+    <div style="padding:20px 24px 0;display:flex;flex-direction:column;gap:10px">
+      <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:13px 15px"><div style="font:600 16px 'Cormorant Garamond';color:#22261f">One clear next step</div><div style="font:400 12px/1.45 'Space Grotesk';color:#5b6b52;margin-top:2px">Stable routes and restrained actions make it obvious where to go next.</div></div>
+      <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:13px 15px"><div style="font:600 16px 'Cormorant Garamond';color:#22261f">Safe foundations</div><div style="font:400 12px/1.45 'Space Grotesk';color:#5b6b52;margin-top:2px">Preview data stays isolated while later household features remain deliberately absent.</div></div>
+    </div>
+    <div class="nav"><b class="on">HOME</b><b>PANTRY</b><b>RECIPES</b><b>PLAN</b><b>SHOP</b><b>GET AHEAD</b></div>
+  </div></div></div>
+
+  <!-- ===== 3 MEAL PLAN ===== -->
+  <div><p class="cap">03 · Meal plan — this week (current)</p>
+  <div class="ph" data-shot="mobile-03-plan"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div class="top"><div class="burg"><span></span><span></span></div><div class="wm" style="font-size:15px">THE PLAN</div><div class="dot"></div></div>
+    <div style="padding:16px 22px 0;display:flex;justify-content:space-between;align-items:flex-end">
+      <div><div class="eyebrow">MON–SUN</div><div style="font:500 30px 'Cormorant Garamond';color:#2e4a34">This week</div></div>
+      <div style="font:400 9px 'Space Mono';color:#2e4a34"><span style="border-bottom:1.5px solid #d7e85a">‹ Prev</span>&nbsp;&nbsp;<span style="border-bottom:1.5px solid #d7e85a">Next ›</span></div>
+    </div>
+    <div style="padding:16px 22px 0;display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;gap:12px;align-items:center;background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:11px 13px">
+        <div style="width:4px;align-self:stretch;border-radius:3px;background:#c7b6e6"></div>
+        <div style="font:400 9px 'Space Mono';color:#5b6b52;width:26px">MON</div>
+        <div style="width:38px;height:38px;border-radius:10px;overflow:hidden"><div class="strp cream" style="height:100%;font-size:0"></div></div>
+        <div style="flex:1"><div style="font:600 15px 'Cormorant Garamond';color:#22261f">Miso salmon traybake</div><div style="font:400 9px 'Space Mono';color:#7a8470">35 min · feeds 4</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:11px 13px">
+        <div style="width:4px;align-self:stretch;border-radius:3px;background:#d7e85a"></div>
+        <div style="font:400 9px 'Space Mono';color:#5b6b52;width:26px">TUE</div>
+        <div style="width:38px;height:38px;border-radius:10px;overflow:hidden"><div class="strp cream" style="height:100%;font-size:0"></div></div>
+        <div style="flex:1"><div style="font:600 15px 'Cormorant Garamond';color:#22261f">Roast chicken, lemon</div><div style="font:400 9px 'Space Mono';color:#7a8470">45 min · feeds 4</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:11px 13px">
+        <div style="width:4px;align-self:stretch;border-radius:3px;background:#a9c0d6"></div>
+        <div style="font:400 9px 'Space Mono';color:#5b6b52;width:26px">WED</div>
+        <div style="width:38px;height:38px;border-radius:10px;overflow:hidden"><div class="strp cream" style="height:100%;font-size:0"></div></div>
+        <div style="flex:1"><div style="font:600 15px 'Cormorant Garamond';color:#22261f">Sesame noodle bowl</div><div style="font:400 9px 'Space Mono';color:#7a8470">20 min · veggie</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;border:1.5px dashed #cabfa9;border-radius:14px;padding:11px 13px">
+        <div style="font:400 9px 'Space Mono';color:#9a9482;width:26px">THU</div>
+        <div style="width:38px;height:38px;border-radius:10px;border:1.5px dashed #cabfa9"></div>
+        <div style="flex:1"><div style="font:500 14px 'Cormorant Garamond';color:#9a9482;font-style:italic">Tap to fill</div></div>
+        <div style="font:400 16px 'Space Grotesk';color:#2e4a34">+</div>
+      </div>
+    </div>
+    <div style="position:absolute;left:22px;right:22px;bottom:80px"><div style="background:#d7e85a;color:#22261f;font:600 13px 'Space Grotesk';padding:13px 0;border-radius:999px;text-align:center">Generate my week</div></div>
+    <div class="nav"><b>HOME</b><b>PANTRY</b><b>RECIPES</b><b class="on">PLAN</b><b>SHOP</b><b>GET AHEAD</b></div>
+  </div></div></div>
+
+  <!-- ===== 4 GET AHEAD ===== -->
+  <div><p class="cap">04 · Get ahead — prep session (current)</p>
+  <div class="ph" data-shot="mobile-04-get-ahead"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div class="top"><div class="burg"><span></span><span></span></div><div class="wm" style="font-size:15px">GET AHEAD</div><div class="dot"></div></div>
+    <div style="padding:18px 24px 0">
+      <div class="eyebrow">THIS WEEK'S PLAN</div>
+      <div style="font:500 34px/.98 'Cormorant Garamond';color:#2e4a34;margin-top:6px">Get ahead</div>
+      <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin:14px 0 8px">TIME YOU HAVE</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <span style="border:1px solid #cabfa9;color:#5b6b52;font:400 10px 'Space Mono';padding:6px 11px;border-radius:999px">15</span>
+        <span style="background:#2e4a34;color:#f5ecde;font:400 10px 'Space Mono';padding:6px 11px;border-radius:999px">30 min</span>
+        <span style="border:1px solid #cabfa9;color:#5b6b52;font:400 10px 'Space Mono';padding:6px 11px;border-radius:999px">45</span>
+        <span style="border:1px solid #cabfa9;color:#5b6b52;font:400 10px 'Space Mono';padding:6px 11px;border-radius:999px">60</span>
+        <span style="border:1px solid #cabfa9;color:#5b6b52;font:400 10px 'Space Mono';padding:6px 11px;border-radius:999px">Custom</span>
+      </div>
+    </div>
+    <div style="padding:16px 24px 0;display:flex;justify-content:space-between;align-items:baseline"><div style="font:500 18px 'Cormorant Garamond';color:#2e4a34">3 tasks · 1 done</div><div style="font:400 9px 'Space Mono';color:#7a8470">28 / 30 MIN</div></div>
+    <div style="padding:10px 24px 0;display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;gap:12px;align-items:flex-start;background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:12px 13px"><div style="width:22px;height:22px;border-radius:7px;background:#2e4a34;color:#d7e85a;font:700 13px 'Space Grotesk';display:flex;align-items:center;justify-content:center">✓</div><div style="flex:1"><div style="font:600 15px 'Cormorant Garamond';color:#22261f;text-decoration:line-through;opacity:.6">Roast the chicken &amp; veg</div><div style="font:400 9px 'Space Mono';color:#7a8470">COVERS 2 MEALS · 25 MIN</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start;background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:12px 13px"><div style="width:22px;height:22px;border-radius:7px;border:1.5px solid #b7ad99"></div><div style="flex:1"><div style="font:600 15px 'Cormorant Garamond';color:#22261f">Cook a batch of rice</div><div style="font:400 9px 'Space Mono';color:#7a8470">COVERS 2 MEALS · 8 MIN</div></div><span style="font:400 9px 'Space Mono';color:#7a8470">skip</span></div>
+      <div style="display:flex;gap:12px;align-items:flex-start;background:#fffdf7;border:1px solid #e0d6c5;border-radius:14px;padding:12px 13px"><div style="width:22px;height:22px;border-radius:7px;border:1.5px solid #b7ad99"></div><div style="flex:1"><div style="font:600 15px 'Cormorant Garamond';color:#22261f">Chop onions &amp; herbs</div><div style="font:400 9px 'Space Mono';color:#7a8470">USED IN 4 MEALS · 7 MIN</div></div><span style="font:400 9px 'Space Mono';color:#7a8470">defer</span></div>
+    </div>
+    <div style="position:absolute;left:24px;right:24px;bottom:80px"><div style="background:#d7e85a;color:#22261f;font:600 13px 'Space Grotesk';padding:12px 0;border-radius:999px;text-align:center">Start prep session</div></div>
+    <div class="nav"><b>HOME</b><b>PANTRY</b><b>RECIPES</b><b>PLAN</b><b>SHOP</b><b class="on">GET AHEAD</b></div>
+  </div></div></div>
+
+  <!-- ===== 5 RECIPES ===== -->
+  <div><p class="cap">05 · Recipe library (current: name search)</p>
+  <div class="ph" data-shot="mobile-05-recipes"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div class="top"><div class="burg"><span></span><span></span></div><div class="wm" style="font-size:15px">RECIPES</div><div class="dot"></div></div>
+    <div style="padding:14px 22px 0">
+      <div style="background:#fffdf7;border:1px solid #e0d6c5;border-radius:999px;padding:10px 16px;font:400 13px 'Space Grotesk';color:#9a9482">Search recipes…</div>
+    </div>
+    <div style="padding:14px 22px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><div style="height:96px;border-radius:16px;overflow:hidden;position:relative"><div class="strp cream" style="height:100%;border-radius:16px">PHOTO</div><div style="position:absolute;left:7px;bottom:7px;background:#d7e85a;color:#22261f;font:400 8px 'Space Mono';padding:4px 8px;border-radius:999px">veggie</div></div><div style="font:600 15px/1.05 'Cormorant Garamond';color:#22261f;margin-top:7px">Sesame noodle bowl</div><div style="font:400 8.5px 'Space Mono';color:#7a8470">20 MIN</div></div>
+      <div><div style="height:96px;border-radius:16px;overflow:hidden;position:relative"><div class="strp cream" style="height:100%;border-radius:16px">PHOTO</div><div style="position:absolute;left:7px;bottom:7px;background:#c7b6e6;color:#3a2f60;font:400 8px 'Space Mono';padding:4px 8px;border-radius:999px">family</div></div><div style="font:600 15px/1.05 'Cormorant Garamond';color:#22261f;margin-top:7px">Charred lemon chicken</div><div style="font:400 8.5px 'Space Mono';color:#7a8470">45 MIN</div></div>
+      <div><div style="height:96px;border-radius:16px;overflow:hidden;position:relative"><div class="strp cream" style="height:100%;border-radius:16px">PHOTO</div><div style="position:absolute;left:7px;bottom:7px;background:#a9c0d6;color:#22323f;font:400 8px 'Space Mono';padding:4px 8px;border-radius:999px">one-pan</div></div><div style="font:600 15px/1.05 'Cormorant Garamond';color:#22261f;margin-top:7px">Miso salmon traybake</div><div style="font:400 8.5px 'Space Mono';color:#7a8470">35 MIN</div></div>
+      <div><div style="height:96px;border-radius:16px;overflow:hidden;position:relative"><div class="strp cream" style="height:100%;border-radius:16px">PHOTO</div><div style="position:absolute;left:7px;bottom:7px;background:#d7e85a;color:#22261f;font:400 8px 'Space Mono';padding:4px 8px;border-radius:999px">veggie</div></div><div style="font:600 15px/1.05 'Cormorant Garamond';color:#22261f;margin-top:7px">Butter bean stew</div><div style="font:400 8.5px 'Space Mono';color:#7a8470">30 MIN</div></div>
+    </div>
+    <div class="nav"><b>HOME</b><b>PANTRY</b><b class="on">RECIPES</b><b>PLAN</b><b>SHOP</b><b>GET AHEAD</b></div>
+  </div></div></div>
+
+  <!-- ===== 6 SINGLE RECIPE ===== -->
+  <div><p class="cap">06 · Single recipe</p>
+  <div class="ph" data-shot="mobile-06-recipe"><div class="scr" style="background:#f5ecde">
+    <div style="position:relative;height:252px">
+      <div class="sb" style="position:absolute;top:0;left:0;right:0"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+      <div style="position:absolute;top:50px;left:22px;width:32px;height:32px;border-radius:50%;background:#fffdf7;border:1px solid #e0d6c5;display:flex;align-items:center;justify-content:center;font:400 15px 'Space Grotesk';color:#2e4a34">←</div>
+      <div style="position:absolute;top:52px;left:44px;right:22px;bottom:12px">
+        <div style="position:absolute;inset:-8px -12px 10px 6px;background:#d7e85a;border-radius:54% 46% 44% 56%/58% 42% 58% 42%"></div>
+        <div class="strp cream" style="position:absolute;inset:0;border-radius:54% 46% 44% 56%/58% 42% 58% 42%">FOOD PHOTO</div>
+        <div style="position:absolute;right:2px;bottom:2px;background:#c7b6e6;color:#3a2f60;font:400 9px 'Space Mono';padding:7px 12px;border-radius:999px">45 MIN · FEEDS 4</div>
+      </div>
+    </div>
+    <div style="padding:18px 24px 0">
+      <div class="eyebrow">DINNER · TUESDAY'S PLAN</div>
+      <div style="font:500 32px/.98 'Cormorant Garamond';color:#2e4a34;margin-top:6px">Roast chicken,<br><span style="font-style:italic">charred lemon</span></div>
+    </div>
+    <div style="padding:16px 24px 0">
+      <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:9px">INGREDIENTS</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font:400 14px 'Space Grotesk';color:#3c4636">
+        <div style="display:flex;justify-content:space-between">Whole chicken<span style="font:400 9px 'Space Mono';color:#7a8470">SHOP</span></div>
+        <div style="display:flex;justify-content:space-between;color:#2e4a34">Fennel bulb, 2<span style="font:400 9px 'Space Mono';color:#3f6043">✓ PANTRY</span></div>
+        <div style="display:flex;justify-content:space-between;color:#2e4a34">Lemons, 3<span style="font:400 9px 'Space Mono';color:#3f6043">✓ PANTRY</span></div>
+        <div style="display:flex;justify-content:space-between">Baby potatoes, 600g<span style="font:400 9px 'Space Mono';color:#7a8470">SHOP</span></div>
+      </div>
+    </div>
+    <div style="position:absolute;left:24px;right:24px;bottom:28px;display:flex;gap:10px">
+      <div class="pill-o" style="flex:1">Add to shop</div>
+      <div class="pill-f" style="flex:1">Start cooking</div>
+    </div>
+  </div></div></div>
+
+  <!-- ===== 7 SHOPPING ===== -->
+  <div><p class="cap">07 · Shopping list</p>
+  <div class="ph" data-shot="mobile-07-shopping"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div class="top"><div class="burg"><span></span><span></span></div><div class="wm" style="font-size:15px">SHOPPING</div><div class="dot"></div></div>
+    <div style="padding:16px 24px 0">
+      <div class="eyebrow">THIS WEEK · 12 ITEMS</div>
+      <div style="font:500 30px 'Cormorant Garamond';color:#2e4a34">Your list</div>
+    </div>
+    <div style="padding:14px 24px 0">
+      <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:8px">PRODUCE</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;gap:11px;align-items:center"><div style="width:20px;height:20px;border-radius:6px;background:#2e4a34;color:#d7e85a;display:flex;align-items:center;justify-content:center;font:700 11px 'Space Grotesk'">✓</div><div style="flex:1;font:400 14px 'Space Grotesk';color:#9a9482;text-decoration:line-through">Baby potatoes 600g</div></div>
+        <div style="display:flex;gap:11px;align-items:center"><div style="width:20px;height:20px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 14px 'Space Grotesk';color:#22261f">Lemons ×3</div></div>
+        <div style="display:flex;gap:11px;align-items:center"><div style="width:20px;height:20px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 14px 'Space Grotesk';color:#22261f">Spring onions</div><div style="font:400 8px 'Space Mono';color:#3f6043">HALF IN PANTRY</div></div>
+      </div>
+    </div>
+    <div style="padding:16px 24px 0">
+      <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:8px">CHILLED</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;gap:11px;align-items:center"><div style="width:20px;height:20px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 14px 'Space Grotesk';color:#22261f">Whole chicken</div></div>
+        <div style="display:flex;gap:11px;align-items:center"><div style="width:20px;height:20px;border-radius:6px;border:1.5px solid #b7ad99"></div><div style="flex:1;font:400 14px 'Space Grotesk';color:#22261f">Salmon fillets ×4</div></div>
+      </div>
+    </div>
+    <div class="nav"><b>HOME</b><b>PANTRY</b><b>RECIPES</b><b>PLAN</b><b class="on">SHOP</b><b>GET AHEAD</b></div>
+  </div></div></div>
+
+  <!-- ===== 8 PANTRY ===== -->
+  <div><p class="cap">08 · Pantry (current: available / unavailable)</p>
+  <div class="ph" data-shot="mobile-08-pantry"><div class="scr">
+    <div class="sb"><span>9:41</span><div class="sig"><span></span><span></span><span></span><span style="opacity:.3"></span></div></div>
+    <div class="top"><div class="burg"><span></span><span></span></div><div class="wm" style="font-size:15px">COOKSMITH</div><div class="dot"></div></div>
+    <div style="padding:16px 24px 0">
+      <div class="eyebrow">42 STAPLES · 3 UNAVAILABLE</div>
+      <div style="font:500 30px 'Cormorant Garamond';color:#2e4a34">What's in</div>
+    </div>
+    <div style="padding:14px 24px 0;display:flex;gap:8px;flex-wrap:wrap">
+      <div style="background:#f7ebd0;color:#74550f;font:400 10px 'Space Mono';padding:7px 12px;border-radius:999px">⚠ Olive oil</div>
+      <div style="background:#f7ebd0;color:#74550f;font:400 10px 'Space Mono';padding:7px 12px;border-radius:999px">⚠ Rice</div>
+      <div style="background:#f7ebd0;color:#74550f;font:400 10px 'Space Mono';padding:7px 12px;border-radius:999px">⚠ Garlic</div>
+    </div>
+    <div style="padding:18px 24px 0">
+      <div style="font:700 9px 'Space Mono';letter-spacing:.14em;color:#5b6b52;margin-bottom:10px">GRAINS, RICE &amp; PASTA</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div style="font:400 15px 'Space Grotesk';color:#22261f">Pasta</div><span style="background:#e4eee3;color:#3f6043;font:400 9px 'Space Mono';padding:5px 10px;border-radius:999px">IN STOCK</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div style="font:400 15px 'Space Grotesk';color:#22261f">Tinned tomatoes</div><span style="background:#e4eee3;color:#3f6043;font:400 9px 'Space Mono';padding:5px 10px;border-radius:999px">IN STOCK</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div style="font:400 15px 'Space Grotesk';color:#22261f">Rice</div><span style="background:#f7ebd0;color:#74550f;font:400 9px 'Space Mono';padding:5px 10px;border-radius:999px">UNAVAILABLE</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div style="font:400 15px 'Space Grotesk';color:#22261f">Soy sauce</div><span style="background:#e4eee3;color:#3f6043;font:400 9px 'Space Mono';padding:5px 10px;border-radius:999px">IN STOCK</span></div>
+      </div>
+    </div>
+    <div style="position:absolute;left:24px;right:24px;bottom:80px"><div class="pill-o">Add a staple</div></div>
+    <div class="nav"><b>HOME</b><b class="on">PANTRY</b><b>RECIPES</b><b>PLAN</b><b>SHOP</b><b>GET AHEAD</b></div>
+  </div></div></div>
+
+</div>
+</x-dc>
+</body>
+</html>
