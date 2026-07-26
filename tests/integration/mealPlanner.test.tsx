@@ -69,7 +69,11 @@ describe('weekly dinner planner', () => {
     )
 
     await screen.findByRole('heading', { name: testMondayLabel })
-    await user.click(screen.getByRole('button', { name: 'Plan my week' }))
+    expect(screen.getByText('Seven-day week · 1 of 7 planned')).toHaveClass('eyebrow')
+    expect(screen.getAllByRole('button', { name: 'Add dinner' })[0]).toHaveClass('meal-empty-slot')
+    const generateButton = screen.getByRole('button', { name: 'Plan my week' })
+    expect(generateButton).toHaveClass('button-accent')
+    await user.click(generateButton)
     const dialog = await screen.findByRole('dialog', { name: 'Plan my week' })
     expect(within(dialog).getByRole('heading', { name: 'Already planned' })).toBeVisible()
     expect(within(dialog).getByText(/No permitted recipe is available/)).toBeVisible()
