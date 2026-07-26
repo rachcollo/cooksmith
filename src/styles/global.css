@@ -40,8 +40,8 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--colour-focus);
-  outline-offset: 3px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 h1,
@@ -55,13 +55,13 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: var(--font-display-weight);
   line-height: var(--line-height-tight);
 }
 
 h1 {
   font-size: var(--font-size-heading-1);
-  letter-spacing: -0.035em;
+  letter-spacing: var(--letter-spacing-display);
 }
 
 h2 {
@@ -77,10 +77,11 @@ svg {
 }
 
 .eyebrow {
-  color: var(--colour-brand-hover);
-  font-size: var(--font-size-caption);
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  color: var(--colour-brand);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-eyebrow);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-eyebrow);
   text-transform: uppercase;
 }
 
