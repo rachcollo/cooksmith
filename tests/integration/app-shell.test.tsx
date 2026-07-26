@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest'
 
 import { renderApp, renderRouteError } from '../renderApp'
 
+const expectedDestinations = ['Home', 'Pantry', 'Recipes', 'Plan', 'Shopping', 'Get Ahead'] as const
+
 describe('v2 application shell', () => {
   it('renders the home route through the responsive application frame', async () => {
     renderApp('/')
@@ -53,6 +55,49 @@ describe('v2 application shell', () => {
     expect(
       await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' }),
     ).toBeVisible()
+  })
+
+  it('preserves six mobile and seven desktop destinations in the approved order', async () => {
+    renderApp('/')
+
+    await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' })
+    const mobileNavigation = screen.getByRole('navigation', {
+      name: 'Primary mobile navigation',
+    })
+    const desktopNavigation = screen.getByRole('navigation', { name: 'Primary navigation' })
+
+    expect(
+      Array.from(mobileNavigation.querySelectorAll('a, button')).map((item) =>
+        item.textContent?.trim(),
+      ),
+    ).toEqual(expectedDestinations)
+    expect(
+      Array.from(desktopNavigation.querySelectorAll('a, button')).map((item) =>
+        item.textContent?.trim(),
+      ),
+    ).toEqual([...expectedDestinations, 'Settings'])
+    expect(mobileNavigation).not.toHaveTextContent('Settings')
+  })
+
+  it.each([
+    ['/', 'Home'],
+    ['/pantry', 'Pantry'],
+    ['/recipes', 'Recipes'],
+    ['/plan', 'Plan'],
+    ['/shopping', 'Shopping'],
+    ['/get-ahead', 'Get Ahead'],
+    ['/settings', 'Settings'],
+  ])('marks only %s as the active desktop destination', async (route, activeLabel) => {
+    renderApp(route)
+
+    const desktopNavigation = await screen.findByRole('navigation', {
+      name: 'Primary navigation',
+    })
+    const activeDestinations = Array.from(
+      desktopNavigation.querySelectorAll('[aria-current="page"]'),
+    ).map((item) => item.textContent?.trim())
+
+    expect(activeDestinations).toEqual([activeLabel])
   })
 
   it('renders a calm route error boundary without raw error details', async () => {
