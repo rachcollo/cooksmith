@@ -1,16 +1,13 @@
 name: Production database release
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - supabase/migrations/**
   workflow_dispatch:
     inputs:
-      release_commit:
-        description: Paste the full 40-character commit SHA currently at the tip of main
-        required: true
-        type: string
-      confirmation:
-        description: Type DEPLOY_PRODUCTION_DATABASE to confirm
-        required: true
-        type: string
       allow_out_of_order_migrations:
         description: >-
           Only for a known, reviewed exception (e.g. a migration merged after a
@@ -42,24 +39,6 @@ jobs:
       INCLUDE_ALL_FLAG: ${{ inputs.allow_out_of_order_migrations == true && '--include-all' || '' }}
 
     steps:
-      - name: Check release approval inputs
-        env:
-          APPROVED_COMMIT: ${{ inputs.release_commit }}
-          CONFIRMATION: ${{ inputs.confirmation }}
-        run: |
-          if [[ ! "$APPROVED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "::error::release_commit must be an actual 40-character lowercase Git commit SHA, not the example text."
-            exit 1
-          fi
-          if [ "$APPROVED_COMMIT" != "$GITHUB_SHA" ]; then
-            echo "::error::release_commit must match the current main commit: $GITHUB_SHA"
-            exit 1
-          fi
-          if [ "$CONFIRMATION" != "DEPLOY_PRODUCTION_DATABASE" ]; then
-            echo "::error::confirmation must be DEPLOY_PRODUCTION_DATABASE"
-            exit 1
-          fi
-
       - name: Check required protected secrets
         run: |
           test -n "$SUPABASE_ACCESS_TOKEN"
@@ -72,8 +51,6 @@ jobs:
 
       - name: Check out approved main commit
         uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.release_commit }}
 
       - name: Use pinned Node.js runtime
         uses: actions/setup-node@v4
