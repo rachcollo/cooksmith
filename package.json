@@ -51,6 +51,9 @@
     "engineering:select-next": "node scripts/engineering/select-next-ready-issue.mjs"
   },
   "dependencies": {
+    "@fontsource/cormorant-garamond": "5.3.0",
+    "@fontsource/space-grotesk": "5.3.0",
+    "@fontsource/space-mono": "5.3.0",
     "@sentry/react": "10.66.0",
     "@supabase/supabase-js": "2.110.5",
     "lucide-react": "1.24.0",
