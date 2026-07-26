@@ -440,6 +440,9 @@ export function PlanPage() {
     <main className="page-stack meal-planner-page">
       <DocumentTitle title="Meal Planner" />
       <header className="page-header meal-planner-header">
+        <p className="eyebrow">
+          Seven-day week · {visibleMeals.length} of {days.length} planned
+        </p>
         <h1>Seven days. Let’s not overthink it.</h1>
         <p>Plan the dinners that help. Leave the rest blank.</p>
         <WeekPlanGenerator
@@ -581,6 +584,7 @@ export function PlanPage() {
                 ) : (
                   <Button
                     aria-label="Add dinner"
+                    className="meal-empty-slot"
                     variant="secondary"
                     type="button"
                     onClick={() => openAdd(day)}
