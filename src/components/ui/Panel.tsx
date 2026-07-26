@@ -1,7 +1,13 @@
 import type { HTMLAttributes } from 'react'
 
-export function Panel({ className = '', ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={`panel ${className}`.trim()} {...props} />
+type PanelTone = 'default' | 'feature'
+
+interface PanelProps extends HTMLAttributes<HTMLDivElement> {
+  tone?: PanelTone
+}
+
+export function Panel({ className = '', tone = 'default', ...props }: PanelProps) {
+  return <div className={`panel panel-${tone} ${className}`.trim()} {...props} />
 }
 
 export function Card({ className = '', ...props }: HTMLAttributes<HTMLElement>) {
