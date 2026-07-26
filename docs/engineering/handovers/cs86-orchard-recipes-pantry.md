@@ -31,30 +31,30 @@ screens and adds no new user steps or product behaviour.
 
 ## Files affected
 
-| File | Purpose |
-| --- | --- |
-| `src/routes/RecipesPage.tsx` | Photo frames, free-string tags and detail composition |
-| `src/routes/PantryPage.tsx` | Boolean status badges and feature-panel suggestion entry |
-| `src/styles/components.css` | Orchard route layout, typography and responsive rules |
-| `tests/integration/recipes.test.tsx` | Arbitrary-tag regression evidence |
-| `tests/integration/pantry.test.tsx` | Status text and insight-callout regression evidence |
-| `engineering/review/cs86-orchard-recipes-pantry.md` | Package lifecycle evidence |
+| File                                                | Purpose                                                  |
+| --------------------------------------------------- | -------------------------------------------------------- |
+| `src/routes/RecipesPage.tsx`                        | Photo frames, free-string tags and detail composition    |
+| `src/routes/PantryPage.tsx`                         | Boolean status badges and feature-panel suggestion entry |
+| `src/styles/components.css`                         | Orchard route layout, typography and responsive rules    |
+| `tests/integration/recipes.test.tsx`                | Arbitrary-tag regression evidence                        |
+| `tests/integration/pantry.test.tsx`                 | Status text and insight-callout regression evidence      |
+| `engineering/review/cs86-orchard-recipes-pantry.md` | Package lifecycle evidence                               |
 
 ## Validation
 
-| Command or check | Result | Notes |
-| --- | --- | --- |
-| `npm ci --cache .npm-cache` | Passed | Exact lockfile installed with a writable cache |
-| `npm run format` / `npm run format:check` | Passed | Repository formatting clean |
-| `npm run lint` | Passed | Zero warnings |
-| `npm run typecheck` | Passed | Strict TypeScript build |
-| `npm run test` | Passed | 50 files, 260 tests |
-| `npm run build` | Passed | Production bundle built |
-| `npm run docs:commands:check` | Passed | 144 documented files audited |
-| `npm run engineering:check-secrets` | Passed | No forbidden files or high-confidence secrets |
-| `npm run security:audit-production` | Passed | Reviewed browser-only React Router exception |
-| `npm run preflight` | Unavailable | Supabase CLI unavailable in this managed runner |
-| `npm run test:e2e` | Unavailable | Playwright Chromium executable is not installed |
+| Command or check                          | Result      | Notes                                           |
+| ----------------------------------------- | ----------- | ----------------------------------------------- |
+| `npm ci --cache .npm-cache`               | Passed      | Exact lockfile installed with a writable cache  |
+| `npm run format` / `npm run format:check` | Passed      | Repository formatting clean                     |
+| `npm run lint`                            | Passed      | Zero warnings                                   |
+| `npm run typecheck`                       | Passed      | Strict TypeScript build                         |
+| `npm run test`                            | Passed      | 50 files, 260 tests                             |
+| `npm run build`                           | Passed      | Production bundle built                         |
+| `npm run docs:commands:check`             | Passed      | 144 documented files audited                    |
+| `npm run engineering:check-secrets`       | Passed      | No forbidden files or high-confidence secrets   |
+| `npm run security:audit-production`       | Passed      | Reviewed browser-only React Router exception    |
+| `npm run preflight`                       | Unavailable | Supabase CLI unavailable in this managed runner |
+| `npm run test:e2e`                        | Unavailable | Playwright Chromium executable is not installed |
 
 The managed runner also reports its existing `http-proxy` npm warning. It is not produced
 by repository configuration. The two unavailable runner checks remain required in CI or
