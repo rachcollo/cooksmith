@@ -14,12 +14,12 @@ automatic categorisation contract.
 
 ## Changes Made
 
-| File or component                                   | Purpose                                                             |
-| --------------------------------------------------- | ------------------------------------------------------------------- |
-| `src/routes/PantryPage.tsx`                         | Compact add action, controlled add dialog and reliable draft reset. |
-| `src/styles/components.css`                         | Compact, responsive dialog field layout.                            |
-| `tests/integration/pantry.test.tsx`                 | Add flow, hidden-field and cancel/reset regression coverage.        |
-| `engineering/ready/cs55-simplify-compact-pantry.md` | Authoritative CS-55 scope and acceptance criteria (unchanged).      |
+| File or component                                   | Purpose                                                               |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| `src/routes/PantryPage.tsx`                         | Compact toolbar, nested location/category hierarchy and item actions. |
+| `src/styles/components.css`                         | Square cards, borderless actions and responsive toolbar/layout.       |
+| `tests/integration/pantry.test.tsx`                 | Toolbar, hierarchy, quantity and availability regression coverage.    |
+| `engineering/ready/cs55-simplify-compact-pantry.md` | Authoritative CS-55 scope and acceptance criteria (unchanged).        |
 
 ## Database, Dependencies and Release
 
@@ -62,6 +62,11 @@ The review follow-up also verified that each Pantry card now contains exactly tw
 its quantity inside the information column, and keeps the Pantry title and Add item action on one
 compact row. Testing Library now uses a bounded three-second async retry window so route-level lazy
 imports do not produce one-second false negatives when all integration files run concurrently.
+
+The final UI review groups items by category beneath each storage location instead of repeating
+category labels on cards. Empty quantities render no placeholder, availability toggles between A
+and NA, item buttons are borderless, cards use a square recipe-style shape, and Search, Filters, Add
+and Suggestions share one compact icon-led toolbar.
 
 ## Accessibility, Security, Privacy and Cost
 

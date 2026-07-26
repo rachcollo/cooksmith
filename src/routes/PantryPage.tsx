@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { ListFilter, Plus, Sparkles } from 'lucide-react'
 
 import { Dialog } from '../components/ui/Dialog'
 
@@ -17,6 +18,7 @@ import {
   pantryCategoryLabels,
   pantryStorageLocationLabels,
   type PantryItem,
+  type PantryItemCategory,
   type PantryItemInput,
   type PantryStorageLocation,
 } from '../domain/pantry/types'
@@ -196,9 +198,13 @@ export function PantryPage() {
 
   const grouped = useMemo(
     () =>
-      filteredItems.reduce<Partial<Record<PantryStorageLocation, PantryItem[]>>>((groups, item) => {
-        groups[item.storageLocation] = [...(groups[item.storageLocation] ?? []), item]
-        return groups
+      filteredItems.reduce<
+        Partial<Record<PantryStorageLocation, Partial<Record<PantryItemCategory, PantryItem[]>>>>
+      >((locations, item) => {
+        const categories = locations[item.storageLocation] ?? {}
+        categories[item.category] = [...(categories[item.category] ?? []), item]
+        locations[item.storageLocation] = categories
+        return locations
       }, {}),
     [filteredItems],
   )
@@ -401,11 +407,6 @@ export function PantryPage() {
       <DocumentTitle title="Pantry" />
       <header className="page-header pantry-header">
         <h1>Pantry</h1>
-        <div className="page-header-actions">
-          <Button type="button" onClick={() => setAddDialogOpen(true)}>
-            Add item
-          </Button>
-        </div>
       </header>
 
       <div className="pantry-summary" aria-label="Household staples summary">
@@ -419,27 +420,35 @@ export function PantryPage() {
         <ErrorState title="Pantry suggestions need a quick check" message={insightError} />
       ) : null}
 
-      <div className="pantry-suggestions-trigger">
-        <Button variant="secondary" type="button" onClick={() => void generatePantrySuggestions()}>
-          Review pantry suggestions
-        </Button>
-      </div>
-
       <Panel className="pantry-discovery">
         <div className="pantry-discovery-row">
           <TextField
             label="Search staples"
+            placeholder="Search"
+            type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
           <Button
             aria-controls="pantry-filters"
             aria-expanded={filtersOpen}
+            aria-label="Filters"
             variant="secondary"
             type="button"
             onClick={() => setFiltersOpen((open) => !open)}
           >
-            Filters
+            <ListFilter aria-hidden="true" size={20} />
+          </Button>
+          <Button aria-label="Add pantry item" type="button" onClick={() => setAddDialogOpen(true)}>
+            <Plus aria-hidden="true" size={20} />
+          </Button>
+          <Button
+            aria-label="Review pantry suggestions"
+            variant="secondary"
+            type="button"
+            onClick={() => void generatePantrySuggestions()}
+          >
+            <Sparkles aria-hidden="true" size={20} />
           </Button>
         </div>
         {filtersOpen ? (
@@ -512,8 +521,8 @@ export function PantryPage() {
 
       {(Object.keys(pantryStorageLocationLabels) as PantryStorageLocation[]).map(
         (storageLocation) => {
-          const locationItems = grouped[storageLocation] ?? []
-          if (locationItems.length === 0) return null
+          const locationCategories = grouped[storageLocation] ?? {}
+          if (Object.keys(locationCategories).length === 0) return null
           return (
             <section
               className="pantry-section"
@@ -523,44 +532,45 @@ export function PantryPage() {
               <h2 id={`pantry-${storageLocation}`}>
                 {pantryStorageLocationLabels[storageLocation]}
               </h2>
-              <div className="pantry-grid">
-                {locationItems.map((item) => (
-                  <article className="pantry-card" key={item.id}>
-                    <div>
-                      <h3>{item.name}</h3>
-                      <p>
-                        {pantryCategoryLabels[item.category]} ·{' '}
-                        {pantryStorageLocationLabels[item.storageLocation]}
-                      </p>
-                      {item.categorySource === 'automatic' ||
-                      item.storageLocationSource === 'automatic' ? (
-                        <p className="pantry-classification-note">Cooksmith suggested</p>
-                      ) : null}
-                      <p className="pantry-quantity">
-                        {item.quantity === null
-                          ? 'Quantity not set'
-                          : `${item.quantity} ${item.unit ?? ''}`.trim()}
-                      </p>
+              {(Object.keys(pantryCategoryLabels) as PantryItemCategory[]).map((itemCategory) => {
+                const categoryItems = locationCategories[itemCategory] ?? []
+                if (categoryItems.length === 0) return null
+                return (
+                  <section className="pantry-category" key={itemCategory}>
+                    <h3>{pantryCategoryLabels[itemCategory]}</h3>
+                    <div className="pantry-grid">
+                      {categoryItems.map((item) => (
+                        <article className="pantry-card" key={item.id}>
+                          <div>
+                            <h4>{item.name}</h4>
+                            {item.quantity !== null ? (
+                              <p className="pantry-quantity">
+                                {`${item.quantity} ${item.unit ?? ''}`.trim()}
+                              </p>
+                            ) : null}
+                          </div>
+                          <Button
+                            aria-label={
+                              item.available
+                                ? `${item.name} available. Mark not available`
+                                : `${item.name} not available. Mark available`
+                            }
+                            className="pantry-stock-action"
+                            variant="secondary"
+                            type="button"
+                            onClick={() => void toggleAvailability(item)}
+                          >
+                            {item.available ? 'A' : 'NA'}
+                          </Button>
+                          <Button variant="secondary" type="button" onClick={() => openEdit(item)}>
+                            Edit
+                          </Button>
+                        </article>
+                      ))}
                     </div>
-                    <Button
-                      aria-label={
-                        item.available
-                          ? `Mark ${item.name} out of stock`
-                          : `Mark ${item.name} available`
-                      }
-                      className="pantry-stock-action"
-                      variant="secondary"
-                      type="button"
-                      onClick={() => void toggleAvailability(item)}
-                    >
-                      {item.available ? '×' : 'Mark available'}
-                    </Button>
-                    <Button variant="secondary" type="button" onClick={() => openEdit(item)}>
-                      Edit
-                    </Button>
-                  </article>
-                ))}
-              </div>
+                  </section>
+                )
+              })}
             </section>
           )
         },
