@@ -1233,7 +1233,7 @@ button.card:hover {
 }
 
 .meal-planner-page {
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
 .page-header.meal-planner-header {
@@ -1269,7 +1269,7 @@ button.card:hover {
   gap: var(--space-2);
   grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
   margin-inline: auto;
-  max-width: 42rem;
+  max-width: 34rem;
   text-align: center;
   width: 100%;
 }
@@ -1280,8 +1280,11 @@ button.card:hover {
 }
 
 .meal-week-toolbar strong {
-  font-family: var(--font-heading);
-  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
 }
 
 .meal-week-toolbar > div button {
@@ -1305,24 +1308,44 @@ button.card:hover {
 
 .meal-week {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .meal-day {
-  background: var(--colour-surface);
-  border: var(--border-default);
+  background: var(--colour-surface-raised);
+  border: var(--border-strong);
   border-radius: var(--radius-large);
   display: grid;
   gap: var(--space-3);
   min-width: 0;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
   padding: var(--space-4);
+  position: relative;
   transition:
     border-color var(--motion-fast) var(--motion-ease),
     box-shadow var(--motion-fast) var(--motion-ease);
 }
 
 .meal-day-today {
-  border-color: var(--colour-brand);
+  border-color: var(--colour-accent-lime-strong);
+}
+
+.meal-day::before {
+  background: var(--colour-accent-lilac);
+  content: '';
+  inset-block: 0;
+  inset-inline-start: 0;
+  position: absolute;
+  width: 0.3rem;
+}
+
+.meal-day:nth-child(3n + 2)::before {
+  background: var(--colour-accent-lime);
+}
+
+.meal-day:nth-child(3n)::before {
+  background: var(--colour-accent-slate);
 }
 
 .meal-day-drop-target {
@@ -1344,8 +1367,10 @@ button.card:hover {
 
 .meal-day-heading p {
   color: var(--colour-text-muted);
+  font-family: var(--font-mono);
   font-size: var(--font-size-small);
-  font-weight: 750;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-caps);
   text-transform: uppercase;
 }
 
@@ -1355,8 +1380,10 @@ button.card:hover {
 }
 
 .meal-today-badge {
-  border: 1px solid currentcolor;
+  background: var(--colour-accent-lime-soft);
+  border: 0;
   border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
   font-size: var(--font-size-caption);
   font-weight: 750;
   padding: 0.15rem 0.5rem;
@@ -1367,9 +1394,22 @@ button.card:hover {
   width: 100%;
 }
 
+.meal-day > .meal-empty-slot {
+  background: transparent;
+  border: var(--border-dashed-slot);
+  color: var(--colour-text-muted);
+  justify-content: center;
+  min-height: 7rem;
+}
+
+.meal-day > .meal-empty-slot:hover {
+  background: var(--colour-surface-subtle);
+  border-color: var(--colour-brand);
+}
+
 .planned-meal {
   align-items: center;
-  background: var(--colour-brand-soft);
+  background: var(--colour-surface-subtle);
   border-radius: var(--radius-medium);
   display: grid;
   gap: var(--space-2);
@@ -1416,9 +1456,13 @@ button.card:hover {
 
 .planned-meal-title strong,
 .planned-meal-title span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.planned-meal-title strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: var(--line-height-snug);
 }
 
 .planned-meal-title span {
@@ -1455,7 +1499,7 @@ button.card:hover {
 
 .meal-planner-permission {
   align-items: flex-start;
-  background: var(--colour-brand-soft);
+  background: var(--colour-accent-lilac);
   border-radius: var(--radius-large);
   display: flex;
   gap: var(--space-3);
@@ -1604,7 +1648,10 @@ button.card:hover {
 }
 
 .shopping-page {
-  gap: var(--space-5);
+  gap: var(--space-6);
+  margin-inline: auto;
+  max-width: var(--layout-reading);
+  width: 100%;
 }
 
 .shopping-header > p:last-child {
@@ -1633,6 +1680,12 @@ button.card:hover {
 .shopping-summary strong {
   font-family: var(--font-display);
   font-size: 1.5rem;
+}
+
+.shopping-add-panel {
+  background: var(--colour-surface-subtle);
+  border: var(--border-default);
+  box-shadow: none;
 }
 
 .shopping-form {
@@ -1681,8 +1734,13 @@ button.card:hover {
 }
 
 .shopping-category > h2 {
-  font-size: 1rem;
+  color: var(--colour-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-eyebrow);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-eyebrow);
   margin: 0;
+  text-transform: uppercase;
 }
 
 .shopping-list {
@@ -1696,20 +1754,21 @@ button.card:hover {
 .shopping-item {
   align-items: center;
   background: var(--colour-surface);
-  border: var(--border-default);
-  border-radius: var(--radius-medium);
+  border: 0;
+  border-bottom: var(--border-default);
+  border-radius: 0;
   display: grid;
   gap: var(--space-2);
   grid-template-columns:
     var(--touch-target) minmax(0, 1fr) var(--touch-target) var(--touch-target)
     var(--touch-target);
   min-height: var(--touch-target);
-  padding: 0 var(--space-1);
+  padding: var(--space-1);
 }
 
 .shopping-item-pantry-match {
-  background: var(--colour-surface-subtle);
-  border-color: var(--colour-brand);
+  background: var(--colour-positive-soft);
+  border-color: var(--colour-border);
 }
 
 .shopping-pantry-info {
@@ -1777,8 +1836,8 @@ button.card:hover {
 }
 
 .shopping-check::before {
-  border: 2px solid var(--colour-brand);
-  border-radius: var(--radius-pill);
+  border: 2px solid var(--colour-border-strong);
+  border-radius: var(--radius-small);
   content: '';
   height: 1.35rem;
   position: absolute;
@@ -1805,6 +1864,11 @@ button.card:hover {
   overflow-wrap: anywhere;
 }
 
+.shopping-item-copy strong {
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-medium);
+}
+
 .shopping-item-copy span {
   color: var(--colour-text-muted);
   font-size: inherit;
@@ -1817,11 +1881,12 @@ button.card:hover {
 }
 
 .shopping-item-completed .shopping-check {
-  color: var(--colour-surface);
+  color: var(--colour-accent-lime);
 }
 
 .shopping-item-completed .shopping-check::before {
   background: var(--colour-brand);
+  border-color: var(--colour-brand);
 }
 
 .shopping-completed {
