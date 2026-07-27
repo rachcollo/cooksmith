@@ -741,6 +741,252 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_content_versions: {
+        Row: {
+          created_at: string
+          fingerprint: string
+          household_id: string
+          id: string
+          recipe_id: string
+          source_snapshot: Json
+        }
+        Insert: {
+          created_at?: string
+          fingerprint: string
+          household_id: string
+          id?: string
+          recipe_id: string
+          source_snapshot: Json
+        }
+        Update: {
+          created_at?: string
+          fingerprint?: string
+          household_id?: string
+          id?: string
+          recipe_id?: string
+          source_snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_content_versions_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_content_versions_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      recipe_enrichment_jobs: {
+        Row: {
+          attempt_count: number
+          available_at: string
+          completed_at: string | null
+          created_at: string
+          estimated_cost_aud: number | null
+          failure_category:
+            Database['cooksmith']['Enums']['recipe_enrichment_failure_category'] | null
+          household_id: string
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          leased_until: string | null
+          model_key: string
+          output_tokens: number | null
+          recipe_id: string
+          recipe_version_id: string
+          rules_version: string
+          schema_version: string
+          state: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          available_at?: string
+          completed_at?: string | null
+          created_at?: string
+          estimated_cost_aud?: number | null
+          failure_category?:
+            Database['cooksmith']['Enums']['recipe_enrichment_failure_category'] | null
+          household_id: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          leased_until?: string | null
+          model_key?: string
+          output_tokens?: number | null
+          recipe_id: string
+          recipe_version_id: string
+          rules_version?: string
+          schema_version?: string
+          state?: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          available_at?: string
+          completed_at?: string | null
+          created_at?: string
+          estimated_cost_aud?: number | null
+          failure_category?:
+            Database['cooksmith']['Enums']['recipe_enrichment_failure_category'] | null
+          household_id?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          leased_until?: string | null
+          model_key?: string
+          output_tokens?: number | null
+          recipe_id?: string
+          recipe_version_id?: string
+          rules_version?: string
+          schema_version?: string
+          state?: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_enrichment_jobs_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichment_jobs_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichment_jobs_recipe_version_id_fkey'
+            columns: ['recipe_version_id']
+            isOneToOne: false
+            referencedRelation: 'recipe_content_versions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      recipe_enrichments: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          household_id: string
+          id: string
+          is_active: boolean
+          job_id: string
+          model_key: string
+          overall_confidence: string
+          provider: string
+          recipe_id: string
+          recipe_version_id: string
+          result: Json
+          rules_version: string
+          schema_version: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          household_id: string
+          id?: string
+          is_active?: boolean
+          job_id: string
+          model_key: string
+          overall_confidence: string
+          provider: string
+          recipe_id: string
+          recipe_version_id: string
+          result: Json
+          rules_version: string
+          schema_version: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          is_active?: boolean
+          job_id?: string
+          model_key?: string
+          overall_confidence?: string
+          provider?: string
+          recipe_id?: string
+          recipe_version_id?: string
+          result?: Json
+          rules_version?: string
+          schema_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recipe_enrichments_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichments_job_id_fkey'
+            columns: ['job_id']
+            isOneToOne: true
+            referencedRelation: 'recipe_enrichment_jobs'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichments_recipe_id_fkey'
+            columns: ['recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichments_recipe_version_id_fkey'
+            columns: ['recipe_version_id']
+            isOneToOne: false
+            referencedRelation: 'recipe_content_versions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      recipe_intelligence_settings: {
+        Row: {
+          ai_enabled: boolean
+          daily_recipe_limit: number
+          emergency_stop: boolean
+          enqueue_enabled: boolean
+          max_concurrency: number
+          monthly_cost_limit_aud: number
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_enabled?: boolean
+          daily_recipe_limit?: number
+          emergency_stop?: boolean
+          enqueue_enabled?: boolean
+          max_concurrency?: number
+          monthly_cost_limit_aud?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_enabled?: boolean
+          daily_recipe_limit?: number
+          emergency_stop?: boolean
+          enqueue_enabled?: boolean
+          max_concurrency?: number
+          monthly_cost_limit_aud?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       recipe_ingredients: {
         Row: {
           created_at: string
@@ -1005,6 +1251,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_recipe_enrichment: {
+        Args: {
+          target_job_id: string
+          target_model_key: string
+          target_overall_confidence: string
+          target_provider: string
+          target_result: Json
+        }
+        Returns: string
+      }
       accept_household_invitation: {
         Args: { p_display_name: string; p_invitation_token: string }
         Returns: string
@@ -1110,6 +1366,17 @@ export type Database = {
       pantry_storage_location:
         'pantry' | 'fridge' | 'freezer' | 'produce_storage' | 'household_supplies' | 'other'
       prep_mode: 'no_prep' | 'quick' | 'standard' | 'batch'
+      recipe_enrichment_failure_category:
+        | 'disabled'
+        | 'timeout'
+        | 'usage_limit'
+        | 'transient_provider'
+        | 'permanent_provider'
+        | 'schema_invalid'
+        | 'unsupported_data'
+        | 'stale_version'
+        | 'internal_validation'
+      recipe_enrichment_job_state: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
       shopping_item_category:
         | 'produce'
         | 'meat_and_seafood'
@@ -1280,6 +1547,18 @@ export const Constants = {
         'other',
       ],
       prep_mode: ['no_prep', 'quick', 'standard', 'batch'],
+      recipe_enrichment_failure_category: [
+        'disabled',
+        'timeout',
+        'usage_limit',
+        'transient_provider',
+        'permanent_provider',
+        'schema_invalid',
+        'unsupported_data',
+        'stale_version',
+        'internal_validation',
+      ],
+      recipe_enrichment_job_state: ['pending', 'processing', 'completed', 'failed', 'cancelled'],
       shopping_item_category: [
         'produce',
         'meat_and_seafood',

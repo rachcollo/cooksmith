@@ -87,3 +87,5 @@ enabled = false
 policy = "per_worker"
 inspector_port = 8083
 deno_version = 2
+[functions.enrich-recipe]
+verify_jwt = false
