@@ -167,7 +167,7 @@ export function GetAheadPage() {
         {announcement}
       </p>
       {!visibleSession || visibleSession.status !== 'active' || !showChecklist ? (
-        <Panel className="flow-stack">
+        <Panel className="flow-stack get-ahead-session-picker">
           {visibleSession?.status === 'active' ? (
             <div className="resume-session-card">
               <div>
@@ -214,14 +214,16 @@ export function GetAheadPage() {
                 onChange={updateCustom}
               />
             </label>
-            <Button type="submit">Start</Button>
+            <Button variant="accent" type="submit">
+              Start
+            </Button>
             {durationError ? (
               <FormError id="custom-duration-error">{durationError}</FormError>
             ) : null}
           </form>
         </Panel>
       ) : (
-        <Panel className="flow-stack">
+        <Panel className="flow-stack get-ahead-session">
           <GetAheadProgressSummary session={visibleSession} />
           {visibleSession.tasks.filter((task) => task.selected || task.state === 'completed')
             .length === 0 ? (
@@ -297,7 +299,7 @@ export function GetAheadPage() {
 function GetAheadProgressSummary({ session }: { session: GetAheadSession }) {
   const totals = getAheadTotals(session)
   return (
-    <div className="flow-stack" aria-label="Get Ahead progress summary">
+    <div className="flow-stack get-ahead-progress" aria-label="Get Ahead progress summary">
       <div className="cluster">
         <Sparkles aria-hidden="true" />
         <strong>{totals.estimatedTimeSavedMinutes} minutes saved this week</strong>
