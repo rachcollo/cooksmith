@@ -15,16 +15,20 @@ select has_index(
   'weekly_preparation_plans_cache_unique',
   'Weekly preparation plan cache key is unique per household and plan'
 );
-select has_check(
-  'cooksmith',
-  'weekly_preparation_plans',
-  'weekly_preparation_plans_generation_valid',
+select isnt_empty(
+  $$select 1
+    from pg_constraint
+    where conrelid = 'cooksmith.weekly_preparation_plans'::regclass
+      and contype = 'c'
+      and conname = 'weekly_preparation_plans_generation_valid'$$,
   'Weekly preparation plan generation mode is constrained'
 );
-select has_check(
-  'cooksmith',
-  'weekly_preparation_plans',
-  'weekly_preparation_plans_result_object',
+select isnt_empty(
+  $$select 1
+    from pg_constraint
+    where conrelid = 'cooksmith.weekly_preparation_plans'::regclass
+      and contype = 'c'
+      and conname = 'weekly_preparation_plans_result_object'$$,
   'Weekly preparation plan result is a JSON object'
 );
 select isnt_empty(
