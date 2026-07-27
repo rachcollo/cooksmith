@@ -1246,6 +1246,83 @@ export type Database = {
           },
         ]
       }
+      weekly_preparation_plans: {
+        Row: {
+          cache_key: string
+          created_at: string
+          fallback_reason: string | null
+          generation: string
+          household_id: string
+          id: string
+          plan_key: string
+          planner_version: string
+          result: Json
+          schema_version: string
+          updated_at: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          fallback_reason?: string | null
+          generation: string
+          household_id: string
+          id?: string
+          plan_key: string
+          planner_version: string
+          result: Json
+          schema_version: string
+          updated_at?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          fallback_reason?: string | null
+          generation?: string
+          household_id?: string
+          id?: string
+          plan_key?: string
+          planner_version?: string
+          result?: Json
+          schema_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'weekly_preparation_plans_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      weekly_preparation_settings: {
+        Row: {
+          ai_enabled: boolean
+          daily_plan_limit: number
+          emergency_stop: boolean
+          monthly_cost_limit_aud: number
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_enabled?: boolean
+          daily_plan_limit?: number
+          emergency_stop?: boolean
+          monthly_cost_limit_aud?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_enabled?: boolean
+          daily_plan_limit?: number
+          emergency_stop?: boolean
+          monthly_cost_limit_aud?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
