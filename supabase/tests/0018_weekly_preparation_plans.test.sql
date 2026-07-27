@@ -4,11 +4,11 @@ select plan(8);
 select has_table('cooksmith', 'weekly_preparation_plans', 'Weekly preparation plan cache exists');
 select has_table('cooksmith', 'weekly_preparation_settings', 'Weekly preparation settings exist');
 select row_security_active(
-  'cooksmith.weekly_preparation_plans',
+  'cooksmith.weekly_preparation_plans'::regclass,
   'Weekly preparation plan cache has RLS enabled'
 );
 select row_security_active(
-  'cooksmith.weekly_preparation_settings',
+  'cooksmith.weekly_preparation_settings'::regclass,
   'Weekly preparation settings have RLS enabled'
 );
 select has_index(
