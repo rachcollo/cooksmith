@@ -4,11 +4,19 @@ select plan(8);
 select has_table('cooksmith', 'weekly_preparation_plans', 'Weekly preparation plan cache exists');
 select has_table('cooksmith', 'weekly_preparation_settings', 'Weekly preparation settings exist');
 select ok(
-  row_security_active('cooksmith.weekly_preparation_plans'::regclass),
+  (select relrowsecurity
+   from pg_catalog.pg_class
+   join pg_catalog.pg_namespace on pg_namespace.oid = pg_class.relnamespace
+   where pg_namespace.nspname = 'cooksmith'
+     and pg_class.relname = 'weekly_preparation_plans'),
   'Weekly preparation plan cache has row-level security enabled'
 );
 select ok(
-  row_security_active('cooksmith.weekly_preparation_settings'::regclass),
+  (select relrowsecurity
+   from pg_catalog.pg_class
+   join pg_catalog.pg_namespace on pg_namespace.oid = pg_class.relnamespace
+   where pg_namespace.nspname = 'cooksmith'
+     and pg_class.relname = 'weekly_preparation_settings'),
   'Weekly preparation settings have row-level security enabled'
 );
 select has_index(
