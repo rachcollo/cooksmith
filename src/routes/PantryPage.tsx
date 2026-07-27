@@ -566,7 +566,13 @@ export function PantryPage() {
                               type="button"
                               onClick={() => void toggleAvailability(item)}
                             >
-                              {item.available ? 'Available' : 'Out of stock'}
+                              {item.available ? (
+                                <span aria-hidden="true" className="pantry-stock-tick">
+                                  ✓
+                                </span>
+                              ) : (
+                                'Out of stock'
+                              )}
                             </Button>
                           </div>
                         </article>
