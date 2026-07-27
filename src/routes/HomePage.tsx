@@ -13,7 +13,7 @@ export function HomePage() {
   const [detailsOpen, setDetailsOpen] = useState(false)
 
   return (
-    <Stack gap="large">
+    <Stack className="home-foundation" gap="large">
       <DocumentTitle title="Home" />
       <PageHeader
         actions={
@@ -31,7 +31,11 @@ export function HomePage() {
         title="Dinner decisions, made lighter."
       />
 
-      <ResponsiveGrid minimum="14rem" aria-label="Foundation qualities">
+      <ResponsiveGrid
+        className="home-foundation-grid"
+        minimum="14rem"
+        aria-label="Foundation qualities"
+      >
         <Card>
           <Compass aria-hidden="true" />
           <h2>One clear next step</h2>
