@@ -415,9 +415,11 @@ export function ShoppingPage() {
     <main className="page-stack shopping-page">
       <DocumentTitle title="Shopping" />
       <header className="page-header shopping-header">
-        <p className="eyebrow">One useful list · {outstanding.length} to buy</p>
+        <p className="eyebrow">
+          Shopping · {items.length} {items.length === 1 ? 'item' : 'items'}
+        </p>
         <div className="shopping-title-row">
-          <h1>Shopping</h1>
+          <h1>Your list</h1>
           <p className="shopping-summary" role="status" aria-live="polite" aria-atomic="true">
             <span aria-hidden="true">
               <strong>{outstanding.length}</strong> left to buy

@@ -823,6 +823,17 @@ button.card:hover {
   padding: 0;
 }
 
+.pantry-discovery-row .pantry-suggestions-action {
+  background: var(--colour-brand);
+  border-color: var(--colour-brand);
+  border-radius: var(--radius-pill);
+  color: var(--colour-surface);
+}
+
+.pantry-discovery-row .pantry-suggestions-action:hover:not(:disabled) {
+  background: var(--colour-brand-hover);
+}
+
 .pantry-discovery-row .field input {
   height: var(--touch-target);
   min-height: var(--touch-target);
@@ -1005,12 +1016,21 @@ button.card:hover {
 }
 
 .pantry-stock-action {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-small);
   bottom: 0;
   font-size: var(--font-size-small);
   min-width: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
   position: absolute;
   right: 0;
   z-index: 1;
+}
+
+.pantry-stock-action-out {
+  background: var(--colour-attention-soft);
+  color: var(--colour-attention);
 }
 
 .pantry-stock-control {
@@ -1024,13 +1044,6 @@ button.card:hover {
 
 .pantry-stock-control .pantry-stock-action {
   position: static;
-}
-
-.pantry-insights-callout {
-  align-items: center;
-  display: flex;
-  justify-content: flex-end;
-  padding: var(--space-2);
 }
 
 .pantry-card > .button,
@@ -1102,7 +1115,7 @@ button.card:hover {
 @media (max-width: 30rem) {
   .pantry-grid {
     gap: var(--space-1);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .pantry-card {
@@ -1127,7 +1140,7 @@ button.card:hover {
   .pantry-stock-action {
     font-size: 0.62rem;
     min-height: var(--touch-target);
-    padding-inline: var(--space-1);
+    padding: var(--space-1);
   }
 
   .pantry-quantity-fields {
@@ -2012,7 +2025,7 @@ button.card:hover {
   }
 
   .shopping-add-panel {
-    padding: var(--space-2);
+    padding: 0;
   }
 
   .shopping-form {

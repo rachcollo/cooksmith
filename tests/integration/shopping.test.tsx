@@ -103,7 +103,7 @@ describe('shopping list foundation', () => {
     const info = await screen.findByRole('button', {
       name: 'Why should I check my pantry for Milk?',
     })
-    expect(screen.getByText('One useful list · 2 to buy')).toHaveClass('eyebrow')
+    expect(screen.getByText('Shopping · 2 items')).toHaveClass('eyebrow')
     expect(screen.getByRole('heading', { name: 'Dairy and eggs' })).toBeVisible()
     expect(info.closest('li')).toHaveClass('shopping-item-pantry-match')
     expect(screen.queryByText('May already have')).not.toBeInTheDocument()
@@ -215,7 +215,10 @@ describe('shopping list foundation', () => {
     const user = userEvent.setup()
     renderShopping(repository)
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Shopping' })).toBeVisible()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your list' })).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: 'Add an item' }).closest('.shopping-add-panel'),
+    ).not.toBeNull()
     expect(screen.getByRole('status')).toHaveTextContent('1 item left to buy')
     expect(screen.queryByLabelText('Unit')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Category')).not.toBeInTheDocument()
