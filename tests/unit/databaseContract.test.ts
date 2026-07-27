@@ -27,8 +27,11 @@ describe('generated database API contract', () => {
       | 'planned_meals'
       | 'profiles'
       | 'recipe_ingredients'
+      | 'recipe_content_versions'
+      | 'recipe_enrichment_jobs'
+      | 'recipe_enrichments'
+      | 'recipe_intelligence_settings'
       | 'recipe_steps'
-      | 'shopping_item_contributions'
       | 'shopping_item_contributions'
       | 'shopping_list_items'
       | 'shopping_lists'
@@ -61,6 +64,13 @@ describe('generated database API contract', () => {
       'admin',
       'content_editor',
       'support',
+    ])
+    expect(Constants.cooksmith.Enums.recipe_enrichment_job_state).toEqual([
+      'pending',
+      'processing',
+      'completed',
+      'failed',
+      'cancelled',
     ])
   })
 })
