@@ -14,6 +14,67 @@
   min-height: 4.5rem;
 }
 
+.account-menu {
+  position: relative;
+}
+
+.account-menu-trigger {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--colour-brand);
+  cursor: pointer;
+  display: inline-flex;
+  height: var(--touch-target);
+  justify-content: center;
+  padding: 0;
+  width: var(--touch-target);
+}
+
+.account-menu-trigger:hover {
+  background: var(--colour-brand-soft);
+}
+
+.account-menu-trigger svg {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.account-menu-popover {
+  background: var(--colour-surface);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-medium);
+  box-shadow: var(--shadow-soft);
+  min-width: 10rem;
+  padding: var(--space-2);
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  z-index: 20;
+}
+
+.account-menu-popover a,
+.account-menu-popover button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-small);
+  color: var(--colour-text);
+  cursor: pointer;
+  display: flex;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+
+.account-menu-popover a:hover,
+.account-menu-popover button:hover {
+  background: var(--colour-surface-subtle);
+}
+
 .brand {
   align-items: center;
   color: var(--colour-brand);

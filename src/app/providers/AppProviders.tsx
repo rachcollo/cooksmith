@@ -10,6 +10,9 @@ import { OnboardingRepositoryContext } from '../onboarding/onboardingContext'
 import type { HouseholdPeopleRepository } from '../../application/households/householdPeopleRepository'
 import { HouseholdPeopleRepositoryContext } from '../households/householdPeopleContext'
 import { HouseholdPeopleProvider } from '../households/HouseholdPeopleProvider'
+import type { HouseholdPreferencesRepository } from '../../application/households/householdPreferencesRepository'
+import { HouseholdPreferencesRepositoryContext } from '../households/householdPreferencesContext'
+import { HouseholdPreferencesProvider } from '../households/HouseholdPreferencesProvider'
 import type { PantryRepository } from '../../application/pantry/pantryRepository'
 import type { RecipeRepository } from '../../application/recipes/recipeRepository'
 import { PantryProvider } from '../pantry/PantryProvider'
@@ -30,6 +33,7 @@ interface AppProvidersProps {
   initialAuthState: InitialAuthState
   onboardingRepository?: OnboardingRepository
   householdPeopleRepository?: HouseholdPeopleRepository
+  householdPreferencesRepository?: HouseholdPreferencesRepository
   pantryRepository?: PantryRepository
   recipeRepository?: RecipeRepository
   plannedMealRepository?: PlannedMealRepository
@@ -43,6 +47,7 @@ export function AppProviders({
   initialAuthState,
   onboardingRepository,
   householdPeopleRepository,
+  householdPreferencesRepository,
   pantryRepository,
   recipeRepository,
   plannedMealRepository,
@@ -53,23 +58,29 @@ export function AppProviders({
       <AuthProvider client={authClient} initialAuthState={initialAuthState}>
         <HouseholdPeopleRepositoryContext.Provider value={householdPeopleRepository}>
           <HouseholdPeopleProvider>
-            <OnboardingRepositoryContext.Provider value={onboardingRepository}>
-              <PantryRepositoryContext.Provider value={pantryRepository}>
-                <PantryProvider>
-                  <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
-                    <PlannedMealProvider>
-                      <RecipeRepositoryContext.Provider value={recipeRepository}>
-                        <RecipeProvider>
-                          <ShoppingRepositoryContext.Provider value={shoppingRepository}>
-                            <ShoppingProvider>{children}</ShoppingProvider>
-                          </ShoppingRepositoryContext.Provider>
-                        </RecipeProvider>
-                      </RecipeRepositoryContext.Provider>
-                    </PlannedMealProvider>
-                  </PlannedMealRepositoryContext.Provider>
-                </PantryProvider>
-              </PantryRepositoryContext.Provider>
-            </OnboardingRepositoryContext.Provider>
+            <HouseholdPreferencesRepositoryContext.Provider
+              value={householdPreferencesRepository ?? null}
+            >
+              <HouseholdPreferencesProvider>
+                <OnboardingRepositoryContext.Provider value={onboardingRepository}>
+                  <PantryRepositoryContext.Provider value={pantryRepository}>
+                    <PantryProvider>
+                      <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
+                        <PlannedMealProvider>
+                          <RecipeRepositoryContext.Provider value={recipeRepository}>
+                            <RecipeProvider>
+                              <ShoppingRepositoryContext.Provider value={shoppingRepository}>
+                                <ShoppingProvider>{children}</ShoppingProvider>
+                              </ShoppingRepositoryContext.Provider>
+                            </RecipeProvider>
+                          </RecipeRepositoryContext.Provider>
+                        </PlannedMealProvider>
+                      </PlannedMealRepositoryContext.Provider>
+                    </PantryProvider>
+                  </PantryRepositoryContext.Provider>
+                </OnboardingRepositoryContext.Provider>
+              </HouseholdPreferencesProvider>
+            </HouseholdPreferencesRepositoryContext.Provider>
           </HouseholdPeopleProvider>
         </HouseholdPeopleRepositoryContext.Provider>
       </AuthProvider>

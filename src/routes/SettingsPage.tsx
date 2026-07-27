@@ -20,6 +20,7 @@ import {
   type HouseholdMember,
   type HouseholdPeopleState,
 } from '../domain/households/invitations'
+import { HouseholdPreferencesSection } from './HouseholdPreferencesSection'
 
 function friendlyDate(value: string) {
   return new Intl.DateTimeFormat('en-AU', { dateStyle: 'medium' }).format(new Date(value))
@@ -229,6 +230,8 @@ export function SettingsPage() {
           )}
         </section>
       ) : null}
+
+      <HouseholdPreferencesSection householdId={state.householdId} />
 
       <Dialog
         open={Boolean(removing)}

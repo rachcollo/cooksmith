@@ -79,6 +79,42 @@ describe('v2 application shell', () => {
     expect(mobileNavigation).not.toHaveTextContent('Settings')
   })
 
+  it('opens mobile settings and log out actions from the cog menu', async () => {
+    const user = userEvent.setup()
+    renderApp('/')
+
+    await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' })
+    const accountMenuButton = screen.getByRole('button', { name: 'Open account menu' })
+
+    expect(screen.queryByRole('menu', { name: 'Account' })).not.toBeInTheDocument()
+    await user.click(accountMenuButton)
+
+    const accountMenu = screen.getByRole('menu', { name: 'Account' })
+    expect(accountMenuButton).toHaveAttribute('aria-expanded', 'true')
+    expect(accountMenu).toContainElement(screen.getByRole('menuitem', { name: 'Settings' }))
+    expect(accountMenu).toContainElement(screen.getByRole('menuitem', { name: 'Log out' }))
+
+    await user.click(screen.getByRole('menuitem', { name: 'Settings' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Household members' }),
+    ).toBeVisible()
+    expect(screen.queryByRole('menu', { name: 'Account' })).not.toBeInTheDocument()
+  })
+
+  it('closes the mobile account menu with Escape and returns focus to the cog', async () => {
+    const user = userEvent.setup()
+    renderApp('/')
+
+    await screen.findByRole('heading', { name: 'Dinner decisions, made lighter.' })
+    const accountMenuButton = screen.getByRole('button', { name: 'Open account menu' })
+    await user.click(accountMenuButton)
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('menu', { name: 'Account' })).not.toBeInTheDocument()
+    expect(accountMenuButton).toHaveFocus()
+  })
+
   it.each([
     ['/', 'Home'],
     ['/pantry', 'Pantry'],
