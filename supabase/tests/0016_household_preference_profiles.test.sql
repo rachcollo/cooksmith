@@ -45,10 +45,13 @@ select lives_ok(
   'an active household member can create a partial profile'
 );
 
-select results_eq(
-  $$select dietary_requirements from cooksmith.household_preference_profiles
-    where household_id = '20000000-0000-4000-8000-000000000001'$$,
-  array[array['vegetarian']],
+select is(
+  (
+    select dietary_requirements
+    from cooksmith.household_preference_profiles
+    where household_id = '20000000-0000-4000-8000-000000000001'
+  ),
+  array['vegetarian']::text[],
   'hard constraints round trip separately'
 );
 
