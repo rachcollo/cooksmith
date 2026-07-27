@@ -31,7 +31,8 @@ select results_eq(
     'recipe_ingredients:ALL', 'recipe_steps:ALL',
     'shopping_item_contributions:DELETE', 'shopping_item_contributions:INSERT', 'shopping_item_contributions:SELECT', 'shopping_item_contributions:UPDATE',
     'shopping_list_items:DELETE', 'shopping_list_items:INSERT', 'shopping_list_items:SELECT', 'shopping_list_items:UPDATE',
-    'shopping_lists:SELECT'
+    'shopping_lists:SELECT',
+    'weekly_preparation_plans:SELECT'
   ]::text[]) collate "C", 'Policy operation matrix matches the approved API contract'
 );
 
@@ -67,7 +68,8 @@ select results_eq(
     'imported_recipes', 'infrastructure_health', 'planned_meals', 'profiles',
     'recipe_content_versions', 'recipe_enrichment_jobs', 'recipe_enrichments', 'recipe_ingredients',
     'recipe_intelligence_settings', 'recipe_steps',
-    'shopping_item_contributions', 'shopping_list_items', 'shopping_lists'
+    'shopping_item_contributions', 'shopping_list_items', 'shopping_lists',
+    'weekly_preparation_plans', 'weekly_preparation_settings'
   ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );
 
