@@ -29,7 +29,7 @@ create table cooksmith.household_preference_profiles (
 
 create trigger household_preference_profiles_set_updated_at
 before update on cooksmith.household_preference_profiles
-for each row execute function cooksmith_private.set_updated_at();
+for each row execute function cooksmith.set_updated_at();
 
 create function cooksmith_private.set_household_preference_audit()
 returns trigger language plpgsql security definer
