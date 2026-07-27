@@ -35,6 +35,8 @@ describe('generated database API contract', () => {
       | 'shopping_item_contributions'
       | 'shopping_list_items'
       | 'shopping_lists'
+      | 'weekly_preparation_plans'
+      | 'weekly_preparation_settings'
     >()
   })
 

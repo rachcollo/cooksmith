@@ -5,7 +5,7 @@
 - **Milestone:** Get Ahead
 - **Jira issue:** CS-81
 - **Epic:** CS-64 — Get Ahead AI Preparation Assistant
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Branch:** `feat/cs-81-weekly-preparation-plan-consolidation`
 - **Depends on:** CS-65 plus approved shared recipe enrichment and canonical food schema
 - **Blocks:** AI-assisted Get Ahead plan quality
