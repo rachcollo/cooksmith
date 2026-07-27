@@ -954,39 +954,6 @@ export type Database = {
           },
         ]
       }
-      recipe_intelligence_settings: {
-        Row: {
-          ai_enabled: boolean
-          daily_recipe_limit: number
-          emergency_stop: boolean
-          enqueue_enabled: boolean
-          max_concurrency: number
-          monthly_cost_limit_aud: number
-          singleton: boolean
-          updated_at: string
-        }
-        Insert: {
-          ai_enabled?: boolean
-          daily_recipe_limit?: number
-          emergency_stop?: boolean
-          enqueue_enabled?: boolean
-          max_concurrency?: number
-          monthly_cost_limit_aud?: number
-          singleton?: boolean
-          updated_at?: string
-        }
-        Update: {
-          ai_enabled?: boolean
-          daily_recipe_limit?: number
-          emergency_stop?: boolean
-          enqueue_enabled?: boolean
-          max_concurrency?: number
-          monthly_cost_limit_aud?: number
-          singleton?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
       recipe_ingredients: {
         Row: {
           created_at: string
@@ -1042,6 +1009,39 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      recipe_intelligence_settings: {
+        Row: {
+          ai_enabled: boolean
+          daily_recipe_limit: number
+          emergency_stop: boolean
+          enqueue_enabled: boolean
+          max_concurrency: number
+          monthly_cost_limit_aud: number
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_enabled?: boolean
+          daily_recipe_limit?: number
+          emergency_stop?: boolean
+          enqueue_enabled?: boolean
+          max_concurrency?: number
+          monthly_cost_limit_aud?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_enabled?: boolean
+          daily_recipe_limit?: number
+          emergency_stop?: boolean
+          enqueue_enabled?: boolean
+          max_concurrency?: number
+          monthly_cost_limit_aud?: number
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       recipe_steps: {
         Row: {
@@ -1251,6 +1251,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_household_invitation: {
+        Args: { p_display_name: string; p_invitation_token: string }
+        Returns: string
+      }
       activate_recipe_enrichment: {
         Args: {
           target_job_id: string
@@ -1259,10 +1263,6 @@ export type Database = {
           target_provider: string
           target_result: Json
         }
-        Returns: string
-      }
-      accept_household_invitation: {
-        Args: { p_display_name: string; p_invitation_token: string }
         Returns: string
       }
       bootstrap_household: {
