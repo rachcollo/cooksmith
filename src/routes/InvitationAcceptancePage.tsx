@@ -48,7 +48,7 @@ export function InvitationAcceptancePage() {
         </span>
         <strong>Cooksmith</strong>
       </a>
-      <section className="onboarding-card" aria-labelledby="invitation-title">
+      <section className="onboarding-card invitation-card" aria-labelledby="invitation-title">
         <h1 id="invitation-title">Join your Cooksmith household</h1>
         <p>Choose the name the other household members will see.</p>
         {error ? (
