@@ -9,7 +9,6 @@ import { usePantryRepository } from '../app/pantry/pantryContext'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
@@ -484,11 +483,6 @@ export function PantryPage() {
       </Panel>
 
       <Panel className="pantry-insights-callout" tone="feature">
-        <div>
-          <p className="eyebrow">PANTRY INSIGHTS</p>
-          <h2>Useful suggestions, when you need them</h2>
-          <p>Review practical prompts based on your pantry and current meal plan.</p>
-        </div>
         <Button
           aria-label="Review pantry suggestions"
           variant="secondary"
@@ -565,9 +559,6 @@ export function PantryPage() {
                             ) : null}
                           </button>
                           <div className="pantry-stock-control">
-                            <Badge tone={item.available ? 'positive' : 'neutral'}>
-                              {item.available ? 'Available' : 'Out of stock'}
-                            </Badge>
                             <Button
                               aria-label={
                                 item.available
@@ -579,7 +570,7 @@ export function PantryPage() {
                               type="button"
                               onClick={() => void toggleAvailability(item)}
                             >
-                              {item.available ? 'A' : 'NA'}
+                              {item.available ? 'Available' : 'Out of stock'}
                             </Button>
                           </div>
                         </article>

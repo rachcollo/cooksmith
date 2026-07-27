@@ -50,6 +50,15 @@ authenticated route comparison must be completed against the exact Vercel Previe
   surfaces with canonical Orchard tokens.
 - Removed two unused tokens and seven dead selector groups after repository-wide usage
   searches showed no rendered component references.
+- Applied Preview review feedback across the four core routes: compact four-column mobile
+  Pantry cards, three-column mobile Recipe cards, contained recipe photo frames, compact
+  Plan rows with recipe imagery and three retained actions, and a borderless Shopping
+  quick-add area.
+- Replaced Pantry's duplicate badge plus A/NA control with one explicit Available or Out
+  of stock toggle, reduced the Pantry suggestions callout, and matched search/input
+  control heights to adjacent actions.
+- Removed the Plan completion eyebrow, kept dates on one line and aligned the Plan recipe
+  detail with the Recipe Library presentation.
 - Added a unit contract that rejects American colour tokens, temporary token aliases and
   undefined shared-token references.
 - Added browser evidence for 320px, 390px, 768px and 1280px overflow, screenshots, axe
@@ -78,7 +87,12 @@ authenticated route comparison must be completed against the exact Vercel Previe
 | File or component                                                    | Purpose                                                                     |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `src/styles/tokens.css`                                              | Remove unused Orchard tokens                                                |
-| `src/styles/components.css`                                          | Replace undefined aliases and remove evidenced dead selectors               |
+| `src/styles/components.css`                                          | Token cleanup plus responsive Pantry, Recipe, Plan and Shopping refinements |
+| `src/styles/mealPlannerLinkedCards.css`                              | Compact linked-recipe Plan row layout                                       |
+| `src/routes/PantryPage.tsx`                                          | Explicit availability toggle and compact insight action                     |
+| `src/routes/PlanPage.tsx`                                            | Compact header, recipe imagery and Recipe Library-aligned detail            |
+| `tests/integration/pantry.test.tsx`                                  | Pantry availability and reduced-callout regression coverage                 |
+| `tests/integration/mealPlanner.test.tsx`                             | Planner header, imagery and recipe-detail regression coverage               |
 | `tests/unit/orchardStyles.test.ts`                                   | Prevent token drift and undefined shared variables                          |
 | `tests/e2e/shell.spec.ts`                                            | Responsive screenshots, overflow, axe, keyboard and reduced-motion evidence |
 | `docs/engineering/v2/design-system-and-routing.md`                   | Promote the shipped Orchard system                                          |

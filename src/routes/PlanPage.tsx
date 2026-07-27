@@ -25,6 +25,7 @@ import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
 import { Dialog } from '../components/ui/Dialog'
 import { LoadingState } from '../components/ui/LoadingState'
+import { Tag } from '../components/ui/Tag'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
 import {
@@ -440,9 +441,6 @@ export function PlanPage() {
     <main className="page-stack meal-planner-page">
       <DocumentTitle title="Meal Planner" />
       <header className="page-header meal-planner-header">
-        <p className="eyebrow">
-          Seven-day week · {visibleMeals.length} of {days.length} planned
-        </p>
         <h1>Seven days. Let’s not overthink it.</h1>
         <p>Plan the dinners that help. Leave the rest blank.</p>
         <WeekPlanGenerator
@@ -499,6 +497,9 @@ export function PlanPage() {
         <section className="meal-week" aria-label="Weekly dinner planner">
           {days.map((day) => {
             const meal = visibleMeals.find((candidate) => candidate.mealDate === day)
+            const mealRecipe = meal?.recipeId
+              ? recipes.find((recipe) => recipe.id === meal.recipeId)
+              : null
             return (
               <article
                 className={[
@@ -529,6 +530,14 @@ export function PlanPage() {
                     onPointerCancel={finishDrag}
                   >
                     <GripVertical aria-hidden="true" className="meal-drag-handle" />
+                    <span className="photo-frame meal-plan-photo" aria-hidden="true">
+                      <span className="photo-frame-backdrop" />
+                      {mealRecipe?.imageUrl ? (
+                        <img className="photo-frame-media" src={mealRecipe.imageUrl} alt="" />
+                      ) : (
+                        <span className="photo-frame-media is-empty" />
+                      )}
+                    </span>
                     <button
                       className="planned-meal-title"
                       type="button"
@@ -621,6 +630,21 @@ export function PlanPage() {
           }}
         >
           <div className="recipe-detail-dialog">
+            <div className="photo-frame recipe-detail-photo" aria-hidden="true">
+              <span className="photo-frame-backdrop" />
+              {selectedRecipe.imageUrl ? (
+                <img className="photo-frame-media" src={selectedRecipe.imageUrl} alt="" />
+              ) : (
+                <span className="photo-frame-media is-empty" />
+              )}
+            </div>
+            {selectedRecipe.tags.length > 0 ? (
+              <div className="recipe-tags" aria-label="Recipe tags">
+                {selectedRecipe.tags.map((tag) => (
+                  <Tag key={tag} label={tag} />
+                ))}
+              </div>
+            ) : null}
             <section>
               <h3>Ingredients</h3>
               {splitMeaningfulLines(recipeToMultilineInput(selectedRecipe).ingredients).length >
@@ -651,6 +675,22 @@ export function PlanPage() {
                 <p>No instructions added yet.</p>
               )}
             </section>
+            <dl>
+              <dt>Servings</dt>
+              <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
+              <dt>Preparation time</dt>
+              <dd>
+                {selectedRecipe.prepTimeMinutes !== null
+                  ? `${selectedRecipe.prepTimeMinutes} minutes`
+                  : 'Not set'}
+              </dd>
+              <dt>Cooking time</dt>
+              <dd>
+                {selectedRecipe.cookTimeMinutes !== null
+                  ? `${selectedRecipe.cookTimeMinutes} minutes`
+                  : 'Not set'}
+              </dd>
+            </dl>
             {selectedRecipe.notes ? <p>Notes: {selectedRecipe.notes}</p> : null}
             {selectedRecipe.sourceUrl ? (
               <p>
