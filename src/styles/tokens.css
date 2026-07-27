@@ -18,7 +18,6 @@
   --colour-accent-lime-strong: #c7d84e;
   --colour-accent-lime-soft: #e6edcd;
   --colour-accent-lilac: #c7b6e6;
-  --colour-accent-lilac-strong: #b7a4de;
   --colour-accent-lilac-ink: #3a2f60;
   --colour-accent-slate: #a9c0d6;
   --colour-accent-slate-ink: #22323f;
@@ -37,8 +36,6 @@
   --colour-focus: #1f5fd6;
   --colour-focus-soft: rgb(31 95 214 / 22%);
   --colour-overlay: rgb(27 25 22 / 58%);
-  --colour-selected: var(--colour-accent-lime-soft);
-
   /* Colour: image placeholder */
   --colour-placeholder-stripe-a: #efe6d3;
   --colour-placeholder-stripe-b: #e6dcc4;

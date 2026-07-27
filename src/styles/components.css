@@ -182,7 +182,6 @@ button.card:hover {
 }
 
 .badge,
-.environment-badge,
 .tag {
   align-items: center;
   border-radius: var(--radius-pill);
@@ -192,13 +191,6 @@ button.card:hover {
   line-height: var(--line-height-tight);
   min-height: 1.75rem;
   padding: var(--space-1) var(--space-3);
-}
-
-.environment-badge {
-  background: var(--colour-brand-soft);
-  color: var(--colour-brand-hover);
-  margin-block: 0 var(--space-5);
-  text-transform: uppercase;
 }
 
 .badge-neutral {
@@ -253,7 +245,7 @@ button.card:hover {
   align-items: center;
   background:
     radial-gradient(circle at 15% 12%, var(--colour-accent-lime-soft) 0 7rem, transparent 7.1rem),
-    var(--colour-canvas);
+    var(--colour-surface-subtle);
   display: grid;
   gap: var(--space-6);
   justify-items: center;
@@ -299,7 +291,7 @@ button.card:hover {
   align-items: start;
   background:
     radial-gradient(circle at 88% 8%, var(--colour-accent-lilac) 0 6rem, transparent 6.1rem),
-    var(--colour-canvas);
+    var(--colour-surface-subtle);
   display: grid;
   gap: var(--space-5);
   justify-items: center;
@@ -780,13 +772,6 @@ button.card:hover {
   text-transform: uppercase;
 }
 
-.list-row-accent {
-  border-inline-start: var(--line-weight-heavy) solid
-    var(--list-row-accent, var(--colour-accent-lilac));
-  min-height: var(--touch-target);
-  overflow-wrap: anywhere;
-}
-
 @starting-style {
   .modal-surface[open] {
     opacity: 0;
@@ -798,21 +783,6 @@ button.card:hover {
   .photo-frame-backdrop {
     inset: -3% -4% 2% 2%;
   }
-}
-
-.pantry-panel-heading {
-  display: grid;
-  gap: var(--space-1);
-  margin-bottom: var(--space-4);
-}
-
-.pantry-panel-heading h2,
-.pantry-panel-heading p {
-  margin: 0;
-}
-
-.pantry-panel-heading p {
-  color: var(--colour-text-muted);
 }
 
 .pantry-header {
@@ -924,7 +894,7 @@ button.card:hover {
 
 .pantry-category > h3 {
   color: var(--colour-brand);
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: 1.35rem;
   margin: 0;
 }
@@ -952,7 +922,7 @@ button.card:hover {
 }
 
 .pantry-card h4 {
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: 1.2rem;
   overflow-wrap: anywhere;
   text-wrap: pretty;
@@ -981,7 +951,7 @@ button.card:hover {
 
 .recipe-card-heading {
   color: var(--colour-brand);
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -1069,7 +1039,7 @@ button.card:hover {
 
 .pantry-insights-callout h2 {
   color: var(--colour-brand);
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
 }
 
 .pantry-card > .button,
@@ -2290,11 +2260,6 @@ button.card:hover {
   outline-offset: 3px;
 }
 
-.pantry-reconciliation-panel {
-  display: grid;
-  gap: var(--space-4);
-}
-
 .reconciliation-list {
   display: grid;
   gap: var(--space-3);
@@ -2306,7 +2271,7 @@ button.card:hover {
 .reconciliation-item {
   align-items: center;
   border: 1px solid var(--colour-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-large);
   display: grid;
   gap: var(--space-3);
   grid-template-columns: minmax(0, 1fr);
@@ -2316,12 +2281,6 @@ button.card:hover {
 .reconciliation-item p {
   color: var(--colour-text-muted);
   margin: var(--space-1) 0 0;
-}
-
-.reconciliation-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 @media (min-width: 40rem) {
@@ -2343,7 +2302,7 @@ button.card:hover {
 .reconciliation-attention-item {
   align-items: center;
   border: 1px solid var(--colour-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-large);
   display: grid;
   gap: var(--space-3);
   grid-template-columns: minmax(0, 1fr);
@@ -2387,35 +2346,6 @@ button.card:hover {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-}
-
-.duration-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-  gap: var(--space-3);
-  padding: 0;
-  border: 0;
-}
-
-.duration-grid legend {
-  margin-bottom: var(--space-2);
-  font-weight: 700;
-}
-
-.choice-card {
-  display: flex;
-  min-height: 3rem;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--colour-border);
-  border-radius: var(--radius-md);
-  background: var(--colour-surface);
-}
-
-.choice-card:has(input:checked) {
-  border-color: var(--colour-focus);
-  box-shadow: 0 0 0 2px var(--colour-focus-soft);
 }
 
 .plain-list {

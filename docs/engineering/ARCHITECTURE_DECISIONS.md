@@ -48,6 +48,7 @@ Every ADR must contain:
 | [007](../architecture/decisions/007-shopping-list-copy-export.md)            | Accepted   | Use copy export before retailer API integration     |
 | [008](../architecture/decisions/008-isolate-v2-database-assets.md)           | Accepted   | Isolate v2 database assets from the prototype       |
 | [009](../architecture/decisions/009-temporary-main-mvp-workflow.md)          | Accepted   | Use main as the temporary MVP integration branch    |
+| [010](../architecture/decisions/010-orchard-editorial-design-system.md)      | Proposed   | Use Orchard Editorial as the design system          |
 
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 

@@ -30,3 +30,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [007](007-shopping-list-copy-export.md) | Accepted | Use shopping-list copy export before retailer API integration |
 | [008](008-isolate-v2-database-assets.md) | Accepted | Isolate v2 database assets from the prototype schema |
 | [009](009-temporary-main-mvp-workflow.md) | Accepted | Use main as the temporary MVP integration branch |
+| [010](010-orchard-editorial-design-system.md) | Proposed | Use Orchard Editorial as the Cooksmith design system |

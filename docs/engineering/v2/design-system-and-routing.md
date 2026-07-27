@@ -1,93 +1,151 @@
-# v2 design system, routing and navigation
+# Orchard design system, routing and navigation
 
 ## Purpose
 
-Cooksmith v2 uses a restrained, mobile-first frame that keeps the next action clear. Generic components contain presentation behaviour only. Product rules, data access and future workflow state do not belong in this layer.
+Cooksmith uses the Orchard Editorial system: a calm cream canvas, editorial display
+type and deliberate lilac and lime accents. Generic components contain presentation
+behaviour only. Product rules, data access and future workflow state do not belong in
+this layer.
+
+The migration specification in [`docs/design/orchard/`](../../design/orchard/README.md)
+records the source design and migration decisions. This document describes the shipped
+system.
 
 ## Tokens and styling
 
-`src/styles/tokens.css` defines semantic tokens for colour, typography, spacing, borders, radii, elevation, focus, motion, readable widths, breakpoints, touch targets and layering. Use semantic names such as `--colour-text-muted` or `--space-4`, rather than copying literal values into components.
+`src/styles/tokens.css` is the canonical source for semantic colour, typography,
+spacing, border, shape, focus, motion, layout and layer tokens. Colour properties use
+the British `--colour-*` namespace. American `--color-*` properties and compatibility
+aliases are not supported.
 
-Styles are separated by concern:
+Styles remain separated by concern:
 
-- `global.css` supplies the reset, typography and shared base rules.
+- `global.css` supplies reset, typography, shared base rules and reduced-motion
+  treatment.
 - `layout.css` supplies page, stack, inline, grid and header layouts.
-- `components.css` supplies the reusable UI primitives.
+- `components.css` supplies reusable primitives and current route compositions.
 - `navigation.css` supplies the adaptive application frame and navigation.
+- `mealPlannerLinkedCards.css` supplies the linked planner-card treatment.
 
-New tokens need a current interface use. Do not add speculative scales or alternate themes.
+Use semantic tokens rather than literal values in components. New tokens need a current
+interface use and must not duplicate an existing semantic token.
 
-## Typography and layout
+## Typography, colour and imagery
 
-Pages use one `h1`, followed by semantic section headings. The responsive type scale keeps titles legible without overwhelming small screens. Labels and validation text remain readable and are not distinguished by size or colour alone.
+- Cormorant Garamond is the self-hosted display face.
+- Space Grotesk is the self-hosted body and control face.
+- Space Mono is the self-hosted label, eyebrow and metadata face.
+- Forest carries primary structure; cream carries the canvas; lilac and lime are
+  deliberate accents.
+- Status always includes text, an accessible name or another non-colour cue.
+- Photography uses the shared organic frame. When no image exists, use the neutral
+  striped placeholder rather than inventing imagery.
+- Functional icons come from the existing Lucide dependency.
 
-Use `PageContainer`, `PageSection`, `Stack`, `Inline` and `ResponsiveGrid` for common composition. `PageHeader` holds the title, concise description, optional context and one dominant action. Secondary actions must remain visually subordinate.
+Pages use one `h1`, followed by semantic section headings. `PageHeader` holds the title,
+concise description, optional context and one dominant action. Long names and dense
+content wrap without hiding essential information.
 
-## Route map
+## Current route map
 
-| Path                  | Primary navigation | Current purpose                                     |
-| --------------------- | ------------------ | --------------------------------------------------- |
-| `/`                   | Home               | Introduce the foundation and direct the next action |
-| `/pantry`             | Pantry             | Placeholder for the approved pantry milestone       |
-| `/recipes`            | Recipes            | Placeholder for the approved recipe milestone       |
-| `/plan`               | Plan               | Placeholder for the approved planning milestone     |
-| `/shopping`           | Shopping           | Placeholder for the approved shopping milestone     |
-| `/settings`           | Settings           | Household members and pending invitations           |
-| `/onboarding`         | No                 | Authenticated first-run profile and household setup |
-| `/invitations/accept` | No                 | Authenticated invitation acceptance                 |
-| `/health`             | No                 | Non-primary environment and shell diagnostic        |
-| `*`                   | No                 | Calm not-found recovery                             |
+| Path                  | Primary navigation | Current purpose                                              |
+| --------------------- | ------------------ | ------------------------------------------------------------ |
+| `/`                   | Home               | Current Cooksmith foundation and preview guidance            |
+| `/pantry`             | Pantry             | Search, filter and manage household staples and availability |
+| `/recipes`            | Recipes            | Search, create, edit and plan saved recipes                  |
+| `/plan`               | Plan               | Navigate and manage the current seven-day dinner plan        |
+| `/shopping`           | Shopping           | Review, complete and reconcile the generated shopping list   |
+| `/get-ahead`          | Get Ahead          | Build and complete a time-bounded preparation session        |
+| `/settings`           | Settings           | Manage household members and pending invitations             |
+| `/onboarding`         | No                 | Authenticated first-run profile and household setup          |
+| `/invitations/accept` | No                 | Authenticated invitation acceptance                          |
+| `/welcome`, `/auth/*` | No                 | Authentication and recovery                                  |
+| `/health`             | No                 | Environment and shell diagnostic                             |
+| `*`                   | No                 | Calm not-found recovery                                      |
 
-Route modules are lazy loaded. The root layout provides the loading state, route announcement and shared navigation. The route error boundary presents a safe recovery action without exposing provider errors or stack traces. `DocumentTitle` owns the consistent `Page name | Cooksmith` title pattern.
+Route modules are lazy loaded. The root layout owns loading state, route announcement
+and shared navigation. The error boundary provides safe recovery without exposing
+provider errors or stack traces. `DocumentTitle` owns the `Page name | Cooksmith`
+pattern.
 
-Authenticated users without a completed profile and household are routed through `/onboarding` before the application frame is shown. Completion state is loaded from Supabase and is not inferred from browser storage. Returning users with a completed onboarding record bypass this route.
-
-To add a future approved route:
-
-1. Create a route-level component in `src/routes`.
-2. Add it to `createAppRouter.tsx` with lazy loading.
-3. Add navigation only when the approved information architecture requires it.
-4. Set a meaningful document title and use the shared page pattern.
-5. Add direct-route, navigation, title, error and browser smoke coverage.
+Authenticated users without a complete profile and household pass through onboarding.
+Completion is loaded from Supabase and is not inferred from browser storage.
 
 ## Navigation
 
-Small screens use five labelled bottom destinations: Home, Pantry, Recipes, Plan and Shopping. Settings remains a clearly labelled header link so the mobile bar stays focused. Tablet and desktop widths use one six-destination navigation rail. Both patterns use real links, current-page semantics, visible focus and a navigation landmark. Mobile spacing respects device safe areas.
+Small screens use six labelled bottom destinations in this order: Home, Pantry,
+Recipes, Plan, Shopping and Get Ahead. Settings is desktop-only. Desktop uses the same
+six destinations plus Settings, for seven total.
+
+Both navigation treatments use real links, the exact approved Lucide icons, visible
+focus, `aria-current="page"` and a navigation landmark. The mobile bar respects safe
+areas; the desktop rail begins at the desktop breakpoint.
 
 ## Component conventions
 
 Core primitives live in `src/components/ui` and use typed props:
 
-- Buttons provide primary, secondary and quiet emphasis plus disabled and busy states.
+- Buttons provide primary, secondary, quiet and accent variants, semantic tones, and
+  disabled and busy states.
 - Icon buttons always require an accessible label.
-- Fields programmatically associate labels, hints and validation messages.
-- Cards, panels, badges and feedback patterns never use colour as the only status cue.
-- Loading, empty and error states provide concise status and a genuine next action.
-- Dialog and Sheet share one native dialog foundation for focus entry, focus containment, Escape handling, background blocking and focus return.
+- Fields associate labels, hints and validation messages programmatically.
+- Cards, panels, badges, tags and feedback patterns do not use colour as the only cue.
+- Photo frames and list rows use shared Orchard surface classes.
+- Loading, empty and error states provide a concise status and genuine next action.
+- Dialog and Sheet share the native-dialog `ModalSurface` foundation for focus entry,
+  containment, Escape, background blocking and focus return.
 
-Do not put product decisions in generic components. Prefer direct component imports over broad index files.
+Keep product decisions out of generic components and preserve established accessible
+names and automation identifiers when restyling.
 
 ## Accessibility
 
-Every page uses semantic landmarks and a correct heading order. A skip link targets the main content. Controls provide accessible names, 44-pixel minimum targets and visible focus. Field errors are associated with their controls. Status messages use live regions where appropriate.
+Target WCAG 2.2 AA:
 
-Motion is brief and optional. The `prefers-reduced-motion` query removes non-essential transitions and animation. No state change relies on animation.
+- semantic landmarks and correct heading order;
+- a skip link to main content;
+- 44-pixel minimum control targets;
+- visible `:focus-visible` treatment;
+- programmatically associated field errors;
+- live regions for relevant loading and feedback states;
+- status communicated independently of colour;
+- native overlay keyboard and focus behaviour; and
+- non-essential animation reduced through `prefers-reduced-motion`.
 
-Automated tests cover representative routes, navigation, form associations, overlays and axe serious or critical findings. Automation does not replace VoiceOver, keyboard-only and real-device review before a friend-test release.
+Automated tests cover representative navigation, routes, forms, overlays, responsive
+overflow and axe serious or critical findings. Automated checks do not replace
+keyboard-only, VoiceOver and real-device review before release.
 
 ## Responsive expectations
 
-The frame must remain usable at small mobile, larger mobile, tablet and desktop widths. Navigation must not conflict, page actions must wrap, overlays must fit the viewport and content must not create horizontal scrolling. Playwright checks representative mobile, tablet and desktop widths without a paid visual-regression service.
+Verify at 320px small mobile, 390px standard mobile, 768px tablet and at least 1280px
+desktop. Navigation must not collide with content, actions and metadata must wrap,
+overlays must fit the viewport and the document must not scroll horizontally.
 
-## Testing
+Route layouts transform for the available space rather than scaling a phone layout:
+the Plan route becomes a seven-column grid on desktop, Recipes and Pantry can use
+multi-column content, and Shopping and Get Ahead retain readable centred columns.
 
-Use:
+## Adding approved interface work
+
+1. Confirm the product behaviour is approved and not a future Orchard concept.
+2. Reuse an existing semantic token or typed primitive where it fits.
+3. Preserve routes, data loading, permissions, accessible names and identifiers.
+4. Add unit/integration evidence and browser coverage for responsive, keyboard and
+   accessibility behaviour.
+5. Run the repository quality, governance, secret and dependency checks.
+6. Record hosted Preview and manual assistive-technology evidence separately.
+
+## Verification commands
 
 ```bash
-npm run test:unit
-npm run test:integration
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test
+npm run build
 npm run test:e2e
-npm run validate
+npm run docs:commands:check
+npm run engineering:check-secrets
+npm run security:audit-production
 ```
-
-Component tests verify behaviour rather than snapshots. Browser tests cover direct navigation, refresh, back and forward history, responsive navigation, focus, overlays, reduced motion and automated accessibility.
