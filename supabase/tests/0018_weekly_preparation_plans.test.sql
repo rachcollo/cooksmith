@@ -3,11 +3,13 @@ select plan(8);
 
 select has_table('cooksmith', 'weekly_preparation_plans', 'Weekly preparation plan cache exists');
 select has_table('cooksmith', 'weekly_preparation_settings', 'Weekly preparation settings exist');
-select row_security_active(
-  'cooksmith.weekly_preparation_plans'::regclass
+select ok(
+  row_security_active('cooksmith.weekly_preparation_plans'::regclass),
+  'Weekly preparation plan cache has row-level security enabled'
 );
-select row_security_active(
-  'cooksmith.weekly_preparation_settings'::regclass
+select ok(
+  row_security_active('cooksmith.weekly_preparation_settings'::regclass),
+  'Weekly preparation settings have row-level security enabled'
 );
 select has_index(
   'cooksmith',
