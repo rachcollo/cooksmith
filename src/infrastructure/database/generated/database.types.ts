@@ -314,6 +314,62 @@ export type Database = {
           },
         ]
       }
+      household_preference_profiles: {
+        Row: {
+          avoided_foods: string[]
+          cooking_confidence: string | null
+          created_at: string
+          created_by: string | null
+          dietary_requirements: string[]
+          favourite_cuisines: string[]
+          household_id: string
+          liked_foods: string[]
+          people: Json
+          preferred_store: string | null
+          updated_at: string
+          updated_by: string | null
+          weeknight_time: string | null
+        }
+        Insert: {
+          avoided_foods?: string[]
+          cooking_confidence?: string | null
+          created_at?: string
+          created_by?: string | null
+          dietary_requirements?: string[]
+          favourite_cuisines?: string[]
+          household_id: string
+          liked_foods?: string[]
+          people?: Json
+          preferred_store?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          weeknight_time?: string | null
+        }
+        Update: {
+          avoided_foods?: string[]
+          cooking_confidence?: string | null
+          created_at?: string
+          created_by?: string | null
+          dietary_requirements?: string[]
+          favourite_cuisines?: string[]
+          household_id?: string
+          liked_foods?: string[]
+          people?: Json
+          preferred_store?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          weeknight_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_preference_profiles_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: true
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_recipes: {
         Row: {
           archived_at: string | null

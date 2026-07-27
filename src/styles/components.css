@@ -2558,3 +2558,35 @@ button.card:hover {
     flex-direction: column;
   }
 }
+.preference-form,
+.preference-group,
+.preference-person,
+.preference-people {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.preference-group,
+.preference-person {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-5);
+  border: var(--border-default);
+  border-radius: var(--radius-large);
+}
+
+.preference-group > legend,
+.preference-person > legend {
+  padding-inline: var(--space-2);
+  font-weight: 700;
+}
+
+.preference-safety {
+  background: color-mix(in srgb, var(--colour-accent-lilac) 34%, var(--colour-surface-raised));
+}
+
+@media (min-width: 48rem) {
+  .preference-people {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
