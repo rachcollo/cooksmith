@@ -1827,9 +1827,8 @@ button.card:hover {
 
 .shopping-item {
   align-items: center;
-  background: var(--colour-surface);
+  background: transparent;
   border: 0;
-  border-bottom: var(--border-default);
   border-radius: 0;
   display: grid;
   gap: var(--space-2);
@@ -1841,8 +1840,7 @@ button.card:hover {
 }
 
 .shopping-item-pantry-match {
-  background: var(--colour-positive-soft);
-  border-color: var(--colour-border);
+  background: transparent;
 }
 
 .shopping-pantry-info {
@@ -1911,11 +1909,11 @@ button.card:hover {
 
 .shopping-check::before {
   border: 2px solid var(--colour-border-strong);
-  border-radius: var(--radius-small);
+  border-radius: var(--radius-medium);
   content: '';
-  height: 1.35rem;
+  height: 2.25rem;
   position: absolute;
-  width: 1.35rem;
+  width: 2.25rem;
 }
 
 .shopping-check svg,
@@ -1924,6 +1922,12 @@ button.card:hover {
   position: relative;
   width: 1.1rem;
   z-index: 1;
+}
+
+.shopping-check svg {
+  height: 1.35rem;
+  stroke-width: 3;
+  width: 1.35rem;
 }
 
 .shopping-item-copy {
