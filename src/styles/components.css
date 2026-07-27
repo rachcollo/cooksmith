@@ -939,8 +939,9 @@ button.card:hover {
 
 .pantry-card h4 {
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   overflow-wrap: anywhere;
+  text-align: center;
   text-wrap: pretty;
 }
 
@@ -1029,8 +1030,15 @@ button.card:hover {
 }
 
 .pantry-stock-action-out {
-  background: var(--colour-attention-soft);
+  background: transparent;
   color: var(--colour-attention);
+  font-size: var(--font-size-caption);
+}
+
+.pantry-stock-tick {
+  color: var(--colour-text-muted);
+  font-size: 0.8rem;
+  opacity: 0.55;
 }
 
 .pantry-stock-control {
@@ -1054,14 +1062,14 @@ button.card:hover {
 }
 
 .pantry-card-edit-action {
-  align-items: flex-start;
+  align-items: center;
   color: inherit;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 0 0 var(--touch-target);
-  text-align: left;
+  text-align: center;
   width: 100%;
 }
 
@@ -1124,7 +1132,7 @@ button.card:hover {
   }
 
   .pantry-card h4 {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     line-height: var(--line-height-snug);
   }
 
@@ -1138,7 +1146,7 @@ button.card:hover {
   }
 
   .pantry-stock-action {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
     min-height: var(--touch-target);
     padding: var(--space-1);
   }
