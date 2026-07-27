@@ -2,6 +2,7 @@ begin;
 
 create schema if not exists cooksmith_private;
 revoke all on schema cooksmith_private from public, anon, authenticated;
+grant usage on schema cooksmith_private to authenticated;
 
 create type cooksmith.recipe_enrichment_job_state as enum (
   'pending',
