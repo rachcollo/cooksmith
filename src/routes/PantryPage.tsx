@@ -9,7 +9,6 @@ import { usePantryRepository } from '../app/pantry/pantryContext'
 import { useShoppingRepository } from '../app/shopping/shoppingContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
 import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
@@ -440,6 +439,14 @@ export function PantryPage() {
           >
             <ListFilter aria-hidden="true" size={20} />
           </Button>
+          <Button
+            aria-label="Review pantry suggestions"
+            className="pantry-suggestions-action"
+            type="button"
+            onClick={() => void generatePantrySuggestions()}
+          >
+            <Sparkles aria-hidden="true" size={18} />
+          </Button>
           <Button aria-label="Add pantry item" type="button" onClick={() => setAddDialogOpen(true)}>
             <Plus aria-hidden="true" size={20} />
           </Button>
@@ -481,23 +488,6 @@ export function PantryPage() {
             </SelectField>
           </div>
         ) : null}
-      </Panel>
-
-      <Panel className="pantry-insights-callout" tone="feature">
-        <div>
-          <p className="eyebrow">PANTRY INSIGHTS</p>
-          <h2>Useful suggestions, when you need them</h2>
-          <p>Review practical prompts based on your pantry and current meal plan.</p>
-        </div>
-        <Button
-          aria-label="Review pantry suggestions"
-          variant="secondary"
-          type="button"
-          onClick={() => void generatePantrySuggestions()}
-        >
-          <Sparkles aria-hidden="true" size={20} />
-          Review suggestions
-        </Button>
       </Panel>
 
       {filteredItems.length === 0 ? (
@@ -565,21 +555,24 @@ export function PantryPage() {
                             ) : null}
                           </button>
                           <div className="pantry-stock-control">
-                            <Badge tone={item.available ? 'positive' : 'neutral'}>
-                              {item.available ? 'Available' : 'Out of stock'}
-                            </Badge>
                             <Button
                               aria-label={
                                 item.available
                                   ? `${item.name} available. Mark not available`
                                   : `${item.name} not available. Mark available`
                               }
-                              className="pantry-stock-action"
+                              className={`pantry-stock-action${item.available ? '' : ' pantry-stock-action-out'}`}
                               variant="secondary"
                               type="button"
                               onClick={() => void toggleAvailability(item)}
                             >
-                              {item.available ? 'A' : 'NA'}
+                              {item.available ? (
+                                <span aria-hidden="true" className="pantry-stock-tick">
+                                  ✓
+                                </span>
+                              ) : (
+                                'Out of stock'
+                              )}
                             </Button>
                           </div>
                         </article>

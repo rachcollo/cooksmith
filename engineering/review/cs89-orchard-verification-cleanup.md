@@ -5,11 +5,11 @@
 - **Milestone:** Orchard Editorial
 - **Jira issue:** CS-89
 - **Epic:** CS-82 — Orchard Editorial design-system migration
-- **Status:** `Ready`
+- **Status:** `Review`
 - **Branch:** `feat/cs-89-orchard-verification-cleanup`
 - **Depends on:** CS-83 through CS-88 merged
 - **Blocks:** Completion of CS-82
-- **Package path:** `engineering/ready/cs89-orchard-verification-cleanup.md`
+- **Package path:** `engineering/review/cs89-orchard-verification-cleanup.md`
 
 ## Product Outcome
 

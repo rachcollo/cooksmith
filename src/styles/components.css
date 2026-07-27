@@ -182,7 +182,6 @@ button.card:hover {
 }
 
 .badge,
-.environment-badge,
 .tag {
   align-items: center;
   border-radius: var(--radius-pill);
@@ -192,13 +191,6 @@ button.card:hover {
   line-height: var(--line-height-tight);
   min-height: 1.75rem;
   padding: var(--space-1) var(--space-3);
-}
-
-.environment-badge {
-  background: var(--colour-brand-soft);
-  color: var(--colour-brand-hover);
-  margin-block: 0 var(--space-5);
-  text-transform: uppercase;
 }
 
 .badge-neutral {
@@ -253,7 +245,7 @@ button.card:hover {
   align-items: center;
   background:
     radial-gradient(circle at 15% 12%, var(--colour-accent-lime-soft) 0 7rem, transparent 7.1rem),
-    var(--colour-canvas);
+    var(--colour-surface-subtle);
   display: grid;
   gap: var(--space-6);
   justify-items: center;
@@ -299,7 +291,7 @@ button.card:hover {
   align-items: start;
   background:
     radial-gradient(circle at 88% 8%, var(--colour-accent-lilac) 0 6rem, transparent 6.1rem),
-    var(--colour-canvas);
+    var(--colour-surface-subtle);
   display: grid;
   gap: var(--space-5);
   justify-items: center;
@@ -780,13 +772,6 @@ button.card:hover {
   text-transform: uppercase;
 }
 
-.list-row-accent {
-  border-inline-start: var(--line-weight-heavy) solid
-    var(--list-row-accent, var(--colour-accent-lilac));
-  min-height: var(--touch-target);
-  overflow-wrap: anywhere;
-}
-
 @starting-style {
   .modal-surface[open] {
     opacity: 0;
@@ -798,21 +783,6 @@ button.card:hover {
   .photo-frame-backdrop {
     inset: -3% -4% 2% 2%;
   }
-}
-
-.pantry-panel-heading {
-  display: grid;
-  gap: var(--space-1);
-  margin-bottom: var(--space-4);
-}
-
-.pantry-panel-heading h2,
-.pantry-panel-heading p {
-  margin: 0;
-}
-
-.pantry-panel-heading p {
-  color: var(--colour-text-muted);
 }
 
 .pantry-header {
@@ -851,6 +821,22 @@ button.card:hover {
 
 .pantry-discovery-row .button {
   padding: 0;
+}
+
+.pantry-discovery-row .pantry-suggestions-action {
+  background: var(--colour-brand);
+  border-color: var(--colour-brand);
+  border-radius: var(--radius-pill);
+  color: var(--colour-surface);
+}
+
+.pantry-discovery-row .pantry-suggestions-action:hover:not(:disabled) {
+  background: var(--colour-brand-hover);
+}
+
+.pantry-discovery-row .field input {
+  height: var(--touch-target);
+  min-height: var(--touch-target);
 }
 
 .pantry-filters {
@@ -924,7 +910,7 @@ button.card:hover {
 
 .pantry-category > h3 {
   color: var(--colour-brand);
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: 1.35rem;
   margin: 0;
 }
@@ -932,7 +918,7 @@ button.card:hover {
 .pantry-grid {
   display: grid;
   gap: var(--space-2);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 12rem));
 }
 
 .pantry-card {
@@ -952,9 +938,10 @@ button.card:hover {
 }
 
 .pantry-card h4 {
-  font-family: var(--font-heading);
-  font-size: 1.2rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
   overflow-wrap: anywhere;
+  text-align: center;
   text-wrap: pretty;
 }
 
@@ -962,6 +949,7 @@ button.card:hover {
   color: inherit;
   cursor: pointer;
   font: inherit;
+  overflow: hidden;
   text-align: left;
   transition:
     box-shadow var(--motion-fast) ease,
@@ -981,7 +969,7 @@ button.card:hover {
 
 .recipe-card-heading {
   color: var(--colour-brand);
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -1003,6 +991,8 @@ button.card:hover {
 .recipe-card-photo {
   --photo-frame-ratio: 4 / 3;
   display: block;
+  margin: var(--space-1) auto 0;
+  max-width: calc(100% - var(--space-2));
   width: 100%;
 }
 
@@ -1027,12 +1017,28 @@ button.card:hover {
 }
 
 .pantry-stock-action {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-small);
   bottom: 0;
   font-size: var(--font-size-small);
   min-width: var(--touch-target);
+  padding: var(--space-1) var(--space-2);
   position: absolute;
   right: 0;
   z-index: 1;
+}
+
+.pantry-stock-action-out {
+  background: transparent;
+  color: var(--colour-attention);
+  font-size: var(--font-size-caption);
+}
+
+.pantry-stock-tick {
+  color: var(--colour-text-muted);
+  font-size: 0.8rem;
+  opacity: 0.55;
 }
 
 .pantry-stock-control {
@@ -1048,30 +1054,6 @@ button.card:hover {
   position: static;
 }
 
-.pantry-insights-callout {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  justify-content: space-between;
-}
-
-.pantry-insights-callout > div {
-  display: grid;
-  gap: var(--space-1);
-  max-width: 40rem;
-}
-
-.pantry-insights-callout h2,
-.pantry-insights-callout p {
-  margin: 0;
-}
-
-.pantry-insights-callout h2 {
-  color: var(--colour-brand);
-  font-family: var(--font-heading);
-}
-
 .pantry-card > .button,
 .pantry-card-edit-action {
   background: transparent;
@@ -1080,14 +1062,14 @@ button.card:hover {
 }
 
 .pantry-card-edit-action {
-  align-items: flex-start;
+  align-items: center;
   color: inherit;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 0 0 var(--touch-target);
-  text-align: left;
+  text-align: center;
   width: 100%;
 }
 
@@ -1140,15 +1122,17 @@ button.card:hover {
 
 @media (max-width: 30rem) {
   .pantry-grid {
-    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .pantry-card {
+    min-height: 5.25rem;
     padding: var(--space-1);
   }
 
   .pantry-card h4 {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     line-height: var(--line-height-snug);
   }
 
@@ -1159,6 +1143,12 @@ button.card:hover {
   .pantry-card > .button {
     font-size: var(--font-size-caption);
     padding: 0;
+  }
+
+  .pantry-stock-action {
+    font-size: 0.6rem;
+    min-height: var(--touch-target);
+    padding: var(--space-1);
   }
 
   .pantry-quantity-fields {
@@ -1198,6 +1188,11 @@ button.card:hover {
 
 .recipe-library-grid {
   margin-top: var(--space-2);
+}
+
+.recipe-library-toolbar .field input {
+  height: var(--touch-target);
+  min-height: var(--touch-target);
 }
 
 .recipe-detail-dialog {
@@ -1254,29 +1249,43 @@ button.card:hover {
 
   .recipe-library-toolbar > .button:last-child {
     grid-column: 1 / -1;
+    margin-bottom: var(--space-2);
   }
 
   .recipe-library-grid {
-    gap: var(--space-2);
-    grid-template-columns: 1fr;
+    gap: var(--space-1);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .recipe-library-grid .recipe-card {
     align-content: start;
     border-radius: var(--radius-large);
     gap: var(--space-1);
-    min-height: var(--touch-target);
-    padding: var(--space-2);
+    min-height: 10rem;
+    padding: var(--space-1);
   }
 
   .recipe-library-grid .recipe-card-heading {
-    font-size: 1.2rem;
+    font-size: 0.9rem;
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
   }
 
   .recipe-library-grid .recipe-card-summary {
     display: block;
+    font-size: 0.65rem;
+  }
+
+  .recipe-library-grid .recipe-tags {
+    display: none;
+  }
+
+  .recipe-library-grid .recipe-card-detail-action {
+    gap: var(--space-1);
+  }
+
+  .recipe-library-grid .recipe-card-quick-add {
+    font-size: 1.3rem;
   }
 }
 
@@ -1435,8 +1444,9 @@ button.card:hover {
 }
 
 .meal-day-heading h2 {
-  font-size: 1.15rem;
+  font-size: 1rem;
   margin-top: var(--space-1);
+  white-space: nowrap;
 }
 
 .meal-today-badge {
@@ -1479,6 +1489,12 @@ button.card:hover {
   transition:
     opacity var(--motion-fast) var(--motion-ease),
     transform var(--motion-fast) var(--motion-ease);
+}
+
+.meal-plan-photo {
+  --photo-frame-ratio: 1 / 1;
+  display: block;
+  width: var(--touch-target);
 }
 
 .planned-meal.dragging {
@@ -1743,9 +1759,10 @@ button.card:hover {
 }
 
 .shopping-add-panel {
-  background: var(--colour-surface-subtle);
-  border: var(--border-default);
+  background: transparent;
+  border: 0;
   box-shadow: none;
+  padding: 0;
 }
 
 .shopping-form {
@@ -1777,6 +1794,11 @@ button.card:hover {
 
 .shopping-quick-add .field {
   min-width: 0;
+}
+
+.shopping-quick-add .field input {
+  height: var(--touch-target);
+  min-height: var(--touch-target);
 }
 
 .shopping-form .form-error {
@@ -1813,9 +1835,8 @@ button.card:hover {
 
 .shopping-item {
   align-items: center;
-  background: var(--colour-surface);
+  background: transparent;
   border: 0;
-  border-bottom: var(--border-default);
   border-radius: 0;
   display: grid;
   gap: var(--space-2);
@@ -1827,8 +1848,7 @@ button.card:hover {
 }
 
 .shopping-item-pantry-match {
-  background: var(--colour-positive-soft);
-  border-color: var(--colour-border);
+  background: transparent;
 }
 
 .shopping-pantry-info {
@@ -1897,11 +1917,11 @@ button.card:hover {
 
 .shopping-check::before {
   border: 2px solid var(--colour-border-strong);
-  border-radius: var(--radius-small);
+  border-radius: var(--radius-medium);
   content: '';
-  height: 1.35rem;
+  height: 2.25rem;
   position: absolute;
-  width: 1.35rem;
+  width: 2.25rem;
 }
 
 .shopping-check svg,
@@ -1910,6 +1930,12 @@ button.card:hover {
   position: relative;
   width: 1.1rem;
   z-index: 1;
+}
+
+.shopping-check svg {
+  height: 1.35rem;
+  stroke-width: 3;
+  width: 1.35rem;
 }
 
 .shopping-item-copy {
@@ -2011,7 +2037,7 @@ button.card:hover {
   }
 
   .shopping-add-panel {
-    padding: var(--space-2);
+    padding: 0;
   }
 
   .shopping-form {
@@ -2290,11 +2316,6 @@ button.card:hover {
   outline-offset: 3px;
 }
 
-.pantry-reconciliation-panel {
-  display: grid;
-  gap: var(--space-4);
-}
-
 .reconciliation-list {
   display: grid;
   gap: var(--space-3);
@@ -2306,7 +2327,7 @@ button.card:hover {
 .reconciliation-item {
   align-items: center;
   border: 1px solid var(--colour-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-large);
   display: grid;
   gap: var(--space-3);
   grid-template-columns: minmax(0, 1fr);
@@ -2316,12 +2337,6 @@ button.card:hover {
 .reconciliation-item p {
   color: var(--colour-text-muted);
   margin: var(--space-1) 0 0;
-}
-
-.reconciliation-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 @media (min-width: 40rem) {
@@ -2343,7 +2358,7 @@ button.card:hover {
 .reconciliation-attention-item {
   align-items: center;
   border: 1px solid var(--colour-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-large);
   display: grid;
   gap: var(--space-3);
   grid-template-columns: minmax(0, 1fr);
@@ -2387,35 +2402,6 @@ button.card:hover {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
-}
-
-.duration-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-  gap: var(--space-3);
-  padding: 0;
-  border: 0;
-}
-
-.duration-grid legend {
-  margin-bottom: var(--space-2);
-  font-weight: 700;
-}
-
-.choice-card {
-  display: flex;
-  min-height: 3rem;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--colour-border);
-  border-radius: var(--radius-md);
-  background: var(--colour-surface);
-}
-
-.choice-card:has(input:checked) {
-  border-color: var(--colour-focus);
-  box-shadow: 0 0 0 2px var(--colour-focus-soft);
 }
 
 .plain-list {

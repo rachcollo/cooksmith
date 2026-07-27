@@ -69,7 +69,7 @@ describe('weekly dinner planner', () => {
     )
 
     await screen.findByRole('heading', { name: testMondayLabel })
-    expect(screen.getByText('Seven-day week · 1 of 7 planned')).toHaveClass('eyebrow')
+    expect(screen.queryByText(/Seven-day week/)).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Add dinner' })[0]).toHaveClass('meal-empty-slot')
     const generateButton = screen.getByRole('button', { name: 'Plan my week' })
     expect(generateButton).toHaveClass('button-accent')
@@ -468,11 +468,16 @@ describe('weekly dinner planner', () => {
       (button) => button.classList.contains('planned-meal-title'),
     )
     expect(linkedMealButton).toBeDefined()
+    expect(
+      linkedMealButton?.closest('.planned-meal')?.querySelector('.meal-plan-photo'),
+    ).not.toBeNull()
     await user.click(linkedMealButton as HTMLElement)
     const recipeDialog = await screen.findByRole('dialog', {
       name: 'Lentil soup',
     })
     expect(within(recipeDialog).getByText('1 cup lentils')).toBeVisible()
+    expect(recipeDialog.querySelector('.recipe-detail-photo')).not.toBeNull()
+    expect(within(recipeDialog).getByText('Servings')).toBeVisible()
     await user.click(within(recipeDialog).getByRole('button', { name: 'Back to planner' }))
 
     await user.click(screen.getByRole('button', { name: 'Edit planned dinner Lentil soup' }))

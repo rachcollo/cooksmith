@@ -83,8 +83,12 @@ describe('household staples experience', () => {
     ).toBeVisible()
     expect(screen.getByRole('button', { name: 'Review pantry suggestions' })).toBeVisible()
     expect(
-      screen.getByRole('heading', { name: 'Useful suggestions, when you need them' }),
-    ).toBeVisible()
+      screen
+        .getByRole('button', { name: 'Review pantry suggestions' })
+        .closest('.pantry-discovery-row'),
+    ).toBe(discoveryControls)
+    expect(screen.queryByText('Useful suggestions, when you need them')).not.toBeInTheDocument()
+    expect(screen.queryByText('Review suggestions')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Filters' }))
     await userEvent.selectOptions(screen.getByLabelText('Location filter'), 'fridge')
@@ -166,8 +170,22 @@ describe('household staples experience', () => {
       within(card as HTMLElement).getByRole('button', {
         name: 'Plain flour available. Mark not available',
       }),
-    ).toHaveTextContent('A')
-    expect(within(card as HTMLElement).getByText('Available')).toBeVisible()
+    ).toHaveTextContent('✓')
+    await user.click(
+      within(card as HTMLElement).getByRole('button', {
+        name: 'Plain flour available. Mark not available',
+      }),
+    )
+    expect(
+      within(card as HTMLElement).getByRole('button', {
+        name: 'Plain flour not available. Mark available',
+      }),
+    ).toHaveClass('pantry-stock-action-out')
+    await user.click(
+      within(card as HTMLElement).getByRole('button', {
+        name: 'Plain flour not available. Mark available',
+      }),
+    )
     expect(within(card as HTMLElement).queryByRole('button', { name: /Delete|Remove/ })).toBeNull()
 
     await user.click(within(card as HTMLElement).getByRole('button', { name: 'Edit Plain flour' }))
@@ -424,7 +442,7 @@ describe('household staples experience', () => {
     )
     expect(
       await screen.findByRole('button', { name: 'Plain flour not available. Mark available' }),
-    ).toHaveTextContent('NA')
+    ).toHaveTextContent('Out of stock')
 
     await user.click(screen.getByRole('button', { name: 'Edit Plain flour' }))
     await user.click(
