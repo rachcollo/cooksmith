@@ -170,7 +170,7 @@ describe('household staples experience', () => {
       within(card as HTMLElement).getByRole('button', {
         name: 'Plain flour available. Mark not available',
       }),
-    ).toHaveTextContent('Available')
+    ).toHaveTextContent('✓')
     await user.click(
       within(card as HTMLElement).getByRole('button', {
         name: 'Plain flour available. Mark not available',
