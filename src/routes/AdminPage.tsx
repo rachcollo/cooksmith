@@ -153,10 +153,14 @@ function RecipeEnrichmentOperations() {
   if (!repository) return null
   const adminRepository = repository
 
-  async function command(action: 'start' | 'pause' | 'resume' | 'retry_failed') {
+  async function command(action: 'start' | 'pause' | 'resume' | 'retry_failed' | 'reprocess_ai') {
     if (
-      action === 'start' &&
-      !window.confirm('Enrich eligible existing household and shared recipes?')
+      (action === 'start' || action === 'reprocess_ai') &&
+      !window.confirm(
+        action === 'reprocess_ai'
+          ? `Re-enrich eligible recipes with Recipe Intelligence AI? Provider usage is capped at A$${status?.monthlyCostLimitAud.toFixed(2) ?? '0.00'} per month.`
+          : 'Enrich eligible existing household and shared recipes?',
+      )
     )
       return
     setBusy(true)
@@ -178,6 +182,30 @@ function RecipeEnrichmentOperations() {
     }
   }
 
+  async function setAi(enabled: boolean) {
+    if (
+      !window.confirm(
+        enabled
+          ? `Enable Recipe Intelligence AI? It sends only recipe ingredient and step excerpts to the configured provider and is capped at A$${status?.monthlyCostLimitAud.toFixed(2) ?? '0.00'} per month.`
+          : 'Disable Recipe Intelligence AI? Deterministic enrichment will remain available.',
+      )
+    )
+      return
+    setBusy(true)
+    try {
+      setStatus(await adminRepository.setRecipeIntelligenceAi(enabled))
+      setMessage(
+        enabled
+          ? 'Recipe Intelligence AI enabled. Existing recipes are unchanged until re-enriched.'
+          : 'Recipe Intelligence AI disabled. Deterministic enrichment remains available.',
+      )
+    } catch {
+      setMessage('Recipe Intelligence AI could not be updated. No setting was changed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <section className="flow-stack" aria-labelledby="recipe-enrichment-title">
       <div>
@@ -189,6 +217,14 @@ function RecipeEnrichmentOperations() {
         {status ? (
           <>
             <dl className="admin-metrics-grid">
+              <Metric
+                label="Recipe Intelligence AI"
+                value={status.aiEnabled ? 'Enabled' : 'Disabled'}
+              />
+              <Metric
+                label="Monthly provider limit"
+                value={`A$${status.monthlyCostLimitAud.toFixed(2)}`}
+              />
               <Metric label="Household eligible" value={status.sources.household.eligible} />
               <Metric label="Household enriched" value={status.sources.household.current} />
               <Metric label="Shared eligible" value={status.sources.sharedPlatform.eligible} />
@@ -201,6 +237,18 @@ function RecipeEnrichmentOperations() {
               <Metric label="Skipped" value={0} />
             </dl>
             <div className="cluster">
+              <Button disabled={busy} onClick={() => void setAi(!status.aiEnabled)}>
+                {status.aiEnabled
+                  ? 'Disable Recipe Intelligence AI'
+                  : 'Enable Recipe Intelligence AI'}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={busy || !status.aiEnabled || status.paused}
+                onClick={() => void command('reprocess_ai')}
+              >
+                Re-enrich with AI
+              </Button>
               <Button disabled={busy || status.paused} onClick={() => void command('start')}>
                 Enrich existing recipes
               </Button>

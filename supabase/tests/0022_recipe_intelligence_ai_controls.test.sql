@@ -1,0 +1,90 @@
+begin;
+select no_plan();
+
+select has_function(
+  'cooksmith',
+  'recipe_intelligence_ai_command',
+  array['text'],
+  'Recipe Intelligence AI has a protected admin control'
+);
+
+insert into cooksmith.imported_recipes (
+  id, visibility, owner_id, name, source_url, ingredient_rows, instruction_steps
+) values (
+  '95000000-0000-4000-8000-000000000010', 'public',
+  '10000000-0000-4000-8000-000000000001', 'Synthetic AI recipe',
+  'https://example.invalid/synthetic-ai-recipe',
+  '[{"id":"ingredient-1","name":"onion","originalText":"1 onion","quantityText":"1"}]',
+  '[{"id":"step-1","instruction":"Dice the onion."}]'
+);
+
+insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+values
+  ('95000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'recipe-ai-admin@test.invalid', '', now(), now()),
+  ('95000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000',
+   'authenticated', 'authenticated', 'recipe-ai-member@test.invalid', '', now(), now());
+insert into cooksmith.app_user_roles(user_id, role)
+values ('95000000-0000-4000-8000-000000000001', 'admin');
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000002","role":"authenticated"}',
+  true
+);
+select throws_ok(
+  $$select cooksmith.recipe_intelligence_ai_command('enable_ai')$$,
+  '42501',
+  null,
+  'Household users cannot enable Recipe Intelligence AI'
+);
+reset role;
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+select is(
+  (cooksmith.recipe_intelligence_ai_command('enable_ai')->>'aiEnabled')::boolean,
+  true,
+  'An application admin can enable Recipe Intelligence AI through the authorised control'
+);
+reset role;
+
+select results_eq(
+  $$select action from cooksmith.recipe_enrichment_backfill_audit
+    where action = 'enable_ai' order by created_at desc limit 1$$,
+  array['enable_ai'::text],
+  'Recipe Intelligence AI enablement is audited'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$select cooksmith.recipe_enrichment_backfill_command('reprocess_ai', 25)$$,
+  'An admin can create versioned provider-assisted reprocessing jobs'
+);
+reset role;
+
+select ok(
+  exists (
+    select 1
+    from cooksmith.recipe_enrichment_jobs assisted
+    join cooksmith.recipe_enrichment_jobs deterministic
+      on deterministic.recipe_version_id = assisted.recipe_version_id
+     and deterministic.model_key = 'deterministic'
+    where assisted.model_key = 'provider-assisted-v1'
+  ),
+  'AI reprocessing creates a separate job identity beside deterministic evidence'
+);
+
+select * from finish();
+rollback;

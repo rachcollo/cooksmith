@@ -17,3 +17,21 @@ shared results independently. Admin controls expose aggregate progress only.
 Production deployment and the 21-recipe backfill are intentionally excluded
 from this implementation task and require the protected release sequence and a
 separate explicit operator action.
+
+## Provider-assisted quality follow-up
+
+The completed 22-recipe deterministic run proved queueing and activation, but
+only 60 of 392 ingredients linked to steps and none carried preparation
+actions, preparation details or aliases. The follow-up introduces a distinct,
+audited Recipe Intelligence AI control and a versioned reprocessing path for
+the culinary metadata Get Ahead consumes.
+
+Provider output must contain exactly one result for each supplied ingredient
+ID, may reference only supplied step IDs and cannot change immutable original
+recipe text. Provider-assisted jobs/results are stored beside deterministic
+evidence rather than replacing its history.
+
+No new dependency, provider or tier is introduced. Existing daily and A$10
+monthly controls remain enforced. The bounded provider run has variable OpenAI
+usage; actual token cost and output quality must be reviewed before accepting
+the provider-assisted results.

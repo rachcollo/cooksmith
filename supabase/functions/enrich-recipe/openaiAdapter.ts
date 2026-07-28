@@ -1,17 +1,57 @@
 import type {
+  EnrichmentConfidence,
+  ProviderIngredientSuggestion,
+  QuantityState,
   RecipeIntelligence,
   RecipeIntelligenceSource,
 } from '../../../src/domain/recipes/intelligence.ts'
-
-type LinkSuggestion = {
-  sourceIngredientId: string
-  sourceStepIds: string[]
-  confidence: 'high' | 'medium' | 'low' | 'unknown'
-}
+import { applyProviderIngredientSuggestions } from '../../../src/domain/recipes/intelligence.ts'
 
 type OpenAIResponse = {
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>
   usage?: { input_tokens?: number; output_tokens?: number }
+}
+
+const confidenceValues: EnrichmentConfidence[] = ['high', 'medium', 'low', 'unknown']
+const quantityStates: QuantityState[] = [
+  'known',
+  'range',
+  'approximate',
+  'unknown',
+  'not_applicable',
+]
+const dimensions = ['mass', 'volume', 'count', 'unknown'] as const
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string'
+}
+
+function isSuggestion(value: unknown): value is ProviderIngredientSuggestion {
+  if (!value || typeof value !== 'object') return false
+  const suggestion = value as Partial<ProviderIngredientSuggestion>
+  const quantity = suggestion.quantity as
+    | Partial<ProviderIngredientSuggestion['quantity']>
+    | undefined
+  return (
+    typeof suggestion.sourceIngredientId === 'string' &&
+    isNullableString(suggestion.canonicalName) &&
+    Array.isArray(suggestion.aliases) &&
+    suggestion.aliases.every((item) => typeof item === 'string') &&
+    Array.isArray(suggestion.modifiers) &&
+    suggestion.modifiers.every((item) => typeof item === 'string') &&
+    isNullableString(suggestion.action) &&
+    isNullableString(suggestion.preparationDetail) &&
+    Array.isArray(suggestion.sourceStepIds) &&
+    suggestion.sourceStepIds.every((item) => typeof item === 'string') &&
+    confidenceValues.includes(suggestion.confidence as EnrichmentConfidence) &&
+    Boolean(quantity) &&
+    quantityStates.includes(quantity?.state as QuantityState) &&
+    isNullableString(quantity?.original) &&
+    (quantity?.normalisedValue === null || typeof quantity?.normalisedValue === 'number') &&
+    (quantity?.normalisedMaximum === null || typeof quantity?.normalisedMaximum === 'number') &&
+    isNullableString(quantity?.unit) &&
+    dimensions.includes(quantity?.dimension as (typeof dimensions)[number])
+  )
 }
 
 export async function resolveAmbiguousLinks(input: {
@@ -21,26 +61,34 @@ export async function resolveAmbiguousLinks(input: {
   deterministic: RecipeIntelligence
   timeoutMs: number
 }) {
-  const unresolved = new Set(input.deterministic.unresolvedIngredientIds)
-  if (unresolved.size === 0)
+  if (input.source.ingredients.length === 0)
     return { result: input.deterministic, inputTokens: 0, outputTokens: 0 }
 
-  const ingredientIds = [...unresolved]
+  const ingredientIds = input.source.ingredients.map((ingredient) => ingredient.id)
   const stepIds = input.source.steps.map((step) => step.id)
+  const nullableString = { type: ['string', 'null'] }
+  const nullableNumber = { type: ['number', 'null'] }
   const payload = {
     model: input.model,
     input: [
       {
         role: 'system',
         content:
-          'Link only the supplied ingredient IDs to supplied step IDs. Do not add ingredients, steps, quantities, food-safety advice or other facts.',
+          'Structure only the supplied recipe evidence. Return one result for every supplied ingredient ID. Canonical names must exclude quantities, units, brackets and preparation wording. Preserve meaningful cut differences. Do not invent ingredients, steps, quantities, actions, aliases, storage advice, food-safety advice or other facts. Use null or unknown when the evidence does not support a value.',
       },
       {
         role: 'user',
         content: JSON.stringify({
-          ingredients: input.source.ingredients
-            .filter((ingredient) => unresolved.has(ingredient.id))
-            .map(({ id, originalText }) => ({ id, originalText })),
+          ingredients: input.source.ingredients.map(
+            ({ id, name, originalText, quantityText, unit, preparation }) => ({
+              id,
+              name,
+              originalText,
+              quantityText,
+              unit,
+              preparation,
+            }),
+          ),
           steps: input.source.steps,
         }),
       },
@@ -48,30 +96,67 @@ export async function resolveAmbiguousLinks(input: {
     text: {
       format: {
         type: 'json_schema',
-        name: 'recipe_ingredient_step_links',
+        name: 'recipe_ingredient_intelligence',
         strict: true,
         schema: {
           type: 'object',
           additionalProperties: false,
-          required: ['links'],
+          required: ['ingredients'],
           properties: {
-            links: {
+            ingredients: {
               type: 'array',
+              minItems: ingredientIds.length,
+              maxItems: ingredientIds.length,
               items: {
                 type: 'object',
                 additionalProperties: false,
-                required: ['sourceIngredientId', 'sourceStepIds', 'confidence'],
+                required: [
+                  'sourceIngredientId',
+                  'canonicalName',
+                  'aliases',
+                  'modifiers',
+                  'quantity',
+                  'action',
+                  'preparationDetail',
+                  'sourceStepIds',
+                  'confidence',
+                ],
                 properties: {
                   sourceIngredientId: { type: 'string', enum: ingredientIds },
+                  canonicalName: nullableString,
+                  aliases: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+                  modifiers: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+                  quantity: {
+                    type: 'object',
+                    additionalProperties: false,
+                    required: [
+                      'state',
+                      'original',
+                      'normalisedValue',
+                      'normalisedMaximum',
+                      'unit',
+                      'dimension',
+                    ],
+                    properties: {
+                      state: { type: 'string', enum: quantityStates },
+                      original: nullableString,
+                      normalisedValue: nullableNumber,
+                      normalisedMaximum: nullableNumber,
+                      unit: nullableString,
+                      dimension: { type: 'string', enum: dimensions },
+                    },
+                  },
+                  action: nullableString,
+                  preparationDetail: nullableString,
                   sourceStepIds: {
                     type: 'array',
                     uniqueItems: true,
-                    items: { type: 'string', enum: stepIds },
+                    items:
+                      stepIds.length > 0
+                        ? { type: 'string', enum: stepIds }
+                        : { type: 'string' },
                   },
-                  confidence: {
-                    type: 'string',
-                    enum: ['high', 'medium', 'low', 'unknown'],
-                  },
+                  confidence: { type: 'string', enum: confidenceValues },
                 },
               },
             },
@@ -91,7 +176,10 @@ export async function resolveAmbiguousLinks(input: {
     signal: AbortSignal.timeout(input.timeoutMs),
   })
   if (!response.ok) {
-    const category = response.status === 429 || response.status >= 500 ? 'transient_provider' : 'permanent_provider'
+    const category =
+      response.status === 429 || response.status >= 500
+        ? 'transient_provider'
+        : 'permanent_provider'
     throw new Error(category)
   }
 
@@ -100,32 +188,25 @@ export async function resolveAmbiguousLinks(input: {
     ?.flatMap((item) => item.content ?? [])
     .find((item) => item.type === 'output_text')?.text
   if (!text) throw new Error('schema_invalid')
-  const parsed = JSON.parse(text) as { links?: LinkSuggestion[] }
-  if (!Array.isArray(parsed.links)) throw new Error('schema_invalid')
 
-  const result: RecipeIntelligence = {
-    ...input.deterministic,
-    ingredients: input.deterministic.ingredients.map((ingredient) => {
-      const link = parsed.links?.find(
-        (candidate) => candidate.sourceIngredientId === ingredient.sourceIngredientId,
-      )
-      if (!link) return ingredient
-      if (
-        !unresolved.has(link.sourceIngredientId) ||
-        link.sourceStepIds.some((id) => !stepIds.includes(id))
-      )
-        throw new Error('unsupported_data')
-      return {
-        ...ingredient,
-        sourceStepIds: link.sourceStepIds,
-        confidence: link.confidence,
-        provenance: 'model',
-      }
-    }),
-    unresolvedIngredientIds: input.deterministic.unresolvedIngredientIds.filter(
-      (id) => !parsed.links?.some((link) => link.sourceIngredientId === id && link.sourceStepIds.length),
-    ),
+  let parsed: { ingredients?: unknown[] }
+  try {
+    parsed = JSON.parse(text) as { ingredients?: unknown[] }
+  } catch {
+    throw new Error('schema_invalid')
   }
+  if (
+    !Array.isArray(parsed.ingredients) ||
+    parsed.ingredients.length !== ingredientIds.length ||
+    !parsed.ingredients.every(isSuggestion)
+  )
+    throw new Error('schema_invalid')
+
+  const result = applyProviderIngredientSuggestions(
+    input.source,
+    input.deterministic,
+    parsed.ingredients,
+  )
 
   return {
     result,

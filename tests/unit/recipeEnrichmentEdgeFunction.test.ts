@@ -41,4 +41,9 @@ describe('recipe enrichment Edge Function', () => {
       "throw new Error(`database_unavailable:${response.status}:${path.split('?')[0]}`)",
     )
   })
+
+  it('applies provider usage limits only to provider-assisted jobs', () => {
+    expect(source).toContain('model_key=neq.deterministic')
+    expect(source).toContain("job.model_key === 'provider-assisted-v1'")
+  })
 })

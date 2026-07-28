@@ -36,6 +36,19 @@ export type RecipeIntelligence = {
   overallConfidence: EnrichmentConfidence
 }
 
+export type ProviderIngredientSuggestion = Pick<
+  RecipeIntelligenceIngredient,
+  | 'sourceIngredientId'
+  | 'canonicalName'
+  | 'aliases'
+  | 'modifiers'
+  | 'quantity'
+  | 'action'
+  | 'preparationDetail'
+  | 'sourceStepIds'
+  | 'confidence'
+>
+
 export type RecipeIntelligenceSource = {
   recipeId: string
   recipeFingerprint: string
@@ -214,6 +227,62 @@ export function buildDeterministicRecipeIntelligence(
   }
 }
 
+export function applyProviderIngredientSuggestions(
+  source: RecipeIntelligenceSource,
+  deterministic: RecipeIntelligence,
+  suggestions: ProviderIngredientSuggestion[],
+): RecipeIntelligence {
+  const ingredientIds = source.ingredients.map((ingredient) => ingredient.id)
+  const stepIds = new Set(source.steps.map((step) => step.id))
+  if (
+    suggestions.length !== ingredientIds.length ||
+    new Set(suggestions.map((item) => item.sourceIngredientId)).size !== ingredientIds.length ||
+    suggestions.some(
+      (item) =>
+        !ingredientIds.includes(item.sourceIngredientId) ||
+        item.sourceStepIds.some((id) => !stepIds.has(id)),
+    )
+  )
+    throw new Error('unsupported_data')
+
+  const ingredients = deterministic.ingredients.map((ingredient) => {
+    const suggestion = suggestions.find(
+      (item) => item.sourceIngredientId === ingredient.sourceIngredientId,
+    )
+    if (!suggestion) throw new Error('unsupported_data')
+    return {
+      ...ingredient,
+      ...suggestion,
+      originalText: ingredient.originalText,
+      provenance: 'model' as const,
+    }
+  })
+
+  const overallConfidence: EnrichmentConfidence =
+    ingredients.length === 0
+      ? 'unknown'
+      : ingredients.every((ingredient) => ingredient.confidence === 'high')
+        ? 'high'
+        : ingredients.some((ingredient) => ingredient.confidence === 'low')
+          ? 'low'
+          : 'medium'
+
+  return {
+    ...deterministic,
+    ingredients,
+    unresolvedIngredientIds: ingredients
+      .filter(
+        (ingredient) =>
+          !ingredient.canonicalName ||
+          (!ingredient.action &&
+            !ingredient.preparationDetail &&
+            ingredient.sourceStepIds.length === 0),
+      )
+      .map((ingredient) => ingredient.sourceIngredientId),
+    overallConfidence,
+  }
+}
+
 export function validateProviderEnrichment(
   source: RecipeIntelligenceSource,
   value: unknown,
@@ -231,9 +300,20 @@ export function validateProviderEnrichment(
   const ingredientIds = new Set(source.ingredients.map((ingredient) => ingredient.id))
   const stepIds = new Set(source.steps.map((step) => step.id))
   if (
+    candidate.ingredients.length !== ingredientIds.size ||
+    new Set(candidate.ingredients.map((ingredient) => ingredient.sourceIngredientId)).size !==
+      ingredientIds.size
+  )
+    return { ok: false, reason: 'unsupported_reference' }
+  if (
     candidate.ingredients.some(
       (ingredient) =>
+        !ingredient ||
         !ingredientIds.has(ingredient.sourceIngredientId) ||
+        ingredient.originalText !==
+          source.ingredients.find((item) => item.id === ingredient.sourceIngredientId)
+            ?.originalText ||
+        !Array.isArray(ingredient.sourceStepIds) ||
         ingredient.sourceStepIds.some((id) => !stepIds.has(id)),
     )
   )

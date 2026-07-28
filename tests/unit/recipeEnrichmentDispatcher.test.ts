@@ -5,6 +5,8 @@ import { createSupabaseWeeklyPreparationAdminRepository } from '../../src/infras
 
 const status = {
   paused: false,
+  aiEnabled: false,
+  monthlyCostLimitAud: 10,
   sources: {
     household: { eligible: 2, current: 0 },
     sharedPlatform: { eligible: 19, current: 0 },
@@ -20,7 +22,7 @@ function clientWith(rpc: ReturnType<typeof vi.fn>, invoke: ReturnType<typeof vi.
 }
 
 describe('recipe enrichment dispatcher', () => {
-  it.each(['start', 'resume', 'retry_failed'] as const)(
+  it.each(['start', 'resume', 'retry_failed', 'reprocess_ai'] as const)(
     'starts the protected worker after the %s command',
     async (command) => {
       const rpc = vi.fn(async () => ({ data: { status }, error: null }))
@@ -50,6 +52,21 @@ describe('recipe enrichment dispatcher', () => {
       clientWith(rpc, invoke),
     ).commandRecipeEnrichment('pause')
 
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('updates Recipe Intelligence AI through the audited admin RPC', async () => {
+    const rpc = vi.fn(async () => ({ data: { ...status, aiEnabled: true }, error: null }))
+    const invoke = vi.fn()
+
+    const result = await createSupabaseWeeklyPreparationAdminRepository(
+      clientWith(rpc, invoke),
+    ).setRecipeIntelligenceAi(true)
+
+    expect(rpc).toHaveBeenCalledWith('recipe_intelligence_ai_command', {
+      command: 'enable_ai',
+    })
+    expect(result.aiEnabled).toBe(true)
     expect(invoke).not.toHaveBeenCalled()
   })
 })
