@@ -71,7 +71,7 @@ select results_eq(
     'app_user_roles', 'feature_flag_audit', 'feature_flags', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
     'household_members', 'household_pantry_items', 'household_preference_profiles', 'household_recipes', 'household_settings', 'households',
     'imported_recipes', 'infrastructure_health', 'planned_meals', 'profiles',
-    'recipe_content_versions', 'recipe_enrichment_jobs', 'recipe_enrichments', 'recipe_ingredients',
+    'recipe_content_versions', 'recipe_enrichment_backfill_audit', 'recipe_enrichment_jobs', 'recipe_enrichments', 'recipe_ingredients',
     'recipe_intelligence_settings', 'recipe_steps',
     'shopping_item_contributions', 'shopping_list_items', 'shopping_lists',
     'weekly_preparation_evaluation_runs', 'weekly_preparation_plans',
