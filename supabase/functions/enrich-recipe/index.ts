@@ -59,10 +59,20 @@ function secretKey() {
   return env('SUPABASE_SERVICE_ROLE_KEY')
 }
 
+const corsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+  'access-control-allow-methods': 'POST, OPTIONS',
+}
+
 function json(status: number, body: unknown) {
   return Response.json(body, {
     status,
-    headers: { 'cache-control': 'no-store', 'content-type': 'application/json' },
+    headers: {
+      ...corsHeaders,
+      'cache-control': 'no-store',
+      'content-type': 'application/json',
+    },
   })
 }
 
@@ -319,6 +329,7 @@ async function processOne() {
 }
 
 Deno.serve(async (request) => {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders })
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
 
   try {
