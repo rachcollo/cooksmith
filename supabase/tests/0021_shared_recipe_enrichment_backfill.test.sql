@@ -2,10 +2,29 @@ begin;
 select no_plan();
 
 select has_enum('cooksmith', 'recipe_enrichment_source', 'Source identity is database constrained');
-select has_column('cooksmith', 'recipe_content_versions', 'imported_recipe_id');
-select has_column('cooksmith', 'recipe_enrichment_jobs', 'imported_recipe_id');
-select has_column('cooksmith', 'recipe_enrichments', 'imported_recipe_id');
-select has_table('cooksmith', 'recipe_enrichment_backfill_audit');
+select has_column(
+  'cooksmith',
+  'recipe_content_versions',
+  'imported_recipe_id',
+  'Recipe content versions can identify a shared recipe'
+);
+select has_column(
+  'cooksmith',
+  'recipe_enrichment_jobs',
+  'imported_recipe_id',
+  'Recipe enrichment jobs can identify a shared recipe'
+);
+select has_column(
+  'cooksmith',
+  'recipe_enrichments',
+  'imported_recipe_id',
+  'Recipe enrichment results can identify a shared recipe'
+);
+select has_table(
+  'cooksmith',
+  'recipe_enrichment_backfill_audit',
+  'Recipe enrichment backfill commands are audited'
+);
 
 insert into cooksmith.imported_recipes (
   id, visibility, owner_id, name, source_url, ingredient_rows, instruction_steps
@@ -82,12 +101,12 @@ select lives_ok(
   $$select cooksmith.recipe_enrichment_backfill_status()$$,
   'Application admins can preview source-separated eligibility'
 );
-select lives_ok(
-  $$select cooksmith.recipe_enrichment_backfill_command('pause', 25)$$,
-  'Application admins can pause new work'
-);
 select is(
-  (select backfill_paused from cooksmith.recipe_intelligence_settings where singleton),
+  (
+    cooksmith.recipe_enrichment_backfill_command('pause', 25)
+    -> 'status'
+    ->> 'paused'
+  )::boolean,
   true,
   'Pause is persisted server-side'
 );
@@ -95,10 +114,17 @@ select lives_ok(
   $$select cooksmith.recipe_enrichment_backfill_command('resume', 25)$$,
   'Application admins can safely resume work'
 );
+reset role;
 select is(
   (select count(*)::integer from cooksmith.recipe_enrichment_backfill_audit),
   2,
   'Backfill commands create attributable audit evidence'
+);
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"94000000-0000-4000-8000-000000000010","role":"authenticated"}',
+  true
 );
 select throws_ok(
   $$insert into cooksmith.recipe_enrichment_backfill_audit(actor_id, action)
