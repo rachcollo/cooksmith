@@ -10,6 +10,10 @@ declare const Deno: {
   serve(handler: (request: Request) => Response | Promise<Response>): void
 }
 
+declare const EdgeRuntime: {
+  waitUntil(promise: Promise<unknown>): void
+}
+
 type Job = {
   id: string
   source_kind: 'household' | 'shared_platform'
@@ -73,6 +77,16 @@ function restHeaders() {
   }
 }
 
+function userRestHeaders(authorization: string) {
+  return {
+    apikey: secretKey(),
+    authorization,
+    'content-type': 'application/json',
+    'content-profile': 'cooksmith',
+    'accept-profile': 'cooksmith',
+  }
+}
+
 async function rest(path: string, init: RequestInit = {}) {
   const response = await fetch(`${env('SUPABASE_URL')}/rest/v1/${path}`, {
     ...init,
@@ -80,6 +94,32 @@ async function rest(path: string, init: RequestInit = {}) {
   })
   if (!response.ok) throw new Error('database_unavailable')
   return response
+}
+
+async function isAuthorised(request: Request) {
+  const expected = Deno.env.get('RECIPE_INTELLIGENCE_WORKER_TOKEN')
+  if (expected && request.headers.get('x-cooksmith-worker-token') === expected) return true
+
+  const authorization = request.headers.get('authorization')
+  if (!authorization?.startsWith('Bearer ')) return false
+  const response = await fetch(`${env('SUPABASE_URL')}/rest/v1/rpc/has_application_role`, {
+    method: 'POST',
+    headers: userRestHeaders(authorization),
+    body: JSON.stringify({ required_role: 'admin' }),
+  })
+  return response.ok && ((await response.json()) as unknown) === true
+}
+
+async function dispatchNext() {
+  const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/enrich-recipe`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-cooksmith-worker-token': env('RECIPE_INTELLIGENCE_WORKER_TOKEN'),
+    },
+    body: '{}',
+  })
+  if (!response.ok) throw new Error('worker_dispatch_failed')
 }
 
 async function settings(): Promise<Settings> {
@@ -280,15 +320,26 @@ async function processOne() {
 
 Deno.serve(async (request) => {
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
-  const expected = Deno.env.get('RECIPE_INTELLIGENCE_WORKER_TOKEN')
-  if (!expected || request.headers.get('x-cooksmith-worker-token') !== expected)
-    return json(401, { error: 'unauthorised' })
 
   try {
+    if (!(await isAuthorised(request))) return json(401, { error: 'unauthorised' })
     const result = await processOne()
     // Operational metadata only; recipe content, credentials and provider payloads are excluded.
     // eslint-disable-next-line no-console
     console.info(JSON.stringify({ event: 'recipe_enrichment', ...result }))
+    if (
+      result.outcome === 'completed' ||
+      result.outcome === 'failed' ||
+      result.outcome === 'retry_scheduled'
+    ) {
+      EdgeRuntime.waitUntil(
+        dispatchNext().catch(() => {
+          // The durable queue can be resumed safely by another admin command.
+          // eslint-disable-next-line no-console
+          console.error(JSON.stringify({ event: 'recipe_enrichment_dispatch_failed' }))
+        }),
+      )
+    }
     return json(200, result)
   } catch {
     return json(503, { error: 'temporarily_unavailable' })

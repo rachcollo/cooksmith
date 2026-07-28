@@ -5,7 +5,8 @@
 Recipe Intelligence now has database-enforced source identity for household
 and active public shared recipes. The worker and Get Ahead path resolve the
 exact source/version, while `/admin` provides protected preview, start,
-pause/resume, retry and progress controls.
+pause/resume, retry and progress controls. Start, resume and retry initiate a
+server-side worker chain that drains eligible queued jobs one at a time.
 
 ## Release order
 

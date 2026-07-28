@@ -36,10 +36,14 @@ The Supabase project supplies `SUPABASE_URL` and either `SUPABASE_SECRET_KEYS` o
 
 Deploy the database migration before the Edge Function. Keep `ai_enabled = false` until the provider-assisted evaluation is accepted. The deterministic worker can run without spending OpenAI credits.
 
-Invoke the worker with `POST /functions/v1/enrich-recipe` and the secret
-`x-cooksmith-worker-token` header. Each call processes at most one pending job.
-Repeated delivery is idempotent by source, recipe version and processing
-identity.
+The admin start, resume and retry commands invoke the worker using the signed-in
+admin session. The function verifies the application-level admin role before it
+processes work. After each terminal job outcome, the worker dispatches another
+protected invocation using the server-only `x-cooksmith-worker-token`. Each
+invocation processes at most one pending job and the chain stops when the queue
+is empty, processing is paused, the emergency stop is active or an operational
+error occurs. Repeated delivery is idempotent by source, recipe version and
+processing identity.
 
 ## Shared recipes and existing-recipe backfill
 
@@ -54,10 +58,11 @@ household results retain household RLS.
 The protected Admin recipe-enrichment section previews eligibility by source,
 starts bounded idempotent batches, reports aggregate state, pauses new claims,
 resumes work and retries eligible failures. Commands are authorised and
-audited in the database. They do not expose recipe text or enable either AI
-setting. Production backfill is a separate operator action after the database,
-Edge Functions and application are released from the same approved `main`
-SHA.
+audited in the database. Start, resume and retry also initiate the protected
+worker chain so queued jobs advance without a separate operator invocation.
+They do not expose recipe text or enable either AI setting. Production backfill
+is a separate operator action after the database, Edge Functions and
+application are released from the same approved `main` SHA.
 
 ## Rollback
 
