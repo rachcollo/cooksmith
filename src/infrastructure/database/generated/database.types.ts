@@ -839,17 +839,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'recipe_content_versions_imported_recipe_id_fkey'
-            columns: ['imported_recipe_id']
-            isOneToOne: false
-            referencedRelation: 'imported_recipes'
-            referencedColumns: ['id']
-          },
-          {
             foreignKeyName: 'recipe_content_versions_household_id_fkey'
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_content_versions_imported_recipe_id_fkey'
+            columns: ['imported_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'imported_recipes'
             referencedColumns: ['id']
           },
           {
@@ -903,8 +903,8 @@ export type Database = {
           recipe_version_id: string
           rules_version: string
           schema_version: string
-          state: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
           source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+          state: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
           updated_at: string
         }
         Insert: {
@@ -927,8 +927,8 @@ export type Database = {
           recipe_version_id: string
           rules_version?: string
           schema_version?: string
-          state?: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
           source_kind?: Database['cooksmith']['Enums']['recipe_enrichment_source']
+          state?: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
           updated_at?: string
         }
         Update: {
@@ -951,23 +951,23 @@ export type Database = {
           recipe_version_id?: string
           rules_version?: string
           schema_version?: string
-          state?: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
           source_kind?: Database['cooksmith']['Enums']['recipe_enrichment_source']
+          state?: Database['cooksmith']['Enums']['recipe_enrichment_job_state']
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: 'recipe_enrichment_jobs_imported_recipe_id_fkey'
-            columns: ['imported_recipe_id']
-            isOneToOne: false
-            referencedRelation: 'imported_recipes'
-            referencedColumns: ['id']
-          },
           {
             foreignKeyName: 'recipe_enrichment_jobs_household_id_fkey'
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichment_jobs_imported_recipe_id_fkey'
+            columns: ['imported_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'imported_recipes'
             referencedColumns: ['id']
           },
           {
@@ -1043,17 +1043,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'recipe_enrichments_imported_recipe_id_fkey'
-            columns: ['imported_recipe_id']
-            isOneToOne: false
-            referencedRelation: 'imported_recipes'
-            referencedColumns: ['id']
-          },
-          {
             foreignKeyName: 'recipe_enrichments_household_id_fkey'
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recipe_enrichments_imported_recipe_id_fkey'
+            columns: ['imported_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'imported_recipes'
             referencedColumns: ['id']
           },
           {
@@ -1623,6 +1623,11 @@ export type Database = {
           user_id: string
         }[]
       }
+      recipe_enrichment_backfill_command: {
+        Args: { batch_limit?: number; command: string }
+        Returns: Json
+      }
+      recipe_enrichment_backfill_status: { Args: never; Returns: Json }
       reconcile_planned_meal_shopping: {
         Args: {
           ingredient_inputs: Json
@@ -1630,14 +1635,6 @@ export type Database = {
           target_planned_meal_id: string
         }
         Returns: undefined
-      }
-      recipe_enrichment_backfill_command: {
-        Args: { batch_limit?: number; command: string }
-        Returns: Json
-      }
-      recipe_enrichment_backfill_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
       }
       remove_household_member: {
         Args: { p_member_id: string }
