@@ -139,6 +139,14 @@ select ok(
   has_schema_privilege('service_role', 'cooksmith', 'usage'),
   'The enrichment worker service role can access the Cooksmith Data API schema'
 );
+select ok(
+  has_table_privilege('service_role', 'cooksmith.household_recipes', 'select'),
+  'The enrichment worker can validate household recipe freshness'
+);
+select ok(
+  has_table_privilege('service_role', 'cooksmith.imported_recipes', 'select'),
+  'The enrichment worker can validate shared recipe freshness'
+);
 
 select * from finish();
 rollback;

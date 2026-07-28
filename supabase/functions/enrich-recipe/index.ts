@@ -23,6 +23,12 @@ type Job = {
   attempt_count: number
 }
 
+type SnapshotIngredient = Partial<RecipeIntelligenceSource['ingredients'][number]> & {
+  ingredient_name?: string
+  original_line_text?: string
+  quantity_text?: string | null
+}
+
 type Version = {
   id: string
   source_kind: Job['source_kind']
@@ -30,7 +36,7 @@ type Version = {
   imported_recipe_id: string | null
   fingerprint: string
   source_snapshot: {
-    ingredients?: RecipeIntelligenceSource['ingredients']
+    ingredients?: SnapshotIngredient[]
     steps?: RecipeIntelligenceSource['steps']
   }
 }
@@ -206,6 +212,22 @@ async function loadVersion(job: Job): Promise<Version> {
   return versions[0]
 }
 
+function intelligenceSource(version: Version): RecipeIntelligenceSource {
+  return {
+    recipeId: version.recipe_id ?? version.imported_recipe_id ?? '',
+    recipeFingerprint: version.fingerprint,
+    ingredients: (version.source_snapshot.ingredients ?? []).map((ingredient) => ({
+      id: ingredient.id ?? '',
+      name: ingredient.name ?? ingredient.ingredient_name ?? '',
+      originalText: ingredient.originalText ?? ingredient.original_line_text ?? '',
+      quantityText: ingredient.quantityText ?? ingredient.quantity_text ?? null,
+      unit: ingredient.unit ?? null,
+      preparation: ingredient.preparation ?? null,
+    })),
+    steps: version.source_snapshot.steps ?? [],
+  }
+}
+
 async function currentVersionMatches(version: Version) {
   const response = await rest(
     version.source_kind === 'household'
@@ -241,6 +263,8 @@ function failureCategory(error: unknown) {
     'transient_provider',
     'permanent_provider',
     'schema_invalid',
+    'source_mismatch',
+    'unsupported_reference',
     'unsupported_data',
     'stale_version',
     'internal_validation',
@@ -265,12 +289,7 @@ async function processOne() {
 
   try {
     const version = await loadVersion(job)
-    const source: RecipeIntelligenceSource = {
-      recipeId: version.recipe_id ?? version.imported_recipe_id ?? '',
-      recipeFingerprint: version.fingerprint,
-      ingredients: version.source_snapshot.ingredients ?? [],
-      steps: version.source_snapshot.steps ?? [],
-    }
+    const source = intelligenceSource(version)
     const deterministic = buildDeterministicRecipeIntelligence(source)
     let result = deterministic
     let provider = 'deterministic'

@@ -25,6 +25,17 @@ describe('recipe enrichment Edge Function', () => {
     expect(userRestHeaders).toContain('authorization,')
   })
 
+  it('normalises stored shared-recipe snapshots before enrichment', () => {
+    expect(source).toContain('ingredient.name ?? ingredient.ingredient_name')
+    expect(source).toContain('ingredient.originalText ?? ingredient.original_line_text')
+    expect(source).toContain('ingredient.quantityText ?? ingredient.quantity_text')
+  })
+
+  it('keeps validation failures categorised for operations', () => {
+    expect(source).toContain("'source_mismatch'")
+    expect(source).toContain("'unsupported_reference'")
+  })
+
   it('keeps PostgREST failures diagnosable without exposing response content', () => {
     expect(source).toContain(
       "throw new Error(`database_unavailable:${response.status}:${path.split('?')[0]}`)",
