@@ -57,11 +57,14 @@ async function authenticatedUserId(request: Request) {
 type MealRow = {
   id: string
   recipe_id: string | null
+  imported_recipe_id: string | null
   meal_date: string
 }
 
 type EnrichmentRow = {
-  recipe_id: string
+  source_kind: 'household' | 'shared_platform'
+  recipe_id: string | null
+  imported_recipe_id: string | null
   recipe_version_id: string
   schema_version: string
   rules_version: string
@@ -79,10 +82,17 @@ function candidatesFrom(
   meals: MealRow[],
   enrichments: EnrichmentRow[],
 ): WeeklyPreparationCandidate[] {
-  const enrichmentByRecipe = new Map(enrichments.map((item) => [item.recipe_id, item]))
+  const enrichmentByRecipe = new Map(
+    enrichments.map((item) => [
+      `${item.source_kind}:${item.recipe_id ?? item.imported_recipe_id}`,
+      item,
+    ]),
+  )
   return meals.flatMap((meal) => {
-    if (!meal.recipe_id) return []
-    const enrichment = enrichmentByRecipe.get(meal.recipe_id)
+    const sourceKind = meal.recipe_id ? 'household' : 'shared_platform'
+    const recipeId = meal.recipe_id ?? meal.imported_recipe_id
+    if (!recipeId) return []
+    const enrichment = enrichmentByRecipe.get(`${sourceKind}:${recipeId}`)
     if (!enrichment) return []
     return enrichment.result.ingredients.flatMap((ingredient) => {
       if (!ingredient.action && !ingredient.preparationDetail) return []
@@ -92,7 +102,7 @@ function candidatesFrom(
           householdId,
           planId,
           plannedMealId: meal.id,
-          recipeId: meal.recipe_id as string,
+          recipeId,
           recipeVersionId: enrichment.recipe_version_id,
           enrichmentVersion: `${enrichment.schema_version}:${enrichment.rules_version}`,
           servings,
@@ -142,15 +152,27 @@ Deno.serve(async (request) => {
     if (!householdId) return json(403, { error: 'household_unavailable' })
     const planId = `${body.weekStart}_${body.weekEnd}`
     const meals = await rest<MealRow[]>(
-      `planned_meals?household_id=eq.${householdId}&meal_date=gte.${body.weekStart}&meal_date=lte.${body.weekEnd}&recipe_id=not.is.null&select=id,recipe_id,meal_date&order=meal_date.asc&limit=100`,
+      `planned_meals?household_id=eq.${householdId}&meal_date=gte.${body.weekStart}&meal_date=lte.${body.weekEnd}&or=(recipe_id.not.is.null,imported_recipe_id.not.is.null)&select=id,recipe_id,imported_recipe_id,meal_date&order=meal_date.asc&limit=100`,
     )
     const recipeIds = [...new Set(meals.flatMap((meal) => (meal.recipe_id ? [meal.recipe_id] : [])))]
-    if (recipeIds.length === 0) return json(200, { plan: emptyPlan(householdId, planId) })
+    const importedRecipeIds = [
+      ...new Set(meals.flatMap((meal) => (meal.imported_recipe_id ? [meal.imported_recipe_id] : []))),
+    ]
+    if (recipeIds.length === 0 && importedRecipeIds.length === 0)
+      return json(200, { plan: emptyPlan(householdId, planId) })
     const settings = await rest<Array<{ default_servings: number }>>(
       `household_settings?household_id=eq.${householdId}&select=default_servings&limit=1`,
     )
+    const filters = [
+      recipeIds.length
+        ? `and(source_kind.eq.household,household_id.eq.${householdId},recipe_id.in.(${recipeIds.join(',')}))`
+        : null,
+      importedRecipeIds.length
+        ? `and(source_kind.eq.shared_platform,imported_recipe_id.in.(${importedRecipeIds.join(',')}))`
+        : null,
+    ].filter(Boolean)
     const enrichments = await rest<EnrichmentRow[]>(
-      `recipe_enrichments?household_id=eq.${householdId}&recipe_id=in.(${recipeIds.join(',')})&is_active=eq.true&select=recipe_id,recipe_version_id,schema_version,rules_version,result&limit=100`,
+      `recipe_enrichments?is_active=eq.true&or=(${filters.join(',')})&select=source_kind,recipe_id,imported_recipe_id,recipe_version_id,schema_version,rules_version,result&limit=100`,
     )
     const candidates = candidatesFrom(
       householdId,
