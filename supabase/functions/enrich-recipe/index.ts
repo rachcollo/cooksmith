@@ -21,6 +21,7 @@ type Job = {
   imported_recipe_id: string | null
   recipe_version_id: string
   attempt_count: number
+  model_key: string
 }
 
 type SnapshotIngredient = Partial<RecipeIntelligenceSource['ingredients'][number]> & {
@@ -153,7 +154,7 @@ async function withinUsageLimits(config: Settings) {
   day.setUTCHours(0, 0, 0, 0)
   const month = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1))
   const response = await rest(
-    `recipe_enrichment_jobs?created_at=gte.${encodeURIComponent(month.toISOString())}&select=created_at,estimated_cost_aud`,
+    `recipe_enrichment_jobs?model_key=neq.deterministic&created_at=gte.${encodeURIComponent(month.toISOString())}&select=created_at,estimated_cost_aud`,
   )
   const rows = (await response.json()) as Array<{
     created_at: string
@@ -173,7 +174,7 @@ async function claimJob(): Promise<Job | null> {
   if (active.length >= config.max_concurrency) return null
 
   const response = await rest(
-    'recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count',
+    'recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key',
   )
   const jobs = (await response.json()) as Job[]
   const candidate = jobs[0]
@@ -181,7 +182,7 @@ async function claimJob(): Promise<Job | null> {
 
   const lease = new Date(Date.now() + 60_000).toISOString()
   const claim = await rest(
-    `recipe_enrichment_jobs?id=eq.${candidate.id}&state=eq.pending&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count`,
+    `recipe_enrichment_jobs?id=eq.${candidate.id}&state=eq.pending&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
     {
       method: 'PATCH',
       headers: { prefer: 'return=representation' },
@@ -298,7 +299,8 @@ async function processOne() {
     let outputTokens = 0
     let costAud = 0
 
-    if (config.ai_enabled && deterministic.unresolvedIngredientIds.length > 0) {
+    if (job.model_key === 'provider-assisted-v1') {
+      if (!config.ai_enabled) throw new Error('disabled')
       if (!(await withinUsageLimits(config))) throw new Error('usage_limit')
       modelKey = Deno.env.get('RECIPE_INTELLIGENCE_MODEL') ?? 'gpt-5-mini-2025-08-07'
       const assisted = await resolveAmbiguousLinks({

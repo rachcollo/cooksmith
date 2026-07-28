@@ -103,5 +103,12 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const result = data as { status?: unknown } | null
       return backfillStatus(result?.status)
     },
+    async setRecipeIntelligenceAi(enabled) {
+      const { data, error } = await database.rpc('recipe_intelligence_ai_command', {
+        command: enabled ? 'enable_ai' : 'disable_ai',
+      })
+      if (error) throw new Error('Cooksmith could not update Recipe Intelligence AI.')
+      return backfillStatus(data)
+    },
   }
 }

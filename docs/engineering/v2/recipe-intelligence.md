@@ -8,7 +8,10 @@ CS-90 adds recipe-level enrichment beside the approved recipe. It never rewrites
 2. Database triggers create an immutable content snapshot and idempotent pending job.
 3. The protected `enrich-recipe` Edge Function claims one job with a bounded lease.
 4. Deterministic rules resolve known aliases, units, quantities, actions and source links first.
-5. When enabled, only unresolved ingredient and step excerpts are sent to OpenAI using strict structured output.
+5. When enabled, ingredient and step excerpts are sent to OpenAI using strict
+   structured output. The provider may improve canonical names, aliases,
+   modifiers, quantities, preparation actions/details and source-step links,
+   but cannot add source identifiers or rewrite the original recipe.
 6. Local validation rejects unknown source IDs or step IDs.
 7. One database function atomically checks the current recipe version, deactivates the previous result and activates the replacement.
 8. Failed or stale work keeps the previous valid result and does not affect the approved recipe.
@@ -35,6 +38,21 @@ The Supabase project supplies `SUPABASE_URL` and either `SUPABASE_SECRET_KEYS` o
 - two concurrent jobs.
 
 Deploy the database migration before the Edge Function. Keep `ai_enabled = false` until the provider-assisted evaluation is accepted. The deterministic worker can run without spending OpenAI credits.
+
+Recipe Intelligence AI is separate from weekly preparation AI. An application
+administrator can enable or disable it in the Recipe enrichment section of the
+admin portal. Enablement is confirmed, audited and displays the configured
+monthly A$ provider ceiling. It does not change existing results by itself.
+
+**Re-enrich with AI** creates a separate `provider-assisted-v1` job for each
+current eligible recipe version. It never reopens, deletes or overwrites the
+completed deterministic job. Atomic activation retains one current enrichment
+per recipe while preserving both result records for comparison and rollback.
+Repeated reprocessing is idempotent for that processing identity.
+
+While Recipe Intelligence AI is enabled, future recipe imports and material
+edits automatically queue a provider-assisted job beside the deterministic job.
+Disabling it returns new recipe versions to deterministic-only processing.
 
 The admin start, resume and retry commands invoke the worker using the signed-in
 admin session. The function verifies the application-level admin role before it
@@ -63,6 +81,22 @@ worker chain so queued jobs advance without a separate operator invocation.
 They do not expose recipe text or enable either AI setting. Production backfill
 is a separate operator action after the database, Edge Functions and
 application are released from the same approved `main` SHA.
+
+For the initial provider-assisted quality run:
+
+1. Release the AI-control migration, application and `enrich-recipe` function
+   from the same approved `main` SHA.
+2. Confirm the OpenAI key, model and A$ input/output rates are configured
+   without printing their values.
+3. Enable **Recipe Intelligence AI** in Admin.
+4. Select **Re-enrich with AI** once.
+5. Review failures, token/cost totals and structured quality before relying on
+   Get Ahead. Compare canonical-name cleanliness, resolved ingredient links,
+   preparation actions/details, aliases, unknown quantities and confidence
+   with the deterministic baseline.
+6. Disable Recipe Intelligence AI or activate the emergency stop if results
+   contain invented content, costs exceed expectations or provider failures
+   become material.
 
 ## Rollback
 

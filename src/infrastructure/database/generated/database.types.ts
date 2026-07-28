@@ -1628,6 +1628,10 @@ export type Database = {
         Returns: Json
       }
       recipe_enrichment_backfill_status: { Args: never; Returns: Json }
+      recipe_intelligence_ai_command: {
+        Args: { command: string }
+        Returns: Json
+      }
       reconcile_planned_meal_shopping: {
         Args: {
           ingredient_inputs: Json

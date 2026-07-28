@@ -23,6 +23,8 @@ export type WeeklyPreparationEvaluation = {
 
 export type RecipeEnrichmentBackfillStatus = {
   paused: boolean
+  aiEnabled: boolean
+  monthlyCostLimitAud: number
   sources: {
     household: { eligible: number; current: number }
     sharedPlatform: { eligible: number; current: number }
@@ -39,6 +41,7 @@ export interface WeeklyPreparationAdminRepository {
   getLatestEvaluation(): Promise<WeeklyPreparationEvaluation | null>
   getRecipeEnrichmentStatus(): Promise<RecipeEnrichmentBackfillStatus>
   commandRecipeEnrichment(
-    command: 'start' | 'pause' | 'resume' | 'retry_failed',
+    command: 'start' | 'pause' | 'resume' | 'retry_failed' | 'reprocess_ai',
   ): Promise<RecipeEnrichmentBackfillStatus>
+  setRecipeIntelligenceAi(enabled: boolean): Promise<RecipeEnrichmentBackfillStatus>
 }
