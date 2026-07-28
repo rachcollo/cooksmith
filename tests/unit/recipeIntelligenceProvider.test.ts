@@ -75,4 +75,18 @@ describe('Recipe Intelligence provider results', () => {
       ),
     ).toThrow('unsupported_data')
   })
+
+  it('rejects duplicate provider values after schema validation', () => {
+    expect(() =>
+      applyProviderIngredientSuggestions(source, buildDeterministicRecipeIntelligence(source), [
+        { ...suggestion, aliases: ['brown onion', 'brown onion'] },
+      ]),
+    ).toThrow('unsupported_data')
+
+    expect(() =>
+      applyProviderIngredientSuggestions(source, buildDeterministicRecipeIntelligence(source), [
+        { ...suggestion, sourceStepIds: ['step-1', 'step-1'] },
+      ]),
+    ).toThrow('unsupported_data')
+  })
 })
