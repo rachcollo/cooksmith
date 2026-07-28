@@ -94,6 +94,12 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         batch_limit: 25,
       })
       if (error) throw new Error('Cooksmith could not update recipe enrichment.')
+      if (command !== 'pause') {
+        const { error: dispatchError } = await client.functions.invoke('enrich-recipe', {
+          body: {},
+        })
+        if (dispatchError) throw new Error('Cooksmith could not start recipe enrichment.')
+      }
       const result = data as { status?: unknown } | null
       return backfillStatus(result?.status)
     },

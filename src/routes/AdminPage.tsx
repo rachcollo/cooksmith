@@ -168,7 +168,11 @@ function RecipeEnrichmentOperations() {
           : 'Recipe enrichment operation updated.',
       )
     } catch {
-      setMessage('No recipe enrichment settings were changed. Try again.')
+      setMessage(
+        action === 'pause'
+          ? 'Recipe enrichment could not be paused. Try again.'
+          : 'Recipes may be queued, but processing could not start. Try resuming enrichment.',
+      )
     } finally {
       setBusy(false)
     }
