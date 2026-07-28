@@ -1,6 +1,7 @@
 import type {
   WeeklyPreparationAdminRepository,
   WeeklyPreparationEvaluation,
+  RecipeEnrichmentBackfillStatus,
   WeeklyPreparationSettings,
 } from '../../application/admin/weeklyPreparationAdminRepository'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
@@ -19,6 +20,11 @@ function settingsFrom(row: SettingsRow): WeeklyPreparationSettings {
     modelIdentifier: row.model_identifier,
     updatedAt: row.updated_at,
   }
+}
+
+function backfillStatus(value: unknown): RecipeEnrichmentBackfillStatus {
+  if (!value || typeof value !== 'object') throw new Error('Invalid recipe enrichment status.')
+  return value as RecipeEnrichmentBackfillStatus
 }
 
 export function createSupabaseWeeklyPreparationAdminRepository(
@@ -76,6 +82,20 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         ambiguousDecision:
           data.ambiguous_decision as WeeklyPreparationEvaluation['ambiguousDecision'],
       }
+    },
+    async getRecipeEnrichmentStatus() {
+      const { data, error } = await database.rpc('recipe_enrichment_backfill_status')
+      if (error) throw new Error('Cooksmith could not load recipe enrichment progress.')
+      return backfillStatus(data)
+    },
+    async commandRecipeEnrichment(command) {
+      const { data, error } = await database.rpc('recipe_enrichment_backfill_command', {
+        command,
+        batch_limit: 25,
+      })
+      if (error) throw new Error('Cooksmith could not update recipe enrichment.')
+      const result = data as { status?: unknown } | null
+      return backfillStatus(result?.status)
     },
   }
 }

@@ -36,7 +36,28 @@ The Supabase project supplies `SUPABASE_URL` and either `SUPABASE_SECRET_KEYS` o
 
 Deploy the database migration before the Edge Function. Keep `ai_enabled = false` until the provider-assisted evaluation is accepted. The deterministic worker can run without spending OpenAI credits.
 
-Invoke the worker with `POST /functions/v1/enrich-recipe` and the secret `x-cooksmith-worker-token` header. A body of `{"action":"backfill","limit":25}` queues a bounded, resumable batch; an empty body processes one pending job. Repeated backfill and worker delivery are idempotent by recipe version and processing identity.
+Invoke the worker with `POST /functions/v1/enrich-recipe` and the secret
+`x-cooksmith-worker-token` header. Each call processes at most one pending job.
+Repeated delivery is idempotent by source, recipe version and processing
+identity.
+
+## Shared recipes and existing-recipe backfill
+
+CS-93 extends the same enrichment contract to active public rows in
+`imported_recipes`. Versions, jobs and results carry an explicit `household`
+or `shared_platform` source kind plus the matching foreign key.
+Exactly-one-source constraints prevent equal UUIDs in the two recipe tables
+from colliding. Shared results have no household owner and may be reused by
+any authenticated household that can already read the public recipe; private
+household results retain household RLS.
+
+The protected Admin recipe-enrichment section previews eligibility by source,
+starts bounded idempotent batches, reports aggregate state, pauses new claims,
+resumes work and retries eligible failures. Commands are authorised and
+audited in the database. They do not expose recipe text or enable either AI
+setting. Production backfill is a separate operator action after the database,
+Edge Functions and application are released from the same approved `main`
+SHA.
 
 ## Rollback
 

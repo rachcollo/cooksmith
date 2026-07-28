@@ -12,14 +12,18 @@ declare const Deno: {
 
 type Job = {
   id: string
-  recipe_id: string
+  source_kind: 'household' | 'shared_platform'
+  recipe_id: string | null
+  imported_recipe_id: string | null
   recipe_version_id: string
   attempt_count: number
 }
 
 type Version = {
   id: string
-  recipe_id: string
+  source_kind: Job['source_kind']
+  recipe_id: string | null
+  imported_recipe_id: string | null
   fingerprint: string
   source_snapshot: {
     ingredients?: RecipeIntelligenceSource['ingredients']
@@ -33,6 +37,7 @@ type Settings = {
   daily_recipe_limit: number
   monthly_cost_limit_aud: number
   max_concurrency: number
+  backfill_paused: boolean
 }
 
 function env(name: string) {
@@ -79,7 +84,7 @@ async function rest(path: string, init: RequestInit = {}) {
 
 async function settings(): Promise<Settings> {
   const response = await rest(
-    'recipe_intelligence_settings?singleton=eq.true&select=ai_enabled,emergency_stop,daily_recipe_limit,monthly_cost_limit_aud,max_concurrency',
+    'recipe_intelligence_settings?singleton=eq.true&select=ai_enabled,emergency_stop,daily_recipe_limit,monthly_cost_limit_aud,max_concurrency,backfill_paused',
   )
   const rows = (await response.json()) as Settings[]
   if (!rows[0]) throw new Error('settings_unavailable')
@@ -111,7 +116,7 @@ async function claimJob(): Promise<Job | null> {
   if (active.length >= config.max_concurrency) return null
 
   const response = await rest(
-    'recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()&order=created_at.asc&limit=1&select=id,recipe_id,recipe_version_id,attempt_count',
+    'recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count',
   )
   const jobs = (await response.json()) as Job[]
   const candidate = jobs[0]
@@ -119,7 +124,7 @@ async function claimJob(): Promise<Job | null> {
 
   const lease = new Date(Date.now() + 60_000).toISOString()
   const claim = await rest(
-    `recipe_enrichment_jobs?id=eq.${candidate.id}&state=eq.pending&select=id,recipe_id,recipe_version_id,attempt_count`,
+    `recipe_enrichment_jobs?id=eq.${candidate.id}&state=eq.pending&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count`,
     {
       method: 'PATCH',
       headers: { prefer: 'return=representation' },
@@ -137,16 +142,24 @@ async function claimJob(): Promise<Job | null> {
 
 async function loadVersion(job: Job): Promise<Version> {
   const response = await rest(
-    `recipe_content_versions?id=eq.${job.recipe_version_id}&select=id,recipe_id,fingerprint,source_snapshot`,
+    `recipe_content_versions?id=eq.${job.recipe_version_id}&select=id,source_kind,recipe_id,imported_recipe_id,fingerprint,source_snapshot`,
   )
   const versions = (await response.json()) as Version[]
-  if (!versions[0] || versions[0].recipe_id !== job.recipe_id) throw new Error('stale_version')
+  if (
+    !versions[0] ||
+    versions[0].source_kind !== job.source_kind ||
+    versions[0].recipe_id !== job.recipe_id ||
+    versions[0].imported_recipe_id !== job.imported_recipe_id
+  )
+    throw new Error('stale_version')
   return versions[0]
 }
 
 async function currentVersionMatches(version: Version) {
   const response = await rest(
-    `recipe_content_versions?recipe_id=eq.${version.recipe_id}&order=created_at.desc&limit=1&select=id`,
+    version.source_kind === 'household'
+      ? `recipe_content_versions?source_kind=eq.household&recipe_id=eq.${version.recipe_id}&order=created_at.desc&limit=1&select=id`
+      : `recipe_content_versions?source_kind=eq.shared_platform&imported_recipe_id=eq.${version.imported_recipe_id}&order=created_at.desc&limit=1&select=id`,
   )
   const versions = (await response.json()) as Array<{ id: string }>
   return versions[0]?.id === version.id
@@ -194,7 +207,7 @@ function estimatedCostAud(inputTokens: number, outputTokens: number) {
 
 async function processOne() {
   const config = await settings()
-  if (config.emergency_stop) return { outcome: 'disabled' }
+  if (config.emergency_stop || config.backfill_paused) return { outcome: 'disabled' }
   const job = await claimJob()
   if (!job) return { outcome: 'idle' }
   const startedAt = performance.now()
@@ -202,7 +215,7 @@ async function processOne() {
   try {
     const version = await loadVersion(job)
     const source: RecipeIntelligenceSource = {
-      recipeId: version.recipe_id,
+      recipeId: version.recipe_id ?? version.imported_recipe_id ?? '',
       recipeFingerprint: version.fingerprint,
       ingredients: version.source_snapshot.ingredients ?? [],
       steps: version.source_snapshot.steps ?? [],
@@ -265,21 +278,6 @@ async function processOne() {
   }
 }
 
-async function queueBackfill(limit: number) {
-  const boundedLimit = Math.max(1, Math.min(limit, 100))
-  const response = await rest(
-    `household_recipes?archived_at=is.null&order=updated_at.asc&limit=${boundedLimit}&select=id,name`,
-  )
-  const recipes = (await response.json()) as Array<{ id: string; name: string }>
-  for (const recipe of recipes) {
-    await rest(`household_recipes?id=eq.${recipe.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ name: recipe.name }),
-    })
-  }
-  return { outcome: 'backfill_queued', queued: recipes.length }
-}
-
 Deno.serve(async (request) => {
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
   const expected = Deno.env.get('RECIPE_INTELLIGENCE_WORKER_TOKEN')
@@ -287,14 +285,7 @@ Deno.serve(async (request) => {
     return json(401, { error: 'unauthorised' })
 
   try {
-    const body = (await request.json().catch(() => ({}))) as {
-      action?: unknown
-      limit?: unknown
-    }
-    const result =
-      body.action === 'backfill'
-        ? await queueBackfill(typeof body.limit === 'number' ? body.limit : 25)
-        : await processOne()
+    const result = await processOne()
     // Operational metadata only; recipe content, credentials and provider payloads are excluded.
     // eslint-disable-next-line no-console
     console.info(JSON.stringify({ event: 'recipe_enrichment', ...result }))

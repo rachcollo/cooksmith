@@ -6,11 +6,11 @@
 - **Title:** Extend Recipe Intelligence to shared recipes and safe backfill
 - **Jira issue:** [CS-93](https://smillins.atlassian.net/browse/CS-93)
 - **Epic:** CS-5 — Recipe Library
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Branch:** `feat/cs-93-shared-recipe-enrichment-backfill`
 - **Depends on:** CS-90, CS-91, CS-62 and the accepted CS-81 weekly preparation contract
 - **Blocks:** Production Recipe Intelligence backfill and representative CS-81/CS-91 evaluation
-- **Package path:** `engineering/planned/cs93-shared-recipe-enrichment-backfill.md`
+- **Package path:** `engineering/review/cs93-shared-recipe-enrichment-backfill.md`
 - **Verified baseline:** `main` at `1e79e82e8939b422348fd3d9a7bebe9506197d79`
 - **Package date:** 2026-07-28
 

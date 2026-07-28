@@ -11,6 +11,7 @@ import { Panel } from '../components/ui/Panel'
 import type { FeatureFlag, FeatureFlagKey } from '../domain/admin/featureFlags'
 import { useWeeklyPreparationAdminRepository } from '../app/admin/weeklyPreparationAdminContext'
 import type {
+  RecipeEnrichmentBackfillStatus,
   WeeklyPreparationEvaluation,
   WeeklyPreparationSettings,
 } from '../application/admin/weeklyPreparationAdminRepository'
@@ -112,7 +113,117 @@ export function AdminPage() {
         </div>
       </Panel>
       <WeeklyPreparationOperations />
+      <RecipeEnrichmentOperations />
     </Stack>
+  )
+}
+
+function RecipeEnrichmentOperations() {
+  const repository = useWeeklyPreparationAdminRepository()
+  const [status, setStatus] = useState<RecipeEnrichmentBackfillStatus | null>(null)
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const refresh = useCallback(async () => {
+    if (!repository) return
+    try {
+      setStatus(await repository.getRecipeEnrichmentStatus())
+      setMessage('')
+    } catch {
+      setMessage('Recipe enrichment progress could not be loaded. Try again.')
+    }
+  }, [repository])
+
+  useEffect(() => {
+    if (!repository) return
+    let active = true
+    void repository
+      .getRecipeEnrichmentStatus()
+      .then((next) => {
+        if (active) setStatus(next)
+      })
+      .catch(() => {
+        if (active) setMessage('Recipe enrichment progress could not be loaded. Try again.')
+      })
+    return () => {
+      active = false
+    }
+  }, [repository])
+
+  if (!repository) return null
+  const adminRepository = repository
+
+  async function command(action: 'start' | 'pause' | 'resume' | 'retry_failed') {
+    if (
+      action === 'start' &&
+      !window.confirm('Enrich eligible existing household and shared recipes?')
+    )
+      return
+    setBusy(true)
+    try {
+      setStatus(await adminRepository.commandRecipeEnrichment(action))
+      setMessage(
+        action === 'pause'
+          ? 'New enrichment work is paused. Running work may finish safely.'
+          : 'Recipe enrichment operation updated.',
+      )
+    } catch {
+      setMessage('No recipe enrichment settings were changed. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="flow-stack" aria-labelledby="recipe-enrichment-title">
+      <div>
+        <h2 id="recipe-enrichment-title">Recipe enrichment</h2>
+        <p>Prepare household and shared recipes for Get Ahead without changing recipe content.</p>
+      </div>
+      <p aria-live="polite">{message}</p>
+      <Panel>
+        {status ? (
+          <>
+            <dl className="admin-metrics-grid">
+              <Metric label="Household eligible" value={status.sources.household.eligible} />
+              <Metric label="Household enriched" value={status.sources.household.current} />
+              <Metric label="Shared eligible" value={status.sources.sharedPlatform.eligible} />
+              <Metric label="Shared enriched" value={status.sources.sharedPlatform.current} />
+              <Metric label="Queued" value={status.states.pending ?? 0} />
+              <Metric label="Processing" value={status.states.processing ?? 0} />
+              <Metric label="Completed" value={status.states.completed ?? 0} />
+              <Metric label="Failed" value={status.states.failed ?? 0} />
+              <Metric label="Rejected" value={status.states.cancelled ?? 0} />
+              <Metric label="Skipped" value={0} />
+            </dl>
+            <div className="cluster">
+              <Button disabled={busy || status.paused} onClick={() => void command('start')}>
+                Enrich existing recipes
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() => void command(status.paused ? 'resume' : 'pause')}
+              >
+                {status.paused ? 'Resume enrichment' : 'Pause enrichment'}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={busy || !status.states.failed}
+                onClick={() => void command('retry_failed')}
+              >
+                Retry failed
+              </Button>
+              <Button variant="secondary" disabled={busy} onClick={() => void refresh()}>
+                Refresh progress
+              </Button>
+            </div>
+          </>
+        ) : (
+          <LoadingState label="Loading recipe enrichment progress" />
+        )}
+      </Panel>
+    </section>
   )
 }
 
