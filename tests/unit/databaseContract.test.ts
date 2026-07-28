@@ -13,6 +13,8 @@ describe('generated database API contract', () => {
     type TablesContract = keyof Database['cooksmith']['Tables']
     expectTypeOf<TablesContract>().toEqualTypeOf<
       | 'app_user_roles'
+      | 'feature_flag_audit'
+      | 'feature_flags'
       | 'household_allergies'
       | 'household_dietary_requirements'
       | 'household_invitations'

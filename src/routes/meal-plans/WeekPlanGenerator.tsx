@@ -24,8 +24,9 @@ import { addDays, formatDisplayDate, formatWeekRange, nextWeek } from '../../dom
 import type { Recipe } from '../../domain/recipes/types'
 import { buildPlanAdditions } from '../../domain/shopping/planGeneration'
 import { RecipeSearchField } from './RecipeSearchField'
+import { useFeatureFlags } from '../../app/admin/featureFlagContext'
 
-type Phase = 'loading' | 'choice' | 'confirm-replace' | 'review'
+type Phase = 'loading' | 'choice' | 'confirm-replace' | 'review' | 'success'
 
 interface GenerationState {
   error: string | null
@@ -68,6 +69,7 @@ export function WeekPlanGenerator({
   const plannedMeals = usePlannedMealRepository()
   const recipeRepository = useRecipeRepository()
   const shopping = useShoppingRepository()
+  const featureFlags = useFeatureFlags()
   const [state, setState] = useState<GenerationState | null>(null)
   const [applying, setApplying] = useState(false)
   const [draggingDate, setDraggingDate] = useState<string | null>(null)
@@ -309,7 +311,11 @@ export function WeekPlanGenerator({
         await reconcileShopping(saved, proposal.recipe)
       }
       await onApplied?.()
-      setState(null)
+      if (featureFlags.enabled('planner_apply_confirmation')) {
+        setState((current) => (current ? { ...current, phase: 'success' } : current))
+      } else {
+        setState(null)
+      }
     } catch (error) {
       setState((current) =>
         current
@@ -342,6 +348,18 @@ export function WeekPlanGenerator({
           }}
         >
           {state.phase === 'loading' ? <p role="status">Preparing your week…</p> : null}
+
+          {state.phase === 'success' ? (
+            <div className="week-plan-dialog">
+              <h3>Your week is planned</h3>
+              <p>Your dinners and shopping list are ready.</p>
+              <div className="dialog-actions">
+                <Button type="button" onClick={() => setState(null)}>
+                  Done
+                </Button>
+              </div>
+            </div>
+          ) : null}
 
           {state.phase === 'choice' ? (
             <div className="week-plan-dialog">

@@ -7,12 +7,13 @@ import {
 
 import { RootLayout } from '../layout/RootLayout'
 import { AuthLayout } from '../layout/AuthLayout'
-import { PublicOnlyRoute, RequireAuth } from '../auth/RouteGuards'
+import { PublicOnlyRoute, RequireApplicationAdmin, RequireAuth } from '../auth/RouteGuards'
 import { OnboardingGate } from '../onboarding/OnboardingGate'
 import { RouteErrorPage } from '../errors/RouteErrorPage'
 import { LoadingState } from '../../components/ui/LoadingState'
 import {
   GetAheadPage,
+  AdminPage,
   HealthPage,
   HomePage,
   NotFoundPage,
@@ -80,6 +81,10 @@ export const appRoutes: RouteObject[] = [
                   { path: 'shopping', element: <ShoppingPage /> },
                   { path: 'get-ahead', element: <GetAheadPage /> },
                   { path: 'settings', element: <SettingsPage /> },
+                  {
+                    element: <RequireApplicationAdmin />,
+                    children: [{ path: 'admin', element: <AdminPage /> }],
+                  },
                   { path: '*', element: <NotFoundPage /> },
                 ],
               },
