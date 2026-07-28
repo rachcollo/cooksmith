@@ -30,6 +30,7 @@ describe('generated database API contract', () => {
       | 'profiles'
       | 'recipe_ingredients'
       | 'recipe_content_versions'
+      | 'recipe_enrichment_backfill_audit'
       | 'recipe_enrichment_jobs'
       | 'recipe_enrichments'
       | 'recipe_intelligence_settings'
@@ -77,6 +78,10 @@ describe('generated database API contract', () => {
       'completed',
       'failed',
       'cancelled',
+    ])
+    expect(Constants.cooksmith.Enums.recipe_enrichment_source).toEqual([
+      'household',
+      'shared_platform',
     ])
   })
 })
