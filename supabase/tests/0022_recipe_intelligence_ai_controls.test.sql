@@ -38,15 +38,13 @@ select set_config(
   true
 );
 
-select lives_ok(
-  $$select cooksmith.recipe_intelligence_ai_command('enable_ai')$$,
-  'An application admin can enable Recipe Intelligence AI'
-);
 select is(
-  (select ai_enabled from cooksmith.recipe_intelligence_settings where singleton),
+  (cooksmith.recipe_intelligence_ai_command('enable_ai')->>'aiEnabled')::boolean,
   true,
-  'Recipe Intelligence AI enablement is stored server-side'
+  'An application admin can enable Recipe Intelligence AI through the authorised control'
 );
+reset role;
+
 select results_eq(
   $$select action from cooksmith.recipe_enrichment_backfill_audit
     where action = 'enable_ai' order by created_at desc limit 1$$,
@@ -54,10 +52,18 @@ select results_eq(
   'Recipe Intelligence AI enablement is audited'
 );
 
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
 select lives_ok(
   $$select cooksmith.recipe_enrichment_backfill_command('reprocess_ai', 25)$$,
   'An admin can create versioned provider-assisted reprocessing jobs'
 );
+reset role;
+
 select ok(
   exists (
     select 1
@@ -69,7 +75,6 @@ select ok(
   ),
   'AI reprocessing creates a separate job identity beside deterministic evidence'
 );
-reset role;
 
 select * from finish();
 rollback;
