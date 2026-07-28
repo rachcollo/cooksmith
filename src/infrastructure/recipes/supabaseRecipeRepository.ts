@@ -209,6 +209,12 @@ function recipeError(error: PostgrestError | null): void {
   )
 }
 
+async function dispatchRecipeEnrichment(client: CooksmithSupabaseClient) {
+  // Saving is authoritative and the database queue is durable. A temporary
+  // dispatch failure must not make a successfully imported recipe look unsaved.
+  await client.functions.invoke('enrich-recipe', { body: {} })
+}
+
 export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient): RecipeRepository {
   const database = client.schema('cooksmith')
   const selection =
@@ -305,13 +311,17 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
           .is('archived_at', null)
           .single()
         recipeError(existing.error)
-        if (existing.data) return mapImportedRow(existing.data as unknown as ImportedRecipeRow)
+        if (existing.data) {
+          await dispatchRecipeEnrichment(client)
+          return mapImportedRow(existing.data as unknown as ImportedRecipeRow)
+        }
       }
       if (result.error?.code === '23505' && visibility === 'private') {
         throw new Error('You already have a private recipe imported from this URL.')
       }
       recipeError(result.error)
       if (!result.data) throw new Error('Cooksmith could not save the imported recipe.')
+      if (visibility === 'public') await dispatchRecipeEnrichment(client)
       return mapImportedRow(result.data as unknown as ImportedRecipeRow)
     },
     async create(householdId, input) {
