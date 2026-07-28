@@ -77,10 +77,10 @@ function json(status: number, body: unknown) {
 }
 
 function restHeaders() {
-  const key = secretKey()
   return {
-    apikey: key,
-    authorization: `Bearer ${key}`,
+    // Supabase secret keys are opaque `sb_secret_...` values, not JWTs.
+    // Sending one as a bearer token makes the gateway reject the request.
+    apikey: secretKey(),
     'content-type': 'application/json',
     'content-profile': 'cooksmith',
     'accept-profile': 'cooksmith',
