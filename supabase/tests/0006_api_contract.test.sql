@@ -14,9 +14,9 @@ select results_eq(
   $$select (tablename::text || ':' || cmd::text) collate "C" from pg_catalog.pg_policies
     where schemaname = 'cooksmith' order by tablename, cmd$$,
   (array[
-    'household_allergies:DELETE', 'household_allergies:INSERT', 'household_allergies:SELECT', 'household_allergies:UPDATE',
     'feature_flag_audit:SELECT',
     'feature_flags:SELECT', 'feature_flags:UPDATE',
+    'household_allergies:DELETE', 'household_allergies:INSERT', 'household_allergies:SELECT', 'household_allergies:UPDATE',
     'household_dietary_requirements:DELETE', 'household_dietary_requirements:INSERT', 'household_dietary_requirements:SELECT', 'household_dietary_requirements:UPDATE',
     'household_invitations:SELECT',
     'household_members:DELETE', 'household_members:INSERT', 'household_members:SELECT', 'household_members:UPDATE',
