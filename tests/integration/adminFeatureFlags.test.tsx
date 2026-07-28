@@ -81,6 +81,22 @@ describe('admin feature toggles', () => {
       }),
       updateSettings,
       getLatestEvaluation: async () => null,
+      getRecipeEnrichmentStatus: async () => ({
+        paused: false,
+        sources: {
+          household: { eligible: 2, current: 0 },
+          sharedPlatform: { eligible: 19, current: 0 },
+        },
+        states: {},
+      }),
+      commandRecipeEnrichment: async () => ({
+        paused: false,
+        sources: {
+          household: { eligible: 2, current: 0 },
+          sharedPlatform: { eligible: 19, current: 0 },
+        },
+        states: {},
+      }),
     }
     const repository: FeatureFlagRepository = {
       isAdmin: async () => true,
