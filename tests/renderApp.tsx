@@ -11,6 +11,7 @@ import type { PantryRepository } from '../src/application/pantry/pantryRepositor
 import type { RecipeRepository } from '../src/application/recipes/recipeRepository'
 import type { PlannedMealRepository } from '../src/application/meal-plans/plannedMealRepository'
 import type { ShoppingRepository } from '../src/application/shopping/shoppingRepository'
+import type { FeatureFlagRepository } from '../src/application/admin/featureFlagRepository'
 import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
@@ -265,6 +266,14 @@ export const defaultShoppingRepository: ShoppingRepository = {
   remove: async () => undefined,
 }
 
+export const defaultFeatureFlagRepository: FeatureFlagRepository = {
+  isAdmin: async () => false,
+  list: async () => [],
+  update: async () => {
+    throw new Error('Feature flag administration is unavailable in this test.')
+  },
+}
+
 export function renderApp(
   path = '/',
   config: PublicEnv = defaultConfig,
@@ -278,6 +287,7 @@ export function renderApp(
     : signedOutTestAuthState,
   recipeRepository: RecipeRepository = defaultRecipeRepository,
   shoppingRepository: ShoppingRepository = defaultShoppingRepository,
+  featureFlagRepository?: FeatureFlagRepository,
 ) {
   const router = createTestRouter([path])
 
@@ -295,6 +305,7 @@ export function renderApp(
           recipeRepository={recipeRepository}
           plannedMealRepository={plannedMealRepository}
           shoppingRepository={shoppingRepository}
+          featureFlagRepository={featureFlagRepository ?? defaultFeatureFlagRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>

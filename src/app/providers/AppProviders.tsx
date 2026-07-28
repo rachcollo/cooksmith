@@ -25,6 +25,10 @@ import { PlannedMealRepositoryContext } from '../meal-plans/plannedMealContext'
 import type { ShoppingRepository } from '../../application/shopping/shoppingRepository'
 import { ShoppingProvider } from '../shopping/ShoppingProvider'
 import { ShoppingRepositoryContext } from '../shopping/shoppingContext'
+import type { FeatureFlagRepository } from '../../application/admin/featureFlagRepository'
+import { createSupabaseFeatureFlagRepository } from '../../infrastructure/admin/supabaseFeatureFlagRepository'
+import { FeatureFlagProvider } from '../admin/FeatureFlagProvider'
+import { FeatureFlagRepositoryContext } from '../admin/featureFlagContext'
 
 interface AppProvidersProps {
   children: ReactNode
@@ -38,6 +42,7 @@ interface AppProvidersProps {
   recipeRepository?: RecipeRepository
   plannedMealRepository?: PlannedMealRepository
   shoppingRepository?: ShoppingRepository
+  featureFlagRepository?: FeatureFlagRepository
 }
 
 export function AppProviders({
@@ -52,7 +57,13 @@ export function AppProviders({
   recipeRepository,
   plannedMealRepository,
   shoppingRepository,
+  featureFlagRepository,
 }: AppProvidersProps) {
+  const resolvedFeatureFlagRepository =
+    featureFlagRepository ??
+    (authClient && typeof authClient.schema === 'function'
+      ? createSupabaseFeatureFlagRepository(authClient)
+      : null)
   return (
     <AppConfigContext.Provider value={config}>
       <AuthProvider client={authClient} initialAuthState={initialAuthState}>
@@ -69,9 +80,15 @@ export function AppProviders({
                         <PlannedMealProvider>
                           <RecipeRepositoryContext.Provider value={recipeRepository}>
                             <RecipeProvider>
-                              <ShoppingRepositoryContext.Provider value={shoppingRepository}>
-                                <ShoppingProvider>{children}</ShoppingProvider>
-                              </ShoppingRepositoryContext.Provider>
+                              <FeatureFlagRepositoryContext.Provider
+                                value={resolvedFeatureFlagRepository}
+                              >
+                                <FeatureFlagProvider>
+                                  <ShoppingRepositoryContext.Provider value={shoppingRepository}>
+                                    <ShoppingProvider>{children}</ShoppingProvider>
+                                  </ShoppingRepositoryContext.Provider>
+                                </FeatureFlagProvider>
+                              </FeatureFlagRepositoryContext.Provider>
                             </RecipeProvider>
                           </RecipeRepositoryContext.Provider>
                         </PlannedMealProvider>

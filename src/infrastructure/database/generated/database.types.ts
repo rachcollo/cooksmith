@@ -29,6 +29,71 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flag_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          enabled: boolean
+          flag_key: string
+          id: number
+          previous_enabled: boolean
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          enabled: boolean
+          flag_key: string
+          id?: never
+          previous_enabled: boolean
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          enabled?: boolean
+          flag_key?: string
+          id?: never
+          previous_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'feature_flag_audit_flag_key_fkey'
+            columns: ['flag_key']
+            isOneToOne: false
+            referencedRelation: 'feature_flags'
+            referencedColumns: ['key']
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string
+          enabled: boolean
+          key: string
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          enabled?: boolean
+          key: string
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          key?: string
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       household_allergies: {
         Row: {
           allergen: string
