@@ -8,6 +8,16 @@ select has_function(
   'Recipe Intelligence AI has a protected admin control'
 );
 
+insert into cooksmith.imported_recipes (
+  id, visibility, owner_id, name, source_url, ingredient_rows, instruction_steps
+) values (
+  '95000000-0000-4000-8000-000000000010', 'public',
+  '10000000-0000-4000-8000-000000000001', 'Synthetic AI recipe',
+  'https://example.invalid/synthetic-ai-recipe',
+  '[{"id":"ingredient-1","name":"onion","originalText":"1 onion","quantityText":"1"}]',
+  '[{"id":"step-1","instruction":"Dice the onion."}]'
+);
+
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
 values
   ('95000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000',
