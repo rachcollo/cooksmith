@@ -4,6 +4,7 @@ import { Sparkles } from 'lucide-react'
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
 import { useRecipeRepository } from '../app/recipes/recipeContext'
+import { useWeeklyPreparationRepository } from '../app/get-ahead/weeklyPreparationContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -26,6 +27,8 @@ import {
 import { addDays, currentWeek } from '../domain/meal-plans/week'
 import type { PlannedMeal } from '../domain/meal-plans/types'
 import type { Recipe } from '../domain/recipes/types'
+import { weeklyPreparationPlanToOpportunities } from '../domain/get-ahead/weeklyPreparationAdapter'
+import type { WeeklyPreparationPlan } from '../domain/get-ahead/weeklyPreparationPlan'
 
 const storageKey = (householdId: string, planId: string) =>
   `cooksmith:get-ahead:${householdId}:${planId}`
@@ -41,6 +44,7 @@ export function GetAheadPage() {
   const { state } = useOnboarding()
   const plannedMeals = usePlannedMealRepository()
   const recipes = useRecipeRepository()
+  const weeklyPreparation = useWeeklyPreparationRepository()
   const householdId = state.householdId
   const weekStart = currentWeek(new Date())
   const weekEnd = addDays(weekStart, 6)
@@ -56,17 +60,38 @@ export function GetAheadPage() {
   const [announcement, setAnnouncement] = useState('')
   const [overrideError, setOverrideError] = useState<string | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPreparationPlan | null>(null)
+  const [usingFallback, setUsingFallback] = useState(false)
 
   useEffect(() => {
     if (!householdId) return
     let active = true
-    Promise.all([plannedMeals.listWeek(householdId, weekStart, weekEnd), recipes.list(householdId)])
-      .then(([nextMeals, nextRecipes]) => {
+    Promise.all([
+      plannedMeals.listWeek(householdId, weekStart, weekEnd),
+      recipes.list(householdId),
+      weeklyPreparation
+        ?.getCurrentPlan({ weekStart, weekEnd })
+        .then((plan) => ({ plan, unavailable: false }))
+        .catch(() => ({ plan: null, unavailable: true })) ??
+        Promise.resolve({ plan: null, unavailable: true }),
+    ])
+      .then(([nextMeals, nextRecipes, preparation]) => {
         if (!active) return
         setMeals(nextMeals)
         setRecipeList(nextRecipes)
+        setWeeklyPlan(preparation.plan)
+        setUsingFallback(preparation.unavailable)
         const saved = localStorage.getItem(storageKey(householdId, planId))
-        setSession(saved ? (JSON.parse(saved) as GetAheadSession) : null)
+        const parsed = saved ? (JSON.parse(saved) as GetAheadSession) : null
+        const samePlan =
+          !preparation.plan ||
+          !parsed?.weeklyPreparationCacheKey ||
+          parsed.weeklyPreparationCacheKey === preparation.plan.cacheKey
+        setSession(samePlan ? parsed : null)
+        if (!samePlan)
+          setAnnouncement(
+            'Your weekly preparation guidance changed, so Cooksmith is ready to make a fresh checklist.',
+          )
       })
       .catch(() => {
         if (active)
@@ -78,16 +103,19 @@ export function GetAheadPage() {
     return () => {
       active = false
     }
-  }, [householdId, planId, plannedMeals, recipes, weekEnd, weekStart])
+  }, [householdId, planId, plannedMeals, recipes, weekEnd, weekStart, weeklyPreparation])
 
   const opportunities = useMemo(() => {
-    return analysePreparationOpportunities(
+    const deterministic = analysePreparationOpportunities(
       meals.map((plannedMeal) => ({
         plannedMeal,
         recipe: recipeList.find((recipe) => recipe.id === plannedMeal.recipeId) ?? null,
       })),
     )
-  }, [meals, recipeList])
+    if (!weeklyPlan) return deterministic
+    const consolidated = weeklyPreparationPlanToOpportunities(weeklyPlan, meals, recipeList)
+    return consolidated.length > 0 ? consolidated : deterministic
+  }, [meals, recipeList, weeklyPlan])
 
   const visibleSession = session?.householdId === householdId ? session : null
 
@@ -113,7 +141,13 @@ export function GetAheadPage() {
     const error = validateGetAheadDuration(selectedMinutes)
     setDurationError(error)
     if (error || !householdId) return
-    const next = createGetAheadSession({ householdId, planId, selectedMinutes, opportunities })
+    const next = createGetAheadSession({
+      householdId,
+      planId,
+      selectedMinutes,
+      opportunities,
+      weeklyPreparationCacheKey: weeklyPlan?.cacheKey,
+    })
     persist(next)
     setShowChecklist(true)
     setAnnouncement(
@@ -128,6 +162,7 @@ export function GetAheadPage() {
       planId,
       selectedMinutes,
       opportunities,
+      weeklyPreparationCacheKey: weeklyPlan?.cacheKey,
     })
     persist(next)
     setShowChecklist(true)
@@ -166,6 +201,11 @@ export function GetAheadPage() {
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
+      {usingFallback ? (
+        <p className="get-ahead-guidance-note" role="status">
+          Cooksmith is using your usual preparation checklist for now.
+        </p>
+      ) : null}
       {!visibleSession || visibleSession.status !== 'active' || !showChecklist ? (
         <Panel className="flow-stack get-ahead-session-picker">
           {visibleSession?.status === 'active' ? (
@@ -332,6 +372,16 @@ function GetAheadTaskRow({
         />
         <span className="task-row-title">
           <strong>{task.title}</strong>
+          <small>{task.reason}</small>
+          {task.consolidation && task.consolidation.sources.length > 1 ? (
+            <small>
+              Helps with{' '}
+              {[...new Set(task.consolidation.sources.map((source) => source.recipeName))].join(
+                ' and ',
+              )}
+              .
+            </small>
+          ) : null}
           {stale ? (
             <small role="status">Source changed since this session was created.</small>
           ) : null}

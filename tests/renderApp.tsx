@@ -12,6 +12,8 @@ import type { RecipeRepository } from '../src/application/recipes/recipeReposito
 import type { PlannedMealRepository } from '../src/application/meal-plans/plannedMealRepository'
 import type { ShoppingRepository } from '../src/application/shopping/shoppingRepository'
 import type { FeatureFlagRepository } from '../src/application/admin/featureFlagRepository'
+import type { WeeklyPreparationAdminRepository } from '../src/application/admin/weeklyPreparationAdminRepository'
+import type { WeeklyPreparationRepository } from '../src/application/get-ahead/weeklyPreparationRepository'
 import type { PublicEnv } from '../src/config/env'
 import type { CooksmithSupabaseClient } from '../src/infrastructure/auth/supabaseAuthClient'
 import type { Session, User } from '@supabase/supabase-js'
@@ -288,6 +290,8 @@ export function renderApp(
   recipeRepository: RecipeRepository = defaultRecipeRepository,
   shoppingRepository: ShoppingRepository = defaultShoppingRepository,
   featureFlagRepository?: FeatureFlagRepository,
+  weeklyPreparationRepository?: WeeklyPreparationRepository,
+  weeklyPreparationAdminRepository?: WeeklyPreparationAdminRepository,
 ) {
   const router = createTestRouter([path])
 
@@ -306,6 +310,8 @@ export function renderApp(
           plannedMealRepository={plannedMealRepository}
           shoppingRepository={shoppingRepository}
           featureFlagRepository={featureFlagRepository ?? defaultFeatureFlagRepository}
+          weeklyPreparationRepository={weeklyPreparationRepository}
+          weeklyPreparationAdminRepository={weeklyPreparationAdminRepository}
         >
           <RouterProvider router={router} />
         </AppProviders>

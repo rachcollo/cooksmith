@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { FeatureFlagRepository } from '../../src/application/admin/featureFlagRepository'
+import type { WeeklyPreparationAdminRepository } from '../../src/application/admin/weeklyPreparationAdminRepository'
 import type { FeatureFlag } from '../../src/domain/admin/featureFlags'
 import { renderApp } from '../renderApp'
 
@@ -63,5 +64,60 @@ describe('admin feature toggles', () => {
     await user.click(toggle)
     await waitFor(() => expect(update).toHaveBeenCalledWith('planner_apply_confirmation', true))
     expect(await screen.findByText('The new setting is now active.')).toBeVisible()
+  })
+
+  it('confirms and audits the protected weekly preparation emergency stop', async () => {
+    const updateSettings = vi.fn(async (input) => ({
+      ...input,
+      modelIdentifier: 'gpt-5-mini',
+      updatedAt: '2026-07-28T01:00:00Z',
+    }))
+    const weeklyPreparationAdminRepository: WeeklyPreparationAdminRepository = {
+      getSettings: async () => ({
+        aiEnabled: false,
+        emergencyStop: false,
+        modelIdentifier: 'gpt-5-mini',
+        updatedAt: '2026-07-28T00:00:00Z',
+      }),
+      updateSettings,
+      getLatestEvaluation: async () => null,
+    }
+    const repository: FeatureFlagRepository = {
+      isAdmin: async () => true,
+      list: async () => [flag],
+      update: async () => flag,
+    }
+    const user = userEvent.setup()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderApp(
+      '/admin',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+      undefined,
+      weeklyPreparationAdminRepository,
+    )
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Activate emergency stop',
+      }),
+    )
+    await waitFor(() =>
+      expect(updateSettings).toHaveBeenCalledWith({
+        aiEnabled: false,
+        emergencyStop: true,
+      }),
+    )
+    expect(
+      await screen.findByText('Weekly preparation controls updated and recorded in the audit log.'),
+    ).toBeVisible()
   })
 })

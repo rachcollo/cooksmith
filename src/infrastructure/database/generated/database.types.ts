@@ -1311,6 +1311,78 @@ export type Database = {
           },
         ]
       }
+      weekly_preparation_evaluation_runs: {
+        Row: {
+          accepted_count: number
+          ambiguous_decision: string
+          corpus_version: string
+          created_at: string
+          deterministic_count: number
+          estimated_cost_aud: number
+          fallback_count: number
+          id: string
+          input_tokens: number
+          model_call_count: number
+          model_identifier: string
+          output_tokens: number
+          plan_count: number
+          planner_version: string
+          pricing_version: string
+          rejected_count: number
+          reviewed_correct_count: number
+          schema_version: string
+          total_latency_ms: number
+          unsupported_count: number
+          valid_output_count: number
+        }
+        Insert: {
+          accepted_count: number
+          ambiguous_decision: string
+          corpus_version: string
+          created_at?: string
+          deterministic_count: number
+          estimated_cost_aud: number
+          fallback_count: number
+          id?: string
+          input_tokens: number
+          model_call_count: number
+          model_identifier: string
+          output_tokens: number
+          plan_count: number
+          planner_version: string
+          pricing_version: string
+          rejected_count: number
+          reviewed_correct_count: number
+          schema_version: string
+          total_latency_ms: number
+          unsupported_count: number
+          valid_output_count: number
+        }
+        Update: {
+          accepted_count?: number
+          ambiguous_decision?: string
+          corpus_version?: string
+          created_at?: string
+          deterministic_count?: number
+          estimated_cost_aud?: number
+          fallback_count?: number
+          id?: string
+          input_tokens?: number
+          model_call_count?: number
+          model_identifier?: string
+          output_tokens?: number
+          plan_count?: number
+          planner_version?: string
+          pricing_version?: string
+          rejected_count?: number
+          reviewed_correct_count?: number
+          schema_version?: string
+          total_latency_ms?: number
+          unsupported_count?: number
+          valid_output_count?: number
+        }
+        Relationships: []
+      }
       weekly_preparation_plans: {
         Row: {
           cache_key: string
@@ -1366,6 +1438,7 @@ export type Database = {
           ai_enabled: boolean
           daily_plan_limit: number
           emergency_stop: boolean
+          model_identifier: string
           monthly_cost_limit_aud: number
           singleton: boolean
           updated_at: string
@@ -1374,6 +1447,7 @@ export type Database = {
           ai_enabled?: boolean
           daily_plan_limit?: number
           emergency_stop?: boolean
+          model_identifier?: string
           monthly_cost_limit_aud?: number
           singleton?: boolean
           updated_at?: string
@@ -1382,9 +1456,43 @@ export type Database = {
           ai_enabled?: boolean
           daily_plan_limit?: number
           emergency_stop?: boolean
+          model_identifier?: string
           monthly_cost_limit_aud?: number
           singleton?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      weekly_preparation_settings_audit: {
+        Row: {
+          ai_enabled: boolean
+          changed_at: string
+          changed_by: string
+          correlation_id: string
+          emergency_stop: boolean
+          id: number
+          previous_ai_enabled: boolean
+          previous_emergency_stop: boolean
+        }
+        Insert: {
+          ai_enabled: boolean
+          changed_at?: string
+          changed_by: string
+          correlation_id?: string
+          emergency_stop: boolean
+          id?: never
+          previous_ai_enabled: boolean
+          previous_emergency_stop: boolean
+        }
+        Update: {
+          ai_enabled?: boolean
+          changed_at?: string
+          changed_by?: string
+          correlation_id?: string
+          emergency_stop?: boolean
+          id?: never
+          previous_ai_enabled?: boolean
+          previous_emergency_stop?: boolean
         }
         Relationships: []
       }

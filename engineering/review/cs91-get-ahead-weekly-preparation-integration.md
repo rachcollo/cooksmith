@@ -5,11 +5,11 @@
 - **Milestone:** Get Ahead
 - **Jira issue:** CS-91
 - **Epic:** CS-64 — Get Ahead AI Preparation Assistant
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Implementation branch:** `feat/cs-91-get-ahead-weekly-preparation-integration`
 - **Depends on:** CS-81 weekly preparation consolidation and CS-62 admin portal and feature toggles
 - **Builds on:** CS-65 to CS-69 Get Ahead opportunity, session, ranking, consolidation and checklist contracts; CS-90 Recipe Intelligence
-- **Package path:** `engineering/planned/cs91-get-ahead-weekly-preparation-integration.md`
+- **Package path:** `engineering/review/cs91-get-ahead-weekly-preparation-integration.md`
 
 ## Product Outcome
 

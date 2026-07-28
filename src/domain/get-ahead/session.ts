@@ -79,6 +79,7 @@ export interface GetAheadSession {
   scoreVersion: typeof getAheadPriorityScoreVersion
   householdId: string
   planId: string
+  weeklyPreparationCacheKey?: string
   selectedMinutes: number
   status: GetAheadSessionStatus
   createdAt: string
@@ -161,6 +162,7 @@ export function createGetAheadSession(input: {
   planId: string
   selectedMinutes: number
   opportunities: PreparationOpportunity[]
+  weeklyPreparationCacheKey?: string
   now?: Date
 }): GetAheadSession {
   const error = validateGetAheadDuration(input.selectedMinutes)
@@ -173,6 +175,9 @@ export function createGetAheadSession(input: {
     scoreVersion: getAheadPriorityScoreVersion,
     householdId: input.householdId,
     planId: input.planId,
+    ...(input.weeklyPreparationCacheKey
+      ? { weeklyPreparationCacheKey: input.weeklyPreparationCacheKey }
+      : {}),
     selectedMinutes: input.selectedMinutes,
     status: tasks.some((task) => task.selected) ? 'active' : 'completed',
     createdAt: now,
