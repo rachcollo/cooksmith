@@ -21,6 +21,15 @@ export type WeeklyPreparationEvaluation = {
   ambiguousDecision: 'accepted' | 'rejected' | 'fallback'
 }
 
+export type RecipeEnrichmentBackfillStatus = {
+  paused: boolean
+  sources: {
+    household: { eligible: number; current: number }
+    sharedPlatform: { eligible: number; current: number }
+  }
+  states: Partial<Record<'pending' | 'processing' | 'completed' | 'failed' | 'cancelled', number>>
+}
+
 export interface WeeklyPreparationAdminRepository {
   getSettings(): Promise<WeeklyPreparationSettings>
   updateSettings(input: {
@@ -28,4 +37,8 @@ export interface WeeklyPreparationAdminRepository {
     emergencyStop: boolean
   }): Promise<WeeklyPreparationSettings>
   getLatestEvaluation(): Promise<WeeklyPreparationEvaluation | null>
+  getRecipeEnrichmentStatus(): Promise<RecipeEnrichmentBackfillStatus>
+  commandRecipeEnrichment(
+    command: 'start' | 'pause' | 'resume' | 'retry_failed',
+  ): Promise<RecipeEnrichmentBackfillStatus>
 }
