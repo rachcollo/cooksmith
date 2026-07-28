@@ -24,4 +24,10 @@ describe('recipe enrichment Edge Function', () => {
 
     expect(userRestHeaders).toContain('authorization,')
   })
+
+  it('keeps PostgREST failures diagnosable without exposing response content', () => {
+    expect(source).toContain(
+      "throw new Error(`database_unavailable:${response.status}:${path.split('?')[0]}`)",
+    )
+  })
 })

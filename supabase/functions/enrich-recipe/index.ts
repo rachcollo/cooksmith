@@ -102,7 +102,8 @@ async function rest(path: string, init: RequestInit = {}) {
     ...init,
     headers: { ...restHeaders(), ...(init.headers ?? {}) },
   })
-  if (!response.ok) throw new Error('database_unavailable')
+  if (!response.ok)
+    throw new Error(`database_unavailable:${response.status}:${path.split('?')[0]}`)
   return response
 }
 
@@ -352,7 +353,12 @@ Deno.serve(async (request) => {
       )
     }
     return json(200, result)
-  } catch {
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'unknown'
+    // Operational metadata only: status and endpoint name, never response bodies,
+    // credentials, recipe content or provider payloads.
+    // eslint-disable-next-line no-console
+    console.error(JSON.stringify({ event: 'recipe_enrichment_unavailable', reason }))
     return json(503, { error: 'temporarily_unavailable' })
   }
 })

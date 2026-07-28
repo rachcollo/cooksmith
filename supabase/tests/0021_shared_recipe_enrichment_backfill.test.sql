@@ -135,5 +135,10 @@ select throws_ok(
 );
 reset role;
 
+select ok(
+  has_schema_privilege('service_role', 'cooksmith', 'usage'),
+  'The enrichment worker service role can access the Cooksmith Data API schema'
+);
+
 select * from finish();
 rollback;
