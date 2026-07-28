@@ -29,6 +29,12 @@ import type { FeatureFlagRepository } from '../../application/admin/featureFlagR
 import { createSupabaseFeatureFlagRepository } from '../../infrastructure/admin/supabaseFeatureFlagRepository'
 import { FeatureFlagProvider } from '../admin/FeatureFlagProvider'
 import { FeatureFlagRepositoryContext } from '../admin/featureFlagContext'
+import type { WeeklyPreparationRepository } from '../../application/get-ahead/weeklyPreparationRepository'
+import { createSupabaseWeeklyPreparationRepository } from '../../infrastructure/get-ahead/supabaseWeeklyPreparationRepository'
+import { WeeklyPreparationRepositoryContext } from '../get-ahead/weeklyPreparationContext'
+import type { WeeklyPreparationAdminRepository } from '../../application/admin/weeklyPreparationAdminRepository'
+import { createSupabaseWeeklyPreparationAdminRepository } from '../../infrastructure/admin/supabaseWeeklyPreparationAdminRepository'
+import { WeeklyPreparationAdminRepositoryContext } from '../admin/weeklyPreparationAdminContext'
 
 interface AppProvidersProps {
   children: ReactNode
@@ -43,6 +49,8 @@ interface AppProvidersProps {
   plannedMealRepository?: PlannedMealRepository
   shoppingRepository?: ShoppingRepository
   featureFlagRepository?: FeatureFlagRepository
+  weeklyPreparationRepository?: WeeklyPreparationRepository
+  weeklyPreparationAdminRepository?: WeeklyPreparationAdminRepository
 }
 
 export function AppProviders({
@@ -58,11 +66,21 @@ export function AppProviders({
   plannedMealRepository,
   shoppingRepository,
   featureFlagRepository,
+  weeklyPreparationRepository,
+  weeklyPreparationAdminRepository,
 }: AppProvidersProps) {
   const resolvedFeatureFlagRepository =
     featureFlagRepository ??
     (authClient && typeof authClient.schema === 'function'
       ? createSupabaseFeatureFlagRepository(authClient)
+      : null)
+  const resolvedWeeklyPreparationRepository =
+    weeklyPreparationRepository ??
+    (authClient ? createSupabaseWeeklyPreparationRepository(authClient) : null)
+  const resolvedWeeklyPreparationAdminRepository =
+    weeklyPreparationAdminRepository ??
+    (authClient && typeof authClient.schema === 'function'
+      ? createSupabaseWeeklyPreparationAdminRepository(authClient)
       : null)
   return (
     <AppConfigContext.Provider value={config}>
@@ -84,9 +102,19 @@ export function AppProviders({
                                 value={resolvedFeatureFlagRepository}
                               >
                                 <FeatureFlagProvider>
-                                  <ShoppingRepositoryContext.Provider value={shoppingRepository}>
-                                    <ShoppingProvider>{children}</ShoppingProvider>
-                                  </ShoppingRepositoryContext.Provider>
+                                  <WeeklyPreparationAdminRepositoryContext.Provider
+                                    value={resolvedWeeklyPreparationAdminRepository}
+                                  >
+                                    <WeeklyPreparationRepositoryContext.Provider
+                                      value={resolvedWeeklyPreparationRepository}
+                                    >
+                                      <ShoppingRepositoryContext.Provider
+                                        value={shoppingRepository}
+                                      >
+                                        <ShoppingProvider>{children}</ShoppingProvider>
+                                      </ShoppingRepositoryContext.Provider>
+                                    </WeeklyPreparationRepositoryContext.Provider>
+                                  </WeeklyPreparationAdminRepositoryContext.Provider>
                                 </FeatureFlagProvider>
                               </FeatureFlagRepositoryContext.Provider>
                             </RecipeProvider>

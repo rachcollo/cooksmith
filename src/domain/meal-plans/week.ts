@@ -1,12 +1,14 @@
-const dayFormatter = new Intl.DateTimeFormat('en-AU', { weekday: 'short' })
+const dayFormatter = new Intl.DateTimeFormat('en-AU', { weekday: 'short', timeZone: 'UTC' })
 const fullFormatter = new Intl.DateTimeFormat('en-AU', {
   day: 'numeric',
   month: 'long',
+  timeZone: 'UTC',
   year: 'numeric',
 })
 const headingFormatter = new Intl.DateTimeFormat('en-AU', {
   day: 'numeric',
   month: 'long',
+  timeZone: 'UTC',
   year: 'numeric',
 })
 function parseIsoDate(date: string): Date {

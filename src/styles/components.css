@@ -2619,3 +2619,24 @@ button.card:hover {
   min-height: 44px;
   cursor: pointer;
 }
+.admin-metrics-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  margin: 0 0 var(--space-5);
+}
+
+.admin-metrics-grid div {
+  min-width: 0;
+}
+
+.admin-metrics-grid dt {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.admin-metrics-grid dd {
+  font-weight: 600;
+  margin: var(--space-1) 0 0;
+  overflow-wrap: anywhere;
+}
