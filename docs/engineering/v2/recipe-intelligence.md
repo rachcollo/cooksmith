@@ -60,7 +60,10 @@ processes work. After each terminal job outcome, the worker dispatches another
 protected invocation using the server-only `x-cooksmith-worker-token`. Each
 invocation processes at most one pending job and the chain stops when the queue
 is empty, processing is paused, the emergency stop is active or an operational
-error occurs. Repeated delivery is idempotent by source, recipe version and
+error occurs. **Retry failed** is deliberately a single-job canary: it makes
+failed jobs eligible again but processes only the oldest one. An operator
+reviews that outcome before selecting **Resume enrichment** to drain the
+remaining queue. Repeated delivery is idempotent by source, recipe version and
 processing identity.
 
 ## Shared recipes and existing-recipe backfill
@@ -90,11 +93,14 @@ For the initial provider-assisted quality run:
    without printing their values.
 3. Enable **Recipe Intelligence AI** in Admin.
 4. Select **Re-enrich with AI** once.
-5. Review failures, token/cost totals and structured quality before relying on
+5. If provider jobs fail, select **Retry failed** once after the fix, review the
+   single canary outcome, then select **Resume enrichment** only when the canary
+   completes successfully.
+6. Review failures, token/cost totals and structured quality before relying on
    Get Ahead. Compare canonical-name cleanliness, resolved ingredient links,
    preparation actions/details, aliases, unknown quantities and confidence
    with the deterministic baseline.
-6. Disable Recipe Intelligence AI or activate the emergency stop if results
+7. Disable Recipe Intelligence AI or activate the emergency stop if results
    contain invented content, costs exceed expectations or provider failures
    become material.
 
