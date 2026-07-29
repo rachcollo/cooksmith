@@ -136,7 +136,7 @@ select lives_ok(
 );
 reset role;
 
-select is_null(
+select is(
   (
     select state::text from cooksmith.recipe_enrichment_jobs
     where recipe_version_id in (
@@ -149,7 +149,7 @@ select is_null(
   'Retry failed releases the provider-assisted job'
 );
 
-select is(
+select is_null(
   (
     select provider_error_code from cooksmith.recipe_enrichment_jobs
     where recipe_version_id in (
