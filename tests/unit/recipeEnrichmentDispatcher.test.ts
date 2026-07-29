@@ -36,7 +36,9 @@ describe('recipe enrichment dispatcher', () => {
         command,
         batch_limit: 25,
       })
-      expect(invoke).toHaveBeenCalledWith('enrich-recipe', { body: {} })
+      expect(invoke).toHaveBeenCalledWith('enrich-recipe', {
+        body: command === 'retry_failed' ? { dispatchMode: 'single' } : {},
+      })
       expect(result).toEqual(status)
     },
   )
