@@ -53,7 +53,15 @@ describe('recipe enrichment Edge Function', () => {
 
   it('uses an OpenAI-compatible strict schema and safe provider diagnostics', () => {
     expect(adapterSource).not.toContain('uniqueItems')
-    expect(adapterSource).toContain('`${category}:${response.status}:${providerCode}`')
-    expect(adapterSource).not.toContain('body.error?.message')
+    expect(adapterSource).toContain('throw new ProviderRequestError(')
+    expect(adapterSource).toContain("' is not permitted")
+    expect(source).toContain('error instanceof ProviderRequestError')
+    expect(source).toContain('providerStatus: error.status')
+    expect(source).toContain('providerCode: error.providerCode')
+  })
+
+  it('supports a single-job canary without dispatching the rest of the queue', () => {
+    expect(source).toContain("body.dispatchMode === 'single' ? 'single' : 'chain'")
+    expect(source).toContain("dispatchMode === 'chain'")
   })
 })

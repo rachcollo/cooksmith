@@ -16,7 +16,18 @@ type OpenAIResponse = {
 }
 
 type OpenAIErrorResponse = {
-  error?: { code?: unknown; type?: unknown }
+  error?: { code?: unknown; type?: unknown; message?: unknown }
+}
+
+export class ProviderRequestError extends Error {
+  constructor(
+    readonly category: 'transient_provider' | 'permanent_provider',
+    readonly status: number,
+    readonly providerCode: string,
+    readonly schemaKeyword: string | null,
+  ) {
+    super(category)
+  }
 }
 
 const confidenceValues: EnrichmentConfidence[] = ['high', 'medium', 'low', 'unknown']
@@ -188,6 +199,7 @@ export async function resolveAmbiguousLinks(input: {
         ? 'transient_provider'
         : 'permanent_provider'
     let providerCode = 'unknown'
+    let schemaKeyword: string | null = null
     try {
       const body = (await response.json()) as OpenAIErrorResponse
       const rawCode =
@@ -197,10 +209,13 @@ export async function resolveAmbiguousLinks(input: {
             ? body.error.type
             : ''
       if (/^[a-z0-9_.-]{1,80}$/i.test(rawCode)) providerCode = rawCode
+      const rawMessage = typeof body.error?.message === 'string' ? body.error.message : ''
+      const keyword = rawMessage.match(/'([A-Za-z][A-Za-z0-9_-]{0,79})' is not permitted/i)?.[1]
+      if (keyword) schemaKeyword = keyword
     } catch {
       // Status and category remain sufficient when the provider body is unavailable.
     }
-    throw new Error(`${category}:${response.status}:${providerCode}`)
+    throw new ProviderRequestError(category, response.status, providerCode, schemaKeyword)
   }
 
   const body = (await response.json()) as OpenAIResponse

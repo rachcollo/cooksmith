@@ -3,7 +3,7 @@ import {
   validateProviderEnrichment,
   type RecipeIntelligenceSource,
 } from '../../../src/domain/recipes/intelligence.ts'
-import { resolveAmbiguousLinks } from './openaiAdapter.ts'
+import { ProviderRequestError, resolveAmbiguousLinks } from './openaiAdapter.ts'
 
 declare const Deno: {
   env: { get(name: string): string | undefined }
@@ -256,6 +256,7 @@ async function finishJob(
 }
 
 function failureCategory(error: unknown) {
+  if (error instanceof ProviderRequestError) return error.category
   const value = error instanceof Error ? error.message : 'internal_validation'
   const allowed = new Set([
     'disabled',
@@ -271,6 +272,15 @@ function failureCategory(error: unknown) {
     'internal_validation',
   ])
   return allowed.has(value) ? value : 'internal_validation'
+}
+
+function providerDiagnostic(error: unknown) {
+  if (!(error instanceof ProviderRequestError)) return {}
+  return {
+    providerStatus: error.status,
+    providerCode: error.providerCode,
+    ...(error.schemaKeyword ? { schemaKeyword: error.schemaKeyword } : {}),
+  }
 }
 
 function estimatedCostAud(inputTokens: number, outputTokens: number) {
@@ -346,7 +356,12 @@ async function processOne() {
       available_at: retry ? new Date(Date.now() + 30_000).toISOString() : undefined,
       latency_ms: Math.round(performance.now() - startedAt),
     })
-    return { outcome: retry ? 'retry_scheduled' : 'failed', jobId: job.id, category }
+    return {
+      outcome: retry ? 'retry_scheduled' : 'failed',
+      jobId: job.id,
+      category,
+      ...providerDiagnostic(error),
+    }
   }
 }
 
@@ -356,14 +371,15 @@ Deno.serve(async (request) => {
 
   try {
     if (!(await isAuthorised(request))) return json(401, { error: 'unauthorised' })
+    const body = (await request.json().catch(() => ({}))) as { dispatchMode?: unknown }
+    const dispatchMode = body.dispatchMode === 'single' ? 'single' : 'chain'
     const result = await processOne()
     // Operational metadata only; recipe content, credentials and provider payloads are excluded.
     // eslint-disable-next-line no-console
     console.info(JSON.stringify({ event: 'recipe_enrichment', ...result }))
     if (
-      result.outcome === 'completed' ||
-      result.outcome === 'failed' ||
-      result.outcome === 'retry_scheduled'
+      dispatchMode === 'chain' &&
+      (result.outcome === 'completed' || result.outcome === 'retry_scheduled')
     ) {
       EdgeRuntime.waitUntil(
         dispatchNext().catch(() => {

@@ -49,3 +49,25 @@ No dependency or baseline recurring cost was added. Provider-assisted work
 uses the existing approved budget and remains disabled unless separately
 enabled. Browser responses contain aggregate counts only; provider and worker
 secrets remain server-side.
+
+## Provider failure canary follow-up
+
+The provider error boundary now preserves `permanent_provider` and
+`transient_provider` categories instead of collapsing structured OpenAI errors
+to `internal_validation`. Operational output is limited to the HTTP status,
+validated provider code and, when OpenAI identifies one, a validated rejected
+schema-keyword name. Provider messages, response bodies, recipe content and
+credentials are never logged.
+
+**Retry failed** now runs one provider-assisted job as a canary and does not
+self-dispatch the remaining queue. After deployment, review that single job
+and the Edge Function operational event. Select **Resume enrichment** only
+after the canary completes successfully.
+
+This follow-up started from `main` commit
+`5c595b853030b5e777c38ef1e595d113db1e62eb`. It changes no migrations,
+dependencies, provider model, provider pricing or budget. Formatting, lint,
+strict TypeScript, 311 Vitest tests, production build, documentation-command
+audit, database configuration, dependency audit, secret scan and whitespace
+validation passed locally. Hosted provider canary and GitHub CI remain release
+evidence.

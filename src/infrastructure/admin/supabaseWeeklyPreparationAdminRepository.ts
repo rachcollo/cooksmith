@@ -96,7 +96,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       if (error) throw new Error('Cooksmith could not update recipe enrichment.')
       if (command !== 'pause') {
         const { error: dispatchError } = await client.functions.invoke('enrich-recipe', {
-          body: {},
+          body: command === 'retry_failed' ? { dispatchMode: 'single' } : {},
         })
         if (dispatchError) throw new Error('Cooksmith could not start recipe enrichment.')
       }
