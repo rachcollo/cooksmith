@@ -278,9 +278,10 @@ function failureCategory(error: unknown) {
 function providerDiagnostic(error: unknown) {
   if (!(error instanceof ProviderRequestError)) return {}
   return {
-    providerStatus: error.status,
-    providerCode: error.providerCode,
-    ...(error.schemaKeyword ? { schemaKeyword: error.schemaKeyword } : {}),
+    provider_http_status: error.status,
+    provider_error_code: error.providerCode,
+    provider_error_param: error.providerParam,
+    provider_request_id: error.requestId,
   }
 }
 
@@ -356,12 +357,20 @@ async function processOne(modelKey?: string) {
       failure_category: category,
       available_at: retry ? new Date(Date.now() + 30_000).toISOString() : undefined,
       latency_ms: Math.round(performance.now() - startedAt),
+      ...providerDiagnostic(error),
     })
     return {
       outcome: retry ? 'retry_scheduled' : 'failed',
       jobId: job.id,
       category,
-      ...providerDiagnostic(error),
+      providerStatus:
+        error instanceof ProviderRequestError ? error.status : undefined,
+      providerCode:
+        error instanceof ProviderRequestError ? error.providerCode : undefined,
+      providerParam:
+        error instanceof ProviderRequestError ? error.providerParam : undefined,
+      providerRequestId:
+        error instanceof ProviderRequestError ? error.requestId : undefined,
     }
   }
 }

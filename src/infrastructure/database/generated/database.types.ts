@@ -899,6 +899,10 @@ export type Database = {
           leased_until: string | null
           model_key: string
           output_tokens: number | null
+          provider_error_code: string | null
+          provider_error_param: string | null
+          provider_http_status: number | null
+          provider_request_id: string | null
           recipe_id: string | null
           recipe_version_id: string
           rules_version: string
@@ -923,6 +927,10 @@ export type Database = {
           leased_until?: string | null
           model_key?: string
           output_tokens?: number | null
+          provider_error_code?: string | null
+          provider_error_param?: string | null
+          provider_http_status?: number | null
+          provider_request_id?: string | null
           recipe_id?: string | null
           recipe_version_id: string
           rules_version?: string
@@ -947,6 +955,10 @@ export type Database = {
           leased_until?: string | null
           model_key?: string
           output_tokens?: number | null
+          provider_error_code?: string | null
+          provider_error_param?: string | null
+          provider_http_status?: number | null
+          provider_request_id?: string | null
           recipe_id?: string | null
           recipe_version_id?: string
           rules_version?: string

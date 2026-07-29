@@ -30,6 +30,13 @@ export type RecipeEnrichmentBackfillStatus = {
     sharedPlatform: { eligible: number; current: number }
   }
   states: Partial<Record<'pending' | 'processing' | 'completed' | 'failed' | 'cancelled', number>>
+  latestProviderFailure: {
+    httpStatus: number
+    errorCode?: string
+    errorParam?: string
+    requestId?: string
+    failedAt: string
+  } | null
 }
 
 export interface WeeklyPreparationAdminRepository {

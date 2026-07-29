@@ -16,7 +16,7 @@ type OpenAIResponse = {
 }
 
 type OpenAIErrorResponse = {
-  error?: { code?: unknown; type?: unknown; message?: unknown }
+  error?: { code?: unknown; type?: unknown; message?: unknown; param?: unknown }
 }
 
 export class ProviderRequestError extends Error {
@@ -24,6 +24,8 @@ export class ProviderRequestError extends Error {
     readonly category: 'transient_provider' | 'permanent_provider',
     readonly status: number,
     readonly providerCode: string,
+    readonly providerParam: string | null,
+    readonly requestId: string | null,
     readonly schemaKeyword: string | null,
   ) {
     super(category)
@@ -131,7 +133,10 @@ export async function resolveAmbiguousLinks(input: {
         ? 'transient_provider'
         : 'permanent_provider'
     let providerCode = 'unknown'
+    let providerParam: string | null = null
     let schemaKeyword: string | null = null
+    const rawRequestId = response.headers.get('x-request-id') ?? ''
+    const requestId = /^[a-z0-9_-]{1,100}$/i.test(rawRequestId) ? rawRequestId : null
     try {
       const body = (await response.json()) as OpenAIErrorResponse
       const rawCode =
@@ -141,13 +146,27 @@ export async function resolveAmbiguousLinks(input: {
             ? body.error.type
             : ''
       if (/^[a-z0-9_.-]{1,80}$/i.test(rawCode)) providerCode = rawCode
+      const rawParam = typeof body.error?.param === 'string' ? body.error.param : ''
+      if (
+        rawParam.length >= 1 &&
+        rawParam.length <= 160 &&
+        [...rawParam].every((character) => /^[a-z0-9_.-]$/i.test(character))
+      )
+        providerParam = rawParam
       const rawMessage = typeof body.error?.message === 'string' ? body.error.message : ''
       const keyword = rawMessage.match(/'([A-Za-z][A-Za-z0-9_-]{0,79})' is not permitted/i)?.[1]
       if (keyword) schemaKeyword = keyword
     } catch {
       // Status and category remain sufficient when the provider body is unavailable.
     }
-    throw new ProviderRequestError(category, response.status, providerCode, schemaKeyword)
+    throw new ProviderRequestError(
+      category,
+      response.status,
+      providerCode,
+      providerParam,
+      requestId,
+      schemaKeyword,
+    )
   }
 
   const body = (await response.json()) as OpenAIResponse
