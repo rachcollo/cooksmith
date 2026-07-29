@@ -5,11 +5,18 @@ import type {
   RecipeIntelligence,
   RecipeIntelligenceSource,
 } from '../../../src/domain/recipes/intelligence.ts'
-import { applyProviderIngredientSuggestions } from '../../../src/domain/recipes/intelligence.ts'
+import {
+  applyProviderIngredientSuggestions,
+  hasUniqueProviderSuggestionValues,
+} from '../../../src/domain/recipes/intelligence.ts'
 
 type OpenAIResponse = {
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>
   usage?: { input_tokens?: number; output_tokens?: number }
+}
+
+type OpenAIErrorResponse = {
+  error?: { code?: unknown; type?: unknown }
 }
 
 const confidenceValues: EnrichmentConfidence[] = ['high', 'medium', 'low', 'unknown']
@@ -43,6 +50,7 @@ function isSuggestion(value: unknown): value is ProviderIngredientSuggestion {
     isNullableString(suggestion.preparationDetail) &&
     Array.isArray(suggestion.sourceStepIds) &&
     suggestion.sourceStepIds.every((item) => typeof item === 'string') &&
+    hasUniqueProviderSuggestionValues(suggestion as ProviderIngredientSuggestion) &&
     confidenceValues.includes(suggestion.confidence as EnrichmentConfidence) &&
     Boolean(quantity) &&
     quantityStates.includes(quantity?.state as QuantityState) &&
@@ -124,8 +132,8 @@ export async function resolveAmbiguousLinks(input: {
                 properties: {
                   sourceIngredientId: { type: 'string', enum: ingredientIds },
                   canonicalName: nullableString,
-                  aliases: { type: 'array', items: { type: 'string' }, uniqueItems: true },
-                  modifiers: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+                  aliases: { type: 'array', items: { type: 'string' } },
+                  modifiers: { type: 'array', items: { type: 'string' } },
                   quantity: {
                     type: 'object',
                     additionalProperties: false,
@@ -150,7 +158,6 @@ export async function resolveAmbiguousLinks(input: {
                   preparationDetail: nullableString,
                   sourceStepIds: {
                     type: 'array',
-                    uniqueItems: true,
                     items:
                       stepIds.length > 0
                         ? { type: 'string', enum: stepIds }
@@ -180,7 +187,20 @@ export async function resolveAmbiguousLinks(input: {
       response.status === 429 || response.status >= 500
         ? 'transient_provider'
         : 'permanent_provider'
-    throw new Error(category)
+    let providerCode = 'unknown'
+    try {
+      const body = (await response.json()) as OpenAIErrorResponse
+      const rawCode =
+        typeof body.error?.code === 'string'
+          ? body.error.code
+          : typeof body.error?.type === 'string'
+            ? body.error.type
+            : ''
+      if (/^[a-z0-9_.-]{1,80}$/i.test(rawCode)) providerCode = rawCode
+    } catch {
+      // Status and category remain sufficient when the provider body is unavailable.
+    }
+    throw new Error(`${category}:${response.status}:${providerCode}`)
   }
 
   const body = (await response.json()) as OpenAIResponse

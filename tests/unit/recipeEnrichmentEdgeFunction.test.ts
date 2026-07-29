@@ -6,6 +6,10 @@ const source = readFileSync(
   resolve(process.cwd(), 'supabase/functions/enrich-recipe/index.ts'),
   'utf8',
 )
+const adapterSource = readFileSync(
+  resolve(process.cwd(), 'supabase/functions/enrich-recipe/openaiAdapter.ts'),
+  'utf8',
+)
 
 describe('recipe enrichment Edge Function', () => {
   it('uses the Supabase secret key only as the PostgREST API key', () => {
@@ -45,5 +49,11 @@ describe('recipe enrichment Edge Function', () => {
   it('applies provider usage limits only to provider-assisted jobs', () => {
     expect(source).toContain('model_key=neq.deterministic')
     expect(source).toContain("job.model_key === 'provider-assisted-v1'")
+  })
+
+  it('uses an OpenAI-compatible strict schema and safe provider diagnostics', () => {
+    expect(adapterSource).not.toContain('uniqueItems')
+    expect(adapterSource).toContain('`${category}:${response.status}:${providerCode}`')
+    expect(adapterSource).not.toContain('body.error?.message')
   })
 })

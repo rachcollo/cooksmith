@@ -63,6 +63,20 @@ export type RecipeIntelligenceSource = {
   steps: Array<{ id: string; instruction: string }>
 }
 
+function hasUniqueStrings(values: string[]) {
+  return new Set(values).size === values.length
+}
+
+export function hasUniqueProviderSuggestionValues(
+  suggestion: ProviderIngredientSuggestion,
+): boolean {
+  return (
+    hasUniqueStrings(suggestion.aliases) &&
+    hasUniqueStrings(suggestion.modifiers) &&
+    hasUniqueStrings(suggestion.sourceStepIds)
+  )
+}
+
 const aliases: Record<string, string> = {
   'brown onion': 'onion',
   onions: 'onion',
@@ -240,6 +254,7 @@ export function applyProviderIngredientSuggestions(
     suggestions.some(
       (item) =>
         !ingredientIds.includes(item.sourceIngredientId) ||
+        !hasUniqueProviderSuggestionValues(item) ||
         item.sourceStepIds.some((id) => !stepIds.has(id)),
     )
   )
