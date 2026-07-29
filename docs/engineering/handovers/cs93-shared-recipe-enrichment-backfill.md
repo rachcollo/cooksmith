@@ -92,3 +92,26 @@ This recovery started from `main` commit
 provider model, pricing or budget change. The remaining provider call is the
 approved hosted canary and must not include real recipe content in logs or
 repository fixtures.
+
+## Structured provider recovery
+
+The diagnostic canary proved the configured GPT-5 mini model was unavailable to
+the Cooksmith OpenAI project. Changing the runtime model secret to
+`gpt-4.1-mini` reached the provider successfully, while JSON mode returned an
+object that did not satisfy Cooksmith's activation contract.
+
+Recipe Intelligence therefore uses Responses API Structured Outputs again with
+the provider-compatible schema. The schema requires every field and rejects
+additional object properties, while Cooksmith continues to enforce exact
+ingredient count, source references, uniqueness and domain validation before
+activation. The schema intentionally contains no `uniqueItems`, `minItems` or
+`maxItems` keywords.
+
+Deploy the updated `enrich-recipe` function, select **Retry failed** once and
+review the single provider-assisted canary. Select **Resume enrichment** only
+after the canary completes and its activated result passes the existing quality
+review.
+
+This correction starts from `main` commit
+`2aef3a2a5e92eaa5302f86a81235d7fd4653043e`. It adds no migration, dependency,
+provider model, pricing or budget change.
