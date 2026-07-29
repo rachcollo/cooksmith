@@ -34,10 +34,13 @@ describe('recipe enrichment dispatcher', () => {
 
       expect(rpc).toHaveBeenCalledWith('recipe_enrichment_backfill_command', {
         command,
-        batch_limit: 25,
+        batch_limit: command === 'retry_failed' ? 1 : 25,
       })
       expect(invoke).toHaveBeenCalledWith('enrich-recipe', {
-        body: command === 'retry_failed' ? { dispatchMode: 'single' } : {},
+        body:
+          command === 'retry_failed'
+            ? { dispatchMode: 'single', modelKey: 'provider-assisted-v1' }
+            : {},
       })
       expect(result).toEqual(status)
     },
