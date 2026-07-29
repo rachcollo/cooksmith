@@ -150,6 +150,14 @@ function RecipeEnrichmentOperations() {
     }
   }, [repository])
 
+  useEffect(() => {
+    if (!repository || !status) return
+    const hasActiveWork = (status.states.pending ?? 0) > 0 || (status.states.processing ?? 0) > 0
+    if (!hasActiveWork) return
+    const timer = window.setInterval(() => void refresh(), 5_000)
+    return () => window.clearInterval(timer)
+  }, [refresh, repository, status])
+
   if (!repository) return null
   const adminRepository = repository
 
