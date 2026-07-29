@@ -53,6 +53,8 @@ type Settings = {
 
 const PROVIDER_TIMEOUT_MS = 60_000
 const JOB_LEASE_MS = 90_000
+const MAX_CHAIN_DEPTH = 100
+const CONCURRENCY_RETRY_DELAY_MS = 5_000
 
 function env(name: string) {
   const value = Deno.env.get(name)
@@ -130,14 +132,14 @@ async function isAuthorised(request: Request) {
   return response.ok && ((await response.json()) as unknown) === true
 }
 
-async function dispatchNext() {
+async function dispatchNext(chainDepth: number) {
   const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/enrich-recipe`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       'x-cooksmith-worker-token': env('RECIPE_INTELLIGENCE_WORKER_TOKEN'),
     },
-    body: '{}',
+    body: JSON.stringify({ chainDepth }),
   })
   if (!response.ok) throw new Error('worker_dispatch_failed')
 }
@@ -167,13 +169,19 @@ async function withinUsageLimits(config: Settings) {
   return dailyCount < config.daily_recipe_limit && monthlyCost < config.monthly_cost_limit_aud
 }
 
-async function claimJob(modelKey?: string): Promise<Job | null> {
+async function claimJob(
+  modelKey?: string,
+): Promise<{
+  job: Job | null
+  outcome: 'claimed' | 'busy' | 'waiting' | 'empty'
+  retryAfterMs?: number
+}> {
   const activeResponse = await rest(
     'recipe_enrichment_jobs?state=eq.processing&leased_until=gt.now()&select=id',
   )
   const active = (await activeResponse.json()) as Array<{ id: string }>
   const config = await settings()
-  if (active.length >= config.max_concurrency) return null
+  if (active.length >= config.max_concurrency) return { job: null, outcome: 'busy' }
 
   const modelFilter = modelKey ? `&model_key=eq.${encodeURIComponent(modelKey)}` : ''
   const response = await rest(
@@ -181,7 +189,21 @@ async function claimJob(modelKey?: string): Promise<Job | null> {
   )
   const jobs = (await response.json()) as Job[]
   const candidate = jobs[0]
-  if (!candidate) return null
+  if (!candidate) {
+    const waitingResponse = await rest(
+      `recipe_enrichment_jobs?state=eq.pending${modelFilter}&order=available_at.asc&limit=1&select=available_at`,
+    )
+    const waiting = (await waitingResponse.json()) as Array<{ available_at: string }>
+    if (!waiting[0]) return { job: null, outcome: 'empty' }
+    return {
+      job: null,
+      outcome: 'waiting',
+      retryAfterMs: Math.min(
+        Math.max(new Date(waiting[0].available_at).getTime() - Date.now(), 1_000),
+        30_000,
+      ),
+    }
+  }
 
   const lease = new Date(Date.now() + JOB_LEASE_MS).toISOString()
   const claim = await rest(
@@ -198,7 +220,9 @@ async function claimJob(modelKey?: string): Promise<Job | null> {
     },
   )
   const claimed = (await claim.json()) as Job[]
-  return claimed[0] ?? null
+  return claimed[0]
+    ? { job: claimed[0], outcome: 'claimed' }
+    : { job: null, outcome: 'busy' }
 }
 
 async function loadVersion(job: Job): Promise<Version> {
@@ -298,8 +322,14 @@ function estimatedCostAud(inputTokens: number, outputTokens: number) {
 async function processOne(modelKey?: string) {
   const config = await settings()
   if (config.emergency_stop || config.backfill_paused) return { outcome: 'disabled' }
-  const job = await claimJob(modelKey)
-  if (!job) return { outcome: 'idle' }
+  const claimed = await claimJob(modelKey)
+  if (!claimed.job) {
+    if (claimed.outcome === 'busy') return { outcome: 'busy' }
+    if (claimed.outcome === 'waiting')
+      return { outcome: 'waiting', retryAfterMs: claimed.retryAfterMs }
+    return { outcome: 'idle' }
+  }
+  const job = claimed.job
   const startedAt = performance.now()
 
   try {
@@ -382,22 +412,39 @@ Deno.serve(async (request) => {
     const body = (await request.json().catch(() => ({}))) as {
       dispatchMode?: unknown
       modelKey?: unknown
+      chainDepth?: unknown
     }
     const dispatchMode = body.dispatchMode === 'single' ? 'single' : 'chain'
     const modelKey =
       dispatchMode === 'single' && body.modelKey === 'provider-assisted-v1'
         ? 'provider-assisted-v1'
         : undefined
+    const chainDepth =
+      typeof body.chainDepth === 'number' && Number.isInteger(body.chainDepth)
+        ? Math.min(Math.max(body.chainDepth, 0), MAX_CHAIN_DEPTH)
+        : 0
     const result = await processOne(modelKey)
     // Operational metadata only; recipe content, credentials and provider payloads are excluded.
     // eslint-disable-next-line no-console
     console.info(JSON.stringify({ event: 'recipe_enrichment', ...result }))
-    if (
-      dispatchMode === 'chain' &&
-      (result.outcome === 'completed' || result.outcome === 'retry_scheduled')
-    ) {
+    const shouldContinue =
+      result.outcome === 'completed' ||
+      result.outcome === 'retry_scheduled' ||
+      result.outcome === 'failed' ||
+      result.outcome === 'busy' ||
+      result.outcome === 'waiting'
+    if (dispatchMode === 'chain' && shouldContinue && chainDepth < MAX_CHAIN_DEPTH) {
       EdgeRuntime.waitUntil(
-        dispatchNext().catch(() => {
+        (async () => {
+          if (result.outcome === 'busy' || result.outcome === 'waiting') {
+            const delay =
+              result.outcome === 'waiting'
+                ? (result.retryAfterMs ?? CONCURRENCY_RETRY_DELAY_MS)
+                : CONCURRENCY_RETRY_DELAY_MS
+            await new Promise((resolve) => setTimeout(resolve, delay))
+          }
+          await dispatchNext(chainDepth + 1)
+        })().catch(() => {
           // The durable queue can be resumed safely by another admin command.
           // eslint-disable-next-line no-console
           console.error(JSON.stringify({ event: 'recipe_enrichment_dispatch_failed' }))

@@ -151,6 +151,32 @@ select is(
 
 select is(
   (
+    select provider_error_code from cooksmith.recipe_enrichment_jobs
+    where recipe_version_id in (
+      select id from cooksmith.recipe_content_versions
+      where imported_recipe_id = '95000000-0000-4000-8000-000000000010'
+    )
+    and model_key = 'provider-assisted-v1'
+  ),
+  null::text,
+  'Retry failed clears obsolete provider diagnostics'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+select is(
+  cooksmith.recipe_enrichment_backfill_status()->>'latestProviderFailure',
+  null::text,
+  'The admin status hides a provider error after its job is released'
+);
+reset role;
+
+select is(
+  (
     select state::text from cooksmith.recipe_enrichment_jobs
     where recipe_version_id in (
       select id from cooksmith.recipe_content_versions

@@ -106,4 +106,17 @@ describe('recipe enrichment Edge Function', () => {
     expect(source).toContain("body.modelKey === 'provider-assisted-v1'")
     expect(source).toContain('claimJob(modelKey)')
   })
+
+  it('drains a bounded queue across failures and temporary concurrency', () => {
+    expect(source).toContain('const MAX_CHAIN_DEPTH = 100')
+    expect(source).toContain("outcome: 'busy'")
+    expect(source).toContain("result.outcome === 'failed'")
+    expect(source).toContain("result.outcome === 'busy'")
+    expect(source).toContain("result.outcome === 'waiting'")
+    expect(source).toContain('available_at.asc')
+    expect(source).toContain('result.retryAfterMs')
+    expect(source).toContain('chainDepth < MAX_CHAIN_DEPTH')
+    expect(source).toContain('dispatchNext(chainDepth + 1)')
+    expect(source).toContain('CONCURRENCY_RETRY_DELAY_MS')
+  })
 })
