@@ -51,7 +51,12 @@ describe('recipe enrichment Edge Function', () => {
     expect(source).toContain("job.model_key === 'provider-assisted-v1'")
   })
 
-  it('uses an OpenAI-compatible strict schema and safe provider diagnostics', () => {
+  it('uses JSON mode with Cooksmith validation and safe provider diagnostics', () => {
+    expect(adapterSource).toContain("type: 'json_object'")
+    expect(adapterSource).not.toContain("type: 'json_schema'")
+    expect(adapterSource).not.toContain('strict: true')
+    expect(adapterSource).toContain('parsed.ingredients.length !== ingredientIds.length')
+    expect(adapterSource).toContain('parsed.ingredients.every(isSuggestion)')
     expect(adapterSource).not.toContain('uniqueItems')
     expect(adapterSource).not.toContain('minItems')
     expect(adapterSource).not.toContain('maxItems')
