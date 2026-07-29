@@ -84,16 +84,13 @@ export async function resolveAmbiguousLinks(input: {
     return { result: input.deterministic, inputTokens: 0, outputTokens: 0 }
 
   const ingredientIds = input.source.ingredients.map((ingredient) => ingredient.id)
-  const stepIds = input.source.steps.map((step) => step.id)
-  const nullableString = { type: ['string', 'null'] }
-  const nullableNumber = { type: ['number', 'null'] }
   const payload = {
     model: input.model,
     input: [
       {
         role: 'system',
         content:
-          'Structure only the supplied recipe evidence. Return one result for every supplied ingredient ID. Canonical names must exclude quantities, units, brackets and preparation wording. Preserve meaningful cut differences. Do not invent ingredients, steps, quantities, actions, aliases, storage advice, food-safety advice or other facts. Use null or unknown when the evidence does not support a value.',
+          'Structure only the supplied recipe evidence. Return a JSON object with an ingredients array and exactly one result for every supplied ingredient ID. Each result must contain sourceIngredientId, canonicalName, aliases, modifiers, quantity, action, preparationDetail, sourceStepIds and confidence. Quantity must contain state, original, normalisedValue, normalisedMaximum, unit and dimension. Canonical names must exclude quantities, units, brackets and preparation wording. Preserve meaningful cut differences. Do not invent ingredients, steps, quantities, actions, aliases, storage advice, food-safety advice or other facts. Use null or unknown when the evidence does not support a value.',
       },
       {
         role: 'user',
@@ -114,70 +111,7 @@ export async function resolveAmbiguousLinks(input: {
     ],
     text: {
       format: {
-        type: 'json_schema',
-        name: 'recipe_ingredient_intelligence',
-        strict: true,
-        schema: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['ingredients'],
-          properties: {
-            ingredients: {
-              type: 'array',
-              items: {
-                type: 'object',
-                additionalProperties: false,
-                required: [
-                  'sourceIngredientId',
-                  'canonicalName',
-                  'aliases',
-                  'modifiers',
-                  'quantity',
-                  'action',
-                  'preparationDetail',
-                  'sourceStepIds',
-                  'confidence',
-                ],
-                properties: {
-                  sourceIngredientId: { type: 'string', enum: ingredientIds },
-                  canonicalName: nullableString,
-                  aliases: { type: 'array', items: { type: 'string' } },
-                  modifiers: { type: 'array', items: { type: 'string' } },
-                  quantity: {
-                    type: 'object',
-                    additionalProperties: false,
-                    required: [
-                      'state',
-                      'original',
-                      'normalisedValue',
-                      'normalisedMaximum',
-                      'unit',
-                      'dimension',
-                    ],
-                    properties: {
-                      state: { type: 'string', enum: quantityStates },
-                      original: nullableString,
-                      normalisedValue: nullableNumber,
-                      normalisedMaximum: nullableNumber,
-                      unit: nullableString,
-                      dimension: { type: 'string', enum: dimensions },
-                    },
-                  },
-                  action: nullableString,
-                  preparationDetail: nullableString,
-                  sourceStepIds: {
-                    type: 'array',
-                    items:
-                      stepIds.length > 0
-                        ? { type: 'string', enum: stepIds }
-                        : { type: 'string' },
-                  },
-                  confidence: { type: 'string', enum: confidenceValues },
-                },
-              },
-            },
-          },
-        },
+        type: 'json_object',
       },
     },
   }
