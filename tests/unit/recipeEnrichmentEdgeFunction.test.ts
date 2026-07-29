@@ -80,6 +80,26 @@ describe('recipe enrichment Edge Function', () => {
     expect(adapterSource).toContain('body.error?.param')
   })
 
+  it('allows realistic provider latency and classifies an aborted request as a timeout', () => {
+    const providerTimeout = Number(
+      source
+        .match(/const PROVIDER_TIMEOUT_MS = (?<value>[\d_]+)/)
+        ?.groups?.value.replaceAll('_', ''),
+    )
+    const jobLease = Number(
+      source.match(/const JOB_LEASE_MS = (?<value>[\d_]+)/)?.groups?.value.replaceAll('_', ''),
+    )
+
+    expect(providerTimeout).toBe(60_000)
+    expect(jobLease).toBeGreaterThan(providerTimeout)
+    expect(source).toContain('timeoutMs: PROVIDER_TIMEOUT_MS')
+    expect(source).toContain('Date.now() + JOB_LEASE_MS')
+    expect(adapterSource).toContain("error.name === 'TimeoutError'")
+    expect(adapterSource).toContain("error.name === 'AbortError'")
+    expect(adapterSource).toContain("throw new Error('timeout')")
+    expect(source).toContain("'timeout'")
+  })
+
   it('supports a single-job canary without dispatching the rest of the queue', () => {
     expect(source).toContain("body.dispatchMode === 'single' ? 'single' : 'chain'")
     expect(source).toContain("dispatchMode === 'chain'")

@@ -115,3 +115,25 @@ review.
 This correction starts from `main` commit
 `2aef3a2a5e92eaa5302f86a81235d7fd4653043e`. It adds no migration, dependency,
 provider model, pricing or budget change.
+
+## Provider timeout correction
+
+The first structured-output canary reached `gpt-4.1-mini` but exceeded the
+worker's original 12-second provider deadline. The provider deadline is now 60
+seconds. Its job lease is 90 seconds so a response cannot outlive the claim
+before Cooksmith validates, activates and records the result.
+
+Fetch aborts raised by the deadline are explicitly recorded as `timeout`
+instead of `internal_validation`. All provider output still passes Cooksmith's
+ingredient-count, source-reference, uniqueness and domain validation before
+activation. The provider diagnostics, AI-only single-canary selection and
+no-chain canary behaviour remain unchanged.
+
+Deploy the updated `enrich-recipe` function, select **Retry failed** once and
+confirm that the single provider-assisted canary completes and activates. Keep
+**Resume enrichment** disabled until that result and its cost/usage metadata
+have been reviewed.
+
+This correction starts from `main` commit
+`3dcbb15180e95be779bc0518113a89f9460e2316`. It adds no migration, dependency,
+provider model, pricing or budget change.
