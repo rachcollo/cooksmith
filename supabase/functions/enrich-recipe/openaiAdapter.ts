@@ -124,8 +124,6 @@ export async function resolveAmbiguousLinks(input: {
           properties: {
             ingredients: {
               type: 'array',
-              minItems: ingredientIds.length,
-              maxItems: ingredientIds.length,
               items: {
                 type: 'object',
                 additionalProperties: false,

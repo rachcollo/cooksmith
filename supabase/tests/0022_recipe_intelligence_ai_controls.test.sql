@@ -86,5 +86,50 @@ select ok(
   'AI reprocessing creates a separate job identity beside deterministic evidence'
 );
 
+update cooksmith.recipe_enrichment_jobs
+set state = 'failed', failure_category = 'permanent_provider'
+where recipe_version_id in (
+  select id from cooksmith.recipe_content_versions
+  where imported_recipe_id = '95000000-0000-4000-8000-000000000010'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+select lives_ok(
+  $$select cooksmith.recipe_enrichment_backfill_command('retry_failed', 1)$$,
+  'An admin can release one provider-assisted canary for retry'
+);
+reset role;
+
+select is(
+  (
+    select state::text from cooksmith.recipe_enrichment_jobs
+    where recipe_version_id in (
+      select id from cooksmith.recipe_content_versions
+      where imported_recipe_id = '95000000-0000-4000-8000-000000000010'
+    )
+    and model_key = 'provider-assisted-v1'
+  ),
+  'pending',
+  'Retry failed releases the provider-assisted job'
+);
+
+select is(
+  (
+    select state::text from cooksmith.recipe_enrichment_jobs
+    where recipe_version_id in (
+      select id from cooksmith.recipe_content_versions
+      where imported_recipe_id = '95000000-0000-4000-8000-000000000010'
+    )
+    and model_key = 'deterministic'
+  ),
+  'failed',
+  'Retry failed leaves deterministic evidence untouched'
+);
+
 select * from finish();
 rollback;

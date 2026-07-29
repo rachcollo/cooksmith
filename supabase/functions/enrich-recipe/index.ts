@@ -165,7 +165,7 @@ async function withinUsageLimits(config: Settings) {
   return dailyCount < config.daily_recipe_limit && monthlyCost < config.monthly_cost_limit_aud
 }
 
-async function claimJob(): Promise<Job | null> {
+async function claimJob(modelKey?: string): Promise<Job | null> {
   const activeResponse = await rest(
     'recipe_enrichment_jobs?state=eq.processing&leased_until=gt.now()&select=id',
   )
@@ -173,8 +173,9 @@ async function claimJob(): Promise<Job | null> {
   const config = await settings()
   if (active.length >= config.max_concurrency) return null
 
+  const modelFilter = modelKey ? `&model_key=eq.${encodeURIComponent(modelKey)}` : ''
   const response = await rest(
-    'recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key',
+    `recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()${modelFilter}&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
   )
   const jobs = (await response.json()) as Job[]
   const candidate = jobs[0]
@@ -291,10 +292,10 @@ function estimatedCostAud(inputTokens: number, outputTokens: number) {
   return (inputTokens * inputRate + outputTokens * outputRate) / 1_000_000
 }
 
-async function processOne() {
+async function processOne(modelKey?: string) {
   const config = await settings()
   if (config.emergency_stop || config.backfill_paused) return { outcome: 'disabled' }
-  const job = await claimJob()
+  const job = await claimJob(modelKey)
   if (!job) return { outcome: 'idle' }
   const startedAt = performance.now()
 
@@ -371,9 +372,16 @@ Deno.serve(async (request) => {
 
   try {
     if (!(await isAuthorised(request))) return json(401, { error: 'unauthorised' })
-    const body = (await request.json().catch(() => ({}))) as { dispatchMode?: unknown }
+    const body = (await request.json().catch(() => ({}))) as {
+      dispatchMode?: unknown
+      modelKey?: unknown
+    }
     const dispatchMode = body.dispatchMode === 'single' ? 'single' : 'chain'
-    const result = await processOne()
+    const modelKey =
+      dispatchMode === 'single' && body.modelKey === 'provider-assisted-v1'
+        ? 'provider-assisted-v1'
+        : undefined
+    const result = await processOne(modelKey)
     // Operational metadata only; recipe content, credentials and provider payloads are excluded.
     // eslint-disable-next-line no-console
     console.info(JSON.stringify({ event: 'recipe_enrichment', ...result }))
