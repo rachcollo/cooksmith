@@ -149,7 +149,7 @@ select is(
   'Retry failed releases the provider-assisted job'
 );
 
-select is_null(
+select is(
   (
     select provider_error_code from cooksmith.recipe_enrichment_jobs
     where recipe_version_id in (
@@ -158,6 +158,7 @@ select is_null(
     )
     and model_key = 'provider-assisted-v1'
   ),
+  null::text,
   'Retry failed clears obsolete provider diagnostics'
 );
 
@@ -167,8 +168,9 @@ select set_config(
   '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
   true
 );
-select is_null(
+select is(
   cooksmith.recipe_enrichment_backfill_status()->>'latestProviderFailure',
+  null::text,
   'The admin status hides a provider error after its job is released'
 );
 reset role;
