@@ -71,3 +71,24 @@ strict TypeScript, 311 Vitest tests, production build, documentation-command
 audit, database configuration, dependency audit, secret scan and whitespace
 validation passed locally. Hosted provider canary and GitHub CI remain release
 evidence.
+
+## Provider JSON-mode recovery
+
+After repeated provider-side `400` rejections occurred before token generation,
+Recipe Intelligence now requests a plain JSON object instead of submitting a
+strict JSON Schema to OpenAI. The trusted Cooksmith boundary still rejects
+malformed output, missing or duplicate values, an incorrect ingredient count,
+unknown ingredient or step references, source mismatches and unsupported data
+before activation. This removes provider-schema compatibility as a runtime
+dependency without weakening the stored enrichment contract.
+
+Deploy the updated `enrich-recipe` function, select **Retry failed** once and
+review the single provider-assisted canary. Select **Resume enrichment** only
+after that canary completes and its activated result passes the existing
+quality review.
+
+This recovery started from `main` commit
+`021ee01dfeff762f0c87180e9a316bd98d89b255`. It adds no migration, dependency,
+provider model, pricing or budget change. The remaining provider call is the
+approved hosted canary and must not include real recipe content in logs or
+repository fixtures.
