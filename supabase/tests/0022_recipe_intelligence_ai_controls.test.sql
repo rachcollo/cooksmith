@@ -87,11 +87,42 @@ select ok(
 );
 
 update cooksmith.recipe_enrichment_jobs
-set state = 'failed', failure_category = 'permanent_provider'
+set state = 'failed',
+    failure_category = 'permanent_provider',
+    provider_http_status = 400,
+    provider_error_code = 'invalid_request_error',
+    provider_error_param = 'text.format.type',
+    provider_request_id = 'req_synthetic_diagnostic'
 where recipe_version_id in (
   select id from cooksmith.recipe_content_versions
   where imported_recipe_id = '95000000-0000-4000-8000-000000000010'
 );
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"95000000-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+select is(
+  cooksmith.recipe_enrichment_backfill_status()
+    #>> '{latestProviderFailure,errorCode}',
+  'invalid_request_error',
+  'An admin can inspect the privacy-safe provider error code'
+);
+select is(
+  cooksmith.recipe_enrichment_backfill_status()
+    #>> '{latestProviderFailure,errorParam}',
+  'text.format.type',
+  'An admin can inspect the rejected provider parameter without request values'
+);
+select is(
+  cooksmith.recipe_enrichment_backfill_status()
+    #>> '{latestProviderFailure,requestId}',
+  'req_synthetic_diagnostic',
+  'An admin can inspect the provider request identifier'
+);
+reset role;
 
 set local role authenticated;
 select set_config(
