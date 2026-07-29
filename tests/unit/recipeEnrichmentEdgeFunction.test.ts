@@ -63,8 +63,16 @@ describe('recipe enrichment Edge Function', () => {
     expect(adapterSource).toContain('throw new ProviderRequestError(')
     expect(adapterSource).toContain("' is not permitted")
     expect(source).toContain('error instanceof ProviderRequestError')
-    expect(source).toContain('providerStatus: error.status')
-    expect(source).toContain('providerCode: error.providerCode')
+    expect(source).toContain('providerStatus:')
+    expect(source).toContain('? error.status : undefined')
+    expect(source).toContain('providerCode:')
+    expect(source).toContain('? error.providerCode : undefined')
+    expect(source).toContain('provider_http_status: error.status')
+    expect(source).toContain('provider_error_code: error.providerCode')
+    expect(source).toContain('provider_error_param: error.providerParam')
+    expect(source).toContain('provider_request_id: error.requestId')
+    expect(adapterSource).toContain("response.headers.get('x-request-id')")
+    expect(adapterSource).toContain('body.error?.param')
   })
 
   it('supports a single-job canary without dispatching the rest of the queue', () => {
