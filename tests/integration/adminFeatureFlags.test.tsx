@@ -90,6 +90,13 @@ describe('admin feature toggles', () => {
           sharedPlatform: { eligible: 19, current: 0 },
         },
         states: {},
+        latestProviderFailure: {
+          httpStatus: 400,
+          errorCode: 'invalid_request_error',
+          errorParam: 'text.format.type',
+          requestId: 'req_synthetic_diagnostic',
+          failedAt: '2026-07-29T09:00:00Z',
+        },
       }),
       commandRecipeEnrichment: async () => ({
         paused: false,
@@ -100,6 +107,7 @@ describe('admin feature toggles', () => {
           sharedPlatform: { eligible: 19, current: 0 },
         },
         states: {},
+        latestProviderFailure: null,
       }),
       setRecipeIntelligenceAi: async (enabled) => ({
         paused: false,
@@ -110,6 +118,7 @@ describe('admin feature toggles', () => {
           sharedPlatform: { eligible: 19, current: 0 },
         },
         states: {},
+        latestProviderFailure: null,
       }),
     }
     const repository: FeatureFlagRepository = {
@@ -134,6 +143,10 @@ describe('admin feature toggles', () => {
       undefined,
       weeklyPreparationAdminRepository,
     )
+
+    expect(await screen.findByText('Latest AI provider error')).toBeVisible()
+    expect(screen.getByText('HTTP 400 · invalid_request_error · text.format.type')).toBeVisible()
+    expect(screen.getByText('Request ID: req_synthetic_diagnostic')).toBeVisible()
 
     await user.click(
       await screen.findByRole('button', {
