@@ -236,6 +236,23 @@ function RecipeEnrichmentOperations() {
               <Metric label="Rejected" value={status.states.cancelled ?? 0} />
               <Metric label="Skipped" value={0} />
             </dl>
+            {status.latestProviderFailure ? (
+              <div role="status" className="flow-stack">
+                <h3>Latest AI provider error</h3>
+                <p>
+                  HTTP {status.latestProviderFailure.httpStatus}
+                  {status.latestProviderFailure.errorCode
+                    ? ` · ${status.latestProviderFailure.errorCode}`
+                    : ''}
+                  {status.latestProviderFailure.errorParam
+                    ? ` · ${status.latestProviderFailure.errorParam}`
+                    : ''}
+                </p>
+                {status.latestProviderFailure.requestId ? (
+                  <p>Request ID: {status.latestProviderFailure.requestId}</p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="cluster">
               <Button disabled={busy} onClick={() => void setAi(!status.aiEnabled)}>
                 {status.aiEnabled
