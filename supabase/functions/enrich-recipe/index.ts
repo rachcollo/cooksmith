@@ -51,6 +51,9 @@ type Settings = {
   backfill_paused: boolean
 }
 
+const PROVIDER_TIMEOUT_MS = 60_000
+const JOB_LEASE_MS = 90_000
+
 function env(name: string) {
   const value = Deno.env.get(name)
   if (!value) throw new Error(`missing_${name.toLowerCase()}`)
@@ -109,8 +112,7 @@ async function rest(path: string, init: RequestInit = {}) {
     ...init,
     headers: { ...restHeaders(), ...(init.headers ?? {}) },
   })
-  if (!response.ok)
-    throw new Error(`database_unavailable:${response.status}:${path.split('?')[0]}`)
+  if (!response.ok) throw new Error(`database_unavailable:${response.status}:${path.split('?')[0]}`)
   return response
 }
 
@@ -181,7 +183,7 @@ async function claimJob(modelKey?: string): Promise<Job | null> {
   const candidate = jobs[0]
   if (!candidate) return null
 
-  const lease = new Date(Date.now() + 60_000).toISOString()
+  const lease = new Date(Date.now() + JOB_LEASE_MS).toISOString()
   const claim = await rest(
     `recipe_enrichment_jobs?id=eq.${candidate.id}&state=eq.pending&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
     {
@@ -320,7 +322,7 @@ async function processOne(modelKey?: string) {
         model: modelKey,
         source,
         deterministic,
-        timeoutMs: 12_000,
+        timeoutMs: PROVIDER_TIMEOUT_MS,
       })
       result = assisted.result
       inputTokens = assisted.inputTokens
@@ -363,14 +365,10 @@ async function processOne(modelKey?: string) {
       outcome: retry ? 'retry_scheduled' : 'failed',
       jobId: job.id,
       category,
-      providerStatus:
-        error instanceof ProviderRequestError ? error.status : undefined,
-      providerCode:
-        error instanceof ProviderRequestError ? error.providerCode : undefined,
-      providerParam:
-        error instanceof ProviderRequestError ? error.providerParam : undefined,
-      providerRequestId:
-        error instanceof ProviderRequestError ? error.requestId : undefined,
+      providerStatus: error instanceof ProviderRequestError ? error.status : undefined,
+      providerCode: error instanceof ProviderRequestError ? error.providerCode : undefined,
+      providerParam: error instanceof ProviderRequestError ? error.providerParam : undefined,
+      providerRequestId: error instanceof ProviderRequestError ? error.requestId : undefined,
     }
   }
 }

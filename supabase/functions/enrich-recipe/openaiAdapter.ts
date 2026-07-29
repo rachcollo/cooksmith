@@ -19,6 +19,10 @@ type OpenAIErrorResponse = {
   error?: { code?: unknown; type?: unknown; message?: unknown; param?: unknown }
 }
 
+function isProviderTimeout(error: unknown) {
+  return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
+}
+
 export class ProviderRequestError extends Error {
   constructor(
     readonly category: 'transient_provider' | 'permanent_provider',
@@ -50,8 +54,7 @@ function isSuggestion(value: unknown): value is ProviderIngredientSuggestion {
   if (!value || typeof value !== 'object') return false
   const suggestion = value as Partial<ProviderIngredientSuggestion>
   const quantity = suggestion.quantity as
-    | Partial<ProviderIngredientSuggestion['quantity']>
-    | undefined
+    Partial<ProviderIngredientSuggestion['quantity']> | undefined
   return (
     typeof suggestion.sourceIngredientId === 'string' &&
     isNullableString(suggestion.canonicalName) &&
@@ -170,9 +173,7 @@ export async function resolveAmbiguousLinks(input: {
                   sourceStepIds: {
                     type: 'array',
                     items:
-                      stepIds.length > 0
-                        ? { type: 'string', enum: stepIds }
-                        : { type: 'string' },
+                      stepIds.length > 0 ? { type: 'string', enum: stepIds } : { type: 'string' },
                   },
                   confidence: { type: 'string', enum: confidenceValues },
                 },
@@ -184,15 +185,21 @@ export async function resolveAmbiguousLinks(input: {
     },
   }
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${input.apiKey}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(input.timeoutMs),
-  })
+  let response: Response
+  try {
+    response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${input.apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(input.timeoutMs),
+    })
+  } catch (error) {
+    if (isProviderTimeout(error)) throw new Error('timeout')
+    throw error
+  }
   if (!response.ok) {
     const category =
       response.status === 429 || response.status >= 500
