@@ -1,5 +1,10 @@
 begin;
 
+-- now() is transaction-stable, which can make versions created by separate statements
+-- tie and fall back to random UUID ordering. Statement time preserves causal freshness.
+alter table cooksmith.recipe_content_versions
+  alter column created_at set default statement_timestamp();
+
 alter table cooksmith.recipe_enrichment_backfill_audit
   drop constraint recipe_enrichment_backfill_audit_action_check,
   add constraint recipe_enrichment_backfill_audit_action_check
