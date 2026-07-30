@@ -32,7 +32,10 @@ describe('recipe enrichment dispatcher', () => {
   ] as const)(
     'starts the protected worker after the %s command',
     async (command) => {
-      const rpc = vi.fn(async (name: string) => ({\n        data: name === 'recipe_enrichment_backfill_status' ? status : { status },\n        error: null,\n      }))
+      const rpc = vi.fn(async (name: string) => ({
+        data: name === 'recipe_enrichment_backfill_status' ? status : { status },
+        error: null,
+      }))
       const invoke = vi.fn(async () => ({ data: { outcome: 'completed' }, error: null }))
 
       const result = await createSupabaseWeeklyPreparationAdminRepository(
@@ -54,7 +57,13 @@ describe('recipe enrichment dispatcher', () => {
   )
 
   it('pauses without dispatching another worker', async () => {
-    const rpc = vi.fn(async (name: string) => ({\n      data:\n        name === 'recipe_enrichment_backfill_status'\n          ? { ...status, paused: true }\n          : { status: { ...status, paused: true } },\n      error: null,\n    }))
+    const rpc = vi.fn(async (name: string) => ({
+      data:
+        name === 'recipe_enrichment_backfill_status'
+          ? { ...status, paused: true }
+          : { status: { ...status, paused: true } },
+      error: null,
+    }))
     const invoke = vi.fn()
 
     await createSupabaseWeeklyPreparationAdminRepository(
