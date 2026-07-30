@@ -59,7 +59,7 @@ select throws_ok(
       set ai_enabled = true, emergency_stop = false
     where singleton$$,
   '23514',
-  'Accepted 30-plan evaluation required',
+  'Current smoke test and accepted 30-plan evaluation required',
   'AI cannot be enabled before the hosted evaluation is accepted'
 );
 
@@ -83,7 +83,9 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   input_tokens,
   output_tokens,
   estimated_cost_aud,
-  ambiguous_decision
+  ambiguous_decision,
+  completed_at,
+  deployment_sha
 ) values (
   'synthetic-30-v1',
   'weekly-preparation-plan-v1',
@@ -103,7 +105,9 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   1000,
   500,
   0.100000,
-  'accepted'
+  'accepted',
+  now(),
+  repeat('a', 40)
 );
 insert into cooksmith.weekly_preparation_evaluation_cases (
   run_id, case_number, case_key, expected_model_call, model_called, outcome,
