@@ -268,7 +268,7 @@ async function currentVersionMatches(version: Version) {
 
 async function finishJob(
   job: Job,
-  state: 'completed' | 'failed' | 'pending',
+  state: 'failed' | 'pending',
   values: Record<string, unknown>,
 ) {
   await rest(`recipe_enrichment_jobs?id=eq.${job.id}`, {
@@ -276,10 +276,24 @@ async function finishJob(
     body: JSON.stringify({
       state,
       leased_until: null,
-      completed_at: state === 'completed' ? new Date().toISOString() : null,
+      completed_at: null,
       ...values,
     }),
   })
+}
+
+async function recordUsageTelemetry(job: Job, values: Record<string, unknown>) {
+  try {
+    await rest(`recipe_enrichment_jobs?id=eq.${job.id}&state=eq.completed`, {
+      method: 'PATCH',
+      body: JSON.stringify(values),
+    })
+  } catch {
+    // Activation and job completion are already committed atomically. Usage telemetry is
+    // best-effort and must never turn a successful enrichment into a failed job.
+    // eslint-disable-next-line no-console
+    console.error(JSON.stringify({ event: 'recipe_enrichment_telemetry_failed', jobId: job.id }))
+  }
 }
 
 function failureCategory(error: unknown) {
@@ -345,6 +359,7 @@ async function processOne(modelKey?: string) {
 
     if (job.model_key === 'provider-assisted-v1') {
       if (!config.ai_enabled) throw new Error('disabled')
+      if (!(await currentVersionMatches(version))) throw new Error('stale_version')
       if (!(await withinUsageLimits(config))) throw new Error('usage_limit')
       modelKey = Deno.env.get('RECIPE_INTELLIGENCE_MODEL') ?? 'gpt-5-mini-2025-08-07'
       const assisted = await resolveAmbiguousLinks({
@@ -375,7 +390,7 @@ async function processOne(modelKey?: string) {
         target_overall_confidence: result.overallConfidence,
       }),
     })
-    await finishJob(job, 'completed', {
+    await recordUsageTelemetry(job, {
       latency_ms: Math.round(performance.now() - startedAt),
       input_tokens: inputTokens,
       output_tokens: outputTokens,
