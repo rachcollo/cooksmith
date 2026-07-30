@@ -91,7 +91,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
     async commandRecipeEnrichment(command) {
       const { data, error } = await database.rpc('recipe_enrichment_backfill_command', {
         command,
-        batch_limit: command === 'retry_failed' ? 1 : 25,
+        batch_limit: command === 'retry_failed' ? 1 : 100,
       })
       if (error) throw new Error('Cooksmith could not update recipe enrichment.')
       if (command !== 'pause') {
@@ -104,7 +104,8 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         if (dispatchError) throw new Error('Cooksmith could not start recipe enrichment.')
       }
       const result = data as { status?: unknown } | null
-      return backfillStatus(result?.status)
+      if (!result?.status) throw new Error('Cooksmith did not return recipe enrichment progress.')
+      return this.getRecipeEnrichmentStatus()
     },
     async setRecipeIntelligenceAi(enabled) {
       const { data, error } = await database.rpc('recipe_intelligence_ai_command', {

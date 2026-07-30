@@ -85,6 +85,7 @@ describe('admin feature toggles', () => {
         paused: false,
         aiEnabled: false,
         monthlyCostLimitAud: 10,
+        recoverableCount: 1,
         sources: {
           household: { eligible: 2, current: 0 },
           sharedPlatform: { eligible: 19, current: 0 },
@@ -102,6 +103,7 @@ describe('admin feature toggles', () => {
         paused: false,
         aiEnabled: false,
         monthlyCostLimitAud: 10,
+        recoverableCount: 1,
         sources: {
           household: { eligible: 2, current: 0 },
           sharedPlatform: { eligible: 19, current: 0 },
@@ -113,6 +115,7 @@ describe('admin feature toggles', () => {
         paused: false,
         aiEnabled: enabled,
         monthlyCostLimitAud: 10,
+        recoverableCount: 1,
         sources: {
           household: { eligible: 2, current: 0 },
           sharedPlatform: { eligible: 19, current: 0 },

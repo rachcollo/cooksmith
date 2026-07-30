@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useFeatureFlagRepository, useFeatureFlags } from '../app/admin/featureFlagContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
@@ -123,30 +123,38 @@ function RecipeEnrichmentOperations() {
   const [status, setStatus] = useState<RecipeEnrichmentBackfillStatus | null>(null)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const refreshSequence = useRef(0)
 
   const refresh = useCallback(async () => {
     if (!repository) return
+    const sequence = ++refreshSequence.current
     try {
-      setStatus(await repository.getRecipeEnrichmentStatus())
+      const next = await repository.getRecipeEnrichmentStatus()
+      if (sequence !== refreshSequence.current) return
+      setStatus(next)
       setMessage('')
     } catch {
+      if (sequence !== refreshSequence.current) return
       setMessage('Recipe enrichment progress could not be loaded. Try again.')
     }
   }, [repository])
 
   useEffect(() => {
     if (!repository) return
-    let active = true
+    const sequence = ++refreshSequence.current
     void repository
       .getRecipeEnrichmentStatus()
       .then((next) => {
-        if (active) setStatus(next)
+        if (sequence !== refreshSequence.current) return
+        setStatus(next)
+        setMessage('')
       })
       .catch(() => {
-        if (active) setMessage('Recipe enrichment progress could not be loaded. Try again.')
+        if (sequence !== refreshSequence.current) return
+        setMessage('Recipe enrichment progress could not be loaded. Try again.')
       })
     return () => {
-      active = false
+      refreshSequence.current += 1
     }
   }, [repository])
 
@@ -161,16 +169,24 @@ function RecipeEnrichmentOperations() {
   if (!repository) return null
   const adminRepository = repository
 
-  async function command(action: 'start' | 'pause' | 'resume' | 'retry_failed' | 'reprocess_ai') {
-    if (
-      (action === 'start' || action === 'reprocess_ai') &&
-      !window.confirm(
-        action === 'reprocess_ai'
-          ? `Re-enrich eligible recipes with Recipe Intelligence AI? Provider usage is capped at A$${status?.monthlyCostLimitAud.toFixed(2) ?? '0.00'} per month.`
-          : 'Enrich eligible existing household and shared recipes?',
-      )
-    )
-      return
+  async function command(
+    action:
+      | 'start'
+      | 'pause'
+      | 'resume'
+      | 'retry_failed'
+      | 'reprocess_ai'
+      | 'recover_exhausted_ai_failures',
+  ) {
+    const confirmation =
+      action === 'reprocess_ai'
+        ? `Re-enrich eligible recipes with Recipe Intelligence AI? Provider usage is capped at A${status?.monthlyCostLimitAud.toFixed(2) ?? '0.00'} per month.`
+        : action === 'start'
+          ? 'Enrich eligible existing household and shared recipes?'
+          : action === 'recover_exhausted_ai_failures'
+            ? `Recover exactly ${status?.recoverableCount ?? 0} exhausted AI failures? Only failed provider-assisted jobs for each recipe’s latest version without an active successful enrichment will be reset.`
+            : null
+    if (confirmation && !window.confirm(confirmation)) return
     setBusy(true)
     try {
       setStatus(await adminRepository.commandRecipeEnrichment(action))
@@ -241,6 +257,7 @@ function RecipeEnrichmentOperations() {
               <Metric label="Processing" value={status.states.processing ?? 0} />
               <Metric label="Completed" value={status.states.completed ?? 0} />
               <Metric label="Failed" value={status.states.failed ?? 0} />
+              <Metric label="Recoverable AI failures" value={status.recoverableCount} />
               <Metric label="Rejected" value={status.states.cancelled ?? 0} />
               <Metric label="Skipped" value={0} />
             </dl>
@@ -290,6 +307,13 @@ function RecipeEnrichmentOperations() {
                 onClick={() => void command('retry_failed')}
               >
                 Retry failed
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={busy || status.recoverableCount === 0 || !status.aiEnabled}
+                onClick={() => void command('recover_exhausted_ai_failures')}
+              >
+                Recover exhausted AI failures ({status.recoverableCount})
               </Button>
               <Button variant="secondary" disabled={busy} onClick={() => void refresh()}>
                 Refresh progress
