@@ -120,6 +120,7 @@ $reconcile$;
 
 revoke all on function cooksmith_private.reconcile_active_recipe_enrichment_jobs()
   from public, anon, authenticated;
+grant usage on schema cooksmith_private to service_role;
 grant execute on function cooksmith_private.reconcile_active_recipe_enrichment_jobs()
   to service_role;
 
@@ -264,7 +265,9 @@ begin
     set state = 'pending', available_at = now(), failure_category = null
     where id in (
       select id from cooksmith.recipe_enrichment_jobs
-      where state = 'failed' and attempt_count < 3
+      where state = 'failed'
+        and model_key = 'provider-assisted-v1'
+        and attempt_count < 3
       order by updated_at limit bounded_limit
     );
     get diagnostics queued = row_count;
