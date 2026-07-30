@@ -141,11 +141,22 @@ function RecipeEnrichmentOperations() {
 
   useEffect(() => {
     if (!repository) return
-    void refresh()
+    const sequence = ++refreshSequence.current
+    void repository
+      .getRecipeEnrichmentStatus()
+      .then((next) => {
+        if (sequence !== refreshSequence.current) return
+        setStatus(next)
+        setMessage('')
+      })
+      .catch(() => {
+        if (sequence !== refreshSequence.current) return
+        setMessage('Recipe enrichment progress could not be loaded. Try again.')
+      })
     return () => {
       refreshSequence.current += 1
     }
-  }, [refresh, repository])
+  }, [repository])
 
   useEffect(() => {
     if (!repository || !status) return
