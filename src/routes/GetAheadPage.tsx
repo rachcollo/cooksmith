@@ -62,6 +62,7 @@ export function GetAheadPage() {
   const [showChecklist, setShowChecklist] = useState(false)
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPreparationPlan | null>(null)
   const [usingFallback, setUsingFallback] = useState(false)
+  const [planRetrying, setPlanRetrying] = useState(false)
 
   useEffect(() => {
     if (!householdId) return
@@ -70,7 +71,7 @@ export function GetAheadPage() {
       plannedMeals.listWeek(householdId, weekStart, weekEnd),
       recipes.list(householdId),
       weeklyPreparation
-        ?.getCurrentPlan({ weekStart, weekEnd })
+        ?.getCurrentPlan({ householdId, weekStart, weekEnd })
         .then((plan) => ({ plan, unavailable: false }))
         .catch(() => ({ plan: null, unavailable: true })) ??
         Promise.resolve({ plan: null, unavailable: true }),
@@ -118,6 +119,32 @@ export function GetAheadPage() {
   }, [meals, recipeList, weeklyPlan])
 
   const visibleSession = session?.householdId === householdId ? session : null
+
+  async function retryWeeklyPlan() {
+    if (!weeklyPreparation || !householdId) return
+    setPlanRetrying(true)
+    try {
+      const next = await weeklyPreparation.getCurrentPlan({
+        householdId,
+        weekStart,
+        weekEnd,
+        forceRetry: true,
+      })
+      setWeeklyPlan(next)
+      setUsingFallback(next.generation === 'fallback')
+      setAnnouncement(
+        next.generation === 'model-assisted'
+          ? 'Your AI-assisted preparation plan is ready.'
+          : 'Your usual preparation checklist is ready.',
+      )
+    } catch {
+      setAnnouncement(
+        'Cooksmith could not refresh the preparation plan. Your usual checklist is still available.',
+      )
+    } finally {
+      setPlanRetrying(false)
+    }
+  }
 
   function persist(next: GetAheadSession) {
     if (!householdId) return
@@ -201,11 +228,27 @@ export function GetAheadPage() {
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
-      {usingFallback ? (
+      {weeklyPlan?.generation === 'model-assisted' ? (
         <p className="get-ahead-guidance-note" role="status">
-          Cooksmith is using your usual preparation checklist for now.
+          AI-assisted plan
         </p>
-      ) : null}
+      ) : usingFallback || weeklyPlan?.generation === 'fallback' ? (
+        <p className="get-ahead-guidance-note" role="status">
+          Cooksmith is using a temporary fallback. Your usual preparation checklist is still
+          available.
+          <Button
+            variant="secondary"
+            disabled={planRetrying}
+            onClick={() => void retryWeeklyPlan()}
+          >
+            {planRetrying ? 'Trying again…' : 'Try again'}
+          </Button>
+        </p>
+      ) : (
+        <p className="get-ahead-guidance-note" role="status">
+          Usual preparation checklist
+        </p>
+      )}
       {!visibleSession || visibleSession.status !== 'active' || !showChecklist ? (
         <Panel className="flow-stack get-ahead-session-picker">
           {visibleSession?.status === 'active' ? (
