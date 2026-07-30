@@ -23,13 +23,15 @@ function clientWith(rpc: ReturnType<typeof vi.fn>, invoke: ReturnType<typeof vi.
 }
 
 describe('recipe enrichment dispatcher', () => {
-  it.each([
-    'start',
-    'resume',
-    'retry_failed',
-    'reprocess_ai',
-    'recover_exhausted_ai_failures',
-  ] as const)(
+  it.each(
+    [
+      'start',
+      'resume',
+      'retry_failed',
+      'reprocess_ai',
+      'recover_exhausted_ai_failures',
+    ] as const,
+  )(
     'starts the protected worker after the %s command',
     async (command) => {
       const rpc = vi.fn(async (name: string) => ({
