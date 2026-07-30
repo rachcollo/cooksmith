@@ -7,6 +7,7 @@ const status = {
   paused: false,
   aiEnabled: false,
   monthlyCostLimitAud: 10,
+  recoverableCount: 1,
   sources: {
     household: { eligible: 2, current: 0 },
     sharedPlatform: { eligible: 19, current: 0 },
@@ -22,10 +23,10 @@ function clientWith(rpc: ReturnType<typeof vi.fn>, invoke: ReturnType<typeof vi.
 }
 
 describe('recipe enrichment dispatcher', () => {
-  it.each(['start', 'resume', 'retry_failed', 'reprocess_ai'] as const)(
+  it.each(['start', 'resume', 'retry_failed', 'reprocess_ai', 'recover_exhausted_ai_failures'] as const)(
     'starts the protected worker after the %s command',
     async (command) => {
-      const rpc = vi.fn(async () => ({ data: { status }, error: null }))
+      const rpc = vi.fn(async (name: string) => ({\n        data: name === 'recipe_enrichment_backfill_status' ? status : { status },\n        error: null,\n      }))
       const invoke = vi.fn(async () => ({ data: { outcome: 'completed' }, error: null }))
 
       const result = await createSupabaseWeeklyPreparationAdminRepository(
@@ -34,7 +35,7 @@ describe('recipe enrichment dispatcher', () => {
 
       expect(rpc).toHaveBeenCalledWith('recipe_enrichment_backfill_command', {
         command,
-        batch_limit: command === 'retry_failed' ? 1 : 25,
+        batch_limit: command === 'retry_failed' ? 1 : 100,
       })
       expect(invoke).toHaveBeenCalledWith('enrich-recipe', {
         body:
@@ -47,10 +48,7 @@ describe('recipe enrichment dispatcher', () => {
   )
 
   it('pauses without dispatching another worker', async () => {
-    const rpc = vi.fn(async () => ({
-      data: { status: { ...status, paused: true } },
-      error: null,
-    }))
+    const rpc = vi.fn(async (name: string) => ({\n      data:\n        name === 'recipe_enrichment_backfill_status'\n          ? { ...status, paused: true }\n          : { status: { ...status, paused: true } },\n      error: null,\n    }))
     const invoke = vi.fn()
 
     await createSupabaseWeeklyPreparationAdminRepository(
