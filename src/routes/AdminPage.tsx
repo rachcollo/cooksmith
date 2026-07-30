@@ -285,7 +285,16 @@ function RecipeEnrichmentOperations() {
                   value={status.states.failed ?? 0}
                   details={
                     status.latestProviderFailure
-                      ? `Latest AI error: HTTP ${status.latestProviderFailure.httpStatus}${status.latestProviderFailure.errorCode ? ` · ${status.latestProviderFailure.errorCode}` : ''}${status.latestProviderFailure.errorParam ? ` · ${status.latestProviderFailure.errorParam}` : ''}${status.latestProviderFailure.requestId ? ` · Request ${status.latestProviderFailure.requestId}` : ''}`
+                      ? [
+                          `Latest AI error: HTTP ${status.latestProviderFailure.httpStatus}`,
+                          status.latestProviderFailure.errorCode,
+                          status.latestProviderFailure.errorParam,
+                          status.latestProviderFailure.requestId
+                            ? `Request ${status.latestProviderFailure.requestId}`
+                            : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
                       : 'No current provider error'
                   }
                 />
@@ -302,8 +311,6 @@ function RecipeEnrichmentOperations() {
               </tbody>
             </table>
 
-              </div>
-            ) : null}
             <div className="cluster">
               <Button disabled={busy} onClick={() => void setAi(!status.aiEnabled)}>
                 {status.aiEnabled
