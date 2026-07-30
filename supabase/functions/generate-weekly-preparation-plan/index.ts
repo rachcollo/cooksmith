@@ -84,30 +84,48 @@ Deno.serve(async (request) => {
   if (!expected || request.headers.get('x-cooksmith-worker-token') !== expected)
     return json(401, { error: 'unauthorised' })
 
-  const body = (await request.json().catch(() => null)) as { candidates?: unknown } | null
+  const body = (await request.json().catch(() => null)) as {
+    candidates?: unknown
+    forceRetry?: unknown
+    requestId?: unknown
+  } | null
   const candidates = candidatesFrom(body?.candidates)
   if (!candidates) return json(400, { error: 'invalid_request' })
 
   try {
-    const deterministic = buildDeterministicWeeklyPreparationPlan(candidates)
+    const settingsResponse = await rest(
+      'weekly_preparation_settings?singleton=eq.true&select=ai_enabled,emergency_stop,model_identifier,prompt_version,corpus_version',
+    )
+    const [settings] = (await settingsResponse.json()) as Array<{
+      ai_enabled: boolean
+      emergency_stop: boolean
+      model_identifier: string
+      prompt_version: string
+      corpus_version: string
+    }>
+    const basePlan = buildDeterministicWeeklyPreparationPlan(candidates)
+    const deterministic = {
+      ...basePlan,
+      cacheKey: [
+        basePlan.cacheKey,
+        settings?.ai_enabled && !settings.emergency_stop ? 'ai' : 'usual',
+        settings?.model_identifier ?? 'unconfigured',
+        settings?.prompt_version ?? 'unconfigured',
+        settings?.corpus_version ?? 'unconfigured',
+      ].join(':'),
+    }
     const cached = await loadCached(
       deterministic.householdId,
       deterministic.planId,
       deterministic.cacheKey,
     )
-    if (cached) return json(200, { plan: cached, metrics: { cacheHit: true } })
+    if (cached && body?.forceRetry !== true)
+      return json(200, { plan: cached, metrics: { cacheHit: true } })
     if (deterministic.ambiguousCandidateIds.length === 0) {
       await savePlan(deterministic)
       return json(200, { plan: deterministic, metrics: { modelCalled: false } })
     }
 
-    const settingsResponse = await rest(
-      'weekly_preparation_settings?singleton=eq.true&select=ai_enabled,emergency_stop',
-    )
-    const [settings] = (await settingsResponse.json()) as Array<{
-      ai_enabled: boolean
-      emergency_stop: boolean
-    }>
     if (!settings?.ai_enabled || settings.emergency_stop) {
       const fallback = withWeeklyPreparationFallback(
         deterministic,

@@ -381,6 +381,7 @@ function WeeklyPreparationOperations() {
   const [evaluation, setEvaluation] = useState<WeeklyPreparationEvaluation | null>(null)
   const [loading, setLoading] = useState(Boolean(repository))
   const [saving, setSaving] = useState(false)
+  const [evaluating, setEvaluating] = useState(false)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -416,6 +417,53 @@ function WeeklyPreparationOperations() {
 
   const adminRepository = repository
 
+  async function refresh() {
+    const [nextSettings, nextEvaluation] = await Promise.all([
+      adminRepository.getSettings(),
+      adminRepository.getLatestEvaluation(),
+    ])
+    setSettings(nextSettings)
+    setEvaluation(nextEvaluation)
+    setMessage('')
+  }
+
+  async function runEvaluation() {
+    if (
+      !window.confirm(
+        'Run the internal 30-plan evaluation? This tests 30 example weekly plans, uses the configured provider for ambiguous cases and may incur bounded provider cost.',
+      )
+    )
+      return
+    setEvaluating(true)
+    setMessage('')
+    try {
+      await adminRepository.runEvaluation()
+      await refresh()
+      setMessage('The 30-plan evaluation finished. Review the evidence before accepting it.')
+    } catch {
+      setMessage(
+        'The 30-plan evaluation could not complete. Check configuration and hosted smoke readiness, then try again.',
+      )
+    } finally {
+      setEvaluating(false)
+    }
+  }
+
+  async function acceptEvaluation() {
+    if (!evaluation || !window.confirm('Accept this exact completed evaluation?')) return
+    setEvaluating(true)
+    setMessage('')
+    try {
+      await adminRepository.acceptEvaluation(evaluation.id)
+      await refresh()
+      setMessage('Evaluation accepted. AI assistance still requires a separate confirmation.')
+    } catch {
+      setMessage('This evaluation cannot be accepted. Review failed or incomplete cases first.')
+    } finally {
+      setEvaluating(false)
+    }
+  }
+
   async function update(next: Pick<WeeklyPreparationSettings, 'aiEnabled' | 'emergencyStop'>) {
     const action = next.emergencyStop
       ? 'activate the emergency stop'
@@ -429,7 +477,11 @@ function WeeklyPreparationOperations() {
       setSettings(await adminRepository.updateSettings(next))
       setMessage('Weekly preparation controls updated and recorded in the audit log.')
     } catch {
-      setMessage('No weekly preparation controls were changed. Try again.')
+      setMessage(
+        next.aiEnabled
+          ? 'AI assistance remains disabled. Complete the hosted smoke test, run and accept the current 30-plan evaluation, then try again.'
+          : 'No weekly preparation controls were changed. Try again.',
+      )
     } finally {
       setSaving(false)
     }
@@ -439,10 +491,25 @@ function WeeklyPreparationOperations() {
     <section className="flow-stack" aria-labelledby="weekly-preparation-operations-title">
       <div>
         <h2 id="weekly-preparation-operations-title">Weekly preparation operations</h2>
-        <p>Control model assistance and review privacy-safe release evidence.</p>
+        <p>Prove readiness, review evidence and activate model assistance in separate steps.</p>
       </div>
       <p aria-live="polite">{message}</p>
       <Panel>
+        <h3>Release readiness</h3>
+        <p>
+          The 30-plan evaluation means 30 example weekly plans. It is not a 30-minute Get Ahead
+          session.
+        </p>
+        <ol>
+          <li>Configuration: {settings.modelIdentifier ? 'Ready' : 'Needs attention'}</li>
+          <li>Hosted smoke test: {settings.smokeVerified ? 'Ready' : 'Not verified'}</li>
+          <li>
+            30-plan evaluation: {evaluation?.status === 'completed' ? 'Completed' : 'Not completed'}
+          </li>
+          <li>Evaluation acceptance: {evaluation?.accepted ? 'Accepted' : 'Not accepted'}</li>
+          <li>Emergency stop: {settings.emergencyStop ? 'Active' : 'Clear'}</li>
+          <li>AI assistance: {settings.aiEnabled ? 'Enabled' : 'Disabled'}</li>
+        </ol>
         <dl className="admin-metrics-grid">
           <div>
             <dt>AI assistance</dt>
@@ -463,7 +530,9 @@ function WeeklyPreparationOperations() {
         </dl>
         <div className="cluster">
           <Button
-            disabled={saving || settings.emergencyStop}
+            disabled={
+              saving || settings.emergencyStop || !settings.smokeVerified || !evaluation?.accepted
+            }
             onClick={() =>
               void update({
                 aiEnabled: !settings.aiEnabled,
@@ -486,9 +555,32 @@ function WeeklyPreparationOperations() {
             {settings.emergencyStop ? 'Clear emergency stop' : 'Activate emergency stop'}
           </Button>
         </div>
+        {!settings.aiEnabled && (!settings.smokeVerified || !evaluation?.accepted) ? (
+          <p>
+            Enable AI assistance becomes available after the hosted smoke test and the current
+            evaluation are accepted.
+          </p>
+        ) : null}
       </Panel>
       <Panel>
         <h3>30-plan evaluation</h3>
+        <div className="cluster">
+          <Button disabled={evaluating} onClick={() => void runEvaluation()}>
+            {evaluating ? 'Running evaluation…' : 'Run 30-plan evaluation'}
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={
+              evaluating || !evaluation || evaluation.status !== 'completed' || evaluation.accepted
+            }
+            onClick={() => void acceptEvaluation()}
+          >
+            {evaluation?.accepted ? 'Evaluation accepted' : 'Accept evaluation'}
+          </Button>
+          <Button variant="secondary" disabled={evaluating} onClick={() => void refresh()}>
+            Refresh readiness
+          </Button>
+        </div>
         {evaluation ? (
           <dl className="admin-metrics-grid">
             <Metric label="Plans" value={evaluation.planCount} />

@@ -140,6 +140,7 @@ export function buildDeterministicWeeklyPreparationPlan(
     if (shouldGroup) {
       tasks.push(groupedTask(category, partitions))
       if (
+        (partitions.length > 1 && !group.some((candidate) => candidate.boundaries.length > 0)) ||
         group.some(
           (candidate) => candidate.confidence === 'low' || candidate.confidence === 'unknown',
         )

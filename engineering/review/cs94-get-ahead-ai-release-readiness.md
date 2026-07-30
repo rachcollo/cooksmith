@@ -6,11 +6,11 @@
 - **Title:** Make Get Ahead AI generation safe to evaluate, activate and operate
 - **Jira issue:** [CS-94](https://smillins.atlassian.net/browse/CS-94)
 - **Epic:** CS-64 — Get Ahead – AI Preparation Assistant
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Branch:** `feat/cs-94-get-ahead-ai-release-readiness`
 - **Depends on:** CS-81, CS-91, CS-93 and CS-62
 - **Blocks:** Production enablement of Get Ahead AI assistance
-- **Package path:** `engineering/planned/cs94-get-ahead-ai-release-readiness.md`
+- **Package path:** `engineering/review/cs94-get-ahead-ai-release-readiness.md`
 - **Verified baseline:** `main` at `e1ea759cb0f7e6e1029fc025b755044cb46c4355`
 - **Package date:** 2026-07-30
 

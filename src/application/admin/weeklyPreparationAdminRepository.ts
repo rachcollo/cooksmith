@@ -2,10 +2,16 @@ export type WeeklyPreparationSettings = {
   aiEnabled: boolean
   emergencyStop: boolean
   modelIdentifier: string
+  corpusVersion: string
+  promptVersion: string
+  smokeVerified: boolean
   updatedAt: string
 }
 
 export type WeeklyPreparationEvaluation = {
+  id: string
+  status: 'running' | 'completed' | 'failed'
+  accepted: boolean
   createdAt: string
   planCount: number
   deterministicCount: number
@@ -60,6 +66,8 @@ export interface WeeklyPreparationAdminRepository {
     emergencyStop: boolean
   }): Promise<WeeklyPreparationSettings>
   getLatestEvaluation(): Promise<WeeklyPreparationEvaluation | null>
+  runEvaluation(): Promise<void>
+  acceptEvaluation(runId: string): Promise<void>
   getRecipeEnrichmentStatus(): Promise<RecipeEnrichmentBackfillStatus>
   commandRecipeEnrichment(
     command:

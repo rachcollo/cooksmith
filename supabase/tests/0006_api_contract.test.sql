@@ -34,7 +34,10 @@ select results_eq(
     'shopping_item_contributions:DELETE', 'shopping_item_contributions:INSERT', 'shopping_item_contributions:SELECT', 'shopping_item_contributions:UPDATE',
     'shopping_list_items:DELETE', 'shopping_list_items:INSERT', 'shopping_list_items:SELECT', 'shopping_list_items:UPDATE',
     'shopping_lists:SELECT',
+    'weekly_preparation_evaluation_acceptances:SELECT',
+    'weekly_preparation_evaluation_cases:SELECT',
     'weekly_preparation_evaluation_runs:SELECT',
+    'weekly_preparation_generation_attempts:SELECT',
     'weekly_preparation_plans:SELECT',
     'weekly_preparation_settings:SELECT', 'weekly_preparation_settings:UPDATE',
     'weekly_preparation_settings_audit:SELECT'
@@ -74,7 +77,9 @@ select results_eq(
     'recipe_content_versions', 'recipe_enrichment_backfill_audit', 'recipe_enrichment_jobs', 'recipe_enrichments', 'recipe_ingredients',
     'recipe_intelligence_settings', 'recipe_steps',
     'shopping_item_contributions', 'shopping_list_items', 'shopping_lists',
-    'weekly_preparation_evaluation_runs', 'weekly_preparation_plans',
+    'weekly_preparation_evaluation_acceptances', 'weekly_preparation_evaluation_cases',
+    'weekly_preparation_evaluation_runs', 'weekly_preparation_generation_attempts',
+    'weekly_preparation_plans',
     'weekly_preparation_settings', 'weekly_preparation_settings_audit'
   ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );

@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.get-weekly-preparation-plan]
 verify_jwt = true
+
+[functions.evaluate-weekly-preparation]
+verify_jwt = true

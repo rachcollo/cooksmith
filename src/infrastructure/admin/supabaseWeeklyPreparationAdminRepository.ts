@@ -11,6 +11,9 @@ type SettingsRow = {
   ai_enabled: boolean
   emergency_stop: boolean
   model_identifier: string
+  corpus_version: string
+  prompt_version: string
+  smoke_verified_at: string | null
   updated_at: string
 }
 
@@ -19,6 +22,9 @@ function settingsFrom(row: SettingsRow): WeeklyPreparationSettings {
     aiEnabled: row.ai_enabled,
     emergencyStop: row.emergency_stop,
     modelIdentifier: row.model_identifier,
+    corpusVersion: row.corpus_version,
+    promptVersion: row.prompt_version,
+    smokeVerified: Boolean(row.smoke_verified_at),
     updatedAt: row.updated_at,
   }
 }
@@ -36,7 +42,9 @@ export function createSupabaseWeeklyPreparationAdminRepository(
     async getSettings() {
       const { data, error } = await database
         .from('weekly_preparation_settings')
-        .select('ai_enabled, emergency_stop, model_identifier, updated_at')
+        .select(
+          'ai_enabled, emergency_stop, model_identifier, corpus_version, prompt_version, smoke_verified_at, updated_at',
+        )
         .eq('singleton', true)
         .single()
       if (error) throw new Error('Cooksmith could not load weekly preparation controls.')
@@ -50,7 +58,9 @@ export function createSupabaseWeeklyPreparationAdminRepository(
           emergency_stop: input.emergencyStop,
         })
         .eq('singleton', true)
-        .select('ai_enabled, emergency_stop, model_identifier, updated_at')
+        .select(
+          'ai_enabled, emergency_stop, model_identifier, corpus_version, prompt_version, smoke_verified_at, updated_at',
+        )
         .single()
       if (error) throw new Error('Cooksmith could not update weekly preparation controls.')
       return settingsFrom(data)
@@ -59,7 +69,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const { data, error } = await database
         .from('weekly_preparation_evaluation_runs')
         .select(
-          'created_at, plan_count, deterministic_count, model_call_count, valid_output_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision',
+          'id, status, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, weekly_preparation_evaluation_acceptances(id)',
         )
         .order('created_at', { ascending: false })
         .limit(1)
@@ -67,6 +77,9 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       if (error) throw new Error('Cooksmith could not load weekly preparation evaluation evidence.')
       if (!data) return null
       return {
+        id: data.id,
+        status: data.status as WeeklyPreparationEvaluation['status'],
+        accepted: Boolean(data.weekly_preparation_evaluation_acceptances),
         createdAt: data.created_at,
         planCount: data.plan_count,
         deterministicCount: data.deterministic_count,
@@ -83,6 +96,18 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         ambiguousDecision:
           data.ambiguous_decision as WeeklyPreparationEvaluation['ambiguousDecision'],
       }
+    },
+    async runEvaluation() {
+      const { error } = await client.functions.invoke('evaluate-weekly-preparation', {
+        body: { command: 'run' },
+      })
+      if (error) throw new Error('The 30-plan evaluation could not be started.')
+    },
+    async acceptEvaluation(runId) {
+      const { error } = await database.rpc('accept_weekly_preparation_evaluation', {
+        target_run_id: runId,
+      })
+      if (error) throw new Error('This evaluation is not ready to accept.')
     },
     async getRecipeEnrichmentStatus() {
       const { data, error } = await database.rpc('recipe_enrichment_backfill_status')

@@ -1386,13 +1386,110 @@ export type Database = {
           },
         ]
       }
+      weekly_preparation_evaluation_acceptances: {
+        Row: {
+          accepted_at: string
+          accepted_by: string
+          corpus_version: string
+          id: string
+          model_identifier: string
+          planner_version: string
+          prompt_version: string
+          run_id: string
+          schema_version: string
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_by: string
+          corpus_version: string
+          id?: string
+          model_identifier: string
+          planner_version: string
+          prompt_version: string
+          run_id: string
+          schema_version: string
+        }
+        Update: {
+          accepted_at?: string
+          accepted_by?: string
+          corpus_version?: string
+          id?: string
+          model_identifier?: string
+          planner_version?: string
+          prompt_version?: string
+          run_id?: string
+          schema_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'weekly_preparation_evaluation_acceptances_run_id_fkey'
+            columns: ['run_id']
+            isOneToOne: true
+            referencedRelation: 'weekly_preparation_evaluation_runs'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      weekly_preparation_evaluation_cases: {
+        Row: {
+          case_key: string
+          case_number: number
+          estimated_cost_aud: number
+          expected_model_call: boolean
+          input_tokens: number
+          latency_ms: number
+          model_called: boolean
+          outcome: string
+          output_tokens: number
+          reason_code: string | null
+          run_id: string
+        }
+        Insert: {
+          case_key: string
+          case_number: number
+          estimated_cost_aud: number
+          expected_model_call: boolean
+          input_tokens: number
+          latency_ms: number
+          model_called: boolean
+          outcome: string
+          output_tokens: number
+          reason_code?: string | null
+          run_id: string
+        }
+        Update: {
+          case_key?: string
+          case_number?: number
+          estimated_cost_aud?: number
+          expected_model_call?: boolean
+          input_tokens?: number
+          latency_ms?: number
+          model_called?: boolean
+          outcome?: string
+          output_tokens?: number
+          reason_code?: string | null
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'weekly_preparation_evaluation_cases_run_id_fkey'
+            columns: ['run_id']
+            isOneToOne: false
+            referencedRelation: 'weekly_preparation_evaluation_runs'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       weekly_preparation_evaluation_runs: {
         Row: {
           accepted_count: number
           ambiguous_decision: string
+          completed_at: string | null
           corpus_version: string
           created_at: string
+          deployment_sha: string | null
           deterministic_count: number
+          error_reason: string | null
           estimated_cost_aud: number
           fallback_count: number
           id: string
@@ -1403,9 +1500,11 @@ export type Database = {
           plan_count: number
           planner_version: string
           pricing_version: string
+          prompt_version: string
           rejected_count: number
           reviewed_correct_count: number
           schema_version: string
+          status: string
           total_latency_ms: number
           unsupported_count: number
           valid_output_count: number
@@ -1413,9 +1512,12 @@ export type Database = {
         Insert: {
           accepted_count: number
           ambiguous_decision: string
+          completed_at?: string | null
           corpus_version: string
           created_at?: string
+          deployment_sha?: string | null
           deterministic_count: number
+          error_reason?: string | null
           estimated_cost_aud: number
           fallback_count: number
           id?: string
@@ -1426,9 +1528,11 @@ export type Database = {
           plan_count: number
           planner_version: string
           pricing_version: string
+          prompt_version?: string
           rejected_count: number
           reviewed_correct_count: number
           schema_version: string
+          status?: string
           total_latency_ms: number
           unsupported_count: number
           valid_output_count: number
@@ -1436,9 +1540,12 @@ export type Database = {
         Update: {
           accepted_count?: number
           ambiguous_decision?: string
+          completed_at?: string | null
           corpus_version?: string
           created_at?: string
+          deployment_sha?: string | null
           deterministic_count?: number
+          error_reason?: string | null
           estimated_cost_aud?: number
           fallback_count?: number
           id?: string
@@ -1449,14 +1556,72 @@ export type Database = {
           plan_count?: number
           planner_version?: string
           pricing_version?: string
+          prompt_version?: string
           rejected_count?: number
           reviewed_correct_count?: number
           schema_version?: string
+          status?: string
           total_latency_ms?: number
           unsupported_count?: number
           valid_output_count?: number
         }
         Relationships: []
+      }
+      weekly_preparation_generation_attempts: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          estimated_cost_aud: number
+          household_id: string
+          id: string
+          input_tokens: number
+          latency_ms: number
+          model_called: boolean
+          outcome: string
+          output_tokens: number
+          plan_key: string
+          reason_code: string | null
+          request_key: string
+        }
+        Insert: {
+          correlation_id?: string
+          created_at?: string
+          estimated_cost_aud?: number
+          household_id: string
+          id?: string
+          input_tokens?: number
+          latency_ms?: number
+          model_called?: boolean
+          outcome: string
+          output_tokens?: number
+          plan_key: string
+          reason_code?: string | null
+          request_key: string
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          estimated_cost_aud?: number
+          household_id?: string
+          id?: string
+          input_tokens?: number
+          latency_ms?: number
+          model_called?: boolean
+          outcome?: string
+          output_tokens?: number
+          plan_key?: string
+          reason_code?: string | null
+          request_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'weekly_preparation_generation_attempts_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
       }
       weekly_preparation_plans: {
         Row: {
@@ -1511,29 +1676,44 @@ export type Database = {
       weekly_preparation_settings: {
         Row: {
           ai_enabled: boolean
+          corpus_version: string
           daily_plan_limit: number
           emergency_stop: boolean
           model_identifier: string
           monthly_cost_limit_aud: number
+          pricing_version: string
+          prompt_version: string
           singleton: boolean
+          smoke_deployment_sha: string | null
+          smoke_verified_at: string | null
           updated_at: string
         }
         Insert: {
           ai_enabled?: boolean
+          corpus_version?: string
           daily_plan_limit?: number
           emergency_stop?: boolean
           model_identifier?: string
           monthly_cost_limit_aud?: number
+          pricing_version?: string
+          prompt_version?: string
           singleton?: boolean
+          smoke_deployment_sha?: string | null
+          smoke_verified_at?: string | null
           updated_at?: string
         }
         Update: {
           ai_enabled?: boolean
+          corpus_version?: string
           daily_plan_limit?: number
           emergency_stop?: boolean
           model_identifier?: string
           monthly_cost_limit_aud?: number
+          pricing_version?: string
+          prompt_version?: string
           singleton?: boolean
+          smoke_deployment_sha?: string | null
+          smoke_verified_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1578,6 +1758,10 @@ export type Database = {
     Functions: {
       accept_household_invitation: {
         Args: { p_display_name: string; p_invitation_token: string }
+        Returns: string
+      }
+      accept_weekly_preparation_evaluation: {
+        Args: { target_run_id: string }
         Returns: string
       }
       activate_recipe_enrichment: {
