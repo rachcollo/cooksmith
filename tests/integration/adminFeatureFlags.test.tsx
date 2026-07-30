@@ -70,6 +70,9 @@ describe('admin feature toggles', () => {
     const updateSettings = vi.fn(async (input) => ({
       ...input,
       modelIdentifier: 'gpt-5-mini',
+      corpusVersion: 'weekly-preparation-corpus-v1',
+      promptVersion: 'weekly-preparation-prompt-v1',
+      smokeVerified: false,
       updatedAt: '2026-07-28T01:00:00Z',
     }))
     const weeklyPreparationAdminRepository: WeeklyPreparationAdminRepository = {
@@ -77,10 +80,15 @@ describe('admin feature toggles', () => {
         aiEnabled: false,
         emergencyStop: false,
         modelIdentifier: 'gpt-5-mini',
+        corpusVersion: 'weekly-preparation-corpus-v1',
+        promptVersion: 'weekly-preparation-prompt-v1',
+        smokeVerified: false,
         updatedAt: '2026-07-28T00:00:00Z',
       }),
       updateSettings,
       getLatestEvaluation: async () => null,
+      runEvaluation: async () => undefined,
+      acceptEvaluation: async () => undefined,
       getRecipeEnrichmentStatus: async () => ({
         paused: false,
         aiEnabled: false,
