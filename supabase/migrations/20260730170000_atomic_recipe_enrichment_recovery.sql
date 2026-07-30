@@ -91,20 +91,39 @@ begin
 end;
 $$;
 
--- Reconcile only the contradictory state created by the former split-write boundary.
-update cooksmith.recipe_enrichment_jobs jobs
-set state = 'completed',
-    leased_until = null,
-    completed_at = coalesce(jobs.completed_at, enrichments.activated_at, now()),
-    failure_category = null,
-    provider_http_status = null,
-    provider_error_code = null,
-    provider_error_param = null,
-    provider_request_id = null
-from cooksmith.recipe_enrichments enrichments
-where enrichments.job_id = jobs.id
-  and enrichments.is_active
-  and jobs.state = 'failed';
+create or replace function cooksmith_private.reconcile_active_recipe_enrichment_jobs()
+returns integer
+language plpgsql
+security invoker
+set search_path = ''
+as $
+declare reconciled integer;
+begin
+  -- Reconcile only the contradictory state created by the former split-write boundary.
+  update cooksmith.recipe_enrichment_jobs jobs
+  set state = 'completed',
+      leased_until = null,
+      completed_at = coalesce(jobs.completed_at, enrichments.activated_at, now()),
+      failure_category = null,
+      provider_http_status = null,
+      provider_error_code = null,
+      provider_error_param = null,
+      provider_request_id = null
+  from cooksmith.recipe_enrichments enrichments
+  where enrichments.job_id = jobs.id
+    and enrichments.is_active
+    and jobs.state = 'failed';
+  get diagnostics reconciled = row_count;
+  return reconciled;
+end;
+$;
+
+revoke all on function cooksmith_private.reconcile_active_recipe_enrichment_jobs()
+  from public, anon, authenticated;
+grant execute on function cooksmith_private.reconcile_active_recipe_enrichment_jobs()
+  to service_role;
+
+select cooksmith_private.reconcile_active_recipe_enrichment_jobs();
 
 create or replace function cooksmith_private.recipe_enrichment_recoverable_count()
 returns integer
@@ -339,6 +358,8 @@ $$;
 
 comment on function cooksmith.activate_recipe_enrichment(uuid, text, text, jsonb, text) is
   'Atomically validates freshness, activates enrichment, and completes its job.';
+comment on function cooksmith_private.reconcile_active_recipe_enrichment_jobs() is
+  'Repairs failed-job contradictions only when that job owns the active enrichment.';
 comment on function cooksmith_private.recipe_enrichment_recoverable_count() is
   'Counts only exhausted current-version provider jobs without active successful enrichment.';
 comment on function cooksmith.recipe_enrichment_backfill_command(text, integer) is
