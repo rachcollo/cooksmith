@@ -1,5 +1,5 @@
 begin;
-select plan(15);
+select plan(16);
 
 select has_table(
   'cooksmith',
@@ -105,7 +105,38 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   0.100000,
   'accepted'
 );
+insert into cooksmith.weekly_preparation_evaluation_cases (
+  run_id, case_number, case_key, expected_model_call, model_called, outcome,
+  latency_ms, input_tokens, output_tokens, estimated_cost_aud
+)
+select
+  run.id,
+  case_number,
+  'legacy-case-' || case_number,
+  case_number <= 10,
+  case_number <= 10,
+  case when case_number <= 10 then 'model-assisted' else 'deterministic' end,
+  100,
+  case when case_number <= 10 then 100 else 0 end,
+  case when case_number <= 10 then 50 else 0 end,
+  0
+from cooksmith.weekly_preparation_evaluation_runs run
+cross join generate_series(1, 30) case_number;
+
+update cooksmith.weekly_preparation_settings
+set
+  model_identifier = 'test-model',
+  smoke_verified_at = now(),
+  smoke_deployment_sha = repeat('a', 40)
+where singleton;
+
 set local role authenticated;
+select lives_ok(
+  $$select cooksmith.accept_weekly_preparation_evaluation(
+      (select id from cooksmith.weekly_preparation_evaluation_runs limit 1)
+    )$$,
+  'Application admins can explicitly accept a complete current evaluation'
+);
 select lives_ok(
   $$update cooksmith.weekly_preparation_settings
       set ai_enabled = true, emergency_stop = false
