@@ -9,7 +9,12 @@ const source = readFileSync(
 
 describe('recipe import enrichment dispatch', () => {
   it('launches enrichment after a new public import is saved', () => {
-    expect(source).toContain("if (visibility === 'public') await dispatchRecipeEnrichment(client)")
+    expect(source).toContain("if (visibility === 'public') wakeRecipeEnrichment(client)")
+  })
+
+  it('wakes enrichment after household recipe creates and edits without blocking save', () => {
+    expect(source.match(/wakeRecipeEnrichment\(client\)/g)?.length).toBeGreaterThanOrEqual(4)
+    expect(source).toContain('void dispatchRecipeEnrichment(client).catch')
   })
 
   it('does not launch enrichment for private imports that are not queued', () => {

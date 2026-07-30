@@ -2640,3 +2640,20 @@ button.card:hover {
   margin: var(--space-1) 0 0;
   overflow-wrap: anywhere;
 }
+
+.admin-recipe-filters,
+.admin-recipe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.admin-recipe-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-recipe-table-wrap table {
+  min-width: 48rem;
+  width: 100%;
+}

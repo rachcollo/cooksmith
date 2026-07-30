@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
 import { usePlannedMealRepository } from '../app/meal-plans/plannedMealContext'
@@ -129,6 +130,7 @@ function RecipeMultilineEditor({
 }
 
 export function RecipesPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { state } = useOnboarding()
   const repository = useRecipeRepository()
   const plannedMeals = usePlannedMealRepository()
@@ -180,6 +182,23 @@ export function RecipesPage() {
     return recipes.filter((recipe) => recipe.name.toLocaleLowerCase().includes(normalisedQuery))
   }, [query, recipes])
   const selectedRecipe = recipes.find((recipe) => recipe.id === selectedId) ?? null
+
+  useEffect(() => {
+    const recipeId = searchParams.get('recipe')
+    if (!recipeId || recipes.length === 0) return
+    const recipe = recipes.find((candidate) => candidate.id === recipeId)
+    if (!recipe) return
+    const timer = window.setTimeout(() => {
+      setSelectedId(recipe.id)
+      if (searchParams.get('edit') === '1' && recipe.scope === 'household') {
+        setEditDraft(recipeToMultilineInput(recipe))
+        setEditErrors({})
+        setEditing(true)
+      }
+      setSearchParams({}, { replace: true })
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [recipes, searchParams, setSearchParams])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

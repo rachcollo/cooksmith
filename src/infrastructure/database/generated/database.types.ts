@@ -1590,6 +1590,28 @@ export type Database = {
         }
         Returns: string
       }
+      admin_recipe_enrichment_list: {
+        Args: { search_text?: string; status_filter?: string }
+        Returns: {
+          ai_active: boolean
+          can_edit: boolean
+          completed_at: string
+          name: string
+          owner_label: string
+          recipe_id: string
+          retryable: boolean
+          source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+          status: string
+          updated_at: string
+        }[]
+      }
+      admin_retry_recipe_enrichment: {
+        Args: {
+          target_recipe_id: string
+          target_source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+        }
+        Returns: boolean
+      }
       bootstrap_household: {
         Args: { p_household_name: string }
         Returns: string

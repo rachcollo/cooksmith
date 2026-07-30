@@ -20,6 +20,25 @@ Cooksmith must enrich the recipes households actually use, including the shared 
 
 CS-93 extends the existing validated enrichment contract across both approved recipe sources without copying shared recipes into a household or weakening private-recipe isolation. An authorised administrator receives one protected, low-click operation to preview, start, pause, resume and verify an idempotent existing-recipe backfill. Recipe use and deterministic Get Ahead remain available throughout.
 
+### Follow-up fix — automatic dispatch and recipe management
+
+The accepted CS-93 recovery work exposed a final journey gap: household recipe
+creates and edits queued durable work but did not wake the enrichment worker.
+This follow-up must:
+
+- dispatch enrichment asynchronously after household create/edit and eligible
+  public import saves without making recipe saving depend on dispatch success;
+- preserve one job per exact recipe version and the existing stale-version,
+  deletion, retry and provider-cost protections;
+- add protected **Admin → Recipes** search and status filtering with the calm
+  states **Preparing recipe insights**, **Ready**, **Couldn’t enrich** and
+  **Not scheduled**;
+- expose a server-authorised retry only for a genuine failed provider job on
+  the current recipe version without active provider-assisted output;
+- keep provider diagnostics out of the recipe table; and
+- allow editing through the existing recipe editor only when the administrator
+  is also an active member of that recipe's household.
+
 ## Current Baseline
 
 The package was verified against remote `main` commit `1e79e82e8939b422348fd3d9a7bebe9506197d79`, which includes merged CS-90 and CS-91.
