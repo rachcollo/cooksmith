@@ -269,7 +269,11 @@ function RecipeEnrichmentOperations() {
                   value={`${status.sources.sharedPlatform.current} / ${status.sources.sharedPlatform.eligible}`}
                   details="Enriched / eligible"
                 />
-                <StatusRow metric="Queued" value={status.states.pending ?? 0} details="Waiting to run" />
+                <StatusRow
+                  metric="Queued"
+                  value={status.states.pending ?? 0}
+                  details="Waiting to run"
+                />
                 <StatusRow
                   metric="Processing"
                   value={status.states.processing ?? 0}
