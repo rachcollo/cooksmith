@@ -147,9 +147,14 @@ describe('admin feature toggles', () => {
       weeklyPreparationAdminRepository,
     )
 
-    expect(await screen.findByText('Latest AI provider error')).toBeVisible()
-    expect(screen.getByText('HTTP 400 · invalid_request_error · text.format.type')).toBeVisible()
-    expect(screen.getByText('Request ID: req_synthetic_diagnostic')).toBeVisible()
+    const statusTable = await screen.findByRole('table', { name: 'Recipe enrichment status' })
+    expect(statusTable).toBeVisible()
+    expect(screen.getByRole('rowheader', { name: 'Failed' })).toBeVisible()
+    expect(
+      screen.getByText(
+        'Latest AI error: HTTP 400 · invalid_request_error · text.format.type · Request req_synthetic_diagnostic',
+      ),
+    ).toBeVisible()
 
     await user.click(
       await screen.findByRole('button', {
