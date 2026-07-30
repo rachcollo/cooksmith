@@ -96,7 +96,7 @@ returns integer
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $reconcile$
 declare reconciled integer;
 begin
   -- Reconcile only the contradictory state created by the former split-write boundary.
@@ -116,7 +116,7 @@ begin
   get diagnostics reconciled = row_count;
   return reconciled;
 end;
-$;
+$reconcile$;
 
 revoke all on function cooksmith_private.reconcile_active_recipe_enrichment_jobs()
   from public, anon, authenticated;
