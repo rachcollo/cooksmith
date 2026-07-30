@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { useFeatureFlagRepository, useFeatureFlags } from '../app/admin/featureFlagContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
@@ -114,6 +115,15 @@ export function AdminPage() {
       </Panel>
       <WeeklyPreparationOperations />
       <RecipeEnrichmentOperations />
+      <Panel>
+        <h2>Recipe management</h2>
+        <p>
+          Review current recipe insight status, retry genuine failures and edit household recipes.
+        </p>
+        <Link className="button button-secondary button-default" to="/admin/recipes">
+          Manage recipes
+        </Link>
+      </Panel>
     </Stack>
   )
 }

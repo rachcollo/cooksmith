@@ -2,6 +2,7 @@ import type {
   WeeklyPreparationAdminRepository,
   WeeklyPreparationEvaluation,
   RecipeEnrichmentBackfillStatus,
+  AdminRecipeEnrichment,
   WeeklyPreparationSettings,
 } from '../../application/admin/weeklyPreparationAdminRepository'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
@@ -113,6 +114,37 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       })
       if (error) throw new Error('Cooksmith could not update Recipe Intelligence AI.')
       return backfillStatus(data)
+    },
+    async listRecipeEnrichments(input = {}) {
+      const { data, error } = await database.rpc('admin_recipe_enrichment_list', {
+        search_text: input.query?.trim() || null,
+        status_filter: input.status === 'all' ? null : (input.status ?? null),
+      })
+      if (error) throw new Error('Cooksmith could not load recipe insight statuses.')
+      return (data ?? []).map((row) => {
+        const item = row as Record<string, unknown>
+        return {
+          recipeId: String(item.recipe_id),
+          sourceKind: item.source_kind as AdminRecipeEnrichment['sourceKind'],
+          name: String(item.name),
+          ownerLabel: String(item.owner_label),
+          updatedAt: String(item.updated_at),
+          status: item.status as AdminRecipeEnrichment['status'],
+          completedAt: item.completed_at ? String(item.completed_at) : null,
+          aiActive: Boolean(item.ai_active),
+          retryable: Boolean(item.retryable),
+          canEdit: Boolean(item.can_edit),
+        }
+      })
+    },
+    async retryRecipeEnrichment(recipeId, sourceKind) {
+      const { error } = await database.rpc('admin_retry_recipe_enrichment', {
+        target_recipe_id: recipeId,
+        target_source_kind: sourceKind,
+      })
+      if (error) throw new Error('Cooksmith could not retry recipe insights.')
+      const { error: dispatchError } = await client.functions.invoke('enrich-recipe', { body: {} })
+      if (dispatchError) throw new Error('Recipe insights are queued and will start shortly.')
     },
   }
 }

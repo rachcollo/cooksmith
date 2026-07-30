@@ -40,6 +40,11 @@ export const AdminPage = lazy(async () => {
   return { default: module.AdminPage }
 })
 
+export const AdminRecipesPage = lazy(async () => {
+  const module = await import('../../routes/AdminRecipesPage')
+  return { default: module.AdminRecipesPage }
+})
+
 export const HealthPage = lazy(async () => {
   const module = await import('../../routes/HealthPage')
   return { default: module.HealthPage }

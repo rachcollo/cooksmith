@@ -215,6 +215,12 @@ async function dispatchRecipeEnrichment(client: CooksmithSupabaseClient) {
   await client.functions.invoke('enrich-recipe', { body: {} })
 }
 
+function wakeRecipeEnrichment(client: CooksmithSupabaseClient) {
+  void dispatchRecipeEnrichment(client).catch(() => {
+    // The database queue is durable. A later save or admin resume can wake it.
+  })
+}
+
 export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient): RecipeRepository {
   const database = client.schema('cooksmith')
   const selection =
@@ -312,7 +318,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
           .single()
         recipeError(existing.error)
         if (existing.data) {
-          await dispatchRecipeEnrichment(client)
+          wakeRecipeEnrichment(client)
           return mapImportedRow(existing.data as unknown as ImportedRecipeRow)
         }
       }
@@ -321,7 +327,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
       }
       recipeError(result.error)
       if (!result.data) throw new Error('Cooksmith could not save the imported recipe.')
-      if (visibility === 'public') await dispatchRecipeEnrichment(client)
+      if (visibility === 'public') wakeRecipeEnrichment(client)
       return mapImportedRow(result.data as unknown as ImportedRecipeRow)
     },
     async create(householdId, input) {
@@ -355,6 +361,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .single()
       recipeError(refreshed.error)
       if (!refreshed.data) throw new Error('Cooksmith could not save the recipe.')
+      wakeRecipeEnrichment(client)
       return mapRow(refreshed.data as unknown as RecipeRow)
     },
     async update(householdId, recipeId, input) {
@@ -389,6 +396,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .single()
       recipeError(refreshed.error)
       if (!refreshed.data) throw new Error('Cooksmith could not update the recipe.')
+      wakeRecipeEnrichment(client)
       return mapRow(refreshed.data as unknown as RecipeRow)
     },
     async archive(householdId, recipeId) {

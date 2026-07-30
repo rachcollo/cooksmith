@@ -1576,6 +1576,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_recipe_enrichment_list: {
+        Args: { search_text?: string | null; status_filter?: string | null }
+        Returns: {
+          ai_active: boolean
+          can_edit: boolean
+          completed_at: string | null
+          name: string
+          owner_label: string
+          recipe_id: string
+          retryable: boolean
+          source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+          status: string
+          updated_at: string
+        }[]
+      }
+      admin_retry_recipe_enrichment: {
+        Args: {
+          target_recipe_id: string
+          target_source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+        }
+        Returns: boolean
+      }
       accept_household_invitation: {
         Args: { p_display_name: string; p_invitation_token: string }
         Returns: string

@@ -123,6 +123,8 @@ describe('admin feature toggles', () => {
         states: {},
         latestProviderFailure: null,
       }),
+      listRecipeEnrichments: async () => [],
+      retryRecipeEnrichment: async () => undefined,
     }
     const repository: FeatureFlagRepository = {
       isAdmin: async () => true,

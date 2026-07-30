@@ -40,6 +40,19 @@ export type RecipeEnrichmentBackfillStatus = {
   } | null
 }
 
+export type AdminRecipeEnrichment = {
+  recipeId: string
+  sourceKind: 'household' | 'shared_platform'
+  name: string
+  ownerLabel: string
+  updatedAt: string
+  status: 'preparing' | 'ready' | 'failed' | 'not_scheduled'
+  completedAt: string | null
+  aiActive: boolean
+  retryable: boolean
+  canEdit: boolean
+}
+
 export interface WeeklyPreparationAdminRepository {
   getSettings(): Promise<WeeklyPreparationSettings>
   updateSettings(input: {
@@ -58,4 +71,12 @@ export interface WeeklyPreparationAdminRepository {
       | 'recover_exhausted_ai_failures',
   ): Promise<RecipeEnrichmentBackfillStatus>
   setRecipeIntelligenceAi(enabled: boolean): Promise<RecipeEnrichmentBackfillStatus>
+  listRecipeEnrichments(input?: {
+    query?: string
+    status?: AdminRecipeEnrichment['status'] | 'all'
+  }): Promise<AdminRecipeEnrichment[]>
+  retryRecipeEnrichment(
+    recipeId: string,
+    sourceKind: AdminRecipeEnrichment['sourceKind'],
+  ): Promise<void>
 }

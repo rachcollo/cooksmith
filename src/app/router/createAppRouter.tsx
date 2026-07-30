@@ -14,6 +14,7 @@ import { LoadingState } from '../../components/ui/LoadingState'
 import {
   GetAheadPage,
   AdminPage,
+  AdminRecipesPage,
   HealthPage,
   HomePage,
   NotFoundPage,
@@ -83,7 +84,10 @@ export const appRoutes: RouteObject[] = [
                   { path: 'settings', element: <SettingsPage /> },
                   {
                     element: <RequireApplicationAdmin />,
-                    children: [{ path: 'admin', element: <AdminPage /> }],
+                    children: [
+                      { path: 'admin', element: <AdminPage /> },
+                      { path: 'admin/recipes', element: <AdminRecipesPage /> },
+                    ],
                   },
                   { path: '*', element: <NotFoundPage /> },
                 ],
