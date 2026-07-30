@@ -117,8 +117,8 @@ export function createSupabaseWeeklyPreparationAdminRepository(
     },
     async listRecipeEnrichments(input = {}) {
       const { data, error } = await database.rpc('admin_recipe_enrichment_list', {
-        search_text: input.query?.trim() || null,
-        status_filter: input.status === 'all' ? null : (input.status ?? null),
+        search_text: input.query?.trim() || undefined,
+        status_filter: input.status === 'all' ? undefined : input.status,
       })
       if (error) throw new Error('Cooksmith could not load recipe insight statuses.')
       return (data ?? []).map((row) => {

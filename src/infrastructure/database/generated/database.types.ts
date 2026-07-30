@@ -1576,12 +1576,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_household_invitation: {
+        Args: { p_display_name: string; p_invitation_token: string }
+        Returns: string
+      }
+      activate_recipe_enrichment: {
+        Args: {
+          target_job_id: string
+          target_model_key: string
+          target_overall_confidence: string
+          target_provider: string
+          target_result: Json
+        }
+        Returns: string
+      }
       admin_recipe_enrichment_list: {
-        Args: { search_text?: string | null; status_filter?: string | null }
+        Args: { search_text?: string; status_filter?: string }
         Returns: {
           ai_active: boolean
           can_edit: boolean
-          completed_at: string | null
+          completed_at: string
           name: string
           owner_label: string
           recipe_id: string
@@ -1597,20 +1611,6 @@ export type Database = {
           target_source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
         }
         Returns: boolean
-      }
-      accept_household_invitation: {
-        Args: { p_display_name: string; p_invitation_token: string }
-        Returns: string
-      }
-      activate_recipe_enrichment: {
-        Args: {
-          target_job_id: string
-          target_model_key: string
-          target_overall_confidence: string
-          target_provider: string
-          target_result: Json
-        }
-        Returns: string
       }
       bootstrap_household: {
         Args: { p_household_name: string }
