@@ -30,7 +30,9 @@ export type RecipeEnrichmentBackfillStatus = {
     household: { eligible: number; current: number }
     sharedPlatform: { eligible: number; current: number }
   }
-  states: Partial<Record<'pending' | 'processing' | 'completed' | 'failed' | 'cancelled', number>>
+  states: Partial<
+    Record<'pending' | 'processing' | 'completed' | 'failed' | 'cancelled', number>
+  >
   latestProviderFailure: {
     httpStatus: number
     errorCode?: string
@@ -49,7 +51,13 @@ export interface WeeklyPreparationAdminRepository {
   getLatestEvaluation(): Promise<WeeklyPreparationEvaluation | null>
   getRecipeEnrichmentStatus(): Promise<RecipeEnrichmentBackfillStatus>
   commandRecipeEnrichment(
-    command: 'start' | 'pause' | 'resume' | 'retry_failed' | 'reprocess_ai' | 'recover_exhausted_ai_failures',
+    command:
+      | 'start'
+      | 'pause'
+      | 'resume'
+      | 'retry_failed'
+      | 'reprocess_ai'
+      | 'recover_exhausted_ai_failures',
   ): Promise<RecipeEnrichmentBackfillStatus>
   setRecipeIntelligenceAi(enabled: boolean): Promise<RecipeEnrichmentBackfillStatus>
 }
