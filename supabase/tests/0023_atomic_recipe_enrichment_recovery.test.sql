@@ -90,6 +90,11 @@ select is(
 );
 
 -- Make recipe 12's provider failure obsolete by creating a newer content version.
+-- now() is transaction-stable, so age the fixture explicitly before the update trigger runs.
+update cooksmith.recipe_content_versions
+set created_at = created_at - interval '1 second'
+where imported_recipe_id = '96000000-0000-4000-8000-000000000012';
+
 update cooksmith.imported_recipes
 set name = 'Old-version recipe revised'
 where id = '96000000-0000-4000-8000-000000000012';
@@ -159,7 +164,12 @@ select is(
   (select state::text from cooksmith.recipe_enrichment_jobs
    where imported_recipe_id = '96000000-0000-4000-8000-000000000012'
      and model_key = 'provider-assisted-v1'
-   order by created_at limit 1),
+     and recipe_version_id <> (
+       select id from cooksmith.recipe_content_versions
+       where imported_recipe_id = '96000000-0000-4000-8000-000000000012'
+       order by created_at desc, id desc
+       limit 1
+     )),
   'failed',
   'Recovery leaves old recipe-version failures untouched'
 );
