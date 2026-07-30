@@ -107,6 +107,24 @@ describe('recipe enrichment Edge Function', () => {
     expect(source).toContain('claimJob(modelKey)')
   })
 
+  it('makes activation/completion atomic and keeps telemetry best-effort', () => {
+    expect(source).toContain("await rest('rpc/activate_recipe_enrichment'")
+    expect(source).not.toContain("finishJob(job, 'completed'")
+    expect(source).toContain('recordUsageTelemetry(job')
+    expect(source).toContain('Usage telemetry is')
+    expect(source).toContain('best-effort')
+  })
+
+  it('checks version freshness before and after provider token use', () => {
+    const providerBranch = source.slice(source.indexOf("job.model_key === 'provider-assisted-v1'"))
+    const preflight = providerBranch.indexOf('currentVersionMatches(version)')
+    const provider = providerBranch.indexOf('resolveAmbiguousLinks')
+    const finalCheck = providerBranch.indexOf('currentVersionMatches(version)', preflight + 1)
+    expect(preflight).toBeGreaterThanOrEqual(0)
+    expect(preflight).toBeLessThan(provider)
+    expect(finalCheck).toBeGreaterThan(provider)
+  })
+
   it('drains a bounded queue across failures and temporary concurrency', () => {
     expect(source).toContain('const MAX_CHAIN_DEPTH = 100')
     expect(source).toContain("outcome: 'busy'")
