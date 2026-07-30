@@ -25,6 +25,7 @@ export type RecipeEnrichmentBackfillStatus = {
   paused: boolean
   aiEnabled: boolean
   monthlyCostLimitAud: number
+  recoverableCount: number
   sources: {
     household: { eligible: number; current: number }
     sharedPlatform: { eligible: number; current: number }
@@ -48,7 +49,7 @@ export interface WeeklyPreparationAdminRepository {
   getLatestEvaluation(): Promise<WeeklyPreparationEvaluation | null>
   getRecipeEnrichmentStatus(): Promise<RecipeEnrichmentBackfillStatus>
   commandRecipeEnrichment(
-    command: 'start' | 'pause' | 'resume' | 'retry_failed' | 'reprocess_ai',
+    command: 'start' | 'pause' | 'resume' | 'retry_failed' | 'reprocess_ai' | 'recover_exhausted_ai_failures',
   ): Promise<RecipeEnrichmentBackfillStatus>
   setRecipeIntelligenceAi(enabled: boolean): Promise<RecipeEnrichmentBackfillStatus>
 }
