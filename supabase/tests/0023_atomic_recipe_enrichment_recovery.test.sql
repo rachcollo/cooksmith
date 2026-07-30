@@ -99,7 +99,21 @@ update cooksmith.imported_recipes
 set name = 'Old-version recipe revised'
 where id = '96000000-0000-4000-8000-000000000012';
 
--- A deterministic exhausted failure must never enter provider recovery.
+-- An active deterministic enrichment must not suppress recovery of an exhausted AI job.
+update cooksmith.recipe_enrichment_jobs
+set state = 'processing', attempt_count = 1
+where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
+  and model_key = 'deterministic';
+
+select cooksmith.activate_recipe_enrichment(
+  (select id from cooksmith.recipe_enrichment_jobs
+   where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
+     and model_key = 'deterministic'),
+  'deterministic', 'deterministic',
+  '{"recipeId":"recoverable","ingredients":[],"unresolvedIngredientIds":[],"overallConfidence":"high"}',
+  'high'
+);
+
 update cooksmith.recipe_enrichment_jobs
 set state = 'failed', attempt_count = 3
 where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
@@ -131,7 +145,7 @@ select set_config(
 select is(
   (cooksmith.recipe_enrichment_backfill_status()->>'recoverableCount')::integer,
   1,
-  'Status returns the exact recoverable count'
+  'Active deterministic enrichment does not suppress the exact recoverable AI count'
 );
 select lives_ok(
   $$select cooksmith.recipe_enrichment_backfill_command('recover_exhausted_ai_failures', 100)$$,
