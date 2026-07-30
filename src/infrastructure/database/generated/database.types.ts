@@ -1386,93 +1386,6 @@ export type Database = {
           },
         ]
       }
-      weekly_preparation_evaluation_runs: {
-        Row: {
-          accepted_count: number
-          ambiguous_decision: string
-          corpus_version: string
-          completed_at: string | null
-          created_at: string
-          deterministic_count: number
-          estimated_cost_aud: number
-          fallback_count: number
-          id: string
-          deployment_sha: string | null
-          error_reason: string | null
-          input_tokens: number
-          model_call_count: number
-          model_identifier: string
-          output_tokens: number
-          plan_count: number
-          planner_version: string
-          pricing_version: string
-          prompt_version: string
-          rejected_count: number
-          reviewed_correct_count: number
-          schema_version: string
-          status: string
-          total_latency_ms: number
-          unsupported_count: number
-          valid_output_count: number
-        }
-        Insert: {
-          accepted_count: number
-          ambiguous_decision: string
-          corpus_version: string
-          completed_at?: string | null
-          created_at?: string
-          deterministic_count: number
-          estimated_cost_aud: number
-          fallback_count: number
-          id?: string
-          deployment_sha?: string | null
-          error_reason?: string | null
-          input_tokens: number
-          model_call_count: number
-          model_identifier: string
-          output_tokens: number
-          plan_count: number
-          planner_version: string
-          pricing_version: string
-          prompt_version?: string
-          rejected_count: number
-          reviewed_correct_count: number
-          schema_version: string
-          status?: string
-          total_latency_ms: number
-          unsupported_count: number
-          valid_output_count: number
-        }
-        Update: {
-          accepted_count?: number
-          ambiguous_decision?: string
-          corpus_version?: string
-          completed_at?: string | null
-          created_at?: string
-          deterministic_count?: number
-          estimated_cost_aud?: number
-          fallback_count?: number
-          id?: string
-          deployment_sha?: string | null
-          error_reason?: string | null
-          input_tokens?: number
-          model_call_count?: number
-          model_identifier?: string
-          output_tokens?: number
-          plan_count?: number
-          planner_version?: string
-          pricing_version?: string
-          prompt_version?: string
-          rejected_count?: number
-          reviewed_correct_count?: number
-          schema_version?: string
-          status?: string
-          total_latency_ms?: number
-          unsupported_count?: number
-          valid_output_count?: number
-        }
-        Relationships: []
-      }
       weekly_preparation_evaluation_acceptances: {
         Row: {
           accepted_at: string
@@ -1623,6 +1536,93 @@ export type Database = {
           },
         ]
       }
+      weekly_preparation_evaluation_runs: {
+        Row: {
+          accepted_count: number
+          ambiguous_decision: string
+          corpus_version: string
+          completed_at: string | null
+          created_at: string
+          deterministic_count: number
+          estimated_cost_aud: number
+          fallback_count: number
+          id: string
+          deployment_sha: string | null
+          error_reason: string | null
+          input_tokens: number
+          model_call_count: number
+          model_identifier: string
+          output_tokens: number
+          plan_count: number
+          planner_version: string
+          pricing_version: string
+          prompt_version: string
+          rejected_count: number
+          reviewed_correct_count: number
+          schema_version: string
+          status: string
+          total_latency_ms: number
+          unsupported_count: number
+          valid_output_count: number
+        }
+        Insert: {
+          accepted_count: number
+          ambiguous_decision: string
+          corpus_version: string
+          completed_at?: string | null
+          created_at?: string
+          deterministic_count: number
+          estimated_cost_aud: number
+          fallback_count: number
+          id?: string
+          deployment_sha?: string | null
+          error_reason?: string | null
+          input_tokens: number
+          model_call_count: number
+          model_identifier: string
+          output_tokens: number
+          plan_count: number
+          planner_version: string
+          pricing_version: string
+          prompt_version?: string
+          rejected_count: number
+          reviewed_correct_count: number
+          schema_version: string
+          status?: string
+          total_latency_ms: number
+          unsupported_count: number
+          valid_output_count: number
+        }
+        Update: {
+          accepted_count?: number
+          ambiguous_decision?: string
+          corpus_version?: string
+          completed_at?: string | null
+          created_at?: string
+          deterministic_count?: number
+          estimated_cost_aud?: number
+          fallback_count?: number
+          id?: string
+          deployment_sha?: string | null
+          error_reason?: string | null
+          input_tokens?: number
+          model_call_count?: number
+          model_identifier?: string
+          output_tokens?: number
+          plan_count?: number
+          planner_version?: string
+          pricing_version?: string
+          prompt_version?: string
+          rejected_count?: number
+          reviewed_correct_count?: number
+          schema_version?: string
+          status?: string
+          total_latency_ms?: number
+          unsupported_count?: number
+          valid_output_count?: number
+        }
+        Relationships: []
+      }
       weekly_preparation_plans: {
         Row: {
           cache_key: string
@@ -1756,12 +1756,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_weekly_preparation_evaluation: {
-        Args: { target_run_id: string }
-        Returns: string
-      }
       accept_household_invitation: {
         Args: { p_display_name: string; p_invitation_token: string }
+        Returns: string
+      }
+      accept_weekly_preparation_evaluation: {
+        Args: { target_run_id: string }
         Returns: string
       }
       activate_recipe_enrichment: {
