@@ -14,7 +14,9 @@ const repository = readFileSync(
 describe('recipe enrichment admin recovery', () => {
   it('shows the exact recoverable count and requires explicit confirmation', () => {
     expect(page).toContain('Recover exhausted AI failures ({status.recoverableCount})')
-    expect(page).toContain('Recover exactly ${status?.recoverableCount ?? 0} exhausted AI failures?')
+    expect(page).toContain(
+      'Recover exactly ${status?.recoverableCount ?? 0} exhausted AI failures?',
+    )
     expect(page).toContain("command('recover_exhausted_ai_failures')")
     expect(page).toContain('status.recoverableCount === 0')
   })
