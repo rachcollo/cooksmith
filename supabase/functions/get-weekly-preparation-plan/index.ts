@@ -134,10 +134,14 @@ Deno.serve(async (request) => {
   if (!userId) return json(401, { error: 'unauthenticated' })
 
   const body = (await request.json().catch(() => null)) as {
+    householdId?: unknown
     weekStart?: unknown
     weekEnd?: unknown
+    forceRetry?: unknown
   } | null
   if (
+    typeof body?.householdId !== 'string' ||
+    !/^[0-9a-f-]{36}$/i.test(body.householdId) ||
     !validDate(body?.weekStart) ||
     !validDate(body?.weekEnd) ||
     body.weekStart > body.weekEnd
@@ -146,7 +150,7 @@ Deno.serve(async (request) => {
 
   try {
     const memberships = await rest<Array<{ household_id: string }>>(
-      `household_members?user_id=eq.${encodeURIComponent(userId)}&status=eq.active&select=household_id&order=joined_at.asc&limit=1`,
+      `household_members?user_id=eq.${encodeURIComponent(userId)}&household_id=eq.${encodeURIComponent(body.householdId)}&status=eq.active&select=household_id&limit=1`,
     )
     const householdId = memberships[0]?.household_id
     if (!householdId) return json(403, { error: 'household_unavailable' })
@@ -154,9 +158,13 @@ Deno.serve(async (request) => {
     const meals = await rest<MealRow[]>(
       `planned_meals?household_id=eq.${householdId}&meal_date=gte.${body.weekStart}&meal_date=lte.${body.weekEnd}&or=(recipe_id.not.is.null,imported_recipe_id.not.is.null)&select=id,recipe_id,imported_recipe_id,meal_date&order=meal_date.asc&limit=100`,
     )
-    const recipeIds = [...new Set(meals.flatMap((meal) => (meal.recipe_id ? [meal.recipe_id] : [])))]
+    const recipeIds = [
+      ...new Set(meals.flatMap((meal) => (meal.recipe_id ? [meal.recipe_id] : []))),
+    ]
     const importedRecipeIds = [
-      ...new Set(meals.flatMap((meal) => (meal.imported_recipe_id ? [meal.imported_recipe_id] : []))),
+      ...new Set(
+        meals.flatMap((meal) => (meal.imported_recipe_id ? [meal.imported_recipe_id] : [])),
+      ),
     ]
     if (recipeIds.length === 0 && importedRecipeIds.length === 0)
       return json(200, { plan: emptyPlan(householdId, planId) })
@@ -192,7 +200,11 @@ Deno.serve(async (request) => {
           'content-type': 'application/json',
           'x-cooksmith-worker-token': workerToken,
         },
-        body: JSON.stringify({ candidates }),
+        body: JSON.stringify({
+          candidates,
+          forceRetry: body.forceRetry === true,
+          requestId: `${householdId}:${planId}`,
+        }),
         signal: AbortSignal.timeout(15_000),
       },
     )
