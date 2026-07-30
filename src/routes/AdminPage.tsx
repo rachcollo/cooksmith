@@ -240,44 +240,81 @@ function RecipeEnrichmentOperations() {
       <Panel>
         {status ? (
           <>
-            <dl className="admin-metrics-grid">
-              <Metric
-                label="Recipe Intelligence AI"
-                value={status.aiEnabled ? 'Enabled' : 'Disabled'}
-              />
-              <Metric
-                label="Monthly provider limit"
-                value={`A$${status.monthlyCostLimitAud.toFixed(2)}`}
-              />
-              <Metric label="Household eligible" value={status.sources.household.eligible} />
-              <Metric label="Household enriched" value={status.sources.household.current} />
-              <Metric label="Shared eligible" value={status.sources.sharedPlatform.eligible} />
-              <Metric label="Shared enriched" value={status.sources.sharedPlatform.current} />
-              <Metric label="Queued" value={status.states.pending ?? 0} />
-              <Metric label="Processing" value={status.states.processing ?? 0} />
-              <Metric label="Completed" value={status.states.completed ?? 0} />
-              <Metric label="Failed" value={status.states.failed ?? 0} />
-              <Metric label="Recoverable AI failures" value={status.recoverableCount} />
-              <Metric label="Rejected" value={status.states.cancelled ?? 0} />
-              <Metric label="Skipped" value={0} />
-            </dl>
-            {status.latestProviderFailure ? (
-              <div role="status" className="flow-stack">
-                <h3>Latest AI provider error</h3>
-                <p>
-                  HTTP {status.latestProviderFailure.httpStatus}
-                  {status.latestProviderFailure.errorCode
-                    ? ` · ${status.latestProviderFailure.errorCode}`
-                    : ''}
-                  {status.latestProviderFailure.errorParam
-                    ? ` · ${status.latestProviderFailure.errorParam}`
-                    : ''}
-                </p>
-                {status.latestProviderFailure.requestId ? (
-                  <p>Request ID: {status.latestProviderFailure.requestId}</p>
-                ) : null}
-              </div>
-            ) : null}
+            <table aria-label="Recipe enrichment status">
+              <thead>
+                <tr>
+                  <th scope="col">Metric</th>
+                  <th scope="col">Value</th>
+                  <th scope="col">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <StatusRow
+                  metric="Recipe Intelligence AI"
+                  value={status.aiEnabled ? 'Enabled' : 'Disabled'}
+                  details={status.paused ? 'Queue paused' : 'Queue available'}
+                />
+                <StatusRow
+                  metric="Monthly provider limit"
+                  value={`A$${status.monthlyCostLimitAud.toFixed(2)}`}
+                  details="Maximum AI provider spend per month"
+                />
+                <StatusRow
+                  metric="Household recipes"
+                  value={`${status.sources.household.current} / ${status.sources.household.eligible}`}
+                  details="Enriched / eligible"
+                />
+                <StatusRow
+                  metric="Shared recipes"
+                  value={`${status.sources.sharedPlatform.current} / ${status.sources.sharedPlatform.eligible}`}
+                  details="Enriched / eligible"
+                />
+                <StatusRow
+                  metric="Queued"
+                  value={status.states.pending ?? 0}
+                  details="Waiting to run"
+                />
+                <StatusRow
+                  metric="Processing"
+                  value={status.states.processing ?? 0}
+                  details="Currently running"
+                />
+                <StatusRow
+                  metric="Completed"
+                  value={status.states.completed ?? 0}
+                  details="Finished successfully"
+                />
+                <StatusRow
+                  metric="Failed"
+                  value={status.states.failed ?? 0}
+                  details={
+                    status.latestProviderFailure
+                      ? [
+                          `Latest AI error: HTTP ${status.latestProviderFailure.httpStatus}`,
+                          status.latestProviderFailure.errorCode,
+                          status.latestProviderFailure.errorParam,
+                          status.latestProviderFailure.requestId
+                            ? `Request ${status.latestProviderFailure.requestId}`
+                            : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')
+                      : 'No current provider error'
+                  }
+                />
+                <StatusRow
+                  metric="Recoverable AI failures"
+                  value={status.recoverableCount}
+                  details="Exhausted current-version AI jobs eligible for recovery"
+                />
+                <StatusRow
+                  metric="Rejected"
+                  value={status.states.cancelled ?? 0}
+                  details="Cancelled or rejected"
+                />
+              </tbody>
+            </table>
+
             <div className="cluster">
               <Button disabled={busy} onClick={() => void setAi(!status.aiEnabled)}>
                 {status.aiEnabled
@@ -467,6 +504,24 @@ function WeeklyPreparationOperations() {
         )}
       </Panel>
     </section>
+  )
+}
+
+function StatusRow({
+  metric,
+  value,
+  details,
+}: {
+  metric: string
+  value: string | number
+  details: string
+}) {
+  return (
+    <tr>
+      <th scope="row">{metric}</th>
+      <td>{value}</td>
+      <td>{details}</td>
+    </tr>
   )
 }
 
