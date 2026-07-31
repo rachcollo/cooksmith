@@ -24,6 +24,8 @@ const json = (status: number, body: unknown) =>
 const serviceHeaders = () => ({
   apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}`,
+  'accept-profile': 'cooksmith',
+  'content-profile': 'cooksmith',
   'content-type': 'application/json',
 })
 
@@ -107,45 +109,66 @@ Deno.serve(async (request) => {
   )
     return json(412, { error: 'configuration_incomplete' })
 
-  const settingsResponse = await rest(
-    'weekly_preparation_settings?singleton=eq.true&select=corpus_version,prompt_version,pricing_version',
-  )
-  const [settings] = (await settingsResponse.json()) as Array<{
+  let settings: {
     corpus_version: string
     prompt_version: string
     pricing_version: string
-  }>
-  if (!settings) return json(412, { error: 'configuration_incomplete' })
+    model_identifier: string
+  }
+  let runId: string
+  try {
+    const settingsResponse = await rest(
+      'weekly_preparation_settings?singleton=eq.true&select=corpus_version,prompt_version,pricing_version,model_identifier',
+    )
+    const rows = (await settingsResponse.json()) as (typeof settings)[]
+    if (!rows[0]) return json(412, { error: 'configuration_incomplete' })
+    settings = rows[0]
 
-  const runResponse = await rest('weekly_preparation_evaluation_runs?select=id', {
-    method: 'POST',
-    headers: { prefer: 'return=representation' },
-    body: JSON.stringify({
-      corpus_version: settings.corpus_version,
-      schema_version: weeklyPreparationPlanSchemaVersion,
-      planner_version: weeklyPreparationPlannerVersion,
-      prompt_version: settings.prompt_version,
-      model_identifier: model,
-      pricing_version: settings.pricing_version,
-      status: 'running',
-      plan_count: 30,
-      deterministic_count: 0,
-      model_call_count: 0,
-      valid_output_count: 0,
-      accepted_count: 0,
-      rejected_count: 0,
-      fallback_count: 0,
-      unsupported_count: 0,
-      reviewed_correct_count: 0,
-      total_latency_ms: 0,
-      input_tokens: 0,
-      output_tokens: 0,
-      estimated_cost_aud: 0,
-      ambiguous_decision: 'fallback',
-      deployment_sha: deploymentSha,
-    }),
-  })
-  const [{ id: runId }] = (await runResponse.json()) as Array<{ id: string }>
+    if (settings.model_identifier !== model) {
+      await rest('weekly_preparation_settings?singleton=eq.true', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          model_identifier: model,
+          smoke_verified_at: null,
+          smoke_deployment_sha: null,
+        }),
+      })
+    }
+
+    const runResponse = await rest('weekly_preparation_evaluation_runs?select=id', {
+      method: 'POST',
+      headers: { prefer: 'return=representation' },
+      body: JSON.stringify({
+        corpus_version: settings.corpus_version,
+        schema_version: weeklyPreparationPlanSchemaVersion,
+        planner_version: weeklyPreparationPlannerVersion,
+        prompt_version: settings.prompt_version,
+        model_identifier: model,
+        pricing_version: settings.pricing_version,
+        status: 'running',
+        plan_count: 30,
+        deterministic_count: 0,
+        model_call_count: 0,
+        valid_output_count: 0,
+        accepted_count: 0,
+        rejected_count: 0,
+        fallback_count: 0,
+        unsupported_count: 0,
+        reviewed_correct_count: 0,
+        total_latency_ms: 0,
+        input_tokens: 0,
+        output_tokens: 0,
+        estimated_cost_aud: 0,
+        ambiguous_decision: 'fallback',
+        deployment_sha: deploymentSha,
+      }),
+    })
+    const runs = (await runResponse.json()) as Array<{ id: string }>
+    if (!runs[0]) return json(503, { error: 'evaluation_persistence_unavailable' })
+    runId = runs[0].id
+  } catch {
+    return json(503, { error: 'evaluation_persistence_unavailable' })
+  }
 
   const cases = []
   let deterministicCount = 0

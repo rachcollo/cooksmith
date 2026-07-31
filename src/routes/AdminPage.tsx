@@ -440,9 +440,11 @@ function WeeklyPreparationOperations() {
       await adminRepository.runEvaluation()
       await refresh()
       setMessage('The 30-plan evaluation finished. Review the evidence before accepting it.')
-    } catch {
+    } catch (error) {
       setMessage(
-        'The 30-plan evaluation could not complete. Check configuration and hosted smoke readiness, then try again.',
+        error instanceof Error
+          ? error.message
+          : 'The 30-plan evaluation could not complete. Check configuration and try again.',
       )
     } finally {
       setEvaluating(false)

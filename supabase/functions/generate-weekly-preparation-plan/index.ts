@@ -15,6 +15,8 @@ const json = (status: number, body: unknown) =>
 const serviceHeaders = () => ({
   apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}`,
+  'accept-profile': 'cooksmith',
+  'content-profile': 'cooksmith',
   'content-type': 'application/json',
 })
 
@@ -141,9 +143,19 @@ Deno.serve(async (request) => {
     const ambiguous = candidates.filter((candidate) =>
       deterministic.ambiguousCandidateIds.includes(candidate.id),
     )
+    const configuredModel = Deno.env.get('WEEKLY_PREPARATION_MODEL')
+    if (!configuredModel || configuredModel !== settings.model_identifier) {
+      const fallback = withWeeklyPreparationFallback(deterministic, 'model_identity_mismatch')
+      await savePlan(fallback)
+      return json(200, {
+        plan: fallback,
+        metrics: { modelCalled: false, validation: 'configuration_mismatch' },
+      })
+    }
+
     const assisted = await decideAmbiguousPreparation({
       apiKey: Deno.env.get('OPENAI_API_KEY') ?? '',
-      model: Deno.env.get('WEEKLY_PREPARATION_MODEL') ?? 'gpt-5-mini-2025-08-07',
+      model: configuredModel,
       candidates: ambiguous,
       timeoutMs: 10_000,
     })

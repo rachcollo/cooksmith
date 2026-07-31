@@ -34,6 +34,28 @@ function backfillStatus(value: unknown): RecipeEnrichmentBackfillStatus {
   return value as RecipeEnrichmentBackfillStatus
 }
 
+async function evaluationErrorMessage(error: unknown): Promise<string> {
+  const context =
+    error && typeof error === 'object' && 'context' in error ? error.context : undefined
+  if (!(context instanceof Response))
+    return 'The 30-plan evaluation could not be started. Check the Edge Function release.'
+
+  const payload = (await context
+    .clone()
+    .json()
+    .catch(() => null)) as { error?: unknown } | null
+  switch (payload?.error) {
+    case 'configuration_incomplete':
+      return 'The 30-plan evaluation is missing provider or release configuration.'
+    case 'evaluation_persistence_unavailable':
+      return 'The 30-plan evaluation could not access Cooksmith evaluation storage.'
+    case 'administrator_required':
+      return 'Your administrator access could not be verified.'
+    default:
+      return 'The 30-plan evaluation could not complete. Check the Edge Function logs.'
+  }
+}
+
 export function createSupabaseWeeklyPreparationAdminRepository(
   client: CooksmithSupabaseClient,
 ): WeeklyPreparationAdminRepository {
@@ -101,7 +123,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const { error } = await client.functions.invoke('evaluate-weekly-preparation', {
         body: { command: 'run' },
       })
-      if (error) throw new Error('The 30-plan evaluation could not be started.')
+      if (error) throw new Error(await evaluationErrorMessage(error))
     },
     async acceptEvaluation(runId) {
       const { error } = await database.rpc('accept_weekly_preparation_evaluation', {
