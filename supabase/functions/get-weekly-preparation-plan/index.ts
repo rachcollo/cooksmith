@@ -3,6 +3,7 @@ import type {
   WeeklyPreparationPlan,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
 import type { RecipeIntelligence } from '../../../src/domain/recipes/intelligence.ts'
+import { fetchWeeklyPreparationHouseholdData } from '../../../src/infrastructure/get-ahead/weeklyPreparationHouseholdData.ts'
 import { verifyActiveHouseholdMember } from '../../../src/infrastructure/get-ahead/weeklyPreparationMembership.ts'
 
 declare const Deno: {
@@ -98,7 +99,7 @@ function candidatesFrom(
     const enrichment = enrichmentByRecipe.get(`${sourceKind}:${recipeId}`)
     if (!enrichment) return []
     return enrichment.result.ingredients.flatMap((ingredient) => {
-      if (!ingredient.action && !ingredient.preparationDetail) return []
+      if (!isSupportedPreparationAction(ingredient.action)) return []
       return [
         {
           id: `${meal.id}:${enrichment.recipe_version_id}:${ingredient.sourceIngredientId}`,
@@ -128,6 +129,29 @@ function candidatesFrom(
       ]
     })
   })
+}
+
+const supportedPreparationActions = new Set([
+  'bake',
+  'blend',
+  'boil',
+  'chop',
+  'cook',
+  'dice',
+  'grate',
+  'marinate',
+  'mince',
+  'mix',
+  'roast',
+  'shred',
+  'slice',
+  'steam',
+  'toast',
+  'whisk',
+])
+
+function isSupportedPreparationAction(action: string | null) {
+  return action ? supportedPreparationActions.has(action.trim().toLowerCase()) : false
 }
 
 Deno.serve(async (request) => {
@@ -174,7 +198,14 @@ Deno.serve(async (request) => {
 
   try {
     const planId = `${body.weekStart}_${body.weekEnd}`
-    const meals = await rest<MealRow[]>(
+    const householdData = <T>(path: string) =>
+      fetchWeeklyPreparationHouseholdData<T>({
+        supabaseUrl: Deno.env.get('SUPABASE_URL') ?? '',
+        anonKey: Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        authorisation,
+        path,
+      })
+    const meals = await householdData<MealRow[]>(
       `planned_meals?household_id=eq.${householdId}&meal_date=gte.${body.weekStart}&meal_date=lte.${body.weekEnd}&or=(recipe_id.not.is.null,imported_recipe_id.not.is.null)&select=id,recipe_id,imported_recipe_id,meal_date&order=meal_date.asc&limit=100`,
     )
     const recipeIds = [
@@ -187,7 +218,7 @@ Deno.serve(async (request) => {
     ]
     if (recipeIds.length === 0 && importedRecipeIds.length === 0)
       return json(200, { plan: emptyPlan(householdId, planId) })
-    const settings = await rest<Array<{ default_servings: number }>>(
+    const settings = await householdData<Array<{ default_servings: number }>>(
       `household_settings?household_id=eq.${householdId}&select=default_servings&limit=1`,
     )
     const filters = [
