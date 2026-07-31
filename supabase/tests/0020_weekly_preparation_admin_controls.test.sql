@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(17);
 
 select has_table(
   'cooksmith',
@@ -141,6 +141,20 @@ select lives_ok(
     )$$,
   'Application admins can explicitly accept a complete current evaluation'
 );
+update cooksmith.weekly_preparation_settings
+set smoke_deployment_sha = repeat('b', 40)
+where singleton;
+select throws_ok(
+  $$update cooksmith.weekly_preparation_settings
+      set ai_enabled = true, emergency_stop = false
+    where singleton$$,
+  '23514',
+  'Current smoke test and accepted 30-plan evaluation required',
+  'AI cannot activate when smoke and evaluation came from different deployments'
+);
+update cooksmith.weekly_preparation_settings
+set smoke_deployment_sha = repeat('a', 40)
+where singleton;
 select lives_ok(
   $$update cooksmith.weekly_preparation_settings
       set ai_enabled = true, emergency_stop = false
