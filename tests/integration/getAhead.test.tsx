@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
 import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
@@ -95,6 +95,8 @@ const recipeRepository: RecipeRepository = {
 }
 
 describe('Get Ahead page', () => {
+  beforeEach(() => localStorage.clear())
+
   it('clears the temporary fallback banner after a successful retry', async () => {
     const user = userEvent.setup()
     let calls = 0
@@ -172,5 +174,33 @@ describe('Get Ahead page', () => {
 
     await user.click(checkbox)
     expect(checkbox).not.toBeChecked()
+  })
+
+  it('shows the preparation period and replans a resumable session for more time', async () => {
+    const user = userEvent.setup()
+    renderApp(
+      '/get-ahead',
+      { appEnvironment: 'test', buildCommit: 'test-build' },
+      authenticatedTestClient,
+      completedOnboardingRepository,
+      ownerHouseholdPeopleRepository,
+      defaultPantryRepository,
+      plannedMealRepository,
+      authenticatedTestAuthState,
+      recipeRepository,
+      defaultShoppingRepository,
+    )
+
+    expect(await screen.findByLabelText('Which meals are you preparing for?')).toHaveValue(
+      'next-weekdays',
+    )
+    await user.click(screen.getByRole('button', { name: 'Start' }))
+    expect(await screen.findByText(/30 minutes available/u)).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'End early' }))
+    await user.selectOptions(screen.getByLabelText('Preset duration'), '45')
+    await user.click(screen.getByRole('button', { name: 'Update plan' }))
+
+    expect(await screen.findByText(/45 minutes available/u)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'End early' })).toBeVisible()
   })
 })
