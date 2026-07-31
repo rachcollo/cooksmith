@@ -44,3 +44,17 @@ Production release order after merge is database migration
 `20260731100000_cs94_bind_evaluation_to_deployment.sql`, the three weekly-preparation Edge
 Functions with `COOKSMITH_DEPLOYMENT_SHA` set to the merge commit, then the 30-plan evaluation,
 acceptance and AI activation.
+
+## Provider contract correction
+
+The production evaluation failure was traced to an unsupported `uniqueItems` constraint in the
+strict Responses API schema. The correction removes unsupported array constraints while retaining
+Cooksmith's application-side decision validation. Provider HTTP category, safe error code,
+parameter and request ID are logged as operational metadata only; provider response text and
+Cooksmith content remain excluded.
+
+Each completed evaluation case is now persisted immediately. If a later provider call fails, the
+run retains its completed-case evidence and aggregate counters and reports a specific safe failure
+category in Admin. The protected release workflow binds `COOKSMITH_DEPLOYMENT_SHA` to the approved
+commit before deploying the functions. This correction requires an Edge Function release only and
+no database migration.

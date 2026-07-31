@@ -5,7 +5,10 @@ import {
   weeklyPreparationPlanSchemaVersion,
   type WeeklyPreparationCandidate,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
-import { decideAmbiguousPreparation } from '../generate-weekly-preparation-plan/openaiAdapter.ts'
+import {
+  decideAmbiguousPreparation,
+  WeeklyPreparationProviderError,
+} from '../generate-weekly-preparation-plan/openaiAdapter.ts'
 
 declare const Deno: {
   env: { get(key: string): string | undefined }
@@ -35,6 +38,26 @@ const userHeaders = (authorisation: string) => ({
   'content-profile': 'cooksmith',
   'content-type': 'application/json',
 })
+
+function evaluationFailure(error: unknown) {
+  if (error instanceof WeeklyPreparationProviderError) {
+    // Operational metadata only. Provider payloads and Cooksmith content are excluded.
+    // eslint-disable-next-line no-console
+    console.error(
+      JSON.stringify({
+        event: 'weekly_preparation_evaluation_provider_failure',
+        category: error.category,
+        provider_http_status: error.status,
+        provider_error_code: error.providerCode,
+        provider_error_param: error.providerParam,
+        provider_request_id: error.requestId,
+      }),
+    )
+    return error.category
+  }
+  if (error instanceof Error && error.message === 'schema_invalid') return 'provider_output_invalid'
+  return 'evaluation_failed'
+}
 
 async function rest(path: string, init: RequestInit = {}) {
   const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/${path}`, {
@@ -203,7 +226,6 @@ Deno.serve(async (request) => {
     return json(503, { error: 'evaluation_persistence_unavailable' })
   }
 
-  const cases = []
   let deterministicCount = 0
   let modelCallCount = 0
   let validOutputCount = 0
@@ -262,25 +284,24 @@ Deno.serve(async (request) => {
       }
       const latencyMs = Date.now() - startedAt
       totalLatencyMs += latencyMs
-      cases.push({
-        run_id: runId,
-        case_number: caseNumber,
-        case_key: `representative-week-${caseNumber}`,
-        expected_model_call: expectedModelCall,
-        model_called: modelCalled,
-        outcome,
-        reason_code: outcome === 'fallback' ? 'validation' : null,
-        latency_ms: latencyMs,
-        input_tokens: caseInputTokens,
-        output_tokens: caseOutputTokens,
-        estimated_cost_aud:
-          (caseInputTokens * inputRate + caseOutputTokens * outputRate) / 1_000_000,
+      await rest('weekly_preparation_evaluation_cases', {
+        method: 'POST',
+        body: JSON.stringify({
+          run_id: runId,
+          case_number: caseNumber,
+          case_key: `representative-week-${caseNumber}`,
+          expected_model_call: expectedModelCall,
+          model_called: modelCalled,
+          outcome,
+          reason_code: outcome === 'fallback' ? 'validation' : null,
+          latency_ms: latencyMs,
+          input_tokens: caseInputTokens,
+          output_tokens: caseOutputTokens,
+          estimated_cost_aud:
+            (caseInputTokens * inputRate + caseOutputTokens * outputRate) / 1_000_000,
+        }),
       })
     }
-    await rest('weekly_preparation_evaluation_cases', {
-      method: 'POST',
-      body: JSON.stringify(cases),
-    })
     await rest(`weekly_preparation_evaluation_runs?id=eq.${runId}`, {
       method: 'PATCH',
       body: JSON.stringify({
@@ -307,15 +328,26 @@ Deno.serve(async (request) => {
       }),
     })
     return json(200, { runId, status: 'completed' })
-  } catch {
+  } catch (error) {
+    const errorReason = evaluationFailure(error)
     await rest(`weekly_preparation_evaluation_runs?id=eq.${runId}`, {
       method: 'PATCH',
       body: JSON.stringify({
         status: 'failed',
         completed_at: new Date().toISOString(),
-        error_reason: 'evaluation_failed',
+        error_reason: errorReason,
+        deterministic_count: deterministicCount,
+        model_call_count: modelCallCount,
+        valid_output_count: validOutputCount,
+        accepted_count: validOutputCount,
+        fallback_count: fallbackCount,
+        reviewed_correct_count: reviewedCorrectCount,
+        total_latency_ms: totalLatencyMs,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        estimated_cost_aud: estimatedCostAud,
       }),
     }).catch(() => undefined)
-    return json(503, { error: 'evaluation_failed' })
+    return json(503, { error: errorReason })
   }
 })

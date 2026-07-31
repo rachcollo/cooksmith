@@ -42,6 +42,34 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).toContain("error_reason: 'evaluation_interrupted'")
   })
 
+  it('uses an OpenAI-compatible schema and retains safe partial evaluation evidence', () => {
+    const evaluationSource = readFileSync(edgeFunctionSources[0], 'utf8')
+    const adapterSource = readFileSync(
+      'supabase/functions/generate-weekly-preparation-plan/openaiAdapter.ts',
+      'utf8',
+    )
+
+    expect(adapterSource).not.toContain('uniqueItems')
+    expect(adapterSource).not.toContain('minItems')
+    expect(adapterSource).toContain("response.headers.get('x-request-id')")
+    expect(adapterSource).toContain('body.error?.param')
+    expect(adapterSource).toContain("error.name === 'TimeoutError'")
+    expect(adapterSource).toContain("throw new Error('schema_invalid')")
+    expect(evaluationSource).toContain("event: 'weekly_preparation_evaluation_provider_failure'")
+    expect(evaluationSource).toContain("await rest('weekly_preparation_evaluation_cases'")
+    expect(evaluationSource).toContain('deterministic_count: deterministicCount')
+    expect(evaluationSource).toContain('error_reason: errorReason')
+  })
+
+  it('binds the approved deployment identity before deploying functions', () => {
+    const workflow = readFileSync('.github/workflows/production-edge-function-release.yml', 'utf8')
+    const bind = workflow.indexOf('Bind hosted evaluation evidence to the approved commit')
+    const deploy = workflow.indexOf('Deploy authenticated import-recipe function')
+
+    expect(bind).toBeGreaterThan(0)
+    expect(bind).toBeLessThan(deploy)
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],
@@ -49,6 +77,10 @@ describe('weekly preparation Edge Function contracts', () => {
     ['authorisation_unavailable', 'could not verify administrator access'],
     ['evaluation_already_running', 'evaluation is already running'],
     ['evaluation_failed', 'started but could not complete'],
+    ['provider_rejected', 'provider rejected the evaluation request'],
+    ['provider_rate_limited', 'provider is temporarily rate limited'],
+    ['provider_unavailable', 'provider is temporarily unavailable'],
+    ['provider_output_invalid', 'provider returned an invalid evaluation response'],
   ])('shows a safe admin message for %s', async (code, expectedMessage) => {
     const invoke = vi.fn(async () => ({
       data: null,
