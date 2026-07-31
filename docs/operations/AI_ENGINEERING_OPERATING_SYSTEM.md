@@ -264,8 +264,8 @@ Required for:
 - production database migrations (protected `production-database`
   environment, required reviewer, exact 40-character SHA, confirmation phrase
   `DEPLOY_PRODUCTION_DATABASE`);
-- production Edge Function deployments (same protected environment,
-  confirmation phrase `DEPLOY_PRODUCTION_EDGE_FUNCTION`);
+- production Edge Function deployments (automatically prepared for relevant
+  merges and held at the same protected environment for human approval);
 - destructive or irreversible data operations;
 - security-sensitive authentication changes;
 - adding a paid provider or increasing baseline cost by more than A$20/month
@@ -286,9 +286,11 @@ or workflow dispatch performs an irreversible or production-affecting action.
   `permissions: contents: read` and requests nothing broader.
 - No secrets are ever printed; the Jira sync and production release workflows
   read credentials only from GitHub Actions secrets.
-- Production release workflows run only on `workflow_dispatch` against
-  `main`, never on `pull_request`, so forked or untrusted PR code can never
-  trigger a production action or see production credentials.
+- Production release workflows run only for accepted commits on `main`, never
+  on `pull_request`, so forked or untrusted PR code can never trigger a
+  production action or see production credentials. Relevant merges prepare a
+  protected release automatically; the environment approval remains the human
+  production gate.
 - The new `security` quality job blocks tracked `.env*` files (other than
   `.env.example`) and flags high-confidence secret patterns on every PR; this
   complements, and does not replace, GitHub's native secret scanning (a

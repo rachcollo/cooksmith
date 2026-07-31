@@ -70,39 +70,41 @@ mark Jira Done.
 Only do this after the pull request that contains the migration has merged
 to `main`, and only for a commit you have reviewed.
 
-1. In GitHub, open the merged pull request and copy the **full 40-character
-   SHA** of the merge commit (shown on the PR's "Merged" line, or in the
-   commit history of `main`).
-2. Go to **Actions -> Production database release -> Run workflow**.
-3. Select `main`.
-4. Paste the exact SHA into `release_commit`.
-5. Type `DEPLOY_PRODUCTION_DATABASE` into `confirmation`, exactly as shown.
-6. Run the workflow, then approve the `production-database` environment
-   deployment when GitHub prompts you.
-7. Read the dry-run output before the migrations apply. It lists exactly
+1. Open the automatically created **Production database release** run.
+2. Approve the `production-database` environment deployment when GitHub
+   prompts you.
+3. Read the dry-run output before the migrations apply. It lists exactly
    which migrations will run. If anything looks unexpected, cancel and ask
    the engineering agent to investigate instead of proceeding.
-8. After it finishes, the workflow re-checks that migration history is
+4. After it finishes, the workflow re-checks that migration history is
    current. If that final check fails, stop and escalate; do not re-run.
+
+The release is created automatically when a merge to `main` changes
+`supabase/migrations/**`. A manual run remains available for recovery and for
+the reviewed out-of-order migration exception.
 
 ## Release Edge Functions
 
 Only do this after the matching database migration (if any) has already been
 released.
 
-1. Confirm the exact `main` commit SHA you are releasing is the same one you
-   used for the database release, unless they are genuinely unrelated
-   changes.
-2. Go to **Actions -> Production Edge Function release -> Run workflow**.
-3. Select `main`, paste the SHA, and type
-   `DEPLOY_PRODUCTION_EDGE_FUNCTION` into `confirmation`.
-4. Approve the protected environment deployment when prompted.
-5. Confirm the workflow reports the function deployed and JWT verification
-   still enabled.
+1. Open the automatically created **Production Edge Function release** run.
+2. If the same merge includes a database migration, approve and complete the
+   Production database release first.
+3. Approve the Edge Function release's protected environment deployment when
+   prompted.
+4. Confirm the workflow reports the functions deployed, JWT verification is
+   still correct and the deployment identity was recorded.
 
-The approved SHA for a database release does not authorise a different
-commit for an Edge Function release, or vice versa. Each workflow checks its
-own exact commit.
+The release is created automatically when a merge to `main` changes
+`supabase/functions/**`. GitHub deploys that exact merge commit, then sets
+`COOKSMITH_DEPLOYMENT_SHA` to the same commit after the deployed functions
+have been verified. Do not update this secret manually.
+
+The workflow can still be started manually from **Actions -> Production Edge
+Function release -> Run workflow** for recovery or a deliberate redeployment
+of the current `main` commit. Manual runs use the selected `main` commit
+automatically and retain the same protected-environment approval.
 
 ## Verify production and close out Jira
 
