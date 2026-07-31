@@ -27,6 +27,8 @@ const json = (status: number, body: unknown) =>
 const serviceHeaders = () => ({
   apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}`,
+  'accept-profile': 'cooksmith',
+  'content-profile': 'cooksmith',
   'content-type': 'application/json',
 })
 
