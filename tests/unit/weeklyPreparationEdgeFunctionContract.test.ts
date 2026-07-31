@@ -35,14 +35,17 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).not.toContain('app_user_roles?')
   })
 
-  it('checks household membership with the caller JWT before privileged plan loading', () => {
+  it('uses the caller JWT for membership and protected household data before privileged loading', () => {
     const source = readFileSync(edgeFunctionSources[2], 'utf8')
     const membershipSource = readFileSync(
       'src/infrastructure/get-ahead/weeklyPreparationMembership.ts',
       'utf8',
     )
     const membershipCheck = source.indexOf('verifyActiveHouseholdMember({')
-    const mealLoad = source.indexOf('planned_meals?household_id=eq.')
+    const householdData = source.indexOf('fetchWeeklyPreparationHouseholdData<T>({')
+    const mealLoad = source.indexOf('householdData<MealRow[]>(')
+    const settingsLoad = source.indexOf('householdData<Array<{ default_servings: number }>>(')
+    const enrichmentLoad = source.indexOf('rest<EnrichmentRow[]>(')
 
     expect(source).toContain('verifyActiveHouseholdMember({')
     expect(source).toContain('authorisation,')
@@ -52,7 +55,12 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(membershipSource).toContain('authorization: authorisation')
     expect(membershipSource).toContain('body: JSON.stringify({ target_household_id: householdId })')
     expect(membershipCheck).toBeGreaterThan(0)
+    expect(householdData).toBeGreaterThan(membershipCheck)
     expect(mealLoad).toBeGreaterThan(membershipCheck)
+    expect(settingsLoad).toBeGreaterThan(mealLoad)
+    expect(enrichmentLoad).toBeGreaterThan(settingsLoad)
+    expect(source).not.toContain('rest<MealRow[]>(')
+    expect(source).not.toContain('rest<Array<{ default_servings: number }>>(')
   })
 
   it('returns privacy-safe household flow failure categories', () => {

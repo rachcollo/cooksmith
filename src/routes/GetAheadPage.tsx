@@ -315,7 +315,6 @@ export function GetAheadPage() {
               message="Your current plan has no supported Get Ahead opportunities yet."
             />
           ) : null}
-          <p>{visibleSession.recommendationExplanation}</p>
           {overrideError ? (
             <FormError id="get-ahead-override-error">{overrideError}</FormError>
           ) : null}
@@ -415,7 +414,6 @@ function GetAheadTaskRow({
         />
         <span className="task-row-title">
           <strong>{task.title}</strong>
-          <small>{task.reason}</small>
           {task.consolidation && task.consolidation.sources.length > 1 ? (
             <small>
               Helps with{' '}

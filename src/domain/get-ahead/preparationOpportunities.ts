@@ -114,8 +114,8 @@ const stepRules: Array<{ type: PreparationOpportunityType; pattern: RegExp; reas
   },
   {
     type: 'leftover-signal',
-    pattern: /\b(leftover|leftovers|reserve|save)\b/i,
-    reason: 'The recipe instruction explicitly references leftovers, reserving or saving food.',
+    pattern: /\bleftovers?\b/i,
+    reason: 'The recipe instruction explicitly references leftovers.',
   },
   {
     type: 'freezer-signal',

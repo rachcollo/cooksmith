@@ -169,4 +169,20 @@ describe('analysePreparationOpportunities', () => {
     expect(analysePreparationOpportunities([])).toEqual([])
     expect(analysePreparationOpportunities([{ plannedMeal: baseMeal, recipe }])).toEqual([])
   })
+
+  it('does not treat reserving cooking liquid as a leftover opportunity', () => {
+    const recipe: Recipe = {
+      ...baseRecipe,
+      ingredientRows: [],
+      steps: [
+        {
+          ...baseRecipe.steps[0],
+          instruction: 'Reserve one cup of the simmering water.',
+          originalLineText: 'Reserve one cup of the simmering water.',
+        },
+      ],
+    }
+
+    expect(analysePreparationOpportunities([{ plannedMeal: baseMeal, recipe }])).toEqual([])
+  })
 })
