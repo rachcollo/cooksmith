@@ -141,9 +141,11 @@ select lives_ok(
     )$$,
   'Application admins can explicitly accept a complete current evaluation'
 );
+reset role;
 update cooksmith.weekly_preparation_settings
 set smoke_deployment_sha = repeat('b', 40)
 where singleton;
+set local role authenticated;
 select throws_ok(
   $$update cooksmith.weekly_preparation_settings
       set ai_enabled = true, emergency_stop = false
@@ -152,9 +154,11 @@ select throws_ok(
   'Current smoke test and accepted 30-plan evaluation required',
   'AI cannot activate when smoke and evaluation came from different deployments'
 );
+reset role;
 update cooksmith.weekly_preparation_settings
 set smoke_deployment_sha = repeat('a', 40)
 where singleton;
+set local role authenticated;
 select lives_ok(
   $$update cooksmith.weekly_preparation_settings
       set ai_enabled = true, emergency_stop = false
