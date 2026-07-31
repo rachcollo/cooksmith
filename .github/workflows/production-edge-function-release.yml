@@ -1,16 +1,12 @@
 name: Production Edge Function release
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - supabase/functions/**
   workflow_dispatch:
-    inputs:
-      release_commit:
-        description: Paste the full 40-character commit SHA currently at the tip of main
-        required: true
-        type: string
-      confirmation:
-        description: Type DEPLOY_PRODUCTION_EDGE_FUNCTION to confirm
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -31,21 +27,16 @@ jobs:
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
 
     steps:
-      - name: Check release approval inputs
+      - name: Check approved release identity
         env:
-          APPROVED_COMMIT: ${{ inputs.release_commit }}
-          CONFIRMATION: ${{ inputs.confirmation }}
+          APPROVED_COMMIT: ${{ github.sha }}
         run: |
           if [[ ! "$APPROVED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "::error::release_commit must be an actual 40-character lowercase Git commit SHA, not the example text."
+            echo "::error::The approved release must resolve to a full 40-character lowercase Git commit SHA."
             exit 1
           fi
           if [ "$APPROVED_COMMIT" != "$GITHUB_SHA" ]; then
-            echo "::error::release_commit must match the current main commit: $GITHUB_SHA"
-            exit 1
-          fi
-          if [ "$CONFIRMATION" != "DEPLOY_PRODUCTION_EDGE_FUNCTION" ]; then
-            echo "::error::confirmation must be DEPLOY_PRODUCTION_EDGE_FUNCTION"
+            echo "::error::The approved release identity must match the workflow commit: $GITHUB_SHA"
             exit 1
           fi
 
@@ -57,7 +48,7 @@ jobs:
       - name: Check out approved main commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.release_commit }}
+          ref: ${{ github.sha }}
 
       - name: Use pinned Node.js runtime
         uses: actions/setup-node@v4
@@ -99,3 +90,8 @@ jobs:
         run: |
           npx supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > /tmp/functions.json
           node -e "const fs=require('node:fs'); const functions=JSON.parse(fs.readFileSync('/tmp/functions.json','utf8')); if (!functions.some((entry) => entry.name === 'import-recipe' && entry.verify_jwt !== false)) process.exit(1); if (!functions.some((entry) => entry.name === 'enrich-recipe' && entry.verify_jwt === false)) process.exit(1); if (!functions.some((entry) => entry.name === 'generate-weekly-preparation-plan' && entry.verify_jwt === false)) process.exit(1); if (!functions.some((entry) => entry.name === 'get-weekly-preparation-plan' && entry.verify_jwt !== false)) process.exit(1); if (!functions.some((entry) => entry.name === 'evaluate-weekly-preparation' && entry.verify_jwt !== false)) process.exit(1)"
+
+      - name: Bind hosted evaluation evidence to the deployed commit
+        env:
+          COOKSMITH_DEPLOYMENT_SHA: ${{ github.sha }}
+        run: npx supabase secrets set COOKSMITH_DEPLOYMENT_SHA="$COOKSMITH_DEPLOYMENT_SHA" --project-ref "$SUPABASE_PROJECT_REF"
