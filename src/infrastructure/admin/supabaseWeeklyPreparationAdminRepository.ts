@@ -57,6 +57,14 @@ async function evaluationErrorMessage(error: unknown): Promise<string> {
       return 'A 30-plan evaluation is already running. Wait a moment, then refresh.'
     case 'evaluation_failed':
       return 'The 30-plan evaluation started but could not complete. Review the latest evaluation before retrying.'
+    case 'provider_rejected':
+      return 'The provider rejected the evaluation request. Review the latest evaluation before retrying.'
+    case 'provider_rate_limited':
+      return 'The provider is temporarily rate limited. Wait a moment before retrying.'
+    case 'provider_unavailable':
+      return 'The provider is temporarily unavailable. Wait a moment before retrying.'
+    case 'provider_output_invalid':
+      return 'The provider returned an invalid evaluation response. Review the latest evaluation before retrying.'
     default:
       return 'The 30-plan evaluation could not complete. Check the Edge Function logs.'
   }
