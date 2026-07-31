@@ -28,6 +28,13 @@ const serviceHeaders = () => ({
   'content-profile': 'cooksmith',
   'content-type': 'application/json',
 })
+const userHeaders = (authorisation: string) => ({
+  apikey: Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+  authorization: authorisation,
+  'accept-profile': 'cooksmith',
+  'content-profile': 'cooksmith',
+  'content-type': 'application/json',
+})
 
 async function rest(path: string, init: RequestInit = {}) {
   const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/${path}`, {
@@ -39,9 +46,9 @@ async function rest(path: string, init: RequestInit = {}) {
   return response
 }
 
-async function adminUserId(request: Request) {
+async function isAdministrator(request: Request) {
   const authorisation = request.headers.get('authorization')
-  if (!authorisation) return null
+  if (!authorisation) return false
   const userResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/auth/v1/user`, {
     headers: {
       apikey: Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -49,18 +56,38 @@ async function adminUserId(request: Request) {
     },
     signal: AbortSignal.timeout(5_000),
   })
-  if (!userResponse.ok) return null
-  const user = (await userResponse.json()) as { id?: unknown }
-  if (typeof user.id !== 'string') return null
-  const query = new URLSearchParams({
-    user_id: `eq.${user.id}`,
-    role: 'eq.admin',
-    select: 'user_id',
-    limit: '1',
+  if (!userResponse.ok) return false
+  const roleResponse = await fetch(
+    `${Deno.env.get('SUPABASE_URL')}/rest/v1/rpc/has_application_role`,
+    {
+      method: 'POST',
+      headers: userHeaders(authorisation),
+      body: JSON.stringify({ required_role: 'admin' }),
+      signal: AbortSignal.timeout(5_000),
+    },
+  )
+  if (!roleResponse.ok) throw new Error('authorisation_unavailable')
+  return (await roleResponse.json()) === true
+}
+
+async function prepareEvaluationSlot() {
+  const response = await rest(
+    'weekly_preparation_evaluation_runs?status=eq.running&select=id,created_at&order=created_at.desc&limit=1',
+  )
+  const [running] = (await response.json()) as Array<{ id: string; created_at: string }>
+  if (!running) return null
+  const createdAt = Date.parse(running.created_at)
+  if (Number.isFinite(createdAt) && Date.now() - createdAt < 15 * 60 * 1_000)
+    return 'evaluation_already_running'
+  await rest(`weekly_preparation_evaluation_runs?id=eq.${encodeURIComponent(running.id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      status: 'failed',
+      completed_at: new Date().toISOString(),
+      error_reason: 'evaluation_interrupted',
+    }),
   })
-  const roleResponse = await rest(`app_user_roles?${query}`)
-  const roles = (await roleResponse.json()) as Array<{ user_id: string }>
-  return roles.length === 1 ? user.id : null
+  return null
 }
 
 function candidate(caseNumber: number, item: number, action: string): WeeklyPreparationCandidate {
@@ -91,7 +118,11 @@ function candidate(caseNumber: number, item: number, action: string): WeeklyPrep
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders })
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
-  if (!(await adminUserId(request))) return json(403, { error: 'administrator_required' })
+  try {
+    if (!(await isAdministrator(request))) return json(403, { error: 'administrator_required' })
+  } catch {
+    return json(503, { error: 'authorisation_unavailable' })
+  }
 
   const apiKey = Deno.env.get('OPENAI_API_KEY')
   const model = Deno.env.get('WEEKLY_PREPARATION_MODEL')
@@ -117,6 +148,8 @@ Deno.serve(async (request) => {
   }
   let runId: string
   try {
+    const slotError = await prepareEvaluationSlot()
+    if (slotError) return json(409, { error: slotError })
     const settingsResponse = await rest(
       'weekly_preparation_settings?singleton=eq.true&select=corpus_version,prompt_version,pricing_version,model_identifier',
     )
