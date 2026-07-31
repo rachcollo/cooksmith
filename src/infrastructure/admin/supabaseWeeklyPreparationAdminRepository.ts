@@ -51,6 +51,12 @@ async function evaluationErrorMessage(error: unknown): Promise<string> {
       return 'The 30-plan evaluation could not access Cooksmith evaluation storage.'
     case 'administrator_required':
       return 'Your administrator access could not be verified.'
+    case 'authorisation_unavailable':
+      return 'Cooksmith could not verify administrator access. Please try again.'
+    case 'evaluation_already_running':
+      return 'A 30-plan evaluation is already running. Wait a moment, then refresh.'
+    case 'evaluation_failed':
+      return 'The 30-plan evaluation started but could not complete. Review the latest evaluation before retrying.'
     default:
       return 'The 30-plan evaluation could not complete. Check the Edge Function logs.'
   }
