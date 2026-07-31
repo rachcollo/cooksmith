@@ -1,16 +1,14 @@
 # CS-94 handover
 
-- **Status:** End-to-end correction implemented, hosted validation pending
-- **Baseline:** `main` at `704c40a617321fdab7948d3c150dbadd265c913f`
-- **Branch:** `fix/cs-94-end-to-end-readiness`
-- **Migrations:** `20260730230000_cs94_weekly_preparation_release_readiness.sql`,
-  `20260731100000_cs94_bind_evaluation_to_deployment.sql`
-- **Edge Functions changed:** `generate-weekly-preparation-plan`,
-  `get-weekly-preparation-plan`, `evaluate-weekly-preparation`
+- **Status:** Household generation correction implemented, CI and hosted validation pending
+- **Baseline:** `main` at `e42acede9c6063417744f81fa7fe73b3f6eaf74d`
+- **Branch:** `fix/cs-94-household-generation-permissions`
+- **Migrations in this correction:** none
+- **Edge Functions changed in this correction:** `get-weekly-preparation-plan`
 - **Dependencies added:** none
 - **Fixed cost impact:** A$0/month; A$0/year
 
-Local application validation passed: formatting, documentation commands, lint, typecheck, all 319
+Local application validation passed: formatting, documentation commands, lint, typecheck, all 342
 tests, production build and database configuration validation. Database runtime, hosted provider,
 Preview, responsive and assistive-technology validation remain required before approval.
 
@@ -58,3 +56,18 @@ run retains its completed-case evidence and aggregate counters and reports a spe
 category in Admin. The protected release workflow binds `COOKSMITH_DEPLOYMENT_SHA` to the approved
 commit before deploying the functions. This correction requires an Edge Function release only and
 no database migration.
+
+## Household generation permission correction
+
+The household Get Ahead orchestrator now verifies active membership through the existing
+`is_active_household_member` RPC using the signed-in user's JWT before it loads any plan data. It
+no longer attempts to read the protected `household_members` table with a service credential.
+Meals, settings and enrichment continue to load only after that authorisation decision through the
+privileged server boundary.
+
+Authentication, membership verification, missing membership, plan-data, enrichment, worker
+configuration, worker availability and invalid worker response failures now have distinct
+privacy-safe response codes. The household experience continues to fall back calmly without
+showing database, provider, model or credential details. Regression coverage verifies the caller
+JWT is used before privileged plan loading and prevents the protected-table query from returning.
+This correction requires an Edge Function release only and no database migration.
