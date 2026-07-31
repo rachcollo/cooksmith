@@ -35,6 +35,40 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).not.toContain('app_user_roles?')
   })
 
+  it('checks household membership with the caller JWT before privileged plan loading', () => {
+    const source = readFileSync(edgeFunctionSources[2], 'utf8')
+    const membershipSource = readFileSync(
+      'src/infrastructure/get-ahead/weeklyPreparationMembership.ts',
+      'utf8',
+    )
+    const membershipCheck = source.indexOf('verifyActiveHouseholdMember({')
+    const mealLoad = source.indexOf('planned_meals?household_id=eq.')
+
+    expect(source).toContain('verifyActiveHouseholdMember({')
+    expect(source).toContain('authorisation,')
+    expect(source).toContain('householdId: body.householdId')
+    expect(source).not.toContain('household_members?')
+    expect(membershipSource).toContain('/rest/v1/rpc/is_active_household_member')
+    expect(membershipSource).toContain('authorization: authorisation')
+    expect(membershipSource).toContain('body: JSON.stringify({ target_household_id: householdId })')
+    expect(membershipCheck).toBeGreaterThan(0)
+    expect(mealLoad).toBeGreaterThan(membershipCheck)
+  })
+
+  it('returns privacy-safe household flow failure categories', () => {
+    const source = readFileSync(edgeFunctionSources[2], 'utf8')
+
+    expect(source).toContain("error: 'authentication_unavailable'")
+    expect(source).toContain("error: 'membership_verification_unavailable'")
+    expect(source).toContain("error: 'household_unavailable'")
+    expect(source).toContain("error: 'enrichment_unavailable'")
+    expect(source).toContain("error: 'plan_data_unavailable'")
+    expect(source).toContain("error: 'worker_configuration_unavailable'")
+    expect(source).toContain("error: 'worker_unavailable'")
+    expect(source).toContain("error: 'worker_response_invalid'")
+    expect(source).not.toContain("error: 'temporarily_unavailable'")
+  })
+
   it('recovers an interrupted evaluation and rejects a concurrent evaluation', () => {
     const source = readFileSync(edgeFunctionSources[0], 'utf8')
 

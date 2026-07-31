@@ -3,6 +3,7 @@ import type {
   WeeklyPreparationPlan,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
 import type { RecipeIntelligence } from '../../../src/domain/recipes/intelligence.ts'
+import { verifyActiveHouseholdMember } from '../../../src/infrastructure/get-ahead/weeklyPreparationMembership.ts'
 
 declare const Deno: {
   env: { get(key: string): string | undefined }
@@ -132,8 +133,13 @@ function candidatesFrom(
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders })
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
-  const userId = await authenticatedUserId(request)
-  if (!userId) return json(401, { error: 'unauthenticated' })
+  const authorisation = request.headers.get('authorization')
+  if (!authorisation) return json(401, { error: 'unauthenticated' })
+  try {
+    if (!(await authenticatedUserId(request))) return json(401, { error: 'unauthenticated' })
+  } catch {
+    return json(503, { error: 'authentication_unavailable' })
+  }
 
   const body = (await request.json().catch(() => null)) as {
     householdId?: unknown
@@ -150,12 +156,23 @@ Deno.serve(async (request) => {
   )
     return json(400, { error: 'invalid_week' })
 
+  let householdId: string
   try {
-    const memberships = await rest<Array<{ household_id: string }>>(
-      `household_members?user_id=eq.${encodeURIComponent(userId)}&household_id=eq.${encodeURIComponent(body.householdId)}&status=eq.active&select=household_id&limit=1`,
+    if (
+      !(await verifyActiveHouseholdMember({
+        supabaseUrl: Deno.env.get('SUPABASE_URL') ?? '',
+        anonKey: Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        authorisation,
+        householdId: body.householdId,
+      }))
     )
-    const householdId = memberships[0]?.household_id
-    if (!householdId) return json(403, { error: 'household_unavailable' })
+      return json(403, { error: 'household_unavailable' })
+    householdId = body.householdId
+  } catch {
+    return json(503, { error: 'membership_verification_unavailable' })
+  }
+
+  try {
     const planId = `${body.weekStart}_${body.weekEnd}`
     const meals = await rest<MealRow[]>(
       `planned_meals?household_id=eq.${householdId}&meal_date=gte.${body.weekStart}&meal_date=lte.${body.weekEnd}&or=(recipe_id.not.is.null,imported_recipe_id.not.is.null)&select=id,recipe_id,imported_recipe_id,meal_date&order=meal_date.asc&limit=100`,
@@ -193,7 +210,7 @@ Deno.serve(async (request) => {
     )
     if (candidates.length === 0) return json(422, { error: 'enrichment_unavailable' })
     const workerToken = Deno.env.get('WEEKLY_PREPARATION_WORKER_TOKEN')
-    if (!workerToken) throw new Error('worker_unavailable')
+    if (!workerToken) return json(503, { error: 'worker_configuration_unavailable' })
     const worker = await fetch(
       `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-weekly-preparation-plan`,
       {
@@ -210,13 +227,13 @@ Deno.serve(async (request) => {
         signal: AbortSignal.timeout(15_000),
       },
     )
-    if (!worker.ok) throw new Error('worker_unavailable')
+    if (!worker.ok) return json(503, { error: 'worker_unavailable' })
     const result = (await worker.json()) as { plan?: WeeklyPreparationPlan }
     if (!result.plan || result.plan.householdId !== householdId || result.plan.planId !== planId)
-      throw new Error('invalid_worker_response')
+      return json(503, { error: 'worker_response_invalid' })
     return json(200, { plan: result.plan })
   } catch {
-    return json(503, { error: 'temporarily_unavailable' })
+    return json(503, { error: 'plan_data_unavailable' })
   }
 })
 
