@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
 import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
+import type { WeeklyPreparationRepository } from '../../src/application/get-ahead/weeklyPreparationRepository'
 import { currentWeek } from '../../src/domain/meal-plans/week'
 import {
   authenticatedTestClient,
@@ -94,6 +95,48 @@ const recipeRepository: RecipeRepository = {
 }
 
 describe('Get Ahead page', () => {
+  it('clears the temporary fallback banner after a successful retry', async () => {
+    const user = userEvent.setup()
+    let calls = 0
+    const weeklyPreparationRepository: WeeklyPreparationRepository = {
+      getCurrentPlan: async () => {
+        calls += 1
+        if (calls === 1) throw new Error('temporarily unavailable')
+        return {
+          schemaVersion: 'weekly-preparation-plan-v1',
+          plannerVersion: 'weekly-preparation-planner-v1',
+          householdId,
+          planId: `${currentWeek(new Date())}_${currentWeek(new Date())}`,
+          cacheKey: 'successful-retry',
+          tasks: [],
+          ambiguousCandidateIds: [],
+          generation: 'model-assisted',
+          fallbackReason: null,
+        }
+      },
+    }
+    renderApp(
+      '/get-ahead',
+      { appEnvironment: 'test', buildCommit: 'test-build' },
+      authenticatedTestClient,
+      completedOnboardingRepository,
+      ownerHouseholdPeopleRepository,
+      defaultPantryRepository,
+      plannedMealRepository,
+      authenticatedTestAuthState,
+      recipeRepository,
+      defaultShoppingRepository,
+      undefined,
+      weeklyPreparationRepository,
+    )
+
+    expect(await screen.findByText(/temporary fallback/u)).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByText('AI-assisted plan')).toBeVisible()
+    expect(screen.queryByText(/temporary fallback/u)).not.toBeInTheDocument()
+  })
+
   it('keeps prep rows compact and strikes through completed checklist items', async () => {
     const user = userEvent.setup()
     renderApp(
@@ -119,6 +162,8 @@ describe('Get Ahead page', () => {
     expect(within(task).queryByText(/Saves \d+ min later/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/For .+ on/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/More actions/u)).not.toBeInTheDocument()
+    expect(within(task).queryByText(/explicitly describes/u)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Recommended because/u)).not.toBeInTheDocument()
 
     const checkbox = within(task).getByRole('checkbox')
     await user.click(checkbox)
