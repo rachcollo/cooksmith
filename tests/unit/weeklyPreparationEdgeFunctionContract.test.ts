@@ -27,10 +27,28 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).toContain('smoke_verified_at: null')
   })
 
+  it('checks administrator access with the caller JWT instead of reading the roles table', () => {
+    const source = readFileSync(edgeFunctionSources[0], 'utf8')
+
+    expect(source).toContain('/rest/v1/rpc/has_application_role')
+    expect(source).toContain("body: JSON.stringify({ required_role: 'admin' })")
+    expect(source).not.toContain('app_user_roles?')
+  })
+
+  it('recovers an interrupted evaluation and rejects a concurrent evaluation', () => {
+    const source = readFileSync(edgeFunctionSources[0], 'utf8')
+
+    expect(source).toContain("return 'evaluation_already_running'")
+    expect(source).toContain("error_reason: 'evaluation_interrupted'")
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],
     ['administrator_required', 'administrator access could not be verified'],
+    ['authorisation_unavailable', 'could not verify administrator access'],
+    ['evaluation_already_running', 'evaluation is already running'],
+    ['evaluation_failed', 'started but could not complete'],
   ])('shows a safe admin message for %s', async (code, expectedMessage) => {
     const invoke = vi.fn(async () => ({
       data: null,
