@@ -71,6 +71,11 @@ jobs:
           test -f supabase/functions/get-weekly-preparation-plan/index.ts
           test -f supabase/functions/evaluate-weekly-preparation/index.ts
 
+      - name: Bind hosted evaluation evidence to the approved commit
+        env:
+          COOKSMITH_DEPLOYMENT_SHA: ${{ github.sha }}
+        run: npx supabase secrets set COOKSMITH_DEPLOYMENT_SHA="$COOKSMITH_DEPLOYMENT_SHA" --project-ref "$SUPABASE_PROJECT_REF"
+
       - name: Deploy authenticated import-recipe function
         run: npx supabase functions deploy import-recipe --project-ref "$SUPABASE_PROJECT_REF" --use-api
 
@@ -90,8 +95,3 @@ jobs:
         run: |
           npx supabase functions list --project-ref "$SUPABASE_PROJECT_REF" --output json > /tmp/functions.json
           node -e "const fs=require('node:fs'); const functions=JSON.parse(fs.readFileSync('/tmp/functions.json','utf8')); if (!functions.some((entry) => entry.name === 'import-recipe' && entry.verify_jwt !== false)) process.exit(1); if (!functions.some((entry) => entry.name === 'enrich-recipe' && entry.verify_jwt === false)) process.exit(1); if (!functions.some((entry) => entry.name === 'generate-weekly-preparation-plan' && entry.verify_jwt === false)) process.exit(1); if (!functions.some((entry) => entry.name === 'get-weekly-preparation-plan' && entry.verify_jwt !== false)) process.exit(1); if (!functions.some((entry) => entry.name === 'evaluate-weekly-preparation' && entry.verify_jwt !== false)) process.exit(1)"
-
-      - name: Bind hosted evaluation evidence to the deployed commit
-        env:
-          COOKSMITH_DEPLOYMENT_SHA: ${{ github.sha }}
-        run: npx supabase secrets set COOKSMITH_DEPLOYMENT_SHA="$COOKSMITH_DEPLOYMENT_SHA" --project-ref "$SUPABASE_PROJECT_REF"
