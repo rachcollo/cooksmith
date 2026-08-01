@@ -129,6 +129,23 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(bind).toBeLessThan(deploy)
   })
 
+  it('uses short aliases for evaluation relationships in the Admin query', () => {
+    const source = readFileSync(
+      'src/infrastructure/admin/supabaseWeeklyPreparationAdminRepository.ts',
+      'utf8',
+    )
+
+    expect(source).toContain(
+      'acceptances:weekly_preparation_evaluation_acceptances(id)',
+    )
+    expect(source).toContain('cases:weekly_preparation_evaluation_cases(reason_code)')
+    expect(source).toContain('data.cases ?? []')
+    expect(source).toContain('Boolean(data.acceptances)')
+    expect(source).not.toContain(
+      'weekly_preparation_evaluation_acceptances(id), weekly_preparation_evaluation_cases(reason_code)',
+    )
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],
