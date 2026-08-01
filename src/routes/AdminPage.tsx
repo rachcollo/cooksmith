@@ -573,7 +573,7 @@ function WeeklyPreparationOperations() {
           <Button
             variant="secondary"
             disabled={
-              evaluating || !evaluation || evaluation.status !== 'completed' || evaluation.accepted
+              evaluating || !evaluation || !evaluation.acceptanceEligible || evaluation.accepted
             }
             onClick={() => void acceptEvaluation()}
           >
@@ -584,25 +584,44 @@ function WeeklyPreparationOperations() {
           </Button>
         </div>
         {evaluation ? (
-          <dl className="admin-metrics-grid">
-            <Metric label="Plans" value={evaluation.planCount} />
-            <Metric label="Deterministic" value={evaluation.deterministicCount} />
-            <Metric label="Model calls" value={evaluation.modelCallCount} />
-            <Metric label="Valid outputs" value={evaluation.validOutputCount} />
-            <Metric label="Reviewed correct" value={evaluation.reviewedCorrectCount} />
-            <Metric label="Unsupported data" value={evaluation.unsupportedCount} />
-            <Metric label="Fallbacks" value={evaluation.fallbackCount} />
-            <Metric label="Average latency" value={`${evaluation.averageLatencyMs} ms`} />
-            <Metric
-              label="Token usage"
-              value={`${evaluation.inputTokens + evaluation.outputTokens}`}
-            />
-            <Metric
-              label="Estimated cost"
-              value={`A$${evaluation.estimatedCostAud.toFixed(4)} per 30 plans`}
-            />
-            <Metric label="Chop/dice decision" value={evaluation.ambiguousDecision} />
-          </dl>
+          <>
+            {evaluation.reviewMessage ? (
+              <FeedbackState
+                tone="info"
+                title="Evaluation needs review"
+                message={evaluation.reviewMessage}
+              />
+            ) : null}
+            {evaluation.failureReasons.length > 0 ? (
+              <p>
+                Failed cases:{' '}
+                {evaluation.failureReasons
+                  .map(({ reason, count }) => `${count} ${reason.replaceAll('_', ' ')}`)
+                  .join(', ')}
+                .
+              </p>
+            ) : null}
+            <dl className="admin-metrics-grid">
+              <Metric label="Plans" value={evaluation.planCount} />
+              <Metric label="Deterministic" value={evaluation.deterministicCount} />
+              <Metric label="Model calls" value={evaluation.modelCallCount} />
+              <Metric label="Valid outputs" value={evaluation.validOutputCount} />
+              <Metric label="Reviewed correct" value={evaluation.reviewedCorrectCount} />
+              <Metric label="Unsupported data" value={evaluation.unsupportedCount} />
+              <Metric label="Fallbacks" value={evaluation.fallbackCount} />
+              <Metric label="Quality failures" value={evaluation.qualityFailureCount} />
+              <Metric label="Average latency" value={`${evaluation.averageLatencyMs} ms`} />
+              <Metric
+                label="Token usage"
+                value={`${evaluation.inputTokens + evaluation.outputTokens}`}
+              />
+              <Metric
+                label="Estimated cost"
+                value={`A$${evaluation.estimatedCostAud.toFixed(4)} per 30 plans`}
+              />
+              <Metric label="Chop/dice decision" value={evaluation.ambiguousDecision} />
+            </dl>
+          </>
         ) : (
           <p>No hosted evaluation has been recorded. AI assistance must remain disabled.</p>
         )}

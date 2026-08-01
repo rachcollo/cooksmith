@@ -3,12 +3,12 @@ import {
   buildDeterministicWeeklyPreparationPlan,
   weeklyPreparationPlannerVersion,
   weeklyPreparationPlanSchemaVersion,
-  type WeeklyPreparationCandidate,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
 import {
   decideAmbiguousPreparation,
   WeeklyPreparationProviderError,
 } from '../generate-weekly-preparation-plan/openaiAdapter.ts'
+import { buildWeeklyPreparationEvaluationCorpus } from '../../../src/domain/get-ahead/weeklyPreparationEvaluationCorpus.ts'
 
 declare const Deno: {
   env: { get(key: string): string | undefined }
@@ -113,36 +113,6 @@ async function prepareEvaluationSlot() {
   return null
 }
 
-function candidate(
-  caseNumber: number,
-  item: number,
-  action: string,
-  ingredient = 'onion',
-): WeeklyPreparationCandidate {
-  const id = `evaluation-${caseNumber}-${item}`
-  return {
-    id,
-    householdId: '00000000-0000-4000-8000-000000000094',
-    planId: `evaluation-${caseNumber}`,
-    plannedMealId: `meal-${id}`,
-    recipeId: `recipe-${id}`,
-    recipeVersionId: `version-${id}`,
-    enrichmentVersion: 'recipe-intelligence-v1',
-    servings: 4,
-    sourceIngredientId: `ingredient-${id}`,
-    sourceStepIds: [`step-${id}`],
-    originalText: `1 ${ingredient}, ${action}`,
-    canonicalIngredient: ingredient,
-    canonicalAction: action,
-    preparationDetail: action,
-    quantity: { state: 'known', value: 1, unit: null },
-    maximumLeadTimeHours: 24,
-    storageGuidanceReference: 'refrigerate-covered-and-labelled',
-    boundaries: [],
-    confidence: 'high',
-  }
-}
-
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders })
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
@@ -235,32 +205,20 @@ Deno.serve(async (request) => {
   let modelCallCount = 0
   let validOutputCount = 0
   let fallbackCount = 0
+  let rejectedCount = 0
   let reviewedCorrectCount = 0
   let totalLatencyMs = 0
   let inputTokens = 0
   let outputTokens = 0
   let estimatedCostAud = 0
   try {
-    for (let index = 0; index < 30; index += 1) {
+    const corpus = buildWeeklyPreparationEvaluationCorpus()
+    for (let index = 0; index < corpus.length; index += 1) {
       const caseNumber = index + 1
+      const evaluationCase = corpus[index]
+      if (!evaluationCase) throw new Error('evaluation_fixture_invalid')
       const expectedModelCall = true
-      const candidates = [
-        candidate(caseNumber, 1, 'dice'),
-        candidate(caseNumber, 2, 'chop', 'carrot'),
-        candidate(caseNumber, 3, 'mince', 'garlic'),
-        candidate(caseNumber, 4, 'cook', 'garlic cloves'),
-        candidate(caseNumber, 5, 'slice', 'capsicum'),
-      ]
-      const meals = Array.from({ length: 5 }, (_, mealIndex) => ({
-        plannedMealId: candidates[mealIndex]?.plannedMealId ?? `meal-${mealIndex}`,
-        mealDate: `2026-08-${String(mealIndex + 3).padStart(2, '0')}`,
-        recipeName: `Representative meal ${mealIndex + 1}`,
-        ingredients: [candidates[mealIndex]?.originalText ?? '1 vegetable'],
-        instructions:
-          mealIndex === 3
-            ? ['Cook garlic cloves and reserve the simmering water.']
-            : ['Prepare the vegetables, then cook the meal on the planned day.'],
-      }))
+      const { candidates, meals, availableMinutes } = evaluationCase
       const startedAt = Date.now()
       const deterministic = buildDeterministicWeeklyPreparationPlan(candidates)
       let outcome = 'deterministic'
@@ -275,7 +233,7 @@ Deno.serve(async (request) => {
           model,
           candidates,
           meals,
-          availableMinutes: 30,
+          availableMinutes,
           timeoutMs: 12_000,
         })
         caseInputTokens = assisted.inputTokens
@@ -289,23 +247,40 @@ Deno.serve(async (request) => {
           deterministic,
           candidates,
           assisted.decision,
-          30,
+          availableMinutes,
         )
-        const usefulMinutes = validated.ok
-          ? validated.value.tasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0)
-          : 0
-        const usefulPlan =
-          validated.ok &&
-          validated.value.tasks.length >= 2 &&
-          usefulMinutes >= 15 &&
-          validated.value.tasks.every(
-            (task) => !/cook garlic|reserve .*water|preheat/i.test(task.title),
-          )
-        if (!validated.ok || !usefulPlan) {
-          fallbackCount += 1
-          outcome = 'fallback'
-        } else {
+        let reasonCode: string | null = null
+        if (!validated.ok) reasonCode = validated.reason
+        else {
           validOutputCount += 1
+          const usefulMinutes = validated.value.tasks.reduce(
+            (sum, task) => sum + (task.estimatedMinutes ?? 0),
+            0,
+          )
+          const timeSavedMinutes = validated.value.tasks.reduce(
+            (sum, task) => sum + (task.estimatedTimeSavedMinutes ?? 0),
+            0,
+          )
+          if (evaluationCase.expectedEmpty && validated.value.tasks.length > 0)
+            reasonCode = 'expected_empty_plan'
+          else if (!evaluationCase.expectedEmpty && validated.value.tasks.length === 0)
+            reasonCode = 'missing_useful_tasks'
+          else if (validated.value.tasks.length < evaluationCase.minimumUsefulTasks)
+            reasonCode = 'insufficient_useful_tasks'
+          else if (usefulMinutes < evaluationCase.minimumUsefulMinutes)
+            reasonCode = 'insufficient_useful_minutes'
+          else if (validated.value.tasks.length > 0 && timeSavedMinutes === 0)
+            reasonCode = 'no_midweek_time_saved'
+        }
+        if (reasonCode) {
+          if (validated.ok) {
+            rejectedCount += 1
+            outcome = 'failed'
+          } else {
+            fallbackCount += 1
+            outcome = 'fallback'
+          }
+        } else {
           reviewedCorrectCount += 1
           outcome = 'model-assisted'
         }
@@ -320,11 +295,11 @@ Deno.serve(async (request) => {
         body: JSON.stringify({
           run_id: runId,
           case_number: caseNumber,
-          case_key: `representative-week-${caseNumber}`,
+          case_key: evaluationCase.key,
           expected_model_call: expectedModelCall,
           model_called: modelCalled,
           outcome,
-          reason_code: outcome === 'fallback' ? 'validation' : null,
+          reason_code: reasonCode,
           latency_ms: latencyMs,
           input_tokens: caseInputTokens,
           output_tokens: caseOutputTokens,
@@ -333,32 +308,44 @@ Deno.serve(async (request) => {
         }),
       })
     }
+    const reviewPassed = reviewedCorrectCount === corpus.length
     await rest(`weekly_preparation_evaluation_runs?id=eq.${runId}`, {
       method: 'PATCH',
       body: JSON.stringify({
-        status: 'completed',
+        status: reviewPassed ? 'completed' : 'failed',
         completed_at: new Date().toISOString(),
+        error_reason: reviewPassed ? null : 'review_failed',
         deterministic_count: deterministicCount,
         model_call_count: modelCallCount,
         valid_output_count: validOutputCount,
-        accepted_count: validOutputCount,
+        accepted_count: reviewedCorrectCount,
+        rejected_count: rejectedCount,
         fallback_count: fallbackCount,
         reviewed_correct_count: reviewedCorrectCount,
         total_latency_ms: totalLatencyMs,
         input_tokens: inputTokens,
         output_tokens: outputTokens,
         estimated_cost_aud: estimatedCostAud,
-        ambiguous_decision: fallbackCount === 0 ? 'accepted' : 'fallback',
+        ambiguous_decision: reviewPassed
+          ? 'accepted'
+          : rejectedCount > 0
+            ? 'rejected'
+            : 'fallback',
       }),
     })
-    await rest('weekly_preparation_settings?singleton=eq.true', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        smoke_verified_at: new Date().toISOString(),
-        smoke_deployment_sha: deploymentSha,
-      }),
+    if (reviewPassed)
+      await rest('weekly_preparation_settings?singleton=eq.true', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          smoke_verified_at: new Date().toISOString(),
+          smoke_deployment_sha: deploymentSha,
+        }),
+      })
+    return json(reviewPassed ? 200 : 422, {
+      runId,
+      status: reviewPassed ? 'completed' : 'failed',
+      error: reviewPassed ? undefined : 'review_failed',
     })
-    return json(200, { runId, status: 'completed' })
   } catch (error) {
     const errorReason = evaluationFailure(error)
     await rest(`weekly_preparation_evaluation_runs?id=eq.${runId}`, {
@@ -370,7 +357,8 @@ Deno.serve(async (request) => {
         deterministic_count: deterministicCount,
         model_call_count: modelCallCount,
         valid_output_count: validOutputCount,
-        accepted_count: validOutputCount,
+        accepted_count: reviewedCorrectCount,
+        rejected_count: rejectedCount,
         fallback_count: fallbackCount,
         reviewed_correct_count: reviewedCorrectCount,
         total_latency_ms: totalLatencyMs,

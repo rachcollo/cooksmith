@@ -88,7 +88,7 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   completed_at,
   deployment_sha
 ) values (
-  'weekly-preparation-corpus-v2',
+  'weekly-preparation-corpus-v3',
   'weekly-preparation-plan-v2',
   'weekly-preparation-planner-v2',
   'weekly-preparation-strategy-v2',

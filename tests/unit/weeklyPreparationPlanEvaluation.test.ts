@@ -4,6 +4,7 @@ import {
   buildDeterministicWeeklyPreparationPlan,
   type WeeklyPreparationCandidate,
 } from '../../src/domain/get-ahead/weeklyPreparationPlan'
+import { buildWeeklyPreparationEvaluationCorpus } from '../../src/domain/get-ahead/weeklyPreparationEvaluationCorpus'
 
 function candidate(plan: number, recipe: number, action = 'dice'): WeeklyPreparationCandidate {
   const id = `plan-${plan}-recipe-${recipe}`
@@ -31,6 +32,22 @@ function candidate(plan: number, recipe: number, action = 'dice'): WeeklyPrepara
 }
 
 describe('Weekly preparation representative evaluation', () => {
+  it('uses thirty varied cases with duration, safety and honest-empty coverage', () => {
+    const corpus = buildWeeklyPreparationEvaluationCorpus()
+
+    expect(corpus).toHaveLength(30)
+    expect(new Set(corpus.map((item) => item.key)).size).toBe(30)
+    expect(new Set(corpus.map((item) => item.availableMinutes))).toEqual(new Set([15, 30, 60]))
+    expect(corpus.filter((item) => item.expectedEmpty)).toHaveLength(3)
+    expect(
+      corpus.some((item) =>
+        item.candidates.some((candidate) => candidate.boundaries.includes('raw-protein')),
+      ),
+    ).toBe(true)
+    expect(corpus.some((item) => item.minimumUsefulTasks === 1)).toBe(true)
+    expect(corpus.some((item) => item.minimumUsefulTasks === 2)).toBe(true)
+  })
+
   it('evaluates thirty synthetic weekly plans without invented or untraceable data', () => {
     const corpus = Array.from({ length: 30 }, (_, index) => {
       const planNumber = index + 1

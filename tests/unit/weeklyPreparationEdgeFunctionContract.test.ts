@@ -104,6 +104,11 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(evaluationSource).toContain("await rest('weekly_preparation_evaluation_cases'")
     expect(evaluationSource).toContain('deterministic_count: deterministicCount')
     expect(evaluationSource).toContain('error_reason: errorReason')
+    expect(evaluationSource).toContain("error_reason: reviewPassed ? null : 'review_failed'")
+    expect(evaluationSource).toContain('reason_code: reasonCode')
+    expect(evaluationSource).toContain('rejected_count: rejectedCount')
+    expect(evaluationSource).toContain('if (reviewPassed)')
+    expect(evaluationSource).not.toContain("reason_code: outcome === 'fallback' ? 'validation'")
   })
 
   it('sends the selected duration and full meal context to the planning worker', () => {
@@ -135,6 +140,7 @@ describe('weekly preparation Edge Function contracts', () => {
     ['provider_rate_limited', 'provider is temporarily rate limited'],
     ['provider_unavailable', 'provider is temporarily unavailable'],
     ['provider_output_invalid', 'provider returned an invalid evaluation response'],
+    ['review_failed', 'one or more cases failed review'],
   ])('shows a safe admin message for %s', async (code, expectedMessage) => {
     const invoke = vi.fn(async () => ({
       data: null,

@@ -1,5 +1,18 @@
 # CS-94 handover
 
+## 2026-08-01 evaluation review-evidence correction
+
+- Baseline: `main` at `146f149` (merge of PR #148).
+- Branch: `fix/cs-94-evaluation-review-evidence`.
+- Replaces the repeated v2 synthetic input with 30 distinct five-meal cases across 15, 30 and 60 minute sessions, including honest-empty and safety-boundary cases.
+- Persists the exact deterministic validation or product-quality reason for every failed case and separates schema-valid quality failures from validator fallbacks.
+- Marks any incomplete review as failed, withholds hosted smoke evidence, and exposes a safe failure summary in Admin. Accept remains disabled until all 30 cases pass.
+- Migration `20260801193000_cs94_evaluation_review_evidence.sql` disables AI, clears misleading smoke evidence and advances the corpus identity to v3. It is an additive forward fix and does not edit released migrations.
+- Edge Function changed: `evaluate-weekly-preparation`.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Each evaluation continues to make 30 provider calls under existing pricing controls.
+- Local validation passed: `npm ci`, formatting, format check, documentation command audit, lint, typecheck, all 356 Vitest tests and production build. The managed runner could not complete preflight or database reset/lint/pgTAP because the pinned Supabase CLI attempts to write `/root/.supabase`; those unchanged gates remain required in CI.
+- Production remains unchanged. After merge, release the forward migration and Edge Function from the exact approved `main` SHA, then run the v3 evaluation. Accept and enable AI only if Admin reports 30 of 30 cases passed with no failure reasons.
+
 ## 2026-08-01 meal-strategy correction
 
 - Baseline: `main` at `e32180a` (merge of PR #147).

@@ -18,6 +18,7 @@ export type WeeklyPreparationEvaluation = {
   modelCallCount: number
   validOutputCount: number
   fallbackCount: number
+  qualityFailureCount: number
   reviewedCorrectCount: number
   unsupportedCount: number
   averageLatencyMs: number
@@ -25,6 +26,9 @@ export type WeeklyPreparationEvaluation = {
   outputTokens: number
   estimatedCostAud: number
   ambiguousDecision: 'accepted' | 'rejected' | 'fallback'
+  acceptanceEligible: boolean
+  reviewMessage: string | null
+  failureReasons: Array<{ reason: string; count: number }>
 }
 
 export type RecipeEnrichmentBackfillStatus = {

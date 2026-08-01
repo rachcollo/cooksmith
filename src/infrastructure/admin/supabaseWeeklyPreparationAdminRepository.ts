@@ -65,6 +65,8 @@ async function evaluationErrorMessage(error: unknown): Promise<string> {
       return 'The provider is temporarily unavailable. Wait a moment before retrying.'
     case 'provider_output_invalid':
       return 'The provider returned an invalid evaluation response. Review the latest evaluation before retrying.'
+    case 'review_failed':
+      return 'The evaluation completed, but one or more cases failed review. Check the failure summary before running it again.'
     default:
       return 'The 30-plan evaluation could not complete. Check the Edge Function logs.'
   }
@@ -105,13 +107,28 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const { data, error } = await database
         .from('weekly_preparation_evaluation_runs')
         .select(
-          'id, status, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, weekly_preparation_evaluation_acceptances(id)',
+          'id, status, error_reason, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, rejected_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, weekly_preparation_evaluation_acceptances(id), weekly_preparation_evaluation_cases(reason_code)',
         )
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
       if (error) throw new Error('Cooksmith could not load weekly preparation evaluation evidence.')
       if (!data) return null
+      const failureReasonCounts = new Map<string, number>()
+      for (const item of data.weekly_preparation_evaluation_cases ?? []) {
+        if (!item.reason_code) continue
+        failureReasonCounts.set(
+          item.reason_code,
+          (failureReasonCounts.get(item.reason_code) ?? 0) + 1,
+        )
+      }
+      const acceptanceEligible =
+        data.status === 'completed' &&
+        data.plan_count === 30 &&
+        data.valid_output_count === data.model_call_count &&
+        data.fallback_count === 0 &&
+        data.unsupported_count === 0 &&
+        data.reviewed_correct_count === 30
       return {
         id: data.id,
         status: data.status as WeeklyPreparationEvaluation['status'],
@@ -122,6 +139,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         modelCallCount: data.model_call_count,
         validOutputCount: data.valid_output_count,
         fallbackCount: data.fallback_count,
+        qualityFailureCount: data.rejected_count,
         reviewedCorrectCount: data.reviewed_correct_count,
         unsupportedCount: data.unsupported_count,
         averageLatencyMs:
@@ -131,6 +149,20 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         estimatedCostAud: data.estimated_cost_aud,
         ambiguousDecision:
           data.ambiguous_decision as WeeklyPreparationEvaluation['ambiguousDecision'],
+        acceptanceEligible,
+        reviewMessage:
+          data.error_reason === 'review_failed'
+            ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed review. Resolve the failed cases before accepting this evaluation.`
+            : data.status === 'running'
+              ? 'The evaluation is still running.'
+              : !acceptanceEligible && !data.weekly_preparation_evaluation_acceptances
+                ? 'This evaluation does not meet the acceptance requirements.'
+                : null,
+        failureReasons: [...failureReasonCounts.entries()]
+          .map(([reason, count]) => ({ reason, count }))
+          .sort(
+            (left, right) => right.count - left.count || left.reason.localeCompare(right.reason),
+          ),
       }
     },
     async runEvaluation() {
@@ -143,7 +175,10 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const { error } = await database.rpc('accept_weekly_preparation_evaluation', {
         target_run_id: runId,
       })
-      if (error) throw new Error('This evaluation is not ready to accept.')
+      if (error)
+        throw new Error(
+          'This evaluation cannot be accepted. Review the failed or incomplete cases first.',
+        )
     },
     async getRecipeEnrichmentStatus() {
       const { data, error } = await database.rpc('recipe_enrichment_backfill_status')
