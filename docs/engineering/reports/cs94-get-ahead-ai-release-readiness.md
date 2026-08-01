@@ -1,5 +1,13 @@
 # CS-94 implementation report
 
+## Meal-strategy correction — 2026-08-01
+
+The household planner now sends the selected preparation duration and complete selected-meal context to the AI operation. The model creates an ordered, time-bounded make-ahead strategy instead of merely grouping candidates that deterministic code had already approved.
+
+Server validation permits only traceable source candidates, rejects unsupported or unsafe cooking fragments, enforces the selected time budget and accepts an honest empty plan when no worthwhile work exists. Model-provided task estimates and storage guidance flow into the household checklist without exposing internal reasoning.
+
+The v2 readiness corpus contains 30 five-meal cases and fails unless each final plan provides multiple useful tasks, uses a meaningful portion of the time budget and rejects the representative malformed `cook garlic / reserve water` trap. The accompanying migration disables AI, advances the corpus, prompt, schema and planner identities, and requires a fresh accepted evaluation before re-enablement.
+
 ## Outcome
 
 CS-94 adds the controlled product path needed to evaluate and activate Get Ahead AI without

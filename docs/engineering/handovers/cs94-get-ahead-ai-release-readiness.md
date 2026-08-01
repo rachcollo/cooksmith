@@ -1,5 +1,14 @@
 # CS-94 handover
 
+## 2026-08-01 meal-strategy correction
+
+- Baseline: `main` at `e32180a` (merge of PR #147).
+- AI now reviews all selected meals and the actual available time as one planning problem.
+- Deterministic validation owns source traceability, safe action eligibility, storage/lead-time requirements and the time ceiling.
+- Migration `20260801010124_cs94_ai_preparation_strategy.sql` disables the previous AI generation and invalidates its accepted evaluation identity.
+- Release order after merge: approve the Production database release, approve the Production Edge Function release, allow the Vercel deployment, then run and accept the new 30-plan evaluation before re-enabling AI.
+- Cost: no new service or dependency. Provider cost remains usage-based under the existing OpenAI pricing controls. The new evaluation makes 30 model calls and records the measured A$ total before acceptance.
+
 ## Get Ahead preparation-period and replanning correction
 
 - Added a visible preparation-period selector that defaults to the following Monday–Friday and supports this week, next week, or a custom start/end range.

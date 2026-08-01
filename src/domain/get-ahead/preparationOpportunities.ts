@@ -50,6 +50,11 @@ export interface PreparationOpportunity {
     preparation: string | null
   } | null
   reason: string
+  suggestedTitle?: string
+  estimatedMinutes?: number
+  estimatedTimeSavedMinutes?: number
+  storageGuidance?: string
+  priority?: number
 }
 
 interface RuleMatch {

@@ -28,7 +28,7 @@ function candidate(
     preparationDetail: null,
     quantity: { state: 'known', value: 1, unit: null },
     maximumLeadTimeHours: 24,
-    storageGuidanceReference: null,
+    storageGuidanceReference: 'refrigerate-covered-and-labelled',
     boundaries: [],
     confidence: 'high',
     ...overrides,
@@ -76,13 +76,18 @@ describe('weekly preparation plan', () => {
     ['storage boundary', { boundaries: ['storage'] }],
     ['raw protein boundary', { boundaries: ['raw-protein'] }],
     ['batch component boundary', { boundaries: ['batch-component'] }],
-  ] as const)('does not combine across a %s', (_name, override) => {
+  ] as const)('does not combine across a %s', (name, override) => {
     const plan = buildDeterministicWeeklyPreparationPlan([
       candidate('a'),
       candidate('b', override as Partial<WeeklyPreparationCandidate>),
     ])
-    expect(plan.tasks[0]?.decision).toBe('grouped')
-    expect(plan.tasks[0]?.subtasks).toHaveLength(2)
+    if (name === 'raw protein boundary') {
+      expect(plan.tasks).toHaveLength(1)
+      expect(plan.tasks[0]?.subtasks[0]?.sources.map((source) => source.id)).toEqual(['a'])
+    } else {
+      expect(plan.tasks[0]?.decision).toBe('grouped')
+      expect(plan.tasks[0]?.subtasks).toHaveLength(2)
+    }
   })
 
   it('never converts an unknown quantity into a number', () => {
@@ -99,16 +104,23 @@ describe('weekly preparation plan', () => {
       candidate('b', { canonicalAction: 'chop', confidence: 'low' }),
     ]
     const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
-    expect(fallback.ambiguousCandidateIds).toEqual(['a', 'b'])
+    expect(fallback.tasks).toEqual([])
 
     expect(
       applyAndValidateModelDecision(fallback, candidates, {
-        groups: [{ candidateIds: ['invented'], decision: 'grouped' }],
+        tasks: [
+          {
+            candidateIds: ['invented'],
+            title: 'Dice the onions',
+            estimatedMinutes: 10,
+            estimatedTimeSavedMinutes: 10,
+          },
+        ],
       }),
     ).toEqual({ ok: false, reason: 'unsupported_reference' })
   })
 
-  it('rejects a model attempt to combine incompatible source candidates', () => {
+  it('rejects a model attempt to use an unsafe source candidate', () => {
     const candidates = [
       candidate('a', { confidence: 'low' }),
       candidate('b', {
@@ -120,9 +132,16 @@ describe('weekly preparation plan', () => {
     const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
     expect(
       applyAndValidateModelDecision(fallback, candidates, {
-        groups: [{ candidateIds: ['a', 'b'], decision: 'combined' }],
+        tasks: [
+          {
+            candidateIds: ['a', 'b'],
+            title: 'Prepare the vegetables',
+            estimatedMinutes: 10,
+            estimatedTimeSavedMinutes: 15,
+          },
+        ],
       }),
-    ).toEqual({ ok: false, reason: 'unsafe_combination' })
+    ).toEqual({ ok: false, reason: 'unsafe_make_ahead_task' })
   })
 
   it('invalidates the cache key for plan, recipe or enrichment version changes', () => {
@@ -143,16 +162,70 @@ describe('weekly preparation plan', () => {
     )
   })
 
-  it('requires a model decision to cover every ambiguous candidate', () => {
+  it('rejects a model strategy that exceeds the available time', () => {
     const candidates = [
       candidate('a', { confidence: 'low' }),
       candidate('b', { canonicalAction: 'chop', confidence: 'low' }),
     ]
     const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
     expect(
-      applyAndValidateModelDecision(fallback, candidates, {
-        groups: [{ candidateIds: ['a'], decision: 'separate' }],
+      applyAndValidateModelDecision(
+        fallback,
+        candidates,
+        {
+          tasks: [
+            {
+              candidateIds: ['a'],
+              title: 'Dice the onions',
+              estimatedMinutes: 35,
+              estimatedTimeSavedMinutes: 20,
+            },
+          ],
+        },
+        30,
+      ),
+    ).toEqual({ ok: false, reason: 'time_budget_exceeded' })
+  })
+
+  it('accepts a useful five-meal strategy and excludes malformed cooking fragments', () => {
+    const candidates = [
+      candidate('onion'),
+      candidate('carrot', { canonicalIngredient: 'carrot', canonicalAction: 'chop' }),
+      candidate('capsicum', { canonicalIngredient: 'capsicum', canonicalAction: 'slice' }),
+      candidate('garlic', {
+        canonicalIngredient: 'garlic cloves',
+        canonicalAction: 'cook',
+        originalText: 'garlic cloves (, finely minced)',
       }),
-    ).toEqual({ ok: false, reason: 'incomplete_decision' })
+      candidate('herbs', { canonicalIngredient: 'herbs', canonicalAction: 'chop' }),
+    ]
+    const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
+    const result = applyAndValidateModelDecision(
+      fallback,
+      candidates,
+      {
+        tasks: [
+          {
+            candidateIds: ['onion', 'carrot'],
+            title: 'Dice the onion and chop the carrot',
+            estimatedMinutes: 12,
+            estimatedTimeSavedMinutes: 20,
+          },
+          {
+            candidateIds: ['capsicum', 'herbs'],
+            title: 'Slice the capsicum and chop the herbs',
+            estimatedMinutes: 10,
+            estimatedTimeSavedMinutes: 15,
+          },
+        ],
+      },
+      30,
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tasks).toHaveLength(2)
+    expect(result.value.tasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0)).toBe(22)
+    expect(JSON.stringify(result.value.tasks)).not.toContain('garlic cloves (')
   })
 })

@@ -1,7 +1,7 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
-export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v1' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v1' as const
+export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v2' as const
 
 export type PreparationBoundary =
   'allergen' | 'batch-component' | 'cross-contamination' | 'raw-protein' | 'storage' | 'timing'
@@ -66,6 +66,10 @@ export type WeeklyPreparationTask = {
   subtasks: WeeklyPreparationSubtask[]
   confidence: EnrichmentConfidence
   validation: 'validated'
+  estimatedMinutes?: number
+  estimatedTimeSavedMinutes?: number
+  storageGuidance?: string
+  priority?: number
 }
 
 export type WeeklyPreparationPlan = {
@@ -81,9 +85,11 @@ export type WeeklyPreparationPlan = {
 }
 
 export type WeeklyPreparationModelDecision = {
-  groups: Array<{
+  tasks: Array<{
     candidateIds: string[]
-    decision: 'combined' | 'grouped' | 'separate'
+    title: string
+    estimatedMinutes: number
+    estimatedTimeSavedMinutes: number
   }>
 }
 
@@ -122,7 +128,7 @@ export function buildDeterministicWeeklyPreparationPlan(
     throw new Error('mixed_plan_scope')
 
   const ingredientGroups = new Map<string, WeeklyPreparationCandidate[]>()
-  for (const candidate of candidates) {
+  for (const candidate of candidates.filter(isDeterministicallyUseful)) {
     const key = candidate.canonicalIngredient ?? `unknown:${candidate.id}`
     ingredientGroups.set(key, [...(ingredientGroups.get(key) ?? []), candidate])
   }
@@ -169,49 +175,111 @@ export function applyAndValidateModelDecision(
   fallback: WeeklyPreparationPlan,
   candidates: WeeklyPreparationCandidate[],
   decision: WeeklyPreparationModelDecision,
+  availableMinutes = 240,
 ): { ok: true; value: WeeklyPreparationPlan } | { ok: false; reason: string } {
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]))
-  const allowed = new Set(fallback.ambiguousCandidateIds)
   const used = new Set<string>()
   const replacementTasks: WeeklyPreparationTask[] = []
-  for (const group of decision.groups) {
+  let plannedMinutes = 0
+  for (const [priority, group] of decision.tasks.entries()) {
     if (group.candidateIds.length === 0) return { ok: false, reason: 'empty_group' }
+    if (
+      !Number.isInteger(group.estimatedMinutes) ||
+      group.estimatedMinutes < 5 ||
+      group.estimatedMinutes > 120 ||
+      !Number.isInteger(group.estimatedTimeSavedMinutes) ||
+      group.estimatedTimeSavedMinutes < 0 ||
+      group.estimatedTimeSavedMinutes > 180
+    )
+      return { ok: false, reason: 'invalid_estimate' }
+    plannedMinutes += group.estimatedMinutes
+    if (plannedMinutes > availableMinutes) return { ok: false, reason: 'time_budget_exceeded' }
+    const title = group.title.trim()
+    if (
+      title.length < 4 ||
+      title.length > 100 ||
+      /[()[\]{}]|\b(preheat|reserve .*water|serve immediately)\b/i.test(title)
+    )
+      return { ok: false, reason: 'malformed_task' }
     for (const id of group.candidateIds) {
-      if (!allowed.has(id) || !byId.has(id) || used.has(id))
-        return { ok: false, reason: 'unsupported_reference' }
+      if (!byId.has(id) || used.has(id)) return { ok: false, reason: 'unsupported_reference' }
       used.add(id)
     }
-    if (group.decision === 'combined') {
-      const supplied = group.candidateIds.flatMap((id) => byId.get(id) ?? [])
-      if (partitionByCompatibility(supplied).length !== 1)
-        return { ok: false, reason: 'unsafe_combination' }
-    }
     const supplied = group.candidateIds.flatMap((id) => byId.get(id) ?? [])
-    const category = supplied[0]?.canonicalIngredient
-    if (!category || supplied.some((candidate) => candidate.canonicalIngredient !== category))
-      return { ok: false, reason: 'unsupported_grouping' }
-    replacementTasks.push(
-      group.decision === 'combined'
+    if (supplied.some((candidate) => !isModelEligible(candidate)))
+      return { ok: false, reason: 'unsafe_make_ahead_task' }
+    const category = supplied
+      .map((candidate) => candidate.canonicalIngredient)
+      .filter(Boolean)
+      .join(', ')
+    const task =
+      supplied.length > 1 && partitionByCompatibility(supplied).length === 1
         ? combinedTask(category, supplied)
-        : group.decision === 'grouped'
-          ? groupedTask(category, partitionByCompatibility(supplied))
-          : separateCandidatesTask(category, supplied),
-    )
+        : separateCandidatesTask(category || 'ingredients', supplied)
+    replacementTasks.push({
+      ...task,
+      title,
+      estimatedMinutes: group.estimatedMinutes,
+      estimatedTimeSavedMinutes: group.estimatedTimeSavedMinutes,
+      storageGuidance: storageGuidanceFor(supplied),
+      priority: priority + 1,
+    })
   }
-  if (used.size !== allowed.size) return { ok: false, reason: 'incomplete_decision' }
-  const retained = fallback.tasks.filter(
-    (task) =>
-      !task.subtasks.some((subtask) => subtask.sources.some((source) => used.has(source.id))),
-  )
   return {
     ok: true,
     value: {
       ...fallback,
-      tasks: [...retained, ...replacementTasks].sort(compareTasks),
+      tasks: replacementTasks,
+      ambiguousCandidateIds: [],
       generation: 'model-assisted',
       fallbackReason: null,
     },
   }
+}
+
+const safePreparationActions = new Set([
+  'chop',
+  'dice',
+  'grate',
+  'mince',
+  'mix',
+  'shred',
+  'slice',
+  'whisk',
+  'blend',
+  'marinate',
+  'roughly_chop',
+])
+
+function isDeterministicallyUseful(candidate: WeeklyPreparationCandidate) {
+  return (
+    isModelEligible(candidate) &&
+    candidate.confidence !== 'low' &&
+    candidate.confidence !== 'unknown'
+  )
+}
+
+function isModelEligible(candidate: WeeklyPreparationCandidate) {
+  const action = candidate.canonicalAction?.trim().toLowerCase()
+  if (!action || !safePreparationActions.has(action)) return false
+  if (!candidate.canonicalIngredient?.trim()) return false
+  if (/[()[\]{}]|^\s*$/.test(candidate.originalText)) return false
+  if (
+    candidate.boundaries.some(
+      (boundary) => boundary === 'raw-protein' || boundary === 'cross-contamination',
+    )
+  )
+    return false
+  return candidate.maximumLeadTimeHours !== null && Boolean(candidate.storageGuidanceReference)
+}
+
+function storageGuidanceFor(candidates: WeeklyPreparationCandidate[]) {
+  const maximumHours = Math.min(
+    ...candidates.flatMap((candidate) =>
+      candidate.maximumLeadTimeHours === null ? [] : [candidate.maximumLeadTimeHours],
+    ),
+  )
+  return `Refrigerate in a covered, labelled container and use within ${maximumHours} hours.`
 }
 
 export function withWeeklyPreparationFallback(
