@@ -6,7 +6,7 @@ The household planner now sends the selected preparation duration and complete s
 
 Server validation permits only traceable source candidates, rejects unsupported or unsafe cooking fragments, enforces the selected time budget and accepts an honest empty plan when no worthwhile work exists. Model-provided task estimates and storage guidance flow into the household checklist without exposing internal reasoning.
 
-The v2 readiness corpus contains 30 five-meal cases and fails unless each final plan provides multiple useful tasks, uses a meaningful portion of the time budget and rejects the representative malformed `cook garlic / reserve water` trap. The accompanying migration disables AI, advances the corpus, prompt, schema and planner identities, and requires a fresh accepted evaluation before re-enablement.
+The v3 readiness corpus contains 30 distinct five-meal cases across 15, 30 and 60 minute sessions. It covers shared prep, single worthwhile tasks, unsafe candidates, raw-protein boundaries and honest empty plans. Each case now records the exact deterministic or product-quality failure reason. A run passes only when all cases meet their case-specific expectations; a failed review does not create smoke-ready evidence. The accompanying forward migration disables AI, advances the corpus identity and requires a fresh accepted evaluation before re-enablement.
 
 ## Outcome
 
