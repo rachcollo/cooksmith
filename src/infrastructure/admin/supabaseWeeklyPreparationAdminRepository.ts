@@ -107,7 +107,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const { data, error } = await database
         .from('weekly_preparation_evaluation_runs')
         .select(
-          'id, status, error_reason, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, rejected_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, weekly_preparation_evaluation_acceptances(id), weekly_preparation_evaluation_cases(reason_code)',
+          'id, status, error_reason, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, rejected_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, acceptances:weekly_preparation_evaluation_acceptances(id), cases:weekly_preparation_evaluation_cases(reason_code)',
         )
         .order('created_at', { ascending: false })
         .limit(1)
@@ -115,7 +115,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       if (error) throw new Error('Cooksmith could not load weekly preparation evaluation evidence.')
       if (!data) return null
       const failureReasonCounts = new Map<string, number>()
-      for (const item of data.weekly_preparation_evaluation_cases ?? []) {
+      for (const item of data.cases ?? []) {
         if (!item.reason_code) continue
         failureReasonCounts.set(
           item.reason_code,
@@ -132,7 +132,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       return {
         id: data.id,
         status: data.status as WeeklyPreparationEvaluation['status'],
-        accepted: Boolean(data.weekly_preparation_evaluation_acceptances),
+        accepted: Boolean(data.acceptances),
         createdAt: data.created_at,
         planCount: data.plan_count,
         deterministicCount: data.deterministic_count,
@@ -155,7 +155,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
             ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed review. Resolve the failed cases before accepting this evaluation.`
             : data.status === 'running'
               ? 'The evaluation is still running.'
-              : !acceptanceEligible && !data.weekly_preparation_evaluation_acceptances
+              : !acceptanceEligible && !data.acceptances
                 ? 'This evaluation does not meet the acceptance requirements.'
                 : null,
         failureReasons: [...failureReasonCounts.entries()]
