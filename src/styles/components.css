@@ -2491,6 +2491,30 @@ button.card:hover {
   margin: 0;
 }
 
+.preparation-period-fields select,
+.preparation-date-range input {
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: var(--space-1);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-medium);
+  background: var(--colour-surface-raised);
+  color: var(--colour-text);
+  font: inherit;
+  padding: 0 var(--space-3);
+}
+
+.preparation-date-range {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.get-ahead-period-summary {
+  color: var(--colour-text-muted);
+  margin: 0;
+}
+
 .get-ahead-page-header h1 {
   max-width: 15ch;
   font-size: clamp(1.8rem, 9vw, 2.45rem);
@@ -2556,6 +2580,10 @@ button.card:hover {
   .resume-session-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .preparation-date-range {
+    grid-template-columns: 1fr;
   }
 }
 .preference-form,

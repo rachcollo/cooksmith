@@ -8,6 +8,7 @@ import {
   getAheadPriorityScoreVersion,
   getAheadTotals,
   moveGetAheadTask,
+  reconcileGetAheadSession,
   toggleGetAheadTask,
   transitionGetAheadTask,
   validateGetAheadDuration,
@@ -250,6 +251,40 @@ describe('Get Ahead session domain', () => {
     expect(ended.status).toBe('ended')
     expect(ended.tasks.find((task) => task.id === completedTaskId)?.state).toBe('completed')
     expect(getAheadTotals(ended).remainingMinutes).toBeGreaterThan(0)
+  })
+
+  it('replans changed inputs while preserving completed work that still applies', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-08-03_2026-08-07',
+      periodStart: '2026-08-03',
+      periodEnd: '2026-08-07',
+      sourceFingerprint: 'before',
+      selectedMinutes: 30,
+      opportunities: [opportunity('a', 'chop'), opportunity('removed', 'sauce')],
+    })
+    const completed = toggleGetAheadTask(session, 'task_a', 'completed')
+
+    const replanned = reconcileGetAheadSession({
+      session: completed,
+      planId: '2026-08-03_2026-08-07',
+      periodStart: '2026-08-03',
+      periodEnd: '2026-08-07',
+      sourceFingerprint: 'after',
+      selectedMinutes: 45,
+      opportunities: [opportunity('a', 'chop'), opportunity('new', 'marinate')],
+    })
+
+    expect(replanned).toMatchObject({
+      selectedMinutes: 45,
+      sourceFingerprint: 'after',
+      periodStart: '2026-08-03',
+      periodEnd: '2026-08-07',
+      status: 'active',
+    })
+    expect(replanned.tasks.find((task) => task.id === 'task_a')?.state).toBe('completed')
+    expect(replanned.tasks.some((task) => task.id === 'task_removed')).toBe(false)
+    expect(replanned.tasks.some((task) => task.id === 'task_new')).toBe(true)
   })
 
   it('consolidates compatible ingredient preparation into one stable multi-source task', () => {

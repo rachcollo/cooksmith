@@ -20,11 +20,17 @@ import {
   getAheadDurationPresets,
   getAheadTotals,
   isTaskStale,
+  reconcileGetAheadSession,
   transitionGetAheadTask,
   validateGetAheadDuration,
   type GetAheadSession,
 } from '../domain/get-ahead/session'
-import { addDays, currentWeek } from '../domain/meal-plans/week'
+import { formatDisplayDate } from '../domain/meal-plans/week'
+import {
+  periodForPreset,
+  validatePreparationPeriod,
+  type PreparationPeriodPreset,
+} from '../domain/get-ahead/preparationPeriod'
 import type { PlannedMeal } from '../domain/meal-plans/types'
 import type { Recipe } from '../domain/recipes/types'
 import { weeklyPreparationPlanToOpportunities } from '../domain/get-ahead/weeklyPreparationAdapter'
@@ -46,14 +52,17 @@ export function GetAheadPage() {
   const recipes = useRecipeRepository()
   const weeklyPreparation = useWeeklyPreparationRepository()
   const householdId = state.householdId
-  const weekStart = currentWeek(new Date())
-  const weekEnd = addDays(weekStart, 6)
+  const defaultPeriod = useMemo(() => periodForPreset('next-weekdays'), [])
+  const [periodPreset, setPeriodPreset] = useState<PreparationPeriodPreset>('next-weekdays')
+  const [weekStart, setWeekStart] = useState(defaultPeriod.start)
+  const [weekEnd, setWeekEnd] = useState(defaultPeriod.end)
   const planId = `${weekStart}_${weekEnd}`
   const [meals, setMeals] = useState<PlannedMeal[]>([])
   const [recipeList, setRecipeList] = useState<Recipe[]>([])
   const [selectedMinutes, setSelectedMinutes] = useState(30)
   const [customMinutes, setCustomMinutes] = useState('')
   const [durationError, setDurationError] = useState<string | null>(null)
+  const [periodError, setPeriodError] = useState<string | null>(null)
   const [session, setSession] = useState<GetAheadSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +72,8 @@ export function GetAheadPage() {
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPreparationPlan | null>(null)
   const [usingFallback, setUsingFallback] = useState(false)
   const [planRetrying, setPlanRetrying] = useState(false)
+  const [editingPlan, setEditingPlan] = useState(false)
+  const [sessionBeingUpdated, setSessionBeingUpdated] = useState<GetAheadSession | null>(null)
 
   useEffect(() => {
     if (!householdId) return
@@ -84,15 +95,26 @@ export function GetAheadPage() {
         setUsingFallback(preparation.unavailable)
         const saved = localStorage.getItem(storageKey(householdId, planId))
         const parsed = saved ? (JSON.parse(saved) as GetAheadSession) : null
+        const fingerprint = sourceFingerprint(nextMeals, nextRecipes)
         const samePlan =
-          !preparation.plan ||
-          !parsed?.weeklyPreparationCacheKey ||
-          parsed.weeklyPreparationCacheKey === preparation.plan.cacheKey
-        setSession(samePlan ? parsed : null)
-        if (!samePlan)
-          setAnnouncement(
-            'Your weekly preparation guidance changed, so Cooksmith is ready to make a fresh checklist.',
-          )
+          parsed &&
+          parsed.sourceFingerprint === fingerprint &&
+          parsed.weeklyPreparationCacheKey === preparation.plan?.cacheKey
+        if (parsed && !samePlan) {
+          const reconciled = reconcileGetAheadSession({
+            session: parsed,
+            planId,
+            periodStart: weekStart,
+            periodEnd: weekEnd,
+            sourceFingerprint: fingerprint,
+            selectedMinutes: parsed.selectedMinutes,
+            opportunities: opportunitiesFor(nextMeals, nextRecipes, preparation.plan),
+            weeklyPreparationCacheKey: preparation.plan?.cacheKey,
+          })
+          localStorage.setItem(storageKey(householdId, planId), JSON.stringify(reconciled))
+          setSession(reconciled)
+          setAnnouncement('We updated your session to match your latest meal plan.')
+        } else setSession(parsed)
       })
       .catch(() => {
         if (active)
@@ -107,15 +129,7 @@ export function GetAheadPage() {
   }, [householdId, planId, plannedMeals, recipes, weekEnd, weekStart, weeklyPreparation])
 
   const opportunities = useMemo(() => {
-    const deterministic = analysePreparationOpportunities(
-      meals.map((plannedMeal) => ({
-        plannedMeal,
-        recipe: recipeList.find((recipe) => recipe.id === plannedMeal.recipeId) ?? null,
-      })),
-    )
-    if (!weeklyPlan) return deterministic
-    const consolidated = weeklyPreparationPlanToOpportunities(weeklyPlan, meals, recipeList)
-    return consolidated.length > 0 ? consolidated : deterministic
+    return opportunitiesFor(meals, recipeList, weeklyPlan)
   }, [meals, recipeList, weeklyPlan])
 
   const visibleSession = session?.householdId === householdId ? session : null
@@ -166,34 +180,43 @@ export function GetAheadPage() {
   function startSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const error = validateGetAheadDuration(selectedMinutes)
+    const nextPeriodError = validatePreparationPeriod({ start: weekStart, end: weekEnd })
     setDurationError(error)
-    if (error || !householdId) return
-    const next = createGetAheadSession({
+    setPeriodError(nextPeriodError)
+    if (error || nextPeriodError || !householdId) return
+    const sessionInput = {
       householdId,
       planId,
+      periodStart: weekStart,
+      periodEnd: weekEnd,
+      sourceFingerprint: sourceFingerprint(meals, recipeList),
       selectedMinutes,
       opportunities,
       weeklyPreparationCacheKey: weeklyPlan?.cacheKey,
-    })
+    }
+    const previousSession = sessionBeingUpdated ?? visibleSession
+    const next = previousSession
+      ? reconcileGetAheadSession({ ...sessionInput, session: previousSession })
+      : createGetAheadSession(sessionInput)
     persist(next)
     setShowChecklist(true)
+    setEditingPlan(false)
+    setSessionBeingUpdated(null)
     setAnnouncement(
       `Get Ahead session created with ${next.tasks.filter((task) => task.selected).length} tasks.`,
     )
   }
 
-  function startFresh() {
-    if (!window.confirm('Start fresh and replace this unfinished Get Ahead session?')) return
-    const next = createGetAheadSession({
-      householdId: householdId ?? '',
-      planId,
-      selectedMinutes,
-      opportunities,
-      weeklyPreparationCacheKey: weeklyPlan?.cacheKey,
-    })
-    persist(next)
-    setShowChecklist(true)
-    setAnnouncement('Fresh Get Ahead session started.')
+  function updatePeriodPreset(event: ChangeEvent<HTMLSelectElement>) {
+    const preset = event.target.value as PreparationPeriodPreset
+    if (visibleSession) setSessionBeingUpdated(visibleSession)
+    setPeriodPreset(preset)
+    if (preset !== 'custom') {
+      const period = periodForPreset(preset)
+      setWeekStart(period.start)
+      setWeekEnd(period.end)
+      setPeriodError(null)
+    }
   }
 
   function updatePreset(event: ChangeEvent<HTMLSelectElement>) {
@@ -249,22 +272,72 @@ export function GetAheadPage() {
           Usual preparation checklist
         </p>
       )}
-      {!visibleSession || visibleSession.status !== 'active' || !showChecklist ? (
+      {!visibleSession || !showChecklist || editingPlan ? (
         <Panel className="flow-stack get-ahead-session-picker">
-          {visibleSession?.status === 'active' ? (
+          {visibleSession ? (
             <div className="resume-session-card">
               <div>
                 <strong>Prep session waiting</strong>
-                <p>
-                  Resume where you left off, or choose more time below and Cooksmith will replan the
-                  session.
-                </p>
+                <p>Resume where you left off, or update the dates or available time below.</p>
               </div>
-              <Button variant="secondary" onClick={() => setShowChecklist(true)}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowChecklist(true)
+                  setEditingPlan(false)
+                }}
+              >
                 Resume
               </Button>
             </div>
           ) : null}
+          <div className="flow-stack preparation-period-fields">
+            <label htmlFor="preparation-period">
+              Which meals are you preparing for?
+              <select id="preparation-period" value={periodPreset} onChange={updatePeriodPreset}>
+                <option value="next-weekdays">Next Monday to Friday</option>
+                <option value="this-week">This week</option>
+                <option value="next-week">Next week</option>
+                <option value="custom">Choose dates</option>
+              </select>
+            </label>
+            {periodPreset === 'custom' ? (
+              <div className="preparation-date-range">
+                <label htmlFor="preparation-start">
+                  From
+                  <input
+                    id="preparation-start"
+                    type="date"
+                    value={weekStart}
+                    onChange={(event) => {
+                      if (visibleSession) setSessionBeingUpdated(visibleSession)
+                      setWeekStart(event.target.value)
+                      setPeriodError(null)
+                    }}
+                  />
+                </label>
+                <label htmlFor="preparation-end">
+                  To
+                  <input
+                    id="preparation-end"
+                    type="date"
+                    value={weekEnd}
+                    onChange={(event) => {
+                      if (visibleSession) setSessionBeingUpdated(visibleSession)
+                      setWeekEnd(event.target.value)
+                      setPeriodError(null)
+                    }}
+                  />
+                </label>
+              </div>
+            ) : null}
+            <p className="get-ahead-period-summary">
+              Preparing for {formatPeriod(weekStart, weekEnd)}
+            </p>
+            {periodError ? (
+              <FormError id="preparation-period-error">{periodError}</FormError>
+            ) : null}
+          </div>
           <form className="duration-inline-form" onSubmit={startSession}>
             <label className="duration-select-label" htmlFor="duration-preset">
               <span className="sr-only">Preset duration</span>
@@ -298,7 +371,7 @@ export function GetAheadPage() {
               />
             </label>
             <Button variant="accent" type="submit">
-              Start
+              {visibleSession ? 'Update plan' : 'Start'}
             </Button>
             {durationError ? (
               <FormError id="custom-duration-error">{durationError}</FormError>
@@ -308,6 +381,14 @@ export function GetAheadPage() {
       ) : (
         <Panel className="flow-stack get-ahead-session">
           <GetAheadProgressSummary session={visibleSession} />
+          <p className="get-ahead-period-summary">
+            Preparing for{' '}
+            {formatPeriod(
+              visibleSession.periodStart ?? weekStart,
+              visibleSession.periodEnd ?? weekEnd,
+            )}{' '}
+            · {visibleSession.selectedMinutes} minutes available
+          </p>
           {visibleSession.tasks.filter((task) => task.selected || task.state === 'completed')
             .length === 0 ? (
             <EmptyState
@@ -364,18 +445,62 @@ export function GetAheadPage() {
           <div className="cluster">
             <Button
               variant="secondary"
-              onClick={() => persist(endGetAheadSessionEarly(visibleSession))}
+              onClick={() => {
+                persist(endGetAheadSessionEarly(visibleSession))
+                setShowChecklist(false)
+              }}
             >
               End early
             </Button>
-            <Button variant="quiet" onClick={startFresh}>
-              Start fresh
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setSelectedMinutes(visibleSession.selectedMinutes)
+                setSessionBeingUpdated(visibleSession)
+                setEditingPlan(true)
+                setShowChecklist(false)
+              }}
+            >
+              Update plan
             </Button>
           </div>
         </Panel>
       )}
     </>
   )
+}
+
+function opportunitiesFor(
+  meals: PlannedMeal[],
+  recipes: Recipe[],
+  plan: WeeklyPreparationPlan | null,
+) {
+  const deterministic = analysePreparationOpportunities(
+    meals.map((plannedMeal) => ({
+      plannedMeal,
+      recipe: recipes.find((recipe) => recipe.id === plannedMeal.recipeId) ?? null,
+    })),
+  )
+  if (!plan) return deterministic
+  const consolidated = weeklyPreparationPlanToOpportunities(plan, meals, recipes)
+  return consolidated.length > 0 ? consolidated : deterministic
+}
+
+function sourceFingerprint(meals: PlannedMeal[], recipes: Recipe[]) {
+  const recipeVersions = new Map(recipes.map((recipe) => [recipe.id, recipe.updatedAt]))
+  return meals
+    .map(
+      (meal) =>
+        `${meal.id}:${meal.mealDate}:${meal.recipeId ?? ''}:${meal.updatedAt}:${recipeVersions.get(meal.recipeId ?? '') ?? ''}`,
+    )
+    .sort()
+    .join('|')
+}
+
+function formatPeriod(start: string, end: string) {
+  return start === end
+    ? formatDisplayDate(start)
+    : `${formatDisplayDate(start)} to ${formatDisplayDate(end)}`
 }
 
 function GetAheadProgressSummary({ session }: { session: GetAheadSession }) {
@@ -389,6 +514,12 @@ function GetAheadProgressSummary({ session }: { session: GetAheadSession }) {
       </div>
       <progress aria-label="Prep progress" max={100} value={totals.progressPercent} />
       <p>{totals.progressLabel}.</p>
+      {totals.plannedMinutes < totals.selectedMinutes ? (
+        <p>
+          Cooksmith found {totals.plannedMinutes} minutes of useful preparation for the time you
+          selected.
+        </p>
+      ) : null}
     </div>
   )
 }

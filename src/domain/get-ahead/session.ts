@@ -79,6 +79,9 @@ export interface GetAheadSession {
   scoreVersion: typeof getAheadPriorityScoreVersion
   householdId: string
   planId: string
+  periodStart?: string
+  periodEnd?: string
+  sourceFingerprint?: string
   weeklyPreparationCacheKey?: string
   selectedMinutes: number
   status: GetAheadSessionStatus
@@ -88,6 +91,46 @@ export interface GetAheadSession {
   recommendationExplanation: string
   overrides: GetAheadUserOverrides
   tasks: GetAheadTaskSnapshot[]
+}
+
+export function reconcileGetAheadSession(input: {
+  session: GetAheadSession
+  planId: string
+  periodStart: string
+  periodEnd: string
+  sourceFingerprint: string
+  selectedMinutes: number
+  opportunities: PreparationOpportunity[]
+  weeklyPreparationCacheKey?: string
+  now?: Date
+}): GetAheadSession {
+  const fresh = createGetAheadSession({
+    householdId: input.session.householdId,
+    planId: input.planId,
+    periodStart: input.periodStart,
+    periodEnd: input.periodEnd,
+    sourceFingerprint: input.sourceFingerprint,
+    selectedMinutes: input.selectedMinutes,
+    opportunities: input.opportunities,
+    weeklyPreparationCacheKey: input.weeklyPreparationCacheKey,
+    now: input.now,
+  })
+  const completedIds = new Set(
+    input.session.tasks.filter((task) => task.state === 'completed').map((task) => task.id),
+  )
+  const tasks = fresh.tasks.map((task) =>
+    completedIds.has(task.id) ? { ...task, state: 'completed' as const, selected: true } : task,
+  )
+  return {
+    ...fresh,
+    id: input.session.id,
+    createdAt: input.session.createdAt,
+    tasks,
+    recommendationExplanation: explainRecommendation(tasks),
+    status: tasks.some((task) => task.selected || task.state === 'completed')
+      ? 'active'
+      : 'completed',
+  }
 }
 
 export interface GetAheadTotals {
@@ -160,6 +203,9 @@ export function buildGetAheadTasks(
 export function createGetAheadSession(input: {
   householdId: string
   planId: string
+  periodStart?: string
+  periodEnd?: string
+  sourceFingerprint?: string
   selectedMinutes: number
   opportunities: PreparationOpportunity[]
   weeklyPreparationCacheKey?: string
@@ -175,6 +221,9 @@ export function createGetAheadSession(input: {
     scoreVersion: getAheadPriorityScoreVersion,
     householdId: input.householdId,
     planId: input.planId,
+    ...(input.periodStart ? { periodStart: input.periodStart } : {}),
+    ...(input.periodEnd ? { periodEnd: input.periodEnd } : {}),
+    ...(input.sourceFingerprint ? { sourceFingerprint: input.sourceFingerprint } : {}),
     ...(input.weeklyPreparationCacheKey
       ? { weeklyPreparationCacheKey: input.weeklyPreparationCacheKey }
       : {}),

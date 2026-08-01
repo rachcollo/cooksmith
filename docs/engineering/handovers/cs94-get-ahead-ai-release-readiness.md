@@ -1,5 +1,14 @@
 # CS-94 handover
 
+## Get Ahead preparation-period and replanning correction
+
+- Added a visible preparation-period selector that defaults to the following Monday–Friday and supports this week, next week, or a custom start/end range.
+- Kept ended sessions resumable and added an explicit update path for dates or available time.
+- Added automatic saved-session reconciliation using the selected period, meal and recipe versions, and weekly preparation cache identity.
+- Reconciliation retains completed tasks that still apply, removes obsolete work, and adds new eligible tasks without marking them complete.
+- The checklist now displays its date range and time budget and explains when less useful preparation exists than the time selected.
+- This correction has no migration, Edge Function, dependency, provider, privacy, or recurring-cost impact. It requires the normal Vercel application deployment only.
+
 - **Status:** Household generation correction implemented, CI and hosted validation pending
 - **Baseline:** `main` at `e42acede9c6063417744f81fa7fe73b3f6eaf74d`
 - **Branch:** `fix/cs-94-household-generation-permissions`

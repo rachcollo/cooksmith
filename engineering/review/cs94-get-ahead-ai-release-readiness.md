@@ -145,7 +145,13 @@ These observations define the starting problem; they must not be hard-coded as f
 
 ### FR-8 — Household Get Ahead experience
 
-- [ ] The current selected household and week resolve the correct plan.
+- [ ] The current selected household and explicit preparation date range resolve the correct plan.
+- [ ] The date selector defaults to the following Monday–Friday and offers this week, next week and a flexible start/end range.
+- [ ] The active checklist always shows its preparation dates and available time.
+- [ ] Ending early preserves progress and remains resumable.
+- [ ] A user can update the date range or available time and receive a newly fitted checklist.
+- [ ] Cooksmith detects material meal, recipe, enrichment or generation changes and automatically reconciles the saved session without requiring the user to remember to replan.
+- [ ] Automatic reconciliation preserves completed tasks that still apply, removes obsolete tasks and adds newly eligible work without marking it complete.
 - [ ] Household UI distinguishes **AI-assisted plan**, **usual preparation checklist** and **temporary fallback** in calm language.
 - [ ] AI-disabled, unavailable or failed states never block the ordinary checklist.
 - [ ] **Try again** appears only for a current retryable outcome.
