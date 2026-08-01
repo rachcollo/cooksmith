@@ -5,6 +5,7 @@ export interface WeeklyPreparationRepository {
     householdId: string
     weekStart: string
     weekEnd: string
+    availableMinutes: number
     forceRetry?: boolean
   }): Promise<WeeklyPreparationPlan>
 }

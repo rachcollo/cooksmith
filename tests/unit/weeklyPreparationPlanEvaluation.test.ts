@@ -24,7 +24,7 @@ function candidate(plan: number, recipe: number, action = 'dice'): WeeklyPrepara
     preparationDetail: action,
     quantity: { state: 'known', value: 1, unit: null },
     maximumLeadTimeHours: 24,
-    storageGuidanceReference: null,
+    storageGuidanceReference: 'refrigerate-covered-and-labelled',
     boundaries: [],
     confidence: 'high',
   }

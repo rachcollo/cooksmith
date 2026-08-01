@@ -21,8 +21,8 @@ const recipe = {
 } as Recipe
 
 const plan: WeeklyPreparationPlan = {
-  schemaVersion: 'weekly-preparation-plan-v1',
-  plannerVersion: 'weekly-preparation-planner-v1',
+  schemaVersion: 'weekly-preparation-plan-v2',
+  plannerVersion: 'weekly-preparation-planner-v2',
   householdId: 'household-1',
   planId: '2026-07-28_2026-08-03',
   cacheKey: 'cache-1',

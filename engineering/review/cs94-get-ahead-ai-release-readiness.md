@@ -20,6 +20,8 @@ Cooksmith must provide one controlled path from enriched recipes to a proven, us
 
 The 30-plan evaluation is an internal release-quality test using 30 predefined representative weekly plans. It is not a 30-minute Get Ahead session. A household user’s selected prep duration is a separate product input.
 
+The AI operation reviews all selected meals together and creates the best coherent make-ahead strategy for the household's available time. It prioritises meaningful midweek effort reduction, shared preparation and safe make-ahead work. Deterministic code validates time, traceability and safety constraints; it does not pre-decide the final checklist for the model.
+
 ## Current Baseline
 
 The package is based on remote `main` commit `e1ea759cb0f7e6e1029fc025b755044cb46c4355`, after the CS-93 enrichment recovery and automatic recipe-enrichment work was merged.
@@ -106,6 +108,8 @@ These observations define the starting problem; they must not be hard-coded as f
 - [ ] Execution is resumable and idempotent for evaluation identity without duplicating provider cost.
 - [ ] Partial or failed runs cannot be accepted.
 - [ ] Synthetic evaluation content contains no production household identifiers or unnecessary personal data.
+- [ ] Every evaluation case exercises multiple planned meals and an explicit time budget.
+- [ ] Evaluation fails for malformed cooking fragments, unsafe make-ahead work, low-value filler or a checklist that does not make reasonable use of the available time.
 
 ### FR-5 — Evaluation evidence and acceptance
 

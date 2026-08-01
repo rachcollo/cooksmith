@@ -113,7 +113,12 @@ async function prepareEvaluationSlot() {
   return null
 }
 
-function candidate(caseNumber: number, item: number, action: string): WeeklyPreparationCandidate {
+function candidate(
+  caseNumber: number,
+  item: number,
+  action: string,
+  ingredient = 'onion',
+): WeeklyPreparationCandidate {
   const id = `evaluation-${caseNumber}-${item}`
   return {
     id,
@@ -126,13 +131,13 @@ function candidate(caseNumber: number, item: number, action: string): WeeklyPrep
     servings: 4,
     sourceIngredientId: `ingredient-${id}`,
     sourceStepIds: [`step-${id}`],
-    originalText: `1 onion, ${action}`,
-    canonicalIngredient: 'onion',
+    originalText: `1 ${ingredient}, ${action}`,
+    canonicalIngredient: ingredient,
     canonicalAction: action,
     preparationDetail: action,
     quantity: { state: 'known', value: 1, unit: null },
     maximumLeadTimeHours: 24,
-    storageGuidanceReference: null,
+    storageGuidanceReference: 'refrigerate-covered-and-labelled',
     boundaries: [],
     confidence: 'high',
   }
@@ -238,11 +243,24 @@ Deno.serve(async (request) => {
   try {
     for (let index = 0; index < 30; index += 1) {
       const caseNumber = index + 1
-      const expectedModelCall = index % 3 === 0
+      const expectedModelCall = true
       const candidates = [
         candidate(caseNumber, 1, 'dice'),
-        candidate(caseNumber, 2, expectedModelCall ? 'chop' : 'dice'),
+        candidate(caseNumber, 2, 'chop', 'carrot'),
+        candidate(caseNumber, 3, 'mince', 'garlic'),
+        candidate(caseNumber, 4, 'cook', 'garlic cloves'),
+        candidate(caseNumber, 5, 'slice', 'capsicum'),
       ]
+      const meals = Array.from({ length: 5 }, (_, mealIndex) => ({
+        plannedMealId: candidates[mealIndex]?.plannedMealId ?? `meal-${mealIndex}`,
+        mealDate: `2026-08-${String(mealIndex + 3).padStart(2, '0')}`,
+        recipeName: `Representative meal ${mealIndex + 1}`,
+        ingredients: [candidates[mealIndex]?.originalText ?? '1 vegetable'],
+        instructions:
+          mealIndex === 3
+            ? ['Cook garlic cloves and reserve the simmering water.']
+            : ['Prepare the vegetables, then cook the meal on the planned day.'],
+      }))
       const startedAt = Date.now()
       const deterministic = buildDeterministicWeeklyPreparationPlan(candidates)
       let outcome = 'deterministic'
@@ -256,6 +274,8 @@ Deno.serve(async (request) => {
           apiKey,
           model,
           candidates,
+          meals,
+          availableMinutes: 30,
           timeoutMs: 12_000,
         })
         caseInputTokens = assisted.inputTokens
@@ -269,8 +289,19 @@ Deno.serve(async (request) => {
           deterministic,
           candidates,
           assisted.decision,
+          30,
         )
-        if (!validated.ok) {
+        const usefulMinutes = validated.ok
+          ? validated.value.tasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0)
+          : 0
+        const usefulPlan =
+          validated.ok &&
+          validated.value.tasks.length >= 2 &&
+          usefulMinutes >= 15 &&
+          validated.value.tasks.every(
+            (task) => !/cook garlic|reserve .*water|preheat/i.test(task.title),
+          )
+        if (!validated.ok || !usefulPlan) {
           fallbackCount += 1
           outcome = 'fallback'
         } else {

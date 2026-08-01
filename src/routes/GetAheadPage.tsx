@@ -74,6 +74,7 @@ export function GetAheadPage() {
   const [planRetrying, setPlanRetrying] = useState(false)
   const [editingPlan, setEditingPlan] = useState(false)
   const [sessionBeingUpdated, setSessionBeingUpdated] = useState<GetAheadSession | null>(null)
+  const [sessionStarting, setSessionStarting] = useState(false)
 
   useEffect(() => {
     if (!householdId) return
@@ -82,7 +83,7 @@ export function GetAheadPage() {
       plannedMeals.listWeek(householdId, weekStart, weekEnd),
       recipes.list(householdId),
       weeklyPreparation
-        ?.getCurrentPlan({ householdId, weekStart, weekEnd })
+        ?.getCurrentPlan({ householdId, weekStart, weekEnd, availableMinutes: 30 })
         .then((plan) => ({ plan, unavailable: false }))
         .catch(() => ({ plan: null, unavailable: true })) ??
         Promise.resolve({ plan: null, unavailable: true }),
@@ -128,10 +129,6 @@ export function GetAheadPage() {
     }
   }, [householdId, planId, plannedMeals, recipes, weekEnd, weekStart, weeklyPreparation])
 
-  const opportunities = useMemo(() => {
-    return opportunitiesFor(meals, recipeList, weeklyPlan)
-  }, [meals, recipeList, weeklyPlan])
-
   const visibleSession = session?.householdId === householdId ? session : null
 
   async function retryWeeklyPlan() {
@@ -142,6 +139,7 @@ export function GetAheadPage() {
         householdId,
         weekStart,
         weekEnd,
+        availableMinutes: selectedMinutes,
         forceRetry: true,
       })
       setWeeklyPlan(next)
@@ -177,13 +175,32 @@ export function GetAheadPage() {
     setAnnouncement(`${label} ${verb}.`)
   }
 
-  function startSession(event: FormEvent<HTMLFormElement>) {
+  async function startSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const error = validateGetAheadDuration(selectedMinutes)
     const nextPeriodError = validatePreparationPeriod({ start: weekStart, end: weekEnd })
     setDurationError(error)
     setPeriodError(nextPeriodError)
     if (error || nextPeriodError || !householdId) return
+    if (sessionStarting) return
+    setSessionStarting(true)
+    let planForSession = weeklyPlan
+    try {
+      if (weeklyPreparation) {
+        planForSession = await weeklyPreparation.getCurrentPlan({
+          householdId,
+          weekStart,
+          weekEnd,
+          availableMinutes: selectedMinutes,
+        })
+        setWeeklyPlan(planForSession)
+        setUsingFallback(planForSession.generation === 'fallback')
+      }
+    } catch {
+      setUsingFallback(true)
+    } finally {
+      setSessionStarting(false)
+    }
     const sessionInput = {
       householdId,
       planId,
@@ -191,8 +208,8 @@ export function GetAheadPage() {
       periodEnd: weekEnd,
       sourceFingerprint: sourceFingerprint(meals, recipeList),
       selectedMinutes,
-      opportunities,
-      weeklyPreparationCacheKey: weeklyPlan?.cacheKey,
+      opportunities: opportunitiesFor(meals, recipeList, planForSession),
+      weeklyPreparationCacheKey: planForSession?.cacheKey,
     }
     const previousSession = sessionBeingUpdated ?? visibleSession
     const next = previousSession
@@ -370,8 +387,8 @@ export function GetAheadPage() {
                 onChange={updateCustom}
               />
             </label>
-            <Button variant="accent" type="submit">
-              {visibleSession ? 'Update plan' : 'Start'}
+            <Button variant="accent" type="submit" disabled={sessionStarting}>
+              {sessionStarting ? 'Planning…' : visibleSession ? 'Update plan' : 'Start'}
             </Button>
             {durationError ? (
               <FormError id="custom-duration-error">{durationError}</FormError>
@@ -545,6 +562,7 @@ function GetAheadTaskRow({
         />
         <span className="task-row-title">
           <strong>{task.title}</strong>
+          {task.storageGuidance ? <small>{task.storageGuidance}</small> : null}
           {task.consolidation && task.consolidation.sources.length > 1 ? (
             <small>
               Helps with{' '}

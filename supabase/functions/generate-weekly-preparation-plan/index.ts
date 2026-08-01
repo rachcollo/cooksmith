@@ -88,11 +88,22 @@ Deno.serve(async (request) => {
 
   const body = (await request.json().catch(() => null)) as {
     candidates?: unknown
+    meals?: unknown
+    availableMinutes?: unknown
     forceRetry?: unknown
     requestId?: unknown
   } | null
   const candidates = candidatesFrom(body?.candidates)
-  if (!candidates) return json(400, { error: 'invalid_request' })
+  const availableMinutes = body?.availableMinutes
+  const meals = Array.isArray(body?.meals) ? body.meals : null
+  if (
+    !candidates ||
+    !meals ||
+    !Number.isInteger(availableMinutes) ||
+    Number(availableMinutes) < 5 ||
+    Number(availableMinutes) > 240
+  )
+    return json(400, { error: 'invalid_request' })
 
   try {
     const settingsResponse = await rest(
@@ -114,6 +125,7 @@ Deno.serve(async (request) => {
         settings?.model_identifier ?? 'unconfigured',
         settings?.prompt_version ?? 'unconfigured',
         settings?.corpus_version ?? 'unconfigured',
+        availableMinutes,
       ].join(':'),
     }
     const cached = await loadCached(
@@ -123,11 +135,6 @@ Deno.serve(async (request) => {
     )
     if (cached && body?.forceRetry !== true)
       return json(200, { plan: cached, metrics: { cacheHit: true } })
-    if (deterministic.ambiguousCandidateIds.length === 0) {
-      await savePlan(deterministic)
-      return json(200, { plan: deterministic, metrics: { modelCalled: false } })
-    }
-
     if (!settings?.ai_enabled || settings.emergency_stop) {
       const fallback = withWeeklyPreparationFallback(
         deterministic,
@@ -140,9 +147,6 @@ Deno.serve(async (request) => {
       })
     }
 
-    const ambiguous = candidates.filter((candidate) =>
-      deterministic.ambiguousCandidateIds.includes(candidate.id),
-    )
     const configuredModel = Deno.env.get('WEEKLY_PREPARATION_MODEL')
     if (!configuredModel || configuredModel !== settings.model_identifier) {
       const fallback = withWeeklyPreparationFallback(deterministic, 'model_identity_mismatch')
@@ -156,10 +160,23 @@ Deno.serve(async (request) => {
     const assisted = await decideAmbiguousPreparation({
       apiKey: Deno.env.get('OPENAI_API_KEY') ?? '',
       model: configuredModel,
-      candidates: ambiguous,
+      candidates,
+      meals: meals as Array<{
+        plannedMealId: string
+        mealDate: string
+        recipeName: string
+        ingredients: string[]
+        instructions: string[]
+      }>,
+      availableMinutes: Number(availableMinutes),
       timeoutMs: 10_000,
     })
-    const validated = applyAndValidateModelDecision(deterministic, candidates, assisted.decision)
+    const validated = applyAndValidateModelDecision(
+      deterministic,
+      candidates,
+      assisted.decision,
+      Number(availableMinutes),
+    )
     if (!validated.ok) {
       const fallback = withWeeklyPreparationFallback(deterministic, validated.reason)
       await savePlan(fallback)

@@ -29,6 +29,14 @@ export async function decideAmbiguousPreparation(input: {
   apiKey: string
   model: string
   candidates: WeeklyPreparationCandidate[]
+  meals?: Array<{
+    plannedMealId: string
+    mealDate: string
+    recipeName: string
+    ingredients: string[]
+    instructions: string[]
+  }>
+  availableMinutes?: number
   timeoutMs: number
 }) {
   const ids = input.candidates.map((candidate) => candidate.id)
@@ -41,59 +49,64 @@ export async function decideAmbiguousPreparation(input: {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-      model: input.model,
-      input: [
-        {
-          role: 'system',
-          content:
-            'Group only the supplied preparation candidate IDs. Preserve cut, timing, storage, allergen, component and raw-protein boundaries. Never invent or alter source data.',
-        },
-        { role: 'user', content: JSON.stringify(input.candidates) },
-      ],
-      text: {
-        format: {
-          type: 'json_schema',
-          name: 'weekly_preparation_decisions',
-          strict: true,
-          schema: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['groups'],
-            properties: {
-              groups: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  additionalProperties: false,
-                  required: ['candidateIds', 'decision'],
-                  properties: {
-                    candidateIds: {
-                      type: 'array',
-                      items: { type: 'string', enum: ids },
+        model: input.model,
+        input: [
+          {
+            role: 'system',
+            content:
+              'You are Cooksmith’s make-ahead planning brain. Review every selected meal as one portfolio and create the most useful ordered prep session for the available time. Prioritise shared work, meaningful midweek effort reduction, make-ahead components, marinades, and practical chopping. Include only work that is genuinely useful and safe to do ahead. Do not add filler. Reject ordinary cooking fragments, preheating, serving steps, reserving water, or food that will deteriorate. Use only supplied candidate IDs, preserve safety boundaries, and never invent ingredients or quantities. An empty task list is correct when no worthwhile prep exists.',
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              availableMinutes: input.availableMinutes ?? 240,
+              meals: input.meals ?? [],
+              candidates: input.candidates,
+            }),
+          },
+        ],
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'weekly_preparation_strategy',
+            strict: true,
+            schema: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['tasks'],
+              properties: {
+                tasks: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    additionalProperties: false,
+                    required: [
+                      'candidateIds',
+                      'title',
+                      'estimatedMinutes',
+                      'estimatedTimeSavedMinutes',
+                    ],
+                    properties: {
+                      candidateIds: {
+                        type: 'array',
+                        items: { type: 'string', enum: ids },
+                      },
+                      title: { type: 'string' },
+                      estimatedMinutes: { type: 'integer' },
+                      estimatedTimeSavedMinutes: { type: 'integer' },
                     },
-                    decision: { type: 'string', enum: ['combined', 'grouped', 'separate'] },
                   },
                 },
               },
             },
           },
         },
-      },
       }),
       signal: AbortSignal.timeout(input.timeoutMs),
     })
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (error.name === 'TimeoutError' || error.name === 'AbortError')
-    )
-      throw new WeeklyPreparationProviderError(
-        'provider_unavailable',
-        0,
-        'timeout',
-        null,
-        null,
-      )
+    if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError'))
+      throw new WeeklyPreparationProviderError('provider_unavailable', 0, 'timeout', null, null)
     throw error
   }
   if (!response.ok) {

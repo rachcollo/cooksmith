@@ -65,6 +65,28 @@ type MealRow = {
   meal_date: string
 }
 
+type MealPlanningContext = {
+  plannedMealId: string
+  mealDate: string
+  recipeName: string
+  ingredients: string[]
+  instructions: string[]
+}
+
+type HouseholdRecipeRow = {
+  id: string
+  name: string
+  recipe_ingredients: Array<{ original_line_text: string }>
+  recipe_steps: Array<{ instruction: string }>
+}
+
+type ImportedRecipeRow = {
+  id: string
+  name: string
+  ingredient_rows: Array<{ originalLineText?: string; original_line_text?: string }> | null
+  instruction_steps: Array<{ instruction?: string }> | null
+}
+
 type EnrichmentRow = {
   source_kind: 'household' | 'shared_platform'
   recipe_id: string | null
@@ -121,8 +143,8 @@ function candidatesFrom(
             value: ingredient.quantity.normalisedValue,
             unit: ingredient.quantity.unit,
           },
-          maximumLeadTimeHours: null,
-          storageGuidanceReference: null,
+          maximumLeadTimeHours: 24,
+          storageGuidanceReference: 'refrigerate-covered-and-labelled',
           boundaries: [],
           confidence: ingredient.confidence,
         } satisfies WeeklyPreparationCandidate,
@@ -154,6 +176,48 @@ function isSupportedPreparationAction(action: string | null) {
   return action ? supportedPreparationActions.has(action.trim().toLowerCase()) : false
 }
 
+function planningContext(
+  meals: MealRow[],
+  householdRecipes: HouseholdRecipeRow[],
+  importedRecipes: ImportedRecipeRow[],
+): MealPlanningContext[] {
+  const householdById = new Map(householdRecipes.map((recipe) => [recipe.id, recipe]))
+  const importedById = new Map(importedRecipes.map((recipe) => [recipe.id, recipe]))
+  return meals.flatMap((meal) => {
+    const household = meal.recipe_id ? householdById.get(meal.recipe_id) : undefined
+    if (household)
+      return [
+        {
+          plannedMealId: meal.id,
+          mealDate: meal.meal_date,
+          recipeName: household.name,
+          ingredients: household.recipe_ingredients
+            .map((item) => item.original_line_text)
+            .slice(0, 50),
+          instructions: household.recipe_steps.map((item) => item.instruction).slice(0, 30),
+        },
+      ]
+    const imported = meal.imported_recipe_id ? importedById.get(meal.imported_recipe_id) : undefined
+    if (!imported) return []
+    return [
+      {
+        plannedMealId: meal.id,
+        mealDate: meal.meal_date,
+        recipeName: imported.name,
+        ingredients: (imported.ingredient_rows ?? [])
+          .flatMap((item) => {
+            const text = item.originalLineText ?? item.original_line_text
+            return typeof text === 'string' ? [text] : []
+          })
+          .slice(0, 50),
+        instructions: (imported.instruction_steps ?? [])
+          .flatMap((item) => (typeof item.instruction === 'string' ? [item.instruction] : []))
+          .slice(0, 30),
+      },
+    ]
+  })
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders })
   if (request.method !== 'POST') return json(405, { error: 'method_not_allowed' })
@@ -169,6 +233,7 @@ Deno.serve(async (request) => {
     householdId?: unknown
     weekStart?: unknown
     weekEnd?: unknown
+    availableMinutes?: unknown
     forceRetry?: unknown
   } | null
   if (
@@ -176,7 +241,10 @@ Deno.serve(async (request) => {
     !/^[0-9a-f-]{36}$/i.test(body.householdId) ||
     !validDate(body?.weekStart) ||
     !validDate(body?.weekEnd) ||
-    body.weekStart > body.weekEnd
+    body.weekStart > body.weekEnd ||
+    !Number.isInteger(body.availableMinutes) ||
+    Number(body.availableMinutes) < 5 ||
+    Number(body.availableMinutes) > 240
   )
     return json(400, { error: 'invalid_week' })
 
@@ -221,6 +289,16 @@ Deno.serve(async (request) => {
     const settings = await householdData<Array<{ default_servings: number }>>(
       `household_settings?household_id=eq.${householdId}&select=default_servings&limit=1`,
     )
+    const householdRecipes = recipeIds.length
+      ? await householdData<HouseholdRecipeRow[]>(
+          `household_recipes?id=in.(${recipeIds.join(',')})&select=id,name,recipe_ingredients(original_line_text),recipe_steps(instruction)&limit=100`,
+        )
+      : []
+    const importedRecipes = importedRecipeIds.length
+      ? await householdData<ImportedRecipeRow[]>(
+          `imported_recipes?id=in.(${importedRecipeIds.join(',')})&select=id,name,ingredient_rows,instruction_steps&limit=100`,
+        )
+      : []
     const filters = [
       recipeIds.length
         ? `and(source_kind.eq.household,household_id.eq.${householdId},recipe_id.in.(${recipeIds.join(',')}))`
@@ -252,6 +330,8 @@ Deno.serve(async (request) => {
         },
         body: JSON.stringify({
           candidates,
+          meals: planningContext(meals, householdRecipes, importedRecipes),
+          availableMinutes: body.availableMinutes,
           forceRetry: body.forceRetry === true,
           requestId: `${householdId}:${planId}`,
         }),
@@ -270,8 +350,8 @@ Deno.serve(async (request) => {
 
 function emptyPlan(householdId: string, planId: string): WeeklyPreparationPlan {
   return {
-    schemaVersion: 'weekly-preparation-plan-v1',
-    plannerVersion: 'weekly-preparation-planner-v1',
+    schemaVersion: 'weekly-preparation-plan-v2',
+    plannerVersion: 'weekly-preparation-planner-v2',
     householdId,
     planId,
     cacheKey: `empty:${planId}`,

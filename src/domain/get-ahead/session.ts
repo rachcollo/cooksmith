@@ -45,6 +45,7 @@ export interface GetAheadTaskSnapshot {
   sourceKind: string
   sourceText: string
   reason: string
+  storageGuidance?: string
   estimatedMinutes: number
   estimatedTimeSavedMinutes: number
   state: GetAheadTaskState
@@ -393,14 +394,15 @@ export function isTaskStale(task: GetAheadTaskSnapshot, currentRecipeUpdatedAt: 
 }
 
 function toTaskSnapshot(opportunity: PreparationOpportunity): GetAheadTaskSnapshot {
-  const estimatedMinutes = taskEstimateMinutes(opportunity.type)
-  const estimatedTimeSavedMinutes = taskTimeSavedMinutes(opportunity.type)
+  const estimatedMinutes = opportunity.estimatedMinutes ?? taskEstimateMinutes(opportunity.type)
+  const estimatedTimeSavedMinutes =
+    opportunity.estimatedTimeSavedMinutes ?? taskTimeSavedMinutes(opportunity.type)
   return {
     id: `task_${opportunity.id}`,
     opportunityId: opportunity.id,
     sourceRuleVersion: opportunity.ruleVersion,
     type: opportunity.type,
-    title: titleForOpportunity(opportunity),
+    title: opportunity.suggestedTitle ?? titleForOpportunity(opportunity),
     recipeId: opportunity.recipeId,
     recipeName: opportunity.recipeName,
     recipeUpdatedAt: opportunity.recipeUpdatedAt,
@@ -410,6 +412,7 @@ function toTaskSnapshot(opportunity: PreparationOpportunity): GetAheadTaskSnapsh
     sourceKind: opportunity.source.kind,
     sourceText: opportunity.source.text,
     reason: opportunity.reason,
+    ...(opportunity.storageGuidance ? { storageGuidance: opportunity.storageGuidance } : {}),
     estimatedMinutes,
     estimatedTimeSavedMinutes,
     state: 'remaining',
@@ -501,7 +504,9 @@ function scoreOpportunity(
   const timeSavedPerMinute = estimatedTimeSavedMinutes / estimatedMinutes
   const mealsSupported = opportunity.type === 'duplicate-preparation-signal' ? 2 : 1
   const complexityReduction = complexityByType[opportunity.type]
-  const rawScore = timeSavedPerMinute * 45 + mealsSupported * 15 + complexityReduction * 10
+  const modelPriorityBonus = opportunity.priority ? Math.max(0, 20 - opportunity.priority * 2) : 0
+  const rawScore =
+    timeSavedPerMinute * 45 + mealsSupported * 15 + complexityReduction * 10 + modelPriorityBonus
   const score = Math.max(0, Math.min(100, Math.round(rawScore)))
   const explanationFactors = [
     timeSavedPerMinute >= 1.2 ? 'high time saved for the minutes used' : 'practical time saved',

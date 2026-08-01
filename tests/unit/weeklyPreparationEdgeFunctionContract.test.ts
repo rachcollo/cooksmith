@@ -93,6 +93,9 @@ describe('weekly preparation Edge Function contracts', () => {
 
     expect(adapterSource).not.toContain('uniqueItems')
     expect(adapterSource).not.toContain('minItems')
+    expect(adapterSource).toContain('availableMinutes')
+    expect(adapterSource).toContain('Review every selected meal as one portfolio')
+    expect(adapterSource).toContain('An empty task list is correct')
     expect(adapterSource).toContain("response.headers.get('x-request-id')")
     expect(adapterSource).toContain('body.error?.param')
     expect(adapterSource).toContain("error.name === 'TimeoutError'")
@@ -101,6 +104,15 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(evaluationSource).toContain("await rest('weekly_preparation_evaluation_cases'")
     expect(evaluationSource).toContain('deterministic_count: deterministicCount')
     expect(evaluationSource).toContain('error_reason: errorReason')
+  })
+
+  it('sends the selected duration and full meal context to the planning worker', () => {
+    const source = readFileSync(edgeFunctionSources[2], 'utf8')
+
+    expect(source).toContain('availableMinutes: body.availableMinutes')
+    expect(source).toContain('meals: planningContext(')
+    expect(source).toContain('recipe_steps(instruction)')
+    expect(source).toContain('instruction_steps')
   })
 
   it('binds the approved deployment identity before deploying functions', () => {

@@ -60,6 +60,11 @@ export function weeklyPreparationPlanToOpportunities(
             preparation: subtask.preparationDetail,
           },
           reason: sourceSummary(subtask, recipeById),
+          suggestedTitle: task.title,
+          estimatedMinutes: task.estimatedMinutes,
+          estimatedTimeSavedMinutes: task.estimatedTimeSavedMinutes,
+          storageGuidance: task.storageGuidance,
+          priority: task.priority,
         } satisfies PreparationOpportunity,
       ]
     }),
