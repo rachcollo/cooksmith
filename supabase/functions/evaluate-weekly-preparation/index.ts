@@ -272,6 +272,13 @@ Deno.serve(async (request) => {
             (sum, task) => sum + (task.estimatedTimeSavedMinutes ?? 0),
             0,
           )
+          const mealsCovered = new Set(
+            validated.value.tasks.flatMap((task) =>
+              task.subtasks.flatMap((subtask) =>
+                subtask.sources.map((source) => source.plannedMealId),
+              ),
+            ),
+          ).size
           if (evaluationCase.expectedEmpty && validated.value.tasks.length > 0)
             reasonCode = 'expected_empty_plan'
           else if (!evaluationCase.expectedEmpty && validated.value.tasks.length === 0)
@@ -280,6 +287,8 @@ Deno.serve(async (request) => {
             reasonCode = 'insufficient_useful_tasks'
           else if (usefulMinutes < evaluationCase.minimumUsefulMinutes)
             reasonCode = 'insufficient_useful_minutes'
+          else if (mealsCovered < evaluationCase.minimumMealsCovered)
+            reasonCode = 'insufficient_meal_coverage'
           else if (validated.value.tasks.length > 0 && timeSavedMinutes === 0)
             reasonCode = 'no_midweek_time_saved'
         }

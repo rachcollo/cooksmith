@@ -15,6 +15,7 @@ import { TextField } from '../components/ui/TextField'
 const statusLabels: Record<AdminRecipeEnrichment['status'], string> = {
   preparing: 'Preparing recipe insights',
   ready: 'Ready',
+  limited: 'No prep opportunities found',
   failed: 'Couldn’t enrich',
   not_scheduled: 'Not scheduled',
 }

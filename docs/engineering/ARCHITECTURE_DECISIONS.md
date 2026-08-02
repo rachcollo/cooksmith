@@ -37,18 +37,20 @@ Every ADR must contain:
 
 ## Existing ADRs
 
-| ADR                                                                          | Status     | Decision                                            |
-| ---------------------------------------------------------------------------- | ---------- | --------------------------------------------------- |
-| [001](../architecture/decisions/001-existing-repository.md)                  | Accepted   | Build v2 in the existing repository                 |
-| [002](../architecture/decisions/002-v2-integration-branch.md)                | Superseded | Use a dedicated v2 integration branch               |
-| [003](../architecture/decisions/003-greenfield-selective-reuse.md)           | Accepted   | Use greenfield architecture with selective reuse    |
-| [004](../architecture/decisions/004-retain-core-platform.md)                 | Accepted   | Retain React, TypeScript, Vite, Vercel and Supabase |
-| [005](../architecture/decisions/005-deterministic-logic-separate-from-ai.md) | Accepted   | Keep deterministic logic separate from AI           |
-| [006](../architecture/decisions/006-fortnight-planning.md)                   | Accepted   | Use fortnight planning                              |
-| [007](../architecture/decisions/007-shopping-list-copy-export.md)            | Accepted   | Use copy export before retailer API integration     |
-| [008](../architecture/decisions/008-isolate-v2-database-assets.md)           | Accepted   | Isolate v2 database assets from the prototype       |
-| [009](../architecture/decisions/009-temporary-main-mvp-workflow.md)          | Accepted   | Use main as the temporary MVP integration branch    |
-| [010](../architecture/decisions/010-orchard-editorial-design-system.md)      | Proposed   | Use Orchard Editorial as the design system          |
+| ADR                                                                                | Status     | Decision                                                |
+| ---------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------- |
+| [001](../architecture/decisions/001-existing-repository.md)                        | Accepted   | Build v2 in the existing repository                     |
+| [002](../architecture/decisions/002-v2-integration-branch.md)                      | Superseded | Use a dedicated v2 integration branch                   |
+| [003](../architecture/decisions/003-greenfield-selective-reuse.md)                 | Accepted   | Use greenfield architecture with selective reuse        |
+| [004](../architecture/decisions/004-retain-core-platform.md)                       | Accepted   | Retain React, TypeScript, Vite, Vercel and Supabase     |
+| [005](../architecture/decisions/005-deterministic-logic-separate-from-ai.md)       | Accepted   | Keep deterministic logic separate from AI               |
+| [006](../architecture/decisions/006-fortnight-planning.md)                         | Accepted   | Use fortnight planning                                  |
+| [007](../architecture/decisions/007-shopping-list-copy-export.md)                  | Accepted   | Use copy export before retailer API integration         |
+| [008](../architecture/decisions/008-isolate-v2-database-assets.md)                 | Accepted   | Isolate v2 database assets from the prototype           |
+| [009](../architecture/decisions/009-temporary-main-mvp-workflow.md)                | Accepted   | Use main as the temporary MVP integration branch        |
+| [010](../architecture/decisions/010-orchard-editorial-design-system.md)            | Proposed   | Use Orchard Editorial as the design system              |
+| [011](../architecture/decisions/011-database-backed-application-admin-controls.md) | Accepted   | Use database-backed application admin controls          |
+| [012](../architecture/decisions/012-recipe-level-preparation-intelligence.md)      | Accepted   | Use recipe-level preparation intelligence for Get Ahead |
 
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 

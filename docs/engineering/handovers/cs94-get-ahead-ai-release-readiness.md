@@ -213,3 +213,22 @@ This correction requires an Edge Function release only and no database migration
 - After merge, release the forward migration and the two changed Edge Functions from the approved
   `main` SHA. Run and accept a fresh 30-plan evaluation before enabling AI, then verify that a real
   household plan shows concise prep actions, recipe attribution and correct remaining prep time.
+
+## Recipe-level preparation intelligence correction
+
+- Baseline: `main` at `efec570bf8140711e8deeca7b6eb97e7c6073c38`.
+- Branch: `fix/cs-94-recipe-level-prep-intelligence`.
+- Recipe Intelligence v2 derives reusable make-ahead opportunities from complete ingredients and
+  instructions instead of limiting Get Ahead to ingredient action labels.
+- Opportunities retain source references, average-cook effort, likely time saving, internal lead
+  time and separation boundaries. Weekly planning consumes this contract directly and evaluation
+  now requires meaningful meal coverage in multi-meal cases.
+- User-visible “use within” and storage-deadline suggestions are removed. Lead time remains an
+  internal eligibility check, and raw-protein work remains separate from clean preparation.
+- Migration `20260802150000_cs94_recipe_level_prep_intelligence.sql` advances enrichment defaults,
+  queues current recipe versions for v2 re-enrichment, disables weekly AI and advances the planner,
+  prompt and corpus identities.
+- Edge Functions changed: `enrich-recipe`, `evaluate-weekly-preparation`,
+  `generate-weekly-preparation-plan` and `get-weekly-preparation-plan`.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Existing bounded provider
+  controls apply to the one-off re-enrichment.

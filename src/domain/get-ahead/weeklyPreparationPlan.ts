@@ -1,10 +1,10 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v6' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v7' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v4',
+  version: 'weekly-preparation-quality-v5',
   timeBudgets: [15, 30, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
@@ -24,7 +24,7 @@ export const weeklyPreparationQualityRules = {
   ],
   protectedBoundaries: ['raw-protein', 'cross-contamination'],
   boundaryPolicy:
-    'Allow recipe-ready raw-protein preparation with storage guidance, but keep it separate from clean and ready-to-eat preparation.',
+    'Allow recipe-ready raw-protein preparation, but keep it separate from clean and ready-to-eat preparation.',
   durationPolicy:
     'Estimate an average home cook, count shared setup and clean-up once, and treat the selected duration as a maximum rather than a target.',
   rejectedTaskFragments: [
@@ -318,7 +318,7 @@ export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparatio
   if (!candidate.canonicalIngredient?.trim()) return false
   if (/[()[\]{}]|^\s*$/.test(candidate.originalText)) return false
   if (looksLikeCookingOrServingInstruction(candidate.originalText)) return false
-  return candidate.maximumLeadTimeHours !== null && Boolean(candidate.storageGuidanceReference)
+  return candidate.maximumLeadTimeHours !== null
 }
 
 function isConcisePreparationTitle(title: string) {
@@ -375,13 +375,8 @@ function preparationHygieneClass(candidate: WeeklyPreparationCandidate) {
     : 'clean'
 }
 
-function storageGuidanceFor(candidates: WeeklyPreparationCandidate[]) {
-  const maximumHours = Math.min(
-    ...candidates.flatMap((candidate) =>
-      candidate.maximumLeadTimeHours === null ? [] : [candidate.maximumLeadTimeHours],
-    ),
-  )
-  return `Refrigerate in a covered, labelled container and use within ${maximumHours} hours.`
+function storageGuidanceFor(_candidates: WeeklyPreparationCandidate[]) {
+  return undefined
 }
 
 export function withWeeklyPreparationFallback(

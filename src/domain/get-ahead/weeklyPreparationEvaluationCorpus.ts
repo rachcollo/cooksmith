@@ -14,6 +14,7 @@ export type WeeklyPreparationEvaluationCase = {
   expectedEmpty: boolean
   minimumUsefulTasks: number
   minimumUsefulMinutes: number
+  minimumMealsCovered: number
 }
 
 type CandidateFixture = {
@@ -263,7 +264,7 @@ function candidate(
     plannedMealId: `meal-${id}`,
     recipeId: `recipe-${id}`,
     recipeVersionId: `version-${id}`,
-    enrichmentVersion: 'recipe-intelligence-v1',
+    enrichmentVersion: 'recipe-intelligence-v2',
     servings: 4,
     sourceIngredientId: `ingredient-${id}`,
     sourceStepIds: [`step-${id}`],
@@ -274,8 +275,7 @@ function candidate(
     quantity: { state: 'known', value: 1, unit: null },
     maximumLeadTimeHours:
       fixture.maximumLeadTimeHours === undefined ? 24 : fixture.maximumLeadTimeHours,
-    storageGuidanceReference:
-      fixture.maximumLeadTimeHours === null ? null : 'refrigerate-covered-and-labelled',
+    storageGuidanceReference: null,
     boundaries: fixture.boundaries ?? [],
     confidence: 'high',
   }
@@ -303,7 +303,6 @@ export function buildWeeklyPreparationEvaluationCorpus(): WeeklyPreparationEvalu
       const safeCandidateCount = candidates.filter(
         (item) =>
           item.maximumLeadTimeHours !== null &&
-          item.storageGuidanceReference &&
           !['cook', 'preheat', 'crumble'].includes(item.canonicalAction ?? ''),
       ).length
       const expectedEmpty = portfolio.expectedEmpty === true
@@ -315,6 +314,7 @@ export function buildWeeklyPreparationEvaluationCorpus(): WeeklyPreparationEvalu
         expectedEmpty,
         minimumUsefulTasks: expectedEmpty || safeCandidateCount === 0 ? 0 : 1,
         minimumUsefulMinutes: expectedEmpty || safeCandidateCount === 0 ? 0 : 5,
+        minimumMealsCovered: expectedEmpty ? 0 : Math.min(2, safeCandidateCount),
       }
     }),
   )

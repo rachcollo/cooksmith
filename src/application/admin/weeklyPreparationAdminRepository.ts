@@ -71,7 +71,7 @@ export type AdminRecipeEnrichment = {
   name: string
   ownerLabel: string
   updatedAt: string
-  status: 'preparing' | 'ready' | 'failed' | 'not_scheduled'
+  status: 'preparing' | 'ready' | 'limited' | 'failed' | 'not_scheduled'
   completedAt: string | null
   aiActive: boolean
   retryable: boolean

@@ -22,7 +22,7 @@ const recipe = {
 
 const plan: WeeklyPreparationPlan = {
   schemaVersion: 'weekly-preparation-plan-v2',
-  plannerVersion: 'weekly-preparation-planner-v6',
+  plannerVersion: 'weekly-preparation-planner-v7',
   householdId: 'household-1',
   planId: '2026-07-28_2026-08-03',
   cacheKey: 'cache-1',

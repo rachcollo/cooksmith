@@ -1,6 +1,7 @@
 import type {
   EnrichmentConfidence,
   ProviderIngredientSuggestion,
+  ProviderPreparationOpportunity,
   QuantityState,
   RecipeIntelligence,
   RecipeIntelligenceSource,
@@ -45,6 +46,26 @@ const quantityStates: QuantityState[] = [
   'not_applicable',
 ]
 const dimensions = ['mass', 'volume', 'count', 'unknown'] as const
+const opportunityBoundaries = [
+  'batch-component',
+  'cross-contamination',
+  'raw-protein',
+  'storage',
+  'timing',
+] as const
+const preparationActions = [
+  'blend',
+  'chop',
+  'dice',
+  'grate',
+  'marinate',
+  'mince',
+  'mix',
+  'roughly_chop',
+  'shred',
+  'slice',
+  'whisk',
+] as const
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string'
@@ -78,6 +99,30 @@ function isSuggestion(value: unknown): value is ProviderIngredientSuggestion {
   )
 }
 
+function isOpportunity(value: unknown): value is ProviderPreparationOpportunity {
+  if (!value || typeof value !== 'object') return false
+  const item = value as Partial<ProviderPreparationOpportunity>
+  return (
+    typeof item.opportunityId === 'string' &&
+    typeof item.title === 'string' &&
+    typeof item.canonicalIngredient === 'string' &&
+    typeof item.action === 'string' &&
+    isNullableString(item.preparationDetail) &&
+    Array.isArray(item.sourceIngredientIds) &&
+    item.sourceIngredientIds.every((id) => typeof id === 'string') &&
+    Array.isArray(item.sourceStepIds) &&
+    item.sourceStepIds.every((id) => typeof id === 'string') &&
+    Number.isInteger(item.estimatedMinutes) &&
+    Number.isInteger(item.estimatedTimeSavedMinutes) &&
+    Number.isInteger(item.maximumLeadTimeHours) &&
+    Array.isArray(item.boundaries) &&
+    item.boundaries.every((boundary) =>
+      opportunityBoundaries.includes(boundary as (typeof opportunityBoundaries)[number]),
+    ) &&
+    confidenceValues.includes(item.confidence as EnrichmentConfidence)
+  )
+}
+
 export async function resolveAmbiguousLinks(input: {
   apiKey: string
   model: string
@@ -98,7 +143,7 @@ export async function resolveAmbiguousLinks(input: {
       {
         role: 'system',
         content:
-          'Structure only the supplied recipe evidence. Return one result for every supplied ingredient ID. Canonical names must exclude quantities, units, brackets and preparation wording. Preserve meaningful cut differences. Do not invent ingredients, steps, quantities, actions, aliases, storage advice, food-safety advice or other facts. Use null or unknown when the evidence does not support a value.',
+          'Structure the supplied complete recipe into ingredient intelligence and useful recipe-level make-ahead opportunities. Return one ingredient result for every supplied ingredient ID. Opportunities may include grouped vegetable preparation, cutting or marinating protein, sauces, dressings, spice mixes, doughs, batters and genuinely suitable advance-cooked components. Each opportunity must materially reduce weeknight work, use only supplied ingredient and step IDs, have a concise 3-to-8-word action title, and be possible to complete independently. Do not include preheating, boiling water, serving, garnishing, reheating, or ordinary cooking that does not benefit from being done ahead. Estimate an average home cook and count setup and cleanup once per opportunity. Use maximumLeadTimeHours only as internal planning metadata. Do not write storage instructions or use-within advice in titles or preparation details. Mark raw protein boundaries but do not exclude sensible cutting, portioning, seasoning or marinating. Use null or unknown when evidence does not support an ingredient value.',
       },
       {
         role: 'user',
@@ -125,7 +170,7 @@ export async function resolveAmbiguousLinks(input: {
         schema: {
           type: 'object',
           additionalProperties: false,
-          required: ['ingredients'],
+          required: ['ingredients', 'preparationOpportunities'],
           properties: {
             ingredients: {
               type: 'array',
@@ -174,6 +219,51 @@ export async function resolveAmbiguousLinks(input: {
                     type: 'array',
                     items:
                       stepIds.length > 0 ? { type: 'string', enum: stepIds } : { type: 'string' },
+                  },
+                  confidence: { type: 'string', enum: confidenceValues },
+                },
+              },
+            },
+            preparationOpportunities: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: [
+                  'opportunityId',
+                  'title',
+                  'canonicalIngredient',
+                  'action',
+                  'preparationDetail',
+                  'sourceIngredientIds',
+                  'sourceStepIds',
+                  'estimatedMinutes',
+                  'estimatedTimeSavedMinutes',
+                  'maximumLeadTimeHours',
+                  'boundaries',
+                  'confidence',
+                ],
+                properties: {
+                  opportunityId: { type: 'string' },
+                  title: { type: 'string' },
+                  canonicalIngredient: { type: 'string' },
+                  action: { type: 'string', enum: preparationActions },
+                  preparationDetail: nullableString,
+                  sourceIngredientIds: {
+                    type: 'array',
+                    items: { type: 'string', enum: ingredientIds },
+                  },
+                  sourceStepIds: {
+                    type: 'array',
+                    items:
+                      stepIds.length > 0 ? { type: 'string', enum: stepIds } : { type: 'string' },
+                  },
+                  estimatedMinutes: { type: 'integer' },
+                  estimatedTimeSavedMinutes: { type: 'integer' },
+                  maximumLeadTimeHours: { type: 'integer' },
+                  boundaries: {
+                    type: 'array',
+                    items: { type: 'string', enum: opportunityBoundaries },
                   },
                   confidence: { type: 'string', enum: confidenceValues },
                 },
@@ -248,16 +338,21 @@ export async function resolveAmbiguousLinks(input: {
     .find((item) => item.type === 'output_text')?.text
   if (!text) throw new Error('schema_invalid')
 
-  let parsed: { ingredients?: unknown[] }
+  let parsed: { ingredients?: unknown[]; preparationOpportunities?: unknown[] }
   try {
-    parsed = JSON.parse(text) as { ingredients?: unknown[] }
+    parsed = JSON.parse(text) as {
+      ingredients?: unknown[]
+      preparationOpportunities?: unknown[]
+    }
   } catch {
     throw new Error('schema_invalid')
   }
   if (
     !Array.isArray(parsed.ingredients) ||
     parsed.ingredients.length !== ingredientIds.length ||
-    !parsed.ingredients.every(isSuggestion)
+    !parsed.ingredients.every(isSuggestion) ||
+    !Array.isArray(parsed.preparationOpportunities) ||
+    !parsed.preparationOpportunities.every(isOpportunity)
   )
     throw new Error('schema_invalid')
 
@@ -265,6 +360,7 @@ export async function resolveAmbiguousLinks(input: {
     input.source,
     input.deterministic,
     parsed.ingredients,
+    parsed.preparationOpportunities,
   )
 
   return {

@@ -1,5 +1,5 @@
-export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v1'
-export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v1'
+export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v2'
+export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v2'
 
 export type EnrichmentProvenance = 'deterministic' | 'model' | 'unknown'
 export type EnrichmentConfidence = 'high' | 'medium' | 'low' | 'unknown'
@@ -26,12 +26,30 @@ export type RecipeIntelligenceIngredient = {
   confidence: EnrichmentConfidence
 }
 
+export type RecipePreparationOpportunity = {
+  opportunityId: string
+  title: string
+  canonicalIngredient: string
+  action: string
+  preparationDetail: string | null
+  sourceIngredientIds: string[]
+  sourceStepIds: string[]
+  estimatedMinutes: number
+  estimatedTimeSavedMinutes: number
+  maximumLeadTimeHours: number
+  boundaries: Array<
+    'batch-component' | 'cross-contamination' | 'raw-protein' | 'storage' | 'timing'
+  >
+  confidence: EnrichmentConfidence
+}
+
 export type RecipeIntelligence = {
   schemaVersion: typeof recipeIntelligenceSchemaVersion
   rulesVersion: typeof recipeIntelligenceRulesVersion
   recipeId: string
   recipeFingerprint: string
   ingredients: RecipeIntelligenceIngredient[]
+  preparationOpportunities: RecipePreparationOpportunity[]
   unresolvedIngredientIds: string[]
   overallConfidence: EnrichmentConfidence
 }
@@ -48,6 +66,8 @@ export type ProviderIngredientSuggestion = Pick<
   | 'sourceStepIds'
   | 'confidence'
 >
+
+export type ProviderPreparationOpportunity = RecipePreparationOpportunity
 
 export type RecipeIntelligenceSource = {
   recipeId: string
@@ -230,6 +250,7 @@ export function buildDeterministicRecipeIntelligence(
     recipeId: source.recipeId,
     recipeFingerprint: source.recipeFingerprint,
     ingredients,
+    preparationOpportunities: [],
     unresolvedIngredientIds: ingredients
       .filter((ingredient) => ingredient.sourceStepIds.length === 0)
       .map((ingredient) => ingredient.sourceIngredientId),
@@ -245,9 +266,38 @@ export function applyProviderIngredientSuggestions(
   source: RecipeIntelligenceSource,
   deterministic: RecipeIntelligence,
   suggestions: ProviderIngredientSuggestion[],
+  opportunities: ProviderPreparationOpportunity[] = [],
 ): RecipeIntelligence {
   const ingredientIds = source.ingredients.map((ingredient) => ingredient.id)
   const stepIds = new Set(source.steps.map((step) => step.id))
+  if (
+    new Set(opportunities.map((item) => item.opportunityId)).size !== opportunities.length ||
+    opportunities.some(
+      (item) =>
+        item.sourceIngredientIds.length === 0 ||
+        !hasUniqueStrings(item.sourceIngredientIds) ||
+        !hasUniqueStrings(item.sourceStepIds) ||
+        item.sourceIngredientIds.some((id) => !ingredientIds.includes(id)) ||
+        item.sourceStepIds.some((id) => !stepIds.has(id)) ||
+        item.title.trim().length < 4 ||
+        item.title.length > 72 ||
+        /\b(use within|refrigerat|freeze|storage)\b/i.test(
+          `${item.title} ${item.preparationDetail ?? ''}`,
+        ) ||
+        item.canonicalIngredient.trim().length === 0 ||
+        item.action.trim().length === 0 ||
+        !Number.isInteger(item.estimatedMinutes) ||
+        item.estimatedMinutes < 3 ||
+        item.estimatedMinutes > 120 ||
+        !Number.isInteger(item.estimatedTimeSavedMinutes) ||
+        item.estimatedTimeSavedMinutes < 0 ||
+        item.estimatedTimeSavedMinutes > 180 ||
+        !Number.isInteger(item.maximumLeadTimeHours) ||
+        item.maximumLeadTimeHours < 1 ||
+        item.maximumLeadTimeHours > 168,
+    )
+  )
+    throw new Error('unsupported_data')
   if (
     suggestions.length !== ingredientIds.length ||
     new Set(suggestions.map((item) => item.sourceIngredientId)).size !== ingredientIds.length ||
@@ -285,6 +335,7 @@ export function applyProviderIngredientSuggestions(
   return {
     ...deterministic,
     ingredients,
+    preparationOpportunities: opportunities,
     unresolvedIngredientIds: ingredients
       .filter(
         (ingredient) =>
@@ -308,7 +359,8 @@ export function validateProviderEnrichment(
     candidate.recipeId !== source.recipeId ||
     candidate.recipeFingerprint !== source.recipeFingerprint ||
     candidate.schemaVersion !== recipeIntelligenceSchemaVersion ||
-    !Array.isArray(candidate.ingredients)
+    !Array.isArray(candidate.ingredients) ||
+    !Array.isArray(candidate.preparationOpportunities)
   )
     return { ok: false, reason: 'source_mismatch' }
 
@@ -318,6 +370,19 @@ export function validateProviderEnrichment(
     candidate.ingredients.length !== ingredientIds.size ||
     new Set(candidate.ingredients.map((ingredient) => ingredient.sourceIngredientId)).size !==
       ingredientIds.size
+  )
+    return { ok: false, reason: 'unsupported_reference' }
+
+  if (
+    candidate.preparationOpportunities.some(
+      (opportunity) =>
+        !opportunity ||
+        !Array.isArray(opportunity.sourceIngredientIds) ||
+        opportunity.sourceIngredientIds.length === 0 ||
+        opportunity.sourceIngredientIds.some((id) => !ingredientIds.has(id)) ||
+        !Array.isArray(opportunity.sourceStepIds) ||
+        opportunity.sourceStepIds.some((id) => !stepIds.has(id)),
+    )
   )
     return { ok: false, reason: 'unsupported_reference' }
   if (

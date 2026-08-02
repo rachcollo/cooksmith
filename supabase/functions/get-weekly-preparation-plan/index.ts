@@ -114,17 +114,27 @@ function candidatesFrom(
       item,
     ]),
   )
+  const today = new Date().toISOString().slice(0, 10)
   return meals.flatMap((meal) => {
     const sourceKind = meal.recipe_id ? 'household' : 'shared_platform'
     const recipeId = meal.recipe_id ?? meal.imported_recipe_id
     if (!recipeId) return []
     const enrichment = enrichmentByRecipe.get(`${sourceKind}:${recipeId}`)
     if (!enrichment) return []
-    return enrichment.result.ingredients.flatMap((ingredient) => {
-      if (!isSupportedPreparationAction(ingredient.action)) return []
+    return enrichment.result.preparationOpportunities.flatMap((opportunity) => {
+      if (!isSupportedPreparationAction(opportunity.action)) return []
+      const daysUntilMeal = Math.round(
+        (Date.parse(`${meal.meal_date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) /
+          86_400_000,
+      )
+      if (daysUntilMeal < 0 || opportunity.maximumLeadTimeHours < Math.max(1, daysUntilMeal * 24))
+        return []
+      const ingredient = enrichment.result.ingredients.find((item) =>
+        opportunity.sourceIngredientIds.includes(item.sourceIngredientId),
+      )
       return [
         {
-          id: `${meal.id}:${enrichment.recipe_version_id}:${ingredient.sourceIngredientId}`,
+          id: `${meal.id}:${enrichment.recipe_version_id}:${opportunity.opportunityId}`,
           householdId,
           planId,
           plannedMealId: meal.id,
@@ -132,21 +142,21 @@ function candidatesFrom(
           recipeVersionId: enrichment.recipe_version_id,
           enrichmentVersion: `${enrichment.schema_version}:${enrichment.rules_version}`,
           servings,
-          sourceIngredientId: ingredient.sourceIngredientId,
-          sourceStepIds: ingredient.sourceStepIds,
-          originalText: ingredient.originalText,
-          canonicalIngredient: ingredient.canonicalName,
-          canonicalAction: ingredient.action,
-          preparationDetail: ingredient.preparationDetail,
+          sourceIngredientId: opportunity.sourceIngredientIds.join('+'),
+          sourceStepIds: opportunity.sourceStepIds,
+          originalText: opportunity.title,
+          canonicalIngredient: opportunity.canonicalIngredient,
+          canonicalAction: opportunity.action,
+          preparationDetail: opportunity.preparationDetail,
           quantity: {
-            state: ingredient.quantity.state,
-            value: ingredient.quantity.normalisedValue,
-            unit: ingredient.quantity.unit,
+            state: ingredient?.quantity.state ?? 'unknown',
+            value: ingredient?.quantity.normalisedValue ?? null,
+            unit: ingredient?.quantity.unit ?? null,
           },
-          maximumLeadTimeHours: 24,
-          storageGuidanceReference: 'refrigerate-covered-and-labelled',
-          boundaries: [],
-          confidence: ingredient.confidence,
+          maximumLeadTimeHours: opportunity.maximumLeadTimeHours,
+          storageGuidanceReference: null,
+          boundaries: opportunity.boundaries,
+          confidence: opportunity.confidence,
         } satisfies WeeklyPreparationCandidate,
       ]
     })
@@ -165,6 +175,7 @@ const supportedPreparationActions = new Set([
   'mince',
   'mix',
   'roast',
+  'roughly_chop',
   'shred',
   'slice',
   'steam',
@@ -351,7 +362,7 @@ Deno.serve(async (request) => {
 function emptyPlan(householdId: string, planId: string): WeeklyPreparationPlan {
   return {
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v6',
+    plannerVersion: 'weekly-preparation-planner-v7',
     householdId,
     planId,
     cacheKey: `empty:${planId}`,
