@@ -1432,39 +1432,48 @@ export type Database = {
       }
       weekly_preparation_evaluation_cases: {
         Row: {
+          available_minutes: number | null
           case_key: string
           case_number: number
           estimated_cost_aud: number
           expected_model_call: boolean
+          generated_tasks: Json
           input_tokens: number
           latency_ms: number
           model_called: boolean
+          meal_names: string[]
           outcome: string
           output_tokens: number
           reason_code: string | null
           run_id: string
         }
         Insert: {
+          available_minutes?: number | null
           case_key: string
           case_number: number
           estimated_cost_aud: number
           expected_model_call: boolean
+          generated_tasks?: Json
           input_tokens: number
           latency_ms: number
           model_called: boolean
+          meal_names?: string[]
           outcome: string
           output_tokens: number
           reason_code?: string | null
           run_id: string
         }
         Update: {
+          available_minutes?: number | null
           case_key?: string
           case_number?: number
           estimated_cost_aud?: number
           expected_model_call?: boolean
+          generated_tasks?: Json
           input_tokens?: number
           latency_ms?: number
           model_called?: boolean
+          meal_names?: string[]
           outcome?: string
           output_tokens?: number
           reason_code?: string | null
