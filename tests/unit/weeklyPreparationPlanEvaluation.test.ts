@@ -15,7 +15,7 @@ function candidate(plan: number, recipe: number, action = 'dice'): WeeklyPrepara
     plannedMealId: `meal-${id}`,
     recipeId: `recipe-${id}`,
     recipeVersionId: `version-${id}`,
-    enrichmentVersion: 'recipe-intelligence-v1',
+    enrichmentVersion: 'recipe-intelligence-v2',
     servings: 4,
     sourceIngredientId: `ingredient-${id}`,
     sourceStepIds: [`step-${id}`],
@@ -46,6 +46,7 @@ describe('Weekly preparation representative evaluation', () => {
     ).toBe(true)
     expect(corpus.some((item) => item.minimumUsefulTasks === 1)).toBe(true)
     expect(corpus.every((item) => item.expectedEmpty || item.minimumUsefulTasks === 1)).toBe(true)
+    expect(corpus.some((item) => !item.expectedEmpty && item.minimumMealsCovered >= 2)).toBe(true)
     expect(
       corpus
         .filter((item) => item.key.startsWith('raw-protein-boundary'))

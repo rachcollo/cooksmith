@@ -110,3 +110,17 @@ configuration, secret scanning and the production dependency audit pass. The Sup
 unable to create `/root/.supabase` in this managed runner, so reset, lint, pgTAP and generated-type
 freshness remain required GitHub CI gates. Hosted provider generation and mobile verification
 remain post-deployment checks.
+
+## Recipe-level preparation intelligence follow-up — 2026-08-02
+
+Real household testing proved that the weekly model received too few useful candidates because the
+v1 enrichment contract stored only per-ingredient action labels. Recipe Intelligence v2 now stores
+validated make-ahead opportunities derived from complete recipe ingredients and instructions,
+including grouped vegetables, raw-protein preparation, marinades, sauces, spice mixes and suitable
+advance components. The weekly planner consumes these source-linked opportunities and filters them
+against meal timing before model selection.
+
+Lead time and separation boundaries remain deterministic planning controls. The checklist no
+longer displays “use within” or other storage-deadline suggestions. The 30-plan review now checks
+meal coverage as well as task usefulness, time and traceability, preventing a multi-meal portfolio
+from passing with one isolated task when more supported work exists.

@@ -62,6 +62,90 @@ describe('Recipe Intelligence provider results', () => {
     expect(result.overallConfidence).toBe('high')
   })
 
+  it('stores source-bound recipe-level make-ahead opportunities', () => {
+    const result = applyProviderIngredientSuggestions(
+      source,
+      buildDeterministicRecipeIntelligence(source),
+      [suggestion],
+      [
+        {
+          opportunityId: 'onion-prep',
+          title: 'Finely chop the onion',
+          canonicalIngredient: 'onion',
+          action: 'chop',
+          preparationDetail: 'finely chopped',
+          sourceIngredientIds: ['ingredient-1'],
+          sourceStepIds: ['step-1'],
+          estimatedMinutes: 6,
+          estimatedTimeSavedMinutes: 8,
+          maximumLeadTimeHours: 72,
+          boundaries: [],
+          confidence: 'high',
+        },
+      ],
+    )
+
+    expect(result.preparationOpportunities).toEqual([
+      expect.objectContaining({
+        opportunityId: 'onion-prep',
+        title: 'Finely chop the onion',
+        maximumLeadTimeHours: 72,
+      }),
+    ])
+  })
+
+  it('rejects opportunities that invent recipe evidence', () => {
+    expect(() =>
+      applyProviderIngredientSuggestions(
+        source,
+        buildDeterministicRecipeIntelligence(source),
+        [suggestion],
+        [
+          {
+            opportunityId: 'invented',
+            title: 'Make an invented sauce',
+            canonicalIngredient: 'sauce',
+            action: 'mix',
+            preparationDetail: null,
+            sourceIngredientIds: ['invented-ingredient'],
+            sourceStepIds: ['step-1'],
+            estimatedMinutes: 10,
+            estimatedTimeSavedMinutes: 15,
+            maximumLeadTimeHours: 48,
+            boundaries: [],
+            confidence: 'high',
+          },
+        ],
+      ),
+    ).toThrow('unsupported_data')
+  })
+
+  it('rejects visible storage-deadline suggestions', () => {
+    expect(() =>
+      applyProviderIngredientSuggestions(
+        source,
+        buildDeterministicRecipeIntelligence(source),
+        [suggestion],
+        [
+          {
+            opportunityId: 'storage-copy',
+            title: 'Chop onion and use within two days',
+            canonicalIngredient: 'onion',
+            action: 'chop',
+            preparationDetail: null,
+            sourceIngredientIds: ['ingredient-1'],
+            sourceStepIds: ['step-1'],
+            estimatedMinutes: 6,
+            estimatedTimeSavedMinutes: 8,
+            maximumLeadTimeHours: 48,
+            boundaries: [],
+            confidence: 'high',
+          },
+        ],
+      ),
+    ).toThrow('unsupported_data')
+  })
+
   it('rejects duplicate and invented source identities', () => {
     const twoIngredientSource = {
       ...source,

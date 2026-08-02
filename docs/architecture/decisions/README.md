@@ -32,3 +32,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [009](009-temporary-main-mvp-workflow.md) | Accepted | Use main as the temporary MVP integration branch |
 | [010](010-orchard-editorial-design-system.md) | Proposed | Use Orchard Editorial as the Cooksmith design system |
 | [011](011-database-backed-application-admin-controls.md) | Accepted | Use database-backed application administrator controls |
+| [012](012-recipe-level-preparation-intelligence.md) | Accepted | Use recipe-level preparation intelligence for Get Ahead |

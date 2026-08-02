@@ -531,8 +531,8 @@ function WeeklyPreparationOperations() {
                 grouped vegetable-prep block.
               </li>
               <li>
-                Raw protein may be cut, portioned, seasoned or marinated when storage guidance is
-                available. It must remain separate from vegetables and ready-to-eat food.
+                Raw protein may be cut, portioned, seasoned or marinated. It must remain separate
+                from vegetables and ready-to-eat food.
               </li>
               <li>Preheating, serving steps and reserving water are not advance preparation.</li>
               <li>

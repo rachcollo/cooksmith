@@ -132,6 +132,9 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).toContain('meals: planningContext(')
     expect(source).toContain('recipe_steps(instruction)')
     expect(source).toContain('instruction_steps')
+    expect(source).toContain('enrichment.result.preparationOpportunities')
+    expect(source).toContain('opportunity.maximumLeadTimeHours')
+    expect(source).not.toContain('enrichment.result.ingredients.flatMap')
   })
 
   it('binds the approved deployment identity before deploying functions', () => {

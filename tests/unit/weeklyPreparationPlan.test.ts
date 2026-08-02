@@ -18,7 +18,7 @@ function candidate(
     plannedMealId: `meal-${id}`,
     recipeId: `recipe-${id}`,
     recipeVersionId: `recipe-version-${id}`,
-    enrichmentVersion: 'recipe-intelligence-v1',
+    enrichmentVersion: 'recipe-intelligence-v2',
     servings: 4,
     sourceIngredientId: `ingredient-${id}`,
     sourceStepIds: [`step-${id}`],
@@ -137,9 +137,7 @@ describe('weekly preparation plan', () => {
     })
     expect(rawOnly.ok).toBe(true)
     if (rawOnly.ok) {
-      expect(rawOnly.value.tasks[0]?.storageGuidance).toBe(
-        'Refrigerate in a covered, labelled container and use within 24 hours.',
-      )
+      expect(rawOnly.value.tasks[0]?.storageGuidance).toBeUndefined()
     }
 
     expect(
@@ -163,7 +161,7 @@ describe('weekly preparation plan', () => {
     )
     expect(createWeeklyPreparationCacheKey(original)).not.toBe(
       createWeeklyPreparationCacheKey([
-        candidate('a', { enrichmentVersion: 'recipe-intelligence-v2' }),
+        candidate('a', { enrichmentVersion: 'recipe-intelligence-v3' }),
       ]),
     )
     expect(createWeeklyPreparationCacheKey(original)).not.toBe(
