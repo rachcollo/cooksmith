@@ -64,16 +64,15 @@ export async function decideAmbiguousPreparation(input: {
         input: [
           {
             role: 'system',
-            content:
-              [
-                'You are Cooksmith’s make-ahead planning brain. Build one realistic, ordered session across all selected meals.',
-                'Use only eligibleCandidateIds. Never include a candidate marked unsafe or ineligible, and never repeat an ID.',
-                'Every task must take at least 5 whole minutes. The total estimatedMinutes must not exceed availableMinutes.',
-                'Prefer shared prep and the highest genuine midweek time saving. Fill the available time only with worthwhile work; never add filler.',
-                'Task titles must be plain actions without brackets, preheating, serving instructions, reserving water or full cooking steps.',
-                'Return an empty task list when eligibleCandidateIds is empty or no worthwhile prep exists.',
-                `Protected rule version: ${weeklyPreparationQualityRules.version}.`,
-              ].join(' '),
+            content: [
+              'You are Cooksmith’s make-ahead planning brain. Build one realistic, ordered session across all selected meals.',
+              'Use only eligibleCandidateIds. Never include a candidate marked unsafe or ineligible, and never repeat an ID.',
+              'Every task must take at least 5 whole minutes. The total estimatedMinutes must not exceed availableMinutes.',
+              'Prefer shared prep and the highest genuine midweek time saving. Fill the available time only with worthwhile work; never add filler.',
+              'Task titles must be plain actions without brackets, preheating, serving instructions, reserving water or full cooking steps.',
+              'Return an empty task list when eligibleCandidateIds is empty or no worthwhile prep exists.',
+              `Protected rule version: ${weeklyPreparationQualityRules.version}.`,
+            ].join(' '),
           },
           {
             role: 'user',
