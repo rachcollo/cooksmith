@@ -225,6 +225,7 @@ Deno.serve(async (request) => {
       let modelCalled = false
       let caseInputTokens = 0
       let caseOutputTokens = 0
+      let reasonCode: string | null = null
       if (expectedModelCall) {
         modelCalled = true
         modelCallCount += 1
@@ -249,7 +250,6 @@ Deno.serve(async (request) => {
           assisted.decision,
           availableMinutes,
         )
-        let reasonCode: string | null = null
         if (!validated.ok) reasonCode = validated.reason
         else {
           validOutputCount += 1
