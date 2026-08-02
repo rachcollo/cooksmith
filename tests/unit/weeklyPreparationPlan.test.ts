@@ -281,4 +281,58 @@ describe('weekly preparation plan', () => {
     expect(result.value.tasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0)).toBe(18)
     expect(JSON.stringify(result.value.tasks)).not.toContain('garlic cloves (')
   })
+
+  it('replaces copied recipe prose with a concise preparation title', () => {
+    const marinade = candidate('marinade', {
+      canonicalIngredient: 'marinade',
+      canonicalAction: 'mix',
+      originalText: '2 tbsp marinade',
+      confidence: 'low',
+    })
+    const fallback = buildDeterministicWeeklyPreparationPlan([marinade])
+    const result = applyAndValidateModelDecision(fallback, [marinade], {
+      tasks: [
+        {
+          candidateIds: ['marinade'],
+          title:
+            'Marinate Marinade - Mix the marinade ingredients in a bowl, it should be like a paste',
+          estimatedMinutes: 10,
+          estimatedTimeSavedMinutes: 15,
+        },
+      ],
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tasks[0]?.title).toBe('Make marinade')
+  })
+
+  it('excludes cooking and serving sentences misclassified as ingredient preparation', () => {
+    const serving = candidate('serving', {
+      canonicalIngredient: 'consomme',
+      canonicalAction: 'mix',
+      originalText: 'Remove and serve while hot with the consommé for dunking.',
+    })
+    const cooking = candidate('cooking', {
+      canonicalIngredient: 'beef',
+      canonicalAction: 'mix',
+      originalText: 'Simmer chopped chillies, strain and brown beef.',
+    })
+
+    expect(buildDeterministicWeeklyPreparationPlan([serving, cooking]).tasks).toEqual([])
+  })
+
+  it('keeps useful brown vegetables and sliced garnishes eligible', () => {
+    const onion = candidate('brown-onion', {
+      canonicalIngredient: 'brown onion',
+      originalText: '1 brown onion, diced',
+    })
+    const cucumber = candidate('cucumber', {
+      canonicalIngredient: 'cucumber',
+      canonicalAction: 'slice',
+      originalText: '1 cucumber, sliced to serve',
+    })
+
+    expect(buildDeterministicWeeklyPreparationPlan([onion, cucumber]).tasks).toHaveLength(2)
+  })
 })

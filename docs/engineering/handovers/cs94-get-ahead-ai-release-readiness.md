@@ -189,3 +189,27 @@ This correction requires an Edge Function release only and no database migration
 - After merge, release the forward migration and three Edge Functions from the approved `main` SHA,
   run and accept a fresh 30-plan evaluation, then enable AI and verify a partially filled 30-minute
   household session plus the grouped vegetable duration.
+
+## Trustworthy household task correction
+
+- Baseline: `main` at `76d9ebce1637daa5bd89855ca9f3d0d2a0a5afc3`.
+- Branch: `fix/cs-94-ai-plan-fallback`.
+- Model-assisted output can no longer display copied recipe sentences as checklist titles. Titles
+  containing recipe prose are replaced with concise, traceable ingredient preparation actions.
+- Candidates that are actually cooking or serving instructions are excluded even when upstream
+  enrichment has misclassified them as an ingredient preparation action. The provider prompt also
+  requires short preparation-only titles and rejects duplicate filler.
+- Every non-consolidated checklist row identifies its recipe. The progress summary reports actual
+  session prep time remaining rather than presenting estimated later time savings as unused prep
+  capacity.
+- Planner, quality-rule, prompt and corpus identities advance together. The forward migration
+  disables AI and clears previous smoke evidence, so cached v5 results and the previous evaluation
+  cannot authorise v6.
+- Edge Functions changed: `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan` through their shared domain import.
+- Database migration: `20260802113000_cs94_trustworthy_ai_prep_tasks.sql`. Dependencies added:
+  none. Fixed cost impact: A$0/month and A$0/year. Evaluation usage remains 30 bounded provider
+  calls.
+- After merge, release the forward migration and the two changed Edge Functions from the approved
+  `main` SHA. Run and accept a fresh 30-plan evaluation before enabling AI, then verify that a real
+  household plan shows concise prep actions, recipe attribution and correct remaining prep time.

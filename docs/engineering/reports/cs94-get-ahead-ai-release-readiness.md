@@ -93,3 +93,20 @@ No dependency or provider is added. The implementation has A$0 fixed monthly and
 Running the evaluation makes ten bounded calls to the already approved configured OpenAI model.
 Actual token counts and estimated A$ cost are persisted using the existing approved pricing-rate
 configuration.
+
+## Trustworthy household task follow-up — 2026-08-02
+
+Real household testing showed that model-assisted plans could copy long recipe instructions into
+task titles, retain serving or cooking steps misclassified by recipe enrichment, omit recipe
+context and label estimated future time savings as prep time still available. The v6 planner now
+uses model output for selection and ordering only when its visible title is concise and
+preparation-specific. Otherwise it derives a short title from the validated canonical action and
+ingredient. Cooking and serving sentences are rejected at candidate eligibility, each ordinary
+task names its recipe, and the progress card reports remaining session minutes.
+
+Regression coverage reproduces the observed marinade and serving-instruction failures. Formatting,
+lint, strict types, all 364 Vitest tests, production build, documentation command audit, database
+configuration, secret scanning and the production dependency audit pass. The Supabase CLI remains
+unable to create `/root/.supabase` in this managed runner, so reset, lint, pgTAP and generated-type
+freshness remain required GitHub CI gates. Hosted provider generation and mobile verification
+remain post-deployment checks.

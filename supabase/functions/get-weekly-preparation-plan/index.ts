@@ -351,7 +351,7 @@ Deno.serve(async (request) => {
 function emptyPlan(householdId: string, planId: string): WeeklyPreparationPlan {
   return {
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v2',
+    plannerVersion: 'weekly-preparation-planner-v6',
     householdId,
     planId,
     cacheKey: `empty:${planId}`,
