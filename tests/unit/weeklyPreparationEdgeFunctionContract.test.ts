@@ -158,6 +158,18 @@ describe('weekly preparation Edge Function contracts', () => {
     )
   })
 
+  it('filters unsafe candidates before requesting an AI strategy', () => {
+    const source = readFileSync(
+      'supabase/functions/generate-weekly-preparation-plan/openaiAdapter.ts',
+      'utf8',
+    )
+
+    expect(source).toContain('input.candidates.filter(isWeeklyPreparationCandidateEligible)')
+    expect(source).toContain('eligibleCandidateIds: eligibleIds')
+    expect(source).toContain("items: { type: 'string', enum: eligibleIds }")
+    expect(source).toContain('total estimatedMinutes must not exceed availableMinutes')
+  })
+
   it('persists privacy-safe case evidence needed for Admin review', () => {
     const source = readFileSync(edgeFunctionSources[0], 'utf8')
     const migration = readFileSync(
