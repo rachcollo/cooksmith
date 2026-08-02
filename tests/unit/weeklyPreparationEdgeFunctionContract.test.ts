@@ -94,7 +94,9 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(adapterSource).not.toContain('uniqueItems')
     expect(adapterSource).not.toContain('minItems')
     expect(adapterSource).toContain('availableMinutes')
-    expect(adapterSource).toContain('Build one realistic, ordered session across all selected meals')
+    expect(adapterSource).toContain(
+      'Build one realistic, ordered session across all selected meals',
+    )
     expect(adapterSource).toContain('Return an empty task list')
     expect(adapterSource).toContain("response.headers.get('x-request-id')")
     expect(adapterSource).toContain('body.error?.param')
@@ -217,4 +219,3 @@ describe('weekly preparation Edge Function contracts', () => {
     ).rejects.toThrow(expectedMessage)
   })
 })
-
