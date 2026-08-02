@@ -9,6 +9,7 @@ import {
   WeeklyPreparationProviderError,
 } from '../generate-weekly-preparation-plan/openaiAdapter.ts'
 import { buildWeeklyPreparationEvaluationCorpus } from '../../../src/domain/get-ahead/weeklyPreparationEvaluationCorpus.ts'
+import { passesWeeklyPreparationEvaluation } from '../../../src/domain/get-ahead/weeklyPreparationEvaluationPolicy.ts'
 
 declare const Deno: {
   env: { get(key: string): string | undefined }
@@ -331,7 +332,14 @@ Deno.serve(async (request) => {
         }),
       })
     }
-    const reviewPassed = reviewedCorrectCount === corpus.length
+    const reviewPassed = passesWeeklyPreparationEvaluation({
+      planCount: corpus.length,
+      modelCallCount,
+      validOutputCount,
+      fallbackCount,
+      unsupportedCount: 0,
+      reviewedCorrectCount,
+    })
     await rest(`weekly_preparation_evaluation_runs?id=eq.${runId}`, {
       method: 'PATCH',
       body: JSON.stringify({

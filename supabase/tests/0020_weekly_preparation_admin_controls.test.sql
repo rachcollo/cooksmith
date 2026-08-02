@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(18);
 
 select has_table(
   'cooksmith',
@@ -98,11 +98,11 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   0,
   30,
   30,
-  30,
+  28,
+  2,
+  1,
   0,
-  0,
-  0,
-  30,
+  28,
   3000,
   1000,
   500,
@@ -137,11 +137,24 @@ set
 where singleton;
 
 set local role authenticated;
+select throws_ok(
+  $$select cooksmith.accept_weekly_preparation_evaluation(
+      (select id from cooksmith.weekly_preparation_evaluation_runs limit 1)
+    )$$,
+  '23514',
+  'Completed current 30-plan evaluation meeting the quality threshold required',
+  'A 28 of 30 result remains blocked when any hard fallback exists'
+);
+reset role;
+update cooksmith.weekly_preparation_evaluation_runs
+set fallback_count = 0
+where true;
+set local role authenticated;
 select lives_ok(
   $$select cooksmith.accept_weekly_preparation_evaluation(
       (select id from cooksmith.weekly_preparation_evaluation_runs limit 1)
     )$$,
-  'Application admins can explicitly accept a complete current evaluation'
+  'Application admins can explicitly accept a valid 28 of 30 quality evaluation'
 );
 reset role;
 update cooksmith.weekly_preparation_settings

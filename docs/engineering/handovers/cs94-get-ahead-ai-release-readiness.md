@@ -1,5 +1,15 @@
 # CS-94 handover
 
+## 2026-08-02 evaluation quality-threshold correction
+
+- Branch: `fix/cs-94-evaluation-quality-threshold` from `main` at `1049421`.
+- Replaces the probabilistic 30-of-30 usefulness gate with an explicit 28-of-30 release threshold. This aligns the hosted evaluation with the technical architecture's threshold model and prevents repeated 28 or 29 results from blocking activation.
+- Hard constraints remain zero tolerance: all 30 model calls and outputs must be present and valid, with no fallback, unsupported evidence or planner validation failure. The administrator still reviews the quality misses and explicitly accepts the completed run before enabling AI.
+- Migration `20260802180000_cs94_evaluation_quality_threshold.sql` forward-replaces only the acceptance function. It does not edit released migrations or automatically accept evidence, enable AI or alter household data.
+- The evaluator, Admin eligibility calculation, explanation copy, pgTAP fixture and domain regression coverage use the same 28-of-30 policy.
+- Release order after merge: release the forward migration and `evaluate-weekly-preparation` Edge Function from the exact approved `main` SHA, run one fresh evaluation, review any quality misses, accept a result of 28 or higher, then enable AI.
+- Dependencies and fixed costs added: none. Evaluation and plan-generation provider costs remain unchanged.
+
 ## 2026-08-01 evaluation review-evidence correction
 
 - Baseline: `main` at `146f149` (merge of PR #148).
