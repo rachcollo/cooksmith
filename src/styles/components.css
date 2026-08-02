@@ -2669,6 +2669,42 @@ button.card:hover {
   overflow-wrap: anywhere;
 }
 
+.evaluation-case-review {
+  display: grid;
+  gap: var(--space-3);
+  margin-block: var(--space-5);
+}
+
+.evaluation-case {
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-medium);
+  padding: var(--space-3) var(--space-4);
+}
+
+.evaluation-case summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-weight: 600;
+  gap: var(--space-3);
+  justify-content: space-between;
+  min-height: 44px;
+}
+
+.evaluation-case summary span:last-child {
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  text-align: right;
+}
+
+.evaluation-case[open] summary {
+  margin-bottom: var(--space-4);
+}
+
+.evaluation-case h5 {
+  margin-bottom: var(--space-1);
+}
+
 .admin-recipe-filters,
 .admin-recipe-actions {
   display: flex;
