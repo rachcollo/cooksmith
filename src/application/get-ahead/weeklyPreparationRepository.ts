@@ -9,3 +9,13 @@ export interface WeeklyPreparationRepository {
     forceRetry?: boolean
   }): Promise<WeeklyPreparationPlan>
 }
+
+export type WeeklyPreparationUnavailableReason =
+  'recipes_preparing' | 'ai_unavailable' | 'temporarily_unavailable'
+
+export class WeeklyPreparationUnavailableError extends Error {
+  constructor(readonly reason: WeeklyPreparationUnavailableReason) {
+    super(reason)
+    this.name = 'WeeklyPreparationUnavailableError'
+  }
+}

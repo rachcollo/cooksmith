@@ -147,6 +147,12 @@ Deno.serve(async (request) => {
   }
   let runId: string
   try {
+    const readinessResponse = await rest('rpc/weekly_preparation_recipe_readiness', {
+      method: 'POST',
+      body: '{}',
+    })
+    if (((await readinessResponse.json()) as unknown) !== true)
+      return json(409, { error: 'recipes_preparing' })
     const slotError = await prepareEvaluationSlot()
     if (slotError) return json(409, { error: slotError })
     const settingsResponse = await rest(

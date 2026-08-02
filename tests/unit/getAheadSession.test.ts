@@ -253,6 +253,21 @@ describe('Get Ahead session domain', () => {
     expect(getAheadTotals(ended).remainingMinutes).toBeGreaterThan(0)
   })
 
+  it('reports remaining planned work rather than unused session capacity', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 45,
+      opportunities: [opportunity('a', 'chop')],
+    })
+
+    expect(getAheadTotals(session)).toMatchObject({
+      selectedMinutes: 45,
+      plannedMinutes: 10,
+      remainingMinutes: 10,
+    })
+  })
+
   it('replans changed inputs while preserving completed work that still applies', () => {
     const session = createGetAheadSession({
       householdId: 'household-1',

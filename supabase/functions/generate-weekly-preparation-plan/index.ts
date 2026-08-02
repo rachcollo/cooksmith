@@ -1,7 +1,6 @@
 import {
   applyAndValidateModelDecision,
   buildDeterministicWeeklyPreparationPlan,
-  withWeeklyPreparationFallback,
   type WeeklyPreparationCandidate,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
 import { decideAmbiguousPreparation } from './openaiAdapter.ts'
@@ -137,25 +136,12 @@ Deno.serve(async (request) => {
     if (cached && body?.forceRetry !== true)
       return json(200, { plan: cached, metrics: { cacheHit: true } })
     if (!settings?.ai_enabled || settings.emergency_stop) {
-      const fallback = withWeeklyPreparationFallback(
-        deterministic,
-        settings?.emergency_stop ? 'emergency_stop' : 'ai_disabled',
-      )
-      await savePlan(fallback)
-      return json(200, {
-        plan: fallback,
-        metrics: { modelCalled: false },
-      })
+      return json(409, { error: 'ai_unavailable' })
     }
 
     const configuredModel = Deno.env.get('WEEKLY_PREPARATION_MODEL')
     if (!configuredModel || configuredModel !== settings.model_identifier) {
-      const fallback = withWeeklyPreparationFallback(deterministic, 'model_identity_mismatch')
-      await savePlan(fallback)
-      return json(200, {
-        plan: fallback,
-        metrics: { modelCalled: false, validation: 'configuration_mismatch' },
-      })
+      return json(503, { error: 'ai_unavailable' })
     }
 
     const assisted = await decideAmbiguousPreparation({
@@ -179,12 +165,7 @@ Deno.serve(async (request) => {
       Number(availableMinutes),
     )
     if (!validated.ok) {
-      const fallback = withWeeklyPreparationFallback(deterministic, validated.reason)
-      await savePlan(fallback)
-      return json(200, {
-        plan: fallback,
-        metrics: { modelCalled: true, validation: 'rejected' },
-      })
+      return json(422, { error: 'ai_unavailable' })
     }
     await savePlan(validated.value)
     return json(200, {
@@ -196,14 +177,7 @@ Deno.serve(async (request) => {
         outputTokens: assisted.outputTokens,
       },
     })
-  } catch (error) {
-    const deterministic = buildDeterministicWeeklyPreparationPlan(candidates)
-    const reason = error instanceof Error ? error.message : 'temporarily_unavailable'
-    const fallback = withWeeklyPreparationFallback(deterministic, reason)
-    await savePlan(fallback).catch(() => undefined)
-    return json(200, {
-      plan: fallback,
-      metrics: { modelCalled: true, validation: 'fallback' },
-    })
+  } catch {
+    return json(503, { error: 'ai_unavailable' })
   }
 })

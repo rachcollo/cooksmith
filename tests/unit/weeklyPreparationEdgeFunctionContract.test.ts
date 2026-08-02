@@ -69,11 +69,11 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).toContain("error: 'authentication_unavailable'")
     expect(source).toContain("error: 'membership_verification_unavailable'")
     expect(source).toContain("error: 'household_unavailable'")
-    expect(source).toContain("error: 'enrichment_unavailable'")
+    expect(source).toContain("error: 'recipes_preparing'")
+    expect(source).toContain("error: 'no_useful_preparation'")
     expect(source).toContain("error: 'plan_data_unavailable'")
     expect(source).toContain("error: 'worker_configuration_unavailable'")
-    expect(source).toContain("error: 'worker_unavailable'")
-    expect(source).toContain("error: 'worker_response_invalid'")
+    expect(source).toContain("error: 'ai_unavailable'")
     expect(source).not.toContain("error: 'temporarily_unavailable'")
   })
 
@@ -138,6 +138,17 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).not.toContain('enrichment.result.ingredients.flatMap')
   })
 
+  it('requires current v2 enrichment and never returns a deterministic fallback checklist', () => {
+    const householdSource = readFileSync(edgeFunctionSources[2], 'utf8')
+    const workerSource = readFileSync(edgeFunctionSources[1], 'utf8')
+
+    expect(householdSource).toContain('schema_version=eq.${ACTIVE_RECIPE_SCHEMA}')
+    expect(householdSource).toContain('await continueRecipeEnrichment()')
+    expect(householdSource).toContain("return json(409, { error: 'recipes_preparing' })")
+    expect(workerSource).not.toContain('withWeeklyPreparationFallback')
+    expect(workerSource).not.toContain("generation: 'fallback'")
+  })
+
   it('binds the approved deployment identity before deploying functions', () => {
     const workflow = readFileSync('.github/workflows/production-edge-function-release.yml', 'utf8')
     const bind = workflow.indexOf('Bind hosted evaluation evidence to the approved commit')
@@ -198,6 +209,7 @@ describe('weekly preparation Edge Function contracts', () => {
     ['administrator_required', 'administrator access could not be verified'],
     ['authorisation_unavailable', 'could not verify administrator access'],
     ['evaluation_already_running', 'evaluation is already running'],
+    ['recipes_preparing', 'Recipe preparation insights are still being prepared'],
     ['evaluation_failed', 'started but could not complete'],
     ['provider_rejected', 'provider rejected the evaluation request'],
     ['provider_rate_limited', 'provider is temporarily rate limited'],

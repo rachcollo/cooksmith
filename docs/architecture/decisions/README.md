@@ -33,3 +33,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [010](010-orchard-editorial-design-system.md) | Proposed | Use Orchard Editorial as the Cooksmith design system |
 | [011](011-database-backed-application-admin-controls.md) | Accepted | Use database-backed application administrator controls |
 | [012](012-recipe-level-preparation-intelligence.md) | Accepted | Use recipe-level preparation intelligence for Get Ahead |
+| [013](013-fail-closed-get-ahead-planning.md) | Accepted | Fail closed when Get Ahead intelligence is unavailable |

@@ -94,10 +94,54 @@ const recipeRepository: RecipeRepository = {
   },
 }
 
+const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
+  getCurrentPlan: async ({ weekStart, weekEnd }) => ({
+    schemaVersion: 'weekly-preparation-plan-v2',
+    plannerVersion: 'weekly-preparation-planner-v8',
+    householdId,
+    planId: `${weekStart}_${weekEnd}`,
+    cacheKey: 'useful-ai-plan',
+    generation: 'model-assisted',
+    fallbackReason: null,
+    ambiguousCandidateIds: [],
+    tasks: [
+      {
+        id: 'task-onion',
+        title: 'Dice onion',
+        canonicalCategory: 'onion',
+        decision: 'separate',
+        reasonCode: 'compatible',
+        confidence: 'high',
+        validation: 'validated',
+        subtasks: [
+          {
+            id: 'subtask-onion',
+            title: 'Dice onion',
+            canonicalAction: 'dice',
+            preparationDetail: 'diced',
+            quantity: { state: 'known', value: 1, unit: null },
+            sources: [
+              {
+                id: 'candidate-onion',
+                plannedMealId: 'meal-get-ahead',
+                recipeId: recipe.id,
+                recipeVersionId: 'recipe-version-onion',
+                sourceIngredientId: 'ingredient-onion',
+                sourceStepIds: [],
+                originalText: '1 onion, diced',
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }),
+}
+
 describe('Get Ahead page', () => {
   beforeEach(() => localStorage.clear())
 
-  it('clears the temporary fallback banner after a successful retry', async () => {
+  it('shows a clear unavailable state and replaces it after a successful retry', async () => {
     const user = userEvent.setup()
     let calls = 0
     const weeklyPreparationRepository: WeeklyPreparationRepository = {
@@ -106,7 +150,7 @@ describe('Get Ahead page', () => {
         if (calls === 1) throw new Error('temporarily unavailable')
         return {
           schemaVersion: 'weekly-preparation-plan-v2',
-          plannerVersion: 'weekly-preparation-planner-v7',
+          plannerVersion: 'weekly-preparation-planner-v8',
           householdId,
           planId: `${currentWeek(new Date())}_${currentWeek(new Date())}`,
           cacheKey: 'successful-retry',
@@ -132,11 +176,13 @@ describe('Get Ahead page', () => {
       weeklyPreparationRepository,
     )
 
-    expect(await screen.findByText(/temporary fallback/u)).toBeVisible()
+    expect(await screen.findByText(/could not create a useful preparation plan/u)).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Try again' }))
 
     expect(await screen.findByText('AI-assisted plan')).toBeVisible()
-    expect(screen.queryByText(/temporary fallback/u)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/could not create a useful preparation plan/u),
+    ).not.toBeInTheDocument()
   })
 
   it('keeps prep rows compact and strikes through completed checklist items', async () => {
@@ -152,13 +198,15 @@ describe('Get Ahead page', () => {
       authenticatedTestAuthState,
       recipeRepository,
       defaultShoppingRepository,
+      undefined,
+      usefulWeeklyPreparationRepository,
     )
 
     await user.click(await screen.findByRole('button', { name: 'Start' }))
 
     expect(await screen.findByText(/minutes saved this week/u)).toBeVisible()
-    expect(screen.getByText('30 minutes of prep time remaining.')).toBeVisible()
-    const instruction = await screen.findByText('Diced')
+    expect(screen.getByText('10 minutes of prep time remaining.')).toBeVisible()
+    const instruction = await screen.findByText('Dice onion')
     const task = instruction.closest('li')
     if (!task) throw new Error('Expected the Get Ahead instruction to render inside a task row.')
     expect(within(task).queryByText('10 min estimate')).not.toBeInTheDocument()
@@ -191,6 +239,8 @@ describe('Get Ahead page', () => {
       authenticatedTestAuthState,
       recipeRepository,
       defaultShoppingRepository,
+      undefined,
+      usefulWeeklyPreparationRepository,
     )
 
     expect(await screen.findByLabelText('Which meals are you preparing for?')).toHaveValue(
