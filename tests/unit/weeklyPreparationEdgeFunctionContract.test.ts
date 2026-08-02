@@ -12,15 +12,12 @@ const edgeFunctionSources = [
 ]
 
 describe('weekly preparation Edge Function contracts', () => {
-  it.each(edgeFunctionSources)(
-    '%s targets the Cooksmith REST schema',
-    (path) => {
-      const source = readFileSync(path, 'utf8')
+  it.each(edgeFunctionSources)('%s targets the Cooksmith REST schema', (path) => {
+    const source = readFileSync(path, 'utf8')
 
-      expect(source).toContain("'accept-profile': 'cooksmith'")
-      expect(source).toContain("'content-profile': 'cooksmith'")
-    },
-  )
+    expect(source).toContain("'accept-profile': 'cooksmith'")
+    expect(source).toContain("'content-profile': 'cooksmith'")
+  })
 
   it('keeps the hosted evaluation model identity aligned with the provider model', () => {
     const source = readFileSync(edgeFunctionSources[0], 'utf8')
@@ -45,26 +42,18 @@ describe('weekly preparation Edge Function contracts', () => {
       'utf8',
     )
     const membershipCheck = source.indexOf('verifyActiveHouseholdMember({')
-    const householdData = source.indexOf(
-      'fetchWeeklyPreparationHouseholdData<T>({',
-    )
+    const householdData = source.indexOf('fetchWeeklyPreparationHouseholdData<T>({')
     const mealLoad = source.indexOf('householdData<MealRow[]>(')
-    const settingsLoad = source.indexOf(
-      'householdData<Array<{ default_servings: number }>>(',
-    )
+    const settingsLoad = source.indexOf('householdData<Array<{ default_servings: number }>>(')
     const enrichmentLoad = source.indexOf('rest<EnrichmentRow[]>(')
 
     expect(source).toContain('verifyActiveHouseholdMember({')
     expect(source).toContain('authorisation,')
     expect(source).toContain('householdId: body.householdId')
     expect(source).not.toContain('household_members?')
-    expect(membershipSource).toContain(
-      '/rest/v1/rpc/is_active_household_member',
-    )
+    expect(membershipSource).toContain('/rest/v1/rpc/is_active_household_member')
     expect(membershipSource).toContain('authorization: authorisation')
-    expect(membershipSource).toContain(
-      'body: JSON.stringify({ target_household_id: householdId })',
-    )
+    expect(membershipSource).toContain('body: JSON.stringify({ target_household_id: householdId })')
     expect(membershipCheck).toBeGreaterThan(0)
     expect(householdData).toBeGreaterThan(membershipCheck)
     expect(mealLoad).toBeGreaterThan(membershipCheck)
@@ -105,33 +94,21 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(adapterSource).not.toContain('uniqueItems')
     expect(adapterSource).not.toContain('minItems')
     expect(adapterSource).toContain('availableMinutes')
-    expect(adapterSource).toContain(
-      'Review every selected meal as one portfolio',
-    )
+    expect(adapterSource).toContain('Review every selected meal as one portfolio')
     expect(adapterSource).toContain('An empty task list is correct')
     expect(adapterSource).toContain("response.headers.get('x-request-id')")
     expect(adapterSource).toContain('body.error?.param')
     expect(adapterSource).toContain("error.name === 'TimeoutError'")
     expect(adapterSource).toContain("throw new Error('schema_invalid')")
-    expect(evaluationSource).toContain(
-      "event: 'weekly_preparation_evaluation_provider_failure'",
-    )
-    expect(evaluationSource).toContain(
-      "await rest('weekly_preparation_evaluation_cases'",
-    )
-    expect(evaluationSource).toContain(
-      'deterministic_count: deterministicCount',
-    )
+    expect(evaluationSource).toContain("event: 'weekly_preparation_evaluation_provider_failure'")
+    expect(evaluationSource).toContain("await rest('weekly_preparation_evaluation_cases'")
+    expect(evaluationSource).toContain('deterministic_count: deterministicCount')
     expect(evaluationSource).toContain('error_reason: errorReason')
-    expect(evaluationSource).toContain(
-      "error_reason: reviewPassed ? null : 'review_failed'",
-    )
+    expect(evaluationSource).toContain("error_reason: reviewPassed ? null : 'review_failed'")
     expect(evaluationSource).toContain('reason_code: reasonCode')
     expect(evaluationSource).toContain('rejected_count: rejectedCount')
     expect(evaluationSource).toContain('if (reviewPassed)')
-    expect(evaluationSource).not.toContain(
-      "reason_code: outcome === 'fallback' ? 'validation'",
-    )
+    expect(evaluationSource).not.toContain("reason_code: outcome === 'fallback' ? 'validation'")
   })
 
   it('sends the selected duration and full meal context to the planning worker', () => {
@@ -144,16 +121,9 @@ describe('weekly preparation Edge Function contracts', () => {
   })
 
   it('binds the approved deployment identity before deploying functions', () => {
-    const workflow = readFileSync(
-      '.github/workflows/production-edge-function-release.yml',
-      'utf8',
-    )
-    const bind = workflow.indexOf(
-      'Bind hosted evaluation evidence to the approved commit',
-    )
-    const deploy = workflow.indexOf(
-      'Deploy authenticated import-recipe function',
-    )
+    const workflow = readFileSync('.github/workflows/production-edge-function-release.yml', 'utf8')
+    const bind = workflow.indexOf('Bind hosted evaluation evidence to the approved commit')
+    const deploy = workflow.indexOf('Deploy authenticated import-recipe function')
 
     expect(bind).toBeGreaterThan(0)
     expect(bind).toBeLessThan(deploy)
@@ -180,10 +150,7 @@ describe('weekly preparation Edge Function contracts', () => {
 
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
-    [
-      'evaluation_persistence_unavailable',
-      'could not access Cooksmith evaluation storage',
-    ],
+    ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],
     ['administrator_required', 'administrator access could not be verified'],
     ['authorisation_unavailable', 'could not verify administrator access'],
     ['evaluation_already_running', 'evaluation is already running'],
@@ -191,10 +158,7 @@ describe('weekly preparation Edge Function contracts', () => {
     ['provider_rejected', 'provider rejected the evaluation request'],
     ['provider_rate_limited', 'provider is temporarily rate limited'],
     ['provider_unavailable', 'provider is temporarily unavailable'],
-    [
-      'provider_output_invalid',
-      'provider returned an invalid evaluation response',
-    ],
+    ['provider_output_invalid', 'provider returned an invalid evaluation response'],
     ['review_failed', 'one or more cases failed review'],
   ])('shows a safe admin message for %s', async (code, expectedMessage) => {
     const invoke = vi.fn(async () => ({
