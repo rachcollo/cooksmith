@@ -81,13 +81,8 @@ describe('weekly preparation plan', () => {
       candidate('a'),
       candidate('b', override as Partial<WeeklyPreparationCandidate>),
     ])
-    if (name === 'raw protein boundary') {
-      expect(plan.tasks).toHaveLength(1)
-      expect(plan.tasks[0]?.subtasks[0]?.sources.map((source) => source.id)).toEqual(['a'])
-    } else {
-      expect(plan.tasks[0]?.decision).toBe('grouped')
-      expect(plan.tasks[0]?.subtasks).toHaveLength(2)
-    }
+    expect(plan.tasks[0]?.decision).toBe('grouped')
+    expect(plan.tasks[0]?.subtasks).toHaveLength(2)
   })
 
   it('never converts an unknown quantity into a number', () => {
@@ -120,7 +115,7 @@ describe('weekly preparation plan', () => {
     ).toEqual({ ok: false, reason: 'unsupported_reference' })
   })
 
-  it('rejects a model attempt to use an unsafe source candidate', () => {
+  it('allows useful raw-protein prep but rejects mixing it with clean prep', () => {
     const candidates = [
       candidate('a', { confidence: 'low' }),
       candidate('b', {
@@ -130,6 +125,23 @@ describe('weekly preparation plan', () => {
       }),
     ]
     const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
+    const rawOnly = applyAndValidateModelDecision(fallback, candidates, {
+      tasks: [
+        {
+          candidateIds: ['b'],
+          title: 'Slice the chicken for stir-fry',
+          estimatedMinutes: 5,
+          estimatedTimeSavedMinutes: 10,
+        },
+      ],
+    })
+    expect(rawOnly.ok).toBe(true)
+    if (rawOnly.ok) {
+      expect(rawOnly.value.tasks[0]?.storageGuidance).toBe(
+        'Refrigerate in a covered, labelled container and use within 24 hours.',
+      )
+    }
+
     expect(
       applyAndValidateModelDecision(fallback, candidates, {
         tasks: [
@@ -141,7 +153,7 @@ describe('weekly preparation plan', () => {
           },
         ],
       }),
-    ).toEqual({ ok: false, reason: 'unsafe_make_ahead_task' })
+    ).toEqual({ ok: false, reason: 'mixed_hygiene_boundary' })
   })
 
   it('invalidates the cache key for plan, recipe or enrichment version changes', () => {
