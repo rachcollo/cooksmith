@@ -102,3 +102,24 @@ privacy-safe response codes. The household experience continues to fall back cal
 showing database, provider, model or credential details. Regression coverage verifies the caller
 JWT is used before privileged plan loading and prevents the protected-table query from returning.
 This correction requires an Edge Function release only and no database migration.
+
+## Failed-case review correction
+
+- Baseline: `main` at `2999822881f6cd7e2719c68706bdf441b74bd80a`.
+- Branch: `fix/cs-94-evaluation-case-review`.
+- The Admin evaluation panel now lists every failed case as an expandable review containing its
+  synthetic meals, available time, generated tasks, exact rejection reason and the likely fix
+  area. Earlier runs remain readable and identify evidence that was not previously recorded.
+- Migration `20260802013000_cs94_evaluation_case_review.sql` adds nullable or defaulted,
+  privacy-safe evidence fields to the existing evaluation case table. It stores synthetic corpus
+  details only and does not contain household meal or recipe data.
+- Edge Function changed: `evaluate-weekly-preparation`. It persists the structured model decision
+  alongside each case without storing provider payloads or operational errors.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Provider usage per
+  evaluation is unchanged.
+- Local formatting, lint, strict types, 359 Vitest tests and the production build passed. Database
+  configuration validation passed. Local database reset, lint, pgTAP and generated type checks
+  could not run because this environment has no Docker-compatible runtime; CI remains the source
+  of truth for those gates.
+- After merge, release the migration before the Edge Function, refresh Admin, then run a new
+  evaluation. The existing failed run cannot gain generated task evidence retrospectively.

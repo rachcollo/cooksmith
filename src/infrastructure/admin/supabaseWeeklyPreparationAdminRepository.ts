@@ -107,7 +107,7 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       const { data, error } = await database
         .from('weekly_preparation_evaluation_runs')
         .select(
-          'id, status, error_reason, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, rejected_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, acceptances:weekly_preparation_evaluation_acceptances(id), cases:weekly_preparation_evaluation_cases(reason_code)',
+          'id, status, error_reason, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, rejected_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, acceptances:weekly_preparation_evaluation_acceptances(id), cases:weekly_preparation_evaluation_cases(case_number, case_key, outcome, reason_code, available_minutes, meal_names, generated_tasks)',
         )
         .order('created_at', { ascending: false })
         .limit(1)
@@ -163,6 +163,36 @@ export function createSupabaseWeeklyPreparationAdminRepository(
           .sort(
             (left, right) => right.count - left.count || left.reason.localeCompare(right.reason),
           ),
+        failedCases: (data.cases ?? [])
+          .filter((item) => Boolean(item.reason_code))
+          .map((item) => ({
+            caseNumber: item.case_number,
+            caseKey: item.case_key,
+            outcome: item.outcome as 'model-assisted' | 'fallback' | 'failed',
+            reason: item.reason_code ?? 'review_failed',
+            availableMinutes: item.available_minutes,
+            mealNames: Array.isArray(item.meal_names) ? item.meal_names : [],
+            generatedTasks: Array.isArray(item.generated_tasks)
+              ? item.generated_tasks.flatMap((task) => {
+                  if (!task || typeof task !== 'object') return []
+                  const value = task as Record<string, unknown>
+                  if (
+                    typeof value.title !== 'string' ||
+                    typeof value.estimatedMinutes !== 'number' ||
+                    typeof value.estimatedTimeSavedMinutes !== 'number'
+                  )
+                    return []
+                  return [
+                    {
+                      title: value.title,
+                      estimatedMinutes: value.estimatedMinutes,
+                      estimatedTimeSavedMinutes: value.estimatedTimeSavedMinutes,
+                    },
+                  ]
+                })
+              : [],
+          }))
+          .sort((left, right) => left.caseNumber - right.caseNumber),
       }
     },
     async runEvaluation() {

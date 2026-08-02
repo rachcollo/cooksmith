@@ -86,7 +86,45 @@ describe('admin feature toggles', () => {
         updatedAt: '2026-07-28T00:00:00Z',
       }),
       updateSettings,
-      getLatestEvaluation: async () => null,
+      getLatestEvaluation: async () => ({
+        id: '94000000-0000-4000-8000-000000000001',
+        status: 'failed',
+        accepted: false,
+        createdAt: '2026-08-02T00:00:00Z',
+        planCount: 30,
+        deterministicCount: 0,
+        modelCallCount: 30,
+        validOutputCount: 29,
+        fallbackCount: 1,
+        qualityFailureCount: 0,
+        reviewedCorrectCount: 29,
+        unsupportedCount: 0,
+        averageLatencyMs: 100,
+        inputTokens: 1000,
+        outputTokens: 500,
+        estimatedCostAud: 0.1,
+        ambiguousDecision: 'fallback',
+        acceptanceEligible: false,
+        reviewMessage: '29 of 30 cases passed review.',
+        failureReasons: [{ reason: 'time_budget_exceeded', count: 1 }],
+        failedCases: [
+          {
+            caseNumber: 4,
+            caseKey: 'shared-taco-vegetables-30',
+            outcome: 'fallback',
+            reason: 'time_budget_exceeded',
+            availableMinutes: 30,
+            mealNames: ['Beef tacos', 'Bean burritos'],
+            generatedTasks: [
+              {
+                title: 'Prepare taco vegetables',
+                estimatedMinutes: 35,
+                estimatedTimeSavedMinutes: 20,
+              },
+            ],
+          },
+        ],
+      }),
       runEvaluation: async () => undefined,
       acceptEvaluation: async () => undefined,
       getRecipeEnrichmentStatus: async () => ({
@@ -163,6 +201,16 @@ describe('admin feature toggles', () => {
     expect(
       screen.getByText(
         'Latest AI error: HTTP 400 · invalid_request_error · text.format.type · Request req_synthetic_diagnostic',
+      ),
+    ).toBeVisible()
+
+    const failedCase = screen.getByText('Case 4: shared taco vegetables 30')
+    await user.click(failedCase)
+    expect(screen.getByText('Beef tacos, Bean burritos')).toBeVisible()
+    expect(screen.getByText(/Prepare taco vegetables/)).toBeVisible()
+    expect(
+      screen.getByText(
+        'The generated tasks require more time than the person said they had available.',
       ),
     ).toBeVisible()
 

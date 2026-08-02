@@ -148,12 +148,29 @@ describe('weekly preparation Edge Function contracts', () => {
     )
 
     expect(source).toContain('acceptances:weekly_preparation_evaluation_acceptances(id)')
-    expect(source).toContain('cases:weekly_preparation_evaluation_cases(reason_code)')
+    expect(source).toContain(
+      'cases:weekly_preparation_evaluation_cases(case_number, case_key, outcome, reason_code, available_minutes, meal_names, generated_tasks)',
+    )
     expect(source).toContain('data.cases ?? []')
     expect(source).toContain('Boolean(data.acceptances)')
     expect(source).not.toContain(
       'weekly_preparation_evaluation_acceptances(id), weekly_preparation_evaluation_cases(reason_code)',
     )
+  })
+
+  it('persists privacy-safe case evidence needed for Admin review', () => {
+    const source = readFileSync(edgeFunctionSources[0], 'utf8')
+    const migration = readFileSync(
+      'supabase/migrations/20260802013000_cs94_evaluation_case_review.sql',
+      'utf8',
+    )
+
+    expect(source).toContain('available_minutes: availableMinutes')
+    expect(source).toContain('meal_names: [...new Set(meals.map((meal) => meal.recipeName))]')
+    expect(source).toContain('generated_tasks: generatedTasks')
+    expect(migration).toContain('add column available_minutes integer')
+    expect(migration).toContain("add column generated_tasks jsonb not null default '[]'::jsonb")
+    expect(migration).toContain('never household recipe data')
   })
 
   it.each([

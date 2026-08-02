@@ -226,6 +226,11 @@ Deno.serve(async (request) => {
       let caseInputTokens = 0
       let caseOutputTokens = 0
       let reasonCode: string | null = null
+      let generatedTasks: Array<{
+        title: string
+        estimatedMinutes: number
+        estimatedTimeSavedMinutes: number
+      }> = []
       if (expectedModelCall) {
         modelCalled = true
         modelCallCount += 1
@@ -250,6 +255,7 @@ Deno.serve(async (request) => {
           assisted.decision,
           availableMinutes,
         )
+        generatedTasks = assisted.decision.tasks
         if (!validated.ok) reasonCode = validated.reason
         else {
           validOutputCount += 1
@@ -300,6 +306,9 @@ Deno.serve(async (request) => {
           model_called: modelCalled,
           outcome,
           reason_code: reasonCode,
+          available_minutes: availableMinutes,
+          meal_names: [...new Set(meals.map((meal) => meal.recipeName))],
+          generated_tasks: generatedTasks,
           latency_ms: latencyMs,
           input_tokens: caseInputTokens,
           output_tokens: caseOutputTokens,
