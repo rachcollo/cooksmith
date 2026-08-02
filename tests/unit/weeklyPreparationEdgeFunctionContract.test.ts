@@ -109,6 +109,7 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(evaluationSource).toContain("error_reason: reviewPassed ? null : 'review_failed'")
     expect(evaluationSource).toContain('reason_code: reasonCode')
     expect(evaluationSource).toContain('rejected_count: rejectedCount')
+    expect(evaluationSource).toContain('passesWeeklyPreparationEvaluation({')
     expect(evaluationSource).toContain('if (reviewPassed)')
     expect(evaluationSource).not.toContain("reason_code: outcome === 'fallback' ? 'validation'")
   })

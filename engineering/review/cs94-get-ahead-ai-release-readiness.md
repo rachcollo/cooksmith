@@ -106,7 +106,7 @@ These observations define the starting problem; they must not be hard-coded as f
 - [ ] Cases cover compatible consolidation, meaningful cut differences, incompatible units, unknown quantities, storage, timing, allergens and raw-protein boundaries.
 - [ ] Strict output validation rejects invented recipes, ingredients, quantities, actions, steps and safety rules.
 - [ ] Execution is resumable and idempotent for evaluation identity without duplicating provider cost.
-- [ ] Partial or failed runs cannot be accepted.
+- [ ] Partial, interrupted or hard-validation-failed runs cannot be accepted. A complete run may be accepted when at least 28 of 30 cases pass the usefulness and coverage review, provided all 30 model outputs are valid and there are no fallbacks, unsupported references or safety-boundary failures.
 - [ ] Synthetic evaluation content contains no production household identifiers or unnecessary personal data.
 - [ ] Every evaluation case exercises multiple planned meals and an explicit time budget.
 - [ ] Evaluation fails for malformed cooking fragments, unsafe make-ahead work, low-value filler or a checklist that does not make reasonable use of the available time.

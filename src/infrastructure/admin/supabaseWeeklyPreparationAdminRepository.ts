@@ -6,6 +6,10 @@ import type {
   WeeklyPreparationSettings,
 } from '../../application/admin/weeklyPreparationAdminRepository'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
+import {
+  passesWeeklyPreparationEvaluation,
+  weeklyPreparationMinimumQualityPasses,
+} from '../../domain/get-ahead/weeklyPreparationEvaluationPolicy'
 
 type SettingsRow = {
   ai_enabled: boolean
@@ -124,11 +128,14 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       }
       const acceptanceEligible =
         data.status === 'completed' &&
-        data.plan_count === 30 &&
-        data.valid_output_count === data.model_call_count &&
-        data.fallback_count === 0 &&
-        data.unsupported_count === 0 &&
-        data.reviewed_correct_count === 30
+        passesWeeklyPreparationEvaluation({
+          planCount: data.plan_count,
+          modelCallCount: data.model_call_count,
+          validOutputCount: data.valid_output_count,
+          fallbackCount: data.fallback_count,
+          unsupportedCount: data.unsupported_count,
+          reviewedCorrectCount: data.reviewed_correct_count,
+        })
       return {
         id: data.id,
         status: data.status as WeeklyPreparationEvaluation['status'],
@@ -151,13 +158,15 @@ export function createSupabaseWeeklyPreparationAdminRepository(
           data.ambiguous_decision as WeeklyPreparationEvaluation['ambiguousDecision'],
         acceptanceEligible,
         reviewMessage:
-          data.error_reason === 'review_failed'
-            ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed review. Resolve the failed cases before accepting this evaluation.`
-            : data.status === 'running'
-              ? 'The evaluation is still running.'
-              : !acceptanceEligible && !data.acceptances
-                ? 'This evaluation does not meet the acceptance requirements.'
-                : null,
+          acceptanceEligible && data.reviewed_correct_count < data.plan_count
+            ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed. This meets the ${weeklyPreparationMinimumQualityPasses}-case quality threshold. Review the ${data.plan_count - data.reviewed_correct_count} quality ${data.plan_count - data.reviewed_correct_count === 1 ? 'miss' : 'misses'}, then accept this evaluation when you are comfortable.`
+            : data.error_reason === 'review_failed'
+              ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed. This is below the ${weeklyPreparationMinimumQualityPasses}-case quality threshold, or a hard validation check failed.`
+              : data.status === 'running'
+                ? 'The evaluation is still running.'
+                : !acceptanceEligible && !data.acceptances
+                  ? 'This evaluation does not meet the acceptance requirements.'
+                  : null,
         failureReasons: [...failureReasonCounts.entries()]
           .map(([reason, count]) => ({ reason, count }))
           .sort(
