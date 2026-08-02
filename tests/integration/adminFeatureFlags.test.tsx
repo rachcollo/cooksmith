@@ -204,6 +204,7 @@ describe('admin feature toggles', () => {
       ),
     ).toBeVisible()
 
+    await user.click(screen.getByText('Technical case evidence'))
     const failedCase = screen.getByText('Case 4: shared taco vegetables 30')
     await user.click(failedCase)
     expect(screen.getByText('Beef tacos, Bean burritos')).toBeVisible()
