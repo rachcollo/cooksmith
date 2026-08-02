@@ -1,10 +1,10 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v3' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v4' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v1',
+  version: 'weekly-preparation-quality-v2',
   timeBudgets: [15, 30, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
@@ -23,6 +23,8 @@ export const weeklyPreparationQualityRules = {
     'whisk',
   ],
   protectedBoundaries: ['raw-protein', 'cross-contamination'],
+  boundaryPolicy:
+    'Allow recipe-ready raw-protein preparation with storage guidance, but keep it separate from clean and ready-to-eat preparation.',
   rejectedTaskFragments: ['preheat', 'reserve water', 'serve immediately'],
 } as const
 
@@ -117,8 +119,10 @@ export type WeeklyPreparationModelDecision = {
 }
 
 export function createWeeklyPreparationCacheKey(candidates: WeeklyPreparationCandidate[]) {
-  return stableHash(
-    candidates
+  return stableHash([
+    weeklyPreparationPlannerVersion,
+    weeklyPreparationQualityRules.version,
+    ...candidates
       .map((candidate) =>
         [
           candidate.planId,
@@ -134,7 +138,7 @@ export function createWeeklyPreparationCacheKey(candidates: WeeklyPreparationCan
         ].join(':'),
       )
       .sort(),
-  )
+  ])
 }
 
 export function buildDeterministicWeeklyPreparationPlan(
@@ -231,6 +235,8 @@ export function applyAndValidateModelDecision(
     const supplied = group.candidateIds.flatMap((id) => byId.get(id) ?? [])
     if (supplied.some((candidate) => !isWeeklyPreparationCandidateEligible(candidate)))
       return { ok: false, reason: 'unsafe_make_ahead_task' }
+    if (new Set(supplied.map(preparationHygieneClass)).size > 1)
+      return { ok: false, reason: 'mixed_hygiene_boundary' }
     const category = supplied
       .map((candidate) => candidate.canonicalIngredient)
       .filter(Boolean)
@@ -275,13 +281,14 @@ export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparatio
   if (!action || !safePreparationActions.has(action)) return false
   if (!candidate.canonicalIngredient?.trim()) return false
   if (/[()[\]{}]|^\s*$/.test(candidate.originalText)) return false
-  if (
-    candidate.boundaries.some(
-      (boundary) => boundary === 'raw-protein' || boundary === 'cross-contamination',
-    )
-  )
-    return false
   return candidate.maximumLeadTimeHours !== null && Boolean(candidate.storageGuidanceReference)
+}
+
+function preparationHygieneClass(candidate: WeeklyPreparationCandidate) {
+  return candidate.boundaries.includes('raw-protein') ||
+    candidate.boundaries.includes('cross-contamination')
+    ? 'raw-protein'
+    : 'clean'
 }
 
 function storageGuidanceFor(candidates: WeeklyPreparationCandidate[]) {
@@ -347,6 +354,7 @@ function combinedTask(
     ],
     confidence: lowestConfidence(candidates),
     validation: 'validated',
+    storageGuidance: storageGuidanceFor(candidates),
   }
 }
 
@@ -377,6 +385,7 @@ function groupedTask(
     }),
     confidence: lowestConfidence(all),
     validation: 'validated',
+    storageGuidance: storageGuidanceFor(all),
   }
 }
 
@@ -408,6 +417,7 @@ function separateTask(
     ],
     confidence: candidate.confidence,
     validation: 'validated',
+    storageGuidance: storageGuidanceFor([candidate]),
   }
 }
 

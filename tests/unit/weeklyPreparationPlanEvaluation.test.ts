@@ -45,7 +45,12 @@ describe('Weekly preparation representative evaluation', () => {
       ),
     ).toBe(true)
     expect(corpus.some((item) => item.minimumUsefulTasks === 1)).toBe(true)
-    expect(corpus.some((item) => item.minimumUsefulTasks === 2)).toBe(true)
+    expect(corpus.every((item) => item.expectedEmpty || item.minimumUsefulTasks === 1)).toBe(true)
+    expect(
+      corpus
+        .filter((item) => item.key.startsWith('raw-protein-boundary'))
+        .every((item) => item.minimumUsefulTasks === 1),
+    ).toBe(true)
   })
 
   it('evaluates thirty synthetic weekly plans without invented or untraceable data', () => {

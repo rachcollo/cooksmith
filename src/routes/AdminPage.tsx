@@ -526,7 +526,14 @@ function WeeklyPreparationOperations() {
             <ul>
               <li>Sessions must stay within 15, 30 or 60 minutes.</li>
               <li>Tasks must use supplied recipe preparation and take at least 5 minutes.</li>
-              <li>Raw-protein and cross-contamination work is excluded.</li>
+              <li>
+                Recipe-ready vegetable prep is useful work, including a single chopping task or a
+                grouped vegetable-prep block.
+              </li>
+              <li>
+                Raw protein may be cut, portioned, seasoned or marinated when storage guidance is
+                available. It must remain separate from vegetables and ready-to-eat food.
+              </li>
               <li>Preheating, serving steps and reserving water are not advance preparation.</li>
               <li>
                 Cooksmith must prefer useful midweek time savings and return no tasks when
@@ -754,6 +761,12 @@ function evaluationReviewGuidance(reason: string): { area: string; explanation: 
         area: 'Food-safety boundaries',
         explanation:
           'The plan included work that Cooksmith does not consider safe or suitable to complete ahead of time.',
+      }
+    case 'mixed_hygiene_boundary':
+      return {
+        area: 'Food-safety separation',
+        explanation:
+          'The plan combined raw-protein preparation with vegetables or ready-to-eat food in one task. These should be separate prep tasks.',
       }
     case 'insufficient_useful_tasks':
     case 'insufficient_useful_minutes':
