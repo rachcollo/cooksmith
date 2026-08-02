@@ -1440,8 +1440,8 @@ export type Database = {
           generated_tasks: Json
           input_tokens: number
           latency_ms: number
-          model_called: boolean
           meal_names: string[]
+          model_called: boolean
           outcome: string
           output_tokens: number
           reason_code: string | null
@@ -1456,8 +1456,8 @@ export type Database = {
           generated_tasks?: Json
           input_tokens: number
           latency_ms: number
-          model_called: boolean
           meal_names?: string[]
+          model_called: boolean
           outcome: string
           output_tokens: number
           reason_code?: string | null
@@ -1472,8 +1472,8 @@ export type Database = {
           generated_tasks?: Json
           input_tokens?: number
           latency_ms?: number
-          model_called?: boolean
           meal_names?: string[]
+          model_called?: boolean
           outcome?: string
           output_tokens?: number
           reason_code?: string | null
