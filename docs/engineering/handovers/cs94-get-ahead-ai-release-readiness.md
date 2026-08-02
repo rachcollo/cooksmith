@@ -124,7 +124,6 @@ This correction requires an Edge Function release only and no database migration
 - After merge, release the migration before the Edge Function, refresh Admin, then run a new
   evaluation. The existing failed run cannot gain generated task evidence retrospectively.
 
-
 ## End-to-end real-life prep readiness correction
 
 - Baseline: `main` at `3152caf1e06da3f2c294dacfce7fa8486df7cbaa`.
