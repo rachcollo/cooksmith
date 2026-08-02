@@ -527,7 +527,7 @@ function GetAheadProgressSummary({ session }: { session: GetAheadSession }) {
       <div className="cluster">
         <Sparkles aria-hidden="true" />
         <strong>{totals.estimatedTimeSavedMinutes} minutes saved this week</strong>
-        <span>{totals.remainingPotentialMinutes} minutes still possible.</span>
+        <span>{totals.remainingMinutes} minutes of prep time remaining.</span>
       </div>
       <progress aria-label="Prep progress" max={100} value={totals.progressPercent} />
       <p>{totals.progressLabel}.</p>
@@ -571,7 +571,9 @@ function GetAheadTaskRow({
               )}
               .
             </small>
-          ) : null}
+          ) : (
+            <small>For {task.recipeName}.</small>
+          )}
           {stale ? (
             <small role="status">Source changed since this session was created.</small>
           ) : null}

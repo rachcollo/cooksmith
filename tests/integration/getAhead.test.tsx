@@ -106,7 +106,7 @@ describe('Get Ahead page', () => {
         if (calls === 1) throw new Error('temporarily unavailable')
         return {
           schemaVersion: 'weekly-preparation-plan-v2',
-          plannerVersion: 'weekly-preparation-planner-v5',
+          plannerVersion: 'weekly-preparation-planner-v6',
           householdId,
           planId: `${currentWeek(new Date())}_${currentWeek(new Date())}`,
           cacheKey: 'successful-retry',
@@ -157,6 +157,7 @@ describe('Get Ahead page', () => {
     await user.click(await screen.findByRole('button', { name: 'Start' }))
 
     expect(await screen.findByText(/minutes saved this week/u)).toBeVisible()
+    expect(screen.getByText('30 minutes of prep time remaining.')).toBeVisible()
     const instruction = await screen.findByText('Diced')
     const task = instruction.closest('li')
     if (!task) throw new Error('Expected the Get Ahead instruction to render inside a task row.')
@@ -165,6 +166,7 @@ describe('Get Ahead page', () => {
     expect(within(task).queryByText(/For .+ on/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/More actions/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/explicitly describes/u)).not.toBeInTheDocument()
+    expect(within(task).getByText('For Simple pasta.')).toBeVisible()
     expect(screen.queryByText(/Recommended because/u)).not.toBeInTheDocument()
 
     const checkbox = within(task).getByRole('checkbox')

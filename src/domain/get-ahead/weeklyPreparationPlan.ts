@@ -1,10 +1,10 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v5' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v6' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v3',
+  version: 'weekly-preparation-quality-v4',
   timeBudgets: [15, 30, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
@@ -27,7 +27,15 @@ export const weeklyPreparationQualityRules = {
     'Allow recipe-ready raw-protein preparation with storage guidance, but keep it separate from clean and ready-to-eat preparation.',
   durationPolicy:
     'Estimate an average home cook, count shared setup and clean-up once, and treat the selected duration as a maximum rather than a target.',
-  rejectedTaskFragments: ['preheat', 'reserve water', 'serve immediately'],
+  rejectedTaskFragments: [
+    'cook off',
+    'preheat',
+    'remove from',
+    'reserve water',
+    'serve immediately',
+    'simmer',
+    'while hot',
+  ],
 } as const
 
 export type PreparationBoundary =
@@ -224,7 +232,7 @@ export function applyAndValidateModelDecision(
     if (
       title.length < 4 ||
       title.length > 100 ||
-      /[()[\]{}]|\b(preheat|reserve .*water|serve immediately)\b/i.test(title)
+      /[()[\]{}]|\b(preheat|reserve .*water)\b/i.test(title)
     )
       return { ok: false, reason: 'malformed_task' }
     for (const id of group.candidateIds) {
@@ -252,7 +260,7 @@ export function applyAndValidateModelDecision(
     if (plannedMinutes + estimatedMinutes > availableMinutes) continue
     replacementTasks.push({
       ...task,
-      title,
+      title: isConcisePreparationTitle(title) ? title : preparationTitleFor(supplied),
       estimatedMinutes,
       estimatedTimeSavedMinutes: group.estimatedTimeSavedMinutes,
       storageGuidance: storageGuidanceFor(supplied),
@@ -309,7 +317,55 @@ export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparatio
   if (!action || !safePreparationActions.has(action)) return false
   if (!candidate.canonicalIngredient?.trim()) return false
   if (/[()[\]{}]|^\s*$/.test(candidate.originalText)) return false
+  if (looksLikeCookingOrServingInstruction(candidate.originalText)) return false
   return candidate.maximumLeadTimeHours !== null && Boolean(candidate.storageGuidanceReference)
+}
+
+function isConcisePreparationTitle(title: string) {
+  if (title.length > 72 || /[.!?;:]|\s[-–—]\s/.test(title)) return false
+  return !looksLikeCookingOrServingInstruction(title)
+}
+
+function looksLikeCookingOrServingInstruction(value: string) {
+  const normalised = value.toLocaleLowerCase('en-AU')
+  return (
+    weeklyPreparationQualityRules.rejectedTaskFragments.some((fragment) =>
+      normalised.includes(fragment),
+    ) ||
+    /^\s*(?:remove|serve|set aside)\b/.test(normalised) ||
+    /\bbrown (?:the )?(?:beef|chicken|meat|pork)\b/.test(normalised)
+  )
+}
+
+function preparationTitleFor(candidates: WeeklyPreparationCandidate[]) {
+  const ingredients = [
+    ...new Set(
+      candidates.flatMap((candidate) => {
+        const ingredient = candidate.canonicalIngredient?.trim()
+        return ingredient ? [ingredient] : []
+      }),
+    ),
+  ]
+  const actions = [
+    ...new Set(
+      candidates.flatMap((candidate) => {
+        const action = candidate.canonicalAction?.trim()
+        return action ? [action] : []
+      }),
+    ),
+  ]
+  const ingredientList = naturalList(ingredients)
+  if (ingredients.length === 1 && /\b(marinade|sauce|dressing|paste|pesto)\b/i.test(ingredientList))
+    return `Make ${ingredientList}`
+  if (actions.length === 1)
+    return `${sentenceCase((actions[0] ?? 'prepare').replaceAll('_', ' '))} ${ingredientList}`
+  return `Prepare ${ingredientList}`
+}
+
+function naturalList(values: string[]) {
+  if (values.length === 0) return 'ingredients'
+  if (values.length === 1) return values[0] ?? 'ingredients'
+  return `${values.slice(0, -1).join(', ')} and ${values.at(-1)}`
 }
 
 function preparationHygieneClass(candidate: WeeklyPreparationCandidate) {
