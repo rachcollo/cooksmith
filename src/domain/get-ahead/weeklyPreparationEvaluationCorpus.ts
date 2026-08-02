@@ -84,6 +84,8 @@ const portfolios: Array<{
         action: 'marinate',
         recipeName: 'Baked satay chicken',
         instruction: 'Marinate the chicken, then refrigerate.',
+        boundaries: ['raw-protein', 'cross-contamination'],
+        maximumLeadTimeHours: 24,
       },
       {
         ingredient: 'cabbage',
@@ -302,8 +304,6 @@ export function buildWeeklyPreparationEvaluationCorpus(): WeeklyPreparationEvalu
         (item) =>
           item.maximumLeadTimeHours !== null &&
           item.storageGuidanceReference &&
-          !item.boundaries.includes('raw-protein') &&
-          !item.boundaries.includes('cross-contamination') &&
           !['cook', 'preheat', 'crumble'].includes(item.canonicalAction ?? ''),
       ).length
       const expectedEmpty = portfolio.expectedEmpty === true
@@ -313,10 +313,8 @@ export function buildWeeklyPreparationEvaluationCorpus(): WeeklyPreparationEvalu
         candidates,
         meals,
         expectedEmpty,
-        minimumUsefulTasks: expectedEmpty
-          ? 0
-          : Math.min(safeCandidateCount, availableMinutes === 15 ? 1 : 2),
-        minimumUsefulMinutes: expectedEmpty ? 0 : availableMinutes === 15 ? 5 : 10,
+        minimumUsefulTasks: expectedEmpty || safeCandidateCount === 0 ? 0 : 1,
+        minimumUsefulMinutes: expectedEmpty || safeCandidateCount === 0 ? 0 : 5,
       }
     }),
   )
