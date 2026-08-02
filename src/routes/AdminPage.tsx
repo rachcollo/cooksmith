@@ -601,6 +601,80 @@ function WeeklyPreparationOperations() {
                 .
               </p>
             ) : null}
+            {evaluation.failedCases.length > 0 ? (
+              <div className="evaluation-case-review" aria-labelledby="failed-case-review-title">
+                <div>
+                  <h4 id="failed-case-review-title">Failed case review</h4>
+                  <p>
+                    Open a case to see what the AI planned and the evidence that needs correcting.
+                  </p>
+                </div>
+                {evaluation.failedCases.map((evaluationCase) => {
+                  const guidance = evaluationReviewGuidance(evaluationCase.reason)
+                  return (
+                    <details key={evaluationCase.caseNumber} className="evaluation-case">
+                      <summary>
+                        <span>
+                          Case {evaluationCase.caseNumber}:{' '}
+                          {evaluationCase.caseKey.replaceAll('-', ' ')}
+                        </span>
+                        <span>{evaluationReasonLabel(evaluationCase.reason)}</span>
+                      </summary>
+                      <div className="flow-stack">
+                        <dl className="admin-metrics-grid">
+                          <div>
+                            <dt>Time available</dt>
+                            <dd>
+                              {evaluationCase.availableMinutes
+                                ? `${evaluationCase.availableMinutes} minutes`
+                                : 'Not recorded for this earlier run'}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Meals reviewed</dt>
+                            <dd>
+                              {evaluationCase.mealNames.length > 0
+                                ? evaluationCase.mealNames.join(', ')
+                                : 'Not recorded for this earlier run'}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Failure</dt>
+                            <dd>{evaluationReasonLabel(evaluationCase.reason)}</dd>
+                          </div>
+                          <div>
+                            <dt>Fix area</dt>
+                            <dd>{guidance.area}</dd>
+                          </div>
+                        </dl>
+                        <div>
+                          <h5>Why it failed</h5>
+                          <p>{guidance.explanation}</p>
+                        </div>
+                        <div>
+                          <h5>Generated tasks</h5>
+                          {evaluationCase.generatedTasks.length > 0 ? (
+                            <ol>
+                              {evaluationCase.generatedTasks.map((task, index) => (
+                                <li key={`${task.title}-${index}`}>
+                                  <strong>{task.title}</strong> ({task.estimatedMinutes} min, saves{' '}
+                                  {task.estimatedTimeSavedMinutes} min midweek)
+                                </li>
+                              ))}
+                            </ol>
+                          ) : (
+                            <p>
+                              No tasks were returned, or task evidence was not recorded for this
+                              earlier run.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </details>
+                  )
+                })}
+              </div>
+            ) : null}
             <dl className="admin-metrics-grid">
               <Metric label="Plans" value={evaluation.planCount} />
               <Metric label="Deterministic" value={evaluation.deterministicCount} />
@@ -628,6 +702,59 @@ function WeeklyPreparationOperations() {
       </Panel>
     </section>
   )
+}
+
+function evaluationReasonLabel(reason: string) {
+  return reason.replaceAll('_', ' ')
+}
+
+function evaluationReviewGuidance(reason: string): { area: string; explanation: string } {
+  switch (reason) {
+    case 'malformed_task':
+      return {
+        area: 'Planning prompt or output validation',
+        explanation:
+          'The task wording was incomplete, contained disallowed cooking instructions or did not meet the task format.',
+      }
+    case 'unsafe_make_ahead_task':
+      return {
+        area: 'Food-safety boundaries',
+        explanation:
+          'The plan included work that Cooksmith does not consider safe or suitable to complete ahead of time.',
+      }
+    case 'insufficient_useful_tasks':
+    case 'insufficient_useful_minutes':
+    case 'missing_useful_tasks':
+    case 'no_midweek_time_saved':
+      return {
+        area: 'Planning usefulness',
+        explanation:
+          'The plan did not make enough useful progress or save enough cooking time later in the week.',
+      }
+    case 'time_budget_exceeded':
+      return {
+        area: 'Time allocation',
+        explanation:
+          'The generated tasks require more time than the person said they had available.',
+      }
+    case 'unsupported_reference':
+      return {
+        area: 'Recipe source linking',
+        explanation:
+          'A generated task referred to recipe work that was not present in this test case.',
+      }
+    case 'expected_empty_plan':
+      return {
+        area: 'Planning restraint',
+        explanation:
+          'The AI invented prep work where the safest and most useful answer was no tasks.',
+      }
+    default:
+      return {
+        area: 'Plan validation',
+        explanation: 'The generated plan did not satisfy Cooksmith’s release-quality rules.',
+      }
+  }
 }
 
 function StatusRow({
