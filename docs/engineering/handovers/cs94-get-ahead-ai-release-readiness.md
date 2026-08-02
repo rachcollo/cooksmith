@@ -123,3 +123,26 @@ This correction requires an Edge Function release only and no database migration
   of truth for those gates.
 - After merge, release the migration before the Edge Function, refresh Admin, then run a new
   evaluation. The existing failed run cannot gain generated task evidence retrospectively.
+
+
+## End-to-end real-life prep readiness correction
+
+- Baseline: `main` at `3152caf1e06da3f2c294dacfce7fa8486df7cbaa`.
+- Branch: `fix/cs-94-end-to-end-prep-readiness`.
+- The AI receives only candidates that pass Cooksmith's protected action, storage, safety and
+  traceability rules. Empty eligible portfolios return an honest empty session without a provider
+  call.
+- The planning prompt now states the exact time, usefulness, candidate-ID and task-title contract.
+  The planner version advances to v3 and is included in the cache identity so older generated plans
+  cannot be reused.
+- Admin shows the read-only quality rule version and plain-language protected rules. Failed cases
+  are labelled as automatic technical findings and collapsed by default; administrators are not
+  asked to review recipes or propose prompt changes.
+- Safety validation remains authoritative after generation. This change does not make protected
+  rules editable and does not weaken acceptance: all 30 evaluation cases must still pass.
+- Edge Functions changed: `evaluate-weekly-preparation` (shared planner version),
+  `generate-weekly-preparation-plan` and `get-weekly-preparation-plan` (shared domain code).
+- Database migrations: none. Dependencies added: none. Fixed cost impact: A$0/month and A$0/year.
+- After merge, deploy the three weekly-preparation Edge Functions with the approved deployment SHA,
+  run a new 30-plan evaluation, accept it only if all cases pass, enable AI, then trial a household
+  15-minute and 30-minute session including end, resume and replan.
