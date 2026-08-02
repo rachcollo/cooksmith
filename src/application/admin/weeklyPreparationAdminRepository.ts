@@ -29,6 +29,21 @@ export type WeeklyPreparationEvaluation = {
   acceptanceEligible: boolean
   reviewMessage: string | null
   failureReasons: Array<{ reason: string; count: number }>
+  failedCases: WeeklyPreparationEvaluationCaseEvidence[]
+}
+
+export type WeeklyPreparationEvaluationCaseEvidence = {
+  caseNumber: number
+  caseKey: string
+  outcome: 'model-assisted' | 'fallback' | 'failed'
+  reason: string
+  availableMinutes: number | null
+  mealNames: string[]
+  generatedTasks: Array<{
+    title: string
+    estimatedMinutes: number
+    estimatedTimeSavedMinutes: number
+  }>
 }
 
 export type RecipeEnrichmentBackfillStatus = {
