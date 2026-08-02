@@ -106,7 +106,7 @@ describe('Get Ahead page', () => {
         if (calls === 1) throw new Error('temporarily unavailable')
         return {
           schemaVersion: 'weekly-preparation-plan-v2',
-          plannerVersion: 'weekly-preparation-planner-v2',
+          plannerVersion: 'weekly-preparation-planner-v3',
           householdId,
           planId: `${currentWeek(new Date())}_${currentWeek(new Date())}`,
           cacheKey: 'successful-retry',

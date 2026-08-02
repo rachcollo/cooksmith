@@ -1,3 +1,7 @@
+import {
+  isWeeklyPreparationCandidateEligible,
+  weeklyPreparationQualityRules,
+} from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
 import type {
   WeeklyPreparationCandidate,
   WeeklyPreparationModelDecision,
@@ -39,7 +43,14 @@ export async function decideAmbiguousPreparation(input: {
   availableMinutes?: number
   timeoutMs: number
 }) {
-  const ids = input.candidates.map((candidate) => candidate.id)
+  const eligibleCandidates = input.candidates.filter(isWeeklyPreparationCandidateEligible)
+  const eligibleIds = eligibleCandidates.map((candidate) => candidate.id)
+  if (eligibleIds.length === 0)
+    return {
+      decision: { tasks: [] },
+      inputTokens: 0,
+      outputTokens: 0,
+    }
   let response: Response
   try {
     response = await fetch('https://api.openai.com/v1/responses', {
@@ -53,15 +64,23 @@ export async function decideAmbiguousPreparation(input: {
         input: [
           {
             role: 'system',
-            content:
-              'You are Cooksmith’s make-ahead planning brain. Review every selected meal as one portfolio and create the most useful ordered prep session for the available time. Prioritise shared work, meaningful midweek effort reduction, make-ahead components, marinades, and practical chopping. Include only work that is genuinely useful and safe to do ahead. Do not add filler. Reject ordinary cooking fragments, preheating, serving steps, reserving water, or food that will deteriorate. Use only supplied candidate IDs, preserve safety boundaries, and never invent ingredients or quantities. An empty task list is correct when no worthwhile prep exists.',
+            content: [
+              'You are Cooksmith’s make-ahead planning brain. Build one realistic, ordered session across all selected meals.',
+              'Use only eligibleCandidateIds. Never include a candidate marked unsafe or ineligible, and never repeat an ID.',
+              'Every task must take at least 5 whole minutes. The total estimatedMinutes must not exceed availableMinutes.',
+              'Prefer shared prep and the highest genuine midweek time saving. Fill the available time only with worthwhile work; never add filler.',
+              'Task titles must be plain actions without brackets, preheating, serving instructions, reserving water or full cooking steps.',
+              'Return an empty task list when eligibleCandidateIds is empty or no worthwhile prep exists.',
+              `Protected rule version: ${weeklyPreparationQualityRules.version}.`,
+            ].join(' '),
           },
           {
             role: 'user',
             content: JSON.stringify({
               availableMinutes: input.availableMinutes ?? 240,
               meals: input.meals ?? [],
-              candidates: input.candidates,
+              eligibleCandidateIds: eligibleIds,
+              candidates: eligibleCandidates,
             }),
           },
         ],
@@ -89,7 +108,7 @@ export async function decideAmbiguousPreparation(input: {
                     properties: {
                       candidateIds: {
                         type: 'array',
-                        items: { type: 'string', enum: ids },
+                        items: { type: 'string', enum: eligibleIds },
                       },
                       title: { type: 'string' },
                       estimatedMinutes: { type: 'integer' },

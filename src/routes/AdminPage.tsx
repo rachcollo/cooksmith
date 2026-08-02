@@ -17,6 +17,7 @@ import type {
   WeeklyPreparationSettings,
 } from '../application/admin/weeklyPreparationAdminRepository'
 import { Button } from '../components/ui/Button'
+import { weeklyPreparationQualityRules } from '../domain/get-ahead/weeklyPreparationPlan'
 
 export function AdminPage() {
   const repository = useFeatureFlagRepository()
@@ -512,6 +513,31 @@ function WeeklyPreparationOperations() {
           <li>Emergency stop: {settings.emergencyStop ? 'Active' : 'Clear'}</li>
           <li>AI assistance: {settings.aiEnabled ? 'Enabled' : 'Disabled'}</li>
         </ol>
+        <details className="evaluation-case">
+          <summary>
+            <span>Evaluation rules</span>
+            <span>{weeklyPreparationQualityRules.version}</span>
+          </summary>
+          <div className="flow-stack">
+            <p>
+              These protected rules are applied automatically. You do not need to review recipes or
+              correct individual evaluation cases.
+            </p>
+            <ul>
+              <li>Sessions must stay within 15, 30 or 60 minutes.</li>
+              <li>Tasks must use supplied recipe preparation and take at least 5 minutes.</li>
+              <li>Raw-protein and cross-contamination work is excluded.</li>
+              <li>Preheating, serving steps and reserving water are not advance preparation.</li>
+              <li>
+                Cooksmith must prefer useful midweek time savings and return no tasks when
+                appropriate.
+              </li>
+            </ul>
+            <p>
+              Safety, traceability and time-budget rules are versioned and cannot be edited here.
+            </p>
+          </div>
+        </details>
         <dl className="admin-metrics-grid">
           <div>
             <dt>AI assistance</dt>
@@ -604,75 +630,82 @@ function WeeklyPreparationOperations() {
             {evaluation.failedCases.length > 0 ? (
               <div className="evaluation-case-review" aria-labelledby="failed-case-review-title">
                 <div>
-                  <h4 id="failed-case-review-title">Failed case review</h4>
+                  <h4 id="failed-case-review-title">Automatic quality findings</h4>
                   <p>
-                    Open a case to see what the AI planned and the evidence that needs correcting.
+                    Cooksmith uses these technical details to improve the planner centrally. No
+                    recipe-by-recipe action is required from you.
                   </p>
                 </div>
-                {evaluation.failedCases.map((evaluationCase) => {
-                  const guidance = evaluationReviewGuidance(evaluationCase.reason)
-                  return (
-                    <details key={evaluationCase.caseNumber} className="evaluation-case">
-                      <summary>
-                        <span>
-                          Case {evaluationCase.caseNumber}:{' '}
-                          {evaluationCase.caseKey.replaceAll('-', ' ')}
-                        </span>
-                        <span>{evaluationReasonLabel(evaluationCase.reason)}</span>
-                      </summary>
-                      <div className="flow-stack">
-                        <dl className="admin-metrics-grid">
+                <details className="evaluation-case">
+                  <summary>
+                    <span>Technical case evidence</span>
+                    <span>{evaluation.failedCases.length} findings</span>
+                  </summary>
+                  {evaluation.failedCases.map((evaluationCase) => {
+                    const guidance = evaluationReviewGuidance(evaluationCase.reason)
+                    return (
+                      <details key={evaluationCase.caseNumber} className="evaluation-case">
+                        <summary>
+                          <span>
+                            Case {evaluationCase.caseNumber}:{' '}
+                            {evaluationCase.caseKey.replaceAll('-', ' ')}
+                          </span>
+                          <span>{evaluationReasonLabel(evaluationCase.reason)}</span>
+                        </summary>
+                        <div className="flow-stack">
+                          <dl className="admin-metrics-grid">
+                            <div>
+                              <dt>Time available</dt>
+                              <dd>
+                                {evaluationCase.availableMinutes
+                                  ? `${evaluationCase.availableMinutes} minutes`
+                                  : 'Not recorded for this earlier run'}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Meals reviewed</dt>
+                              <dd>
+                                {evaluationCase.mealNames.length > 0
+                                  ? evaluationCase.mealNames.join(', ')
+                                  : 'Not recorded for this earlier run'}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>Failure</dt>
+                              <dd>{evaluationReasonLabel(evaluationCase.reason)}</dd>
+                            </div>
+                            <div>
+                              <dt>Fix area</dt>
+                              <dd>{guidance.area}</dd>
+                            </div>
+                          </dl>
                           <div>
-                            <dt>Time available</dt>
-                            <dd>
-                              {evaluationCase.availableMinutes
-                                ? `${evaluationCase.availableMinutes} minutes`
-                                : 'Not recorded for this earlier run'}
-                            </dd>
+                            <h5>Why it failed</h5>
+                            <p>{guidance.explanation}</p>
                           </div>
                           <div>
-                            <dt>Meals reviewed</dt>
-                            <dd>
-                              {evaluationCase.mealNames.length > 0
-                                ? evaluationCase.mealNames.join(', ')
-                                : 'Not recorded for this earlier run'}
-                            </dd>
+                            <h5>Generated tasks</h5>
+                            {evaluationCase.generatedTasks.length > 0 ? (
+                              <ol>
+                                {evaluationCase.generatedTasks.map((task, index) => (
+                                  <li key={`${task.title}-${index}`}>
+                                    <strong>{task.title}</strong> ({task.estimatedMinutes} min,
+                                    saves {task.estimatedTimeSavedMinutes} min midweek)
+                                  </li>
+                                ))}
+                              </ol>
+                            ) : (
+                              <p>
+                                No tasks were returned, or task evidence was not recorded for this
+                                earlier run.
+                              </p>
+                            )}
                           </div>
-                          <div>
-                            <dt>Failure</dt>
-                            <dd>{evaluationReasonLabel(evaluationCase.reason)}</dd>
-                          </div>
-                          <div>
-                            <dt>Fix area</dt>
-                            <dd>{guidance.area}</dd>
-                          </div>
-                        </dl>
-                        <div>
-                          <h5>Why it failed</h5>
-                          <p>{guidance.explanation}</p>
                         </div>
-                        <div>
-                          <h5>Generated tasks</h5>
-                          {evaluationCase.generatedTasks.length > 0 ? (
-                            <ol>
-                              {evaluationCase.generatedTasks.map((task, index) => (
-                                <li key={`${task.title}-${index}`}>
-                                  <strong>{task.title}</strong> ({task.estimatedMinutes} min, saves{' '}
-                                  {task.estimatedTimeSavedMinutes} min midweek)
-                                </li>
-                              ))}
-                            </ol>
-                          ) : (
-                            <p>
-                              No tasks were returned, or task evidence was not recorded for this
-                              earlier run.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </details>
-                  )
-                })}
+                      </details>
+                    )
+                  })}
+                </details>
               </div>
             ) : null}
             <dl className="admin-metrics-grid">

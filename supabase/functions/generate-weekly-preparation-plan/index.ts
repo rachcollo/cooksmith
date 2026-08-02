@@ -121,6 +121,7 @@ Deno.serve(async (request) => {
       ...basePlan,
       cacheKey: [
         basePlan.cacheKey,
+        basePlan.plannerVersion,
         settings?.ai_enabled && !settings.emergency_stop ? 'ai' : 'usual',
         settings?.model_identifier ?? 'unconfigured',
         settings?.prompt_version ?? 'unconfigured',

@@ -1,7 +1,30 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v2' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v3' as const
+
+export const weeklyPreparationQualityRules = {
+  version: 'weekly-preparation-quality-v1',
+  timeBudgets: [15, 30, 60],
+  minimumTaskMinutes: 5,
+  maximumTaskMinutes: 120,
+  maximumTimeSavedMinutes: 180,
+  safeActions: [
+    'blend',
+    'chop',
+    'dice',
+    'grate',
+    'marinate',
+    'mince',
+    'mix',
+    'roughly_chop',
+    'shred',
+    'slice',
+    'whisk',
+  ],
+  protectedBoundaries: ['raw-protein', 'cross-contamination'],
+  rejectedTaskFragments: ['preheat', 'reserve water', 'serve immediately'],
+} as const
 
 export type PreparationBoundary =
   'allergen' | 'batch-component' | 'cross-contamination' | 'raw-protein' | 'storage' | 'timing'
@@ -206,7 +229,7 @@ export function applyAndValidateModelDecision(
       used.add(id)
     }
     const supplied = group.candidateIds.flatMap((id) => byId.get(id) ?? [])
-    if (supplied.some((candidate) => !isModelEligible(candidate)))
+    if (supplied.some((candidate) => !isWeeklyPreparationCandidateEligible(candidate)))
       return { ok: false, reason: 'unsafe_make_ahead_task' }
     const category = supplied
       .map((candidate) => candidate.canonicalIngredient)
@@ -237,29 +260,17 @@ export function applyAndValidateModelDecision(
   }
 }
 
-const safePreparationActions = new Set([
-  'chop',
-  'dice',
-  'grate',
-  'mince',
-  'mix',
-  'shred',
-  'slice',
-  'whisk',
-  'blend',
-  'marinate',
-  'roughly_chop',
-])
+const safePreparationActions = new Set<string>(weeklyPreparationQualityRules.safeActions)
 
 function isDeterministicallyUseful(candidate: WeeklyPreparationCandidate) {
   return (
-    isModelEligible(candidate) &&
+    isWeeklyPreparationCandidateEligible(candidate) &&
     candidate.confidence !== 'low' &&
     candidate.confidence !== 'unknown'
   )
 }
 
-function isModelEligible(candidate: WeeklyPreparationCandidate) {
+export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparationCandidate) {
   const action = candidate.canonicalAction?.trim().toLowerCase()
   if (!action || !safePreparationActions.has(action)) return false
   if (!candidate.canonicalIngredient?.trim()) return false

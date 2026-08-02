@@ -94,8 +94,10 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(adapterSource).not.toContain('uniqueItems')
     expect(adapterSource).not.toContain('minItems')
     expect(adapterSource).toContain('availableMinutes')
-    expect(adapterSource).toContain('Review every selected meal as one portfolio')
-    expect(adapterSource).toContain('An empty task list is correct')
+    expect(adapterSource).toContain(
+      'Build one realistic, ordered session across all selected meals',
+    )
+    expect(adapterSource).toContain('Return an empty task list')
     expect(adapterSource).toContain("response.headers.get('x-request-id')")
     expect(adapterSource).toContain('body.error?.param')
     expect(adapterSource).toContain("error.name === 'TimeoutError'")
@@ -156,6 +158,18 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).not.toContain(
       'weekly_preparation_evaluation_acceptances(id), weekly_preparation_evaluation_cases(reason_code)',
     )
+  })
+
+  it('filters unsafe candidates before requesting an AI strategy', () => {
+    const source = readFileSync(
+      'supabase/functions/generate-weekly-preparation-plan/openaiAdapter.ts',
+      'utf8',
+    )
+
+    expect(source).toContain('input.candidates.filter(isWeeklyPreparationCandidateEligible)')
+    expect(source).toContain('eligibleCandidateIds: eligibleIds')
+    expect(source).toContain("items: { type: 'string', enum: eligibleIds }")
+    expect(source).toContain('total estimatedMinutes must not exceed availableMinutes')
   })
 
   it('persists privacy-safe case evidence needed for Admin review', () => {
