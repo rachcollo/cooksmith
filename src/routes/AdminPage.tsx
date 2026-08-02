@@ -781,7 +781,7 @@ function evaluationReviewGuidance(reason: string): { area: string; explanation: 
       return {
         area: 'Time allocation',
         explanation:
-          'The generated tasks require more time than the person said they had available.',
+          'This result came from an older planner that rejected work over the selected maximum. The current planner recalibrates durations and keeps the best useful tasks that fit.',
       }
     case 'unsupported_reference':
       return {

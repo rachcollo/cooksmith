@@ -174,29 +174,70 @@ describe('weekly preparation plan', () => {
     )
   })
 
-  it('rejects a model strategy that exceeds the available time', () => {
+  it('recalibrates inflated estimates and keeps the useful work that fits', () => {
     const candidates = [
       candidate('a', { confidence: 'low' }),
       candidate('b', { canonicalAction: 'chop', confidence: 'low' }),
     ]
     const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
-    expect(
-      applyAndValidateModelDecision(
-        fallback,
-        candidates,
-        {
-          tasks: [
-            {
-              candidateIds: ['a'],
-              title: 'Dice the onions',
-              estimatedMinutes: 35,
-              estimatedTimeSavedMinutes: 20,
-            },
-          ],
-        },
-        30,
-      ),
-    ).toEqual({ ok: false, reason: 'time_budget_exceeded' })
+    const result = applyAndValidateModelDecision(
+      fallback,
+      candidates,
+      {
+        tasks: [
+          {
+            candidateIds: ['a'],
+            title: 'Dice the onions',
+            estimatedMinutes: 35,
+            estimatedTimeSavedMinutes: 20,
+          },
+        ],
+      },
+      30,
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tasks).toHaveLength(1)
+    expect(result.value.tasks[0]?.estimatedMinutes).toBe(6)
+  })
+
+  it('counts shared setup once and trims lower-priority work instead of failing the plan', () => {
+    const candidates = [
+      candidate('carrot', { canonicalIngredient: 'carrot', confidence: 'low' }),
+      candidate('celery', { canonicalIngredient: 'celery', confidence: 'low' }),
+      candidate('onion', { canonicalIngredient: 'onion', confidence: 'low' }),
+      candidate('mushroom', { canonicalIngredient: 'mushrooms', confidence: 'low' }),
+    ]
+    const fallback = buildDeterministicWeeklyPreparationPlan(candidates)
+    const result = applyAndValidateModelDecision(
+      fallback,
+      candidates,
+      {
+        tasks: [
+          {
+            candidateIds: ['carrot', 'celery', 'onion'],
+            title: 'Dice the carrot, celery and onion',
+            estimatedMinutes: 20,
+            estimatedTimeSavedMinutes: 20,
+          },
+          {
+            candidateIds: ['mushroom'],
+            title: 'Dice the mushrooms',
+            estimatedMinutes: 10,
+            estimatedTimeSavedMinutes: 8,
+          },
+        ],
+      },
+      15,
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tasks).toHaveLength(1)
+    expect(result.value.tasks[0]).toMatchObject({
+      title: 'Dice the carrot, celery and onion',
+      estimatedMinutes: 12,
+    })
   })
 
   it('accepts a useful five-meal strategy and excludes malformed cooking fragments', () => {
@@ -237,7 +278,7 @@ describe('weekly preparation plan', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.value.tasks).toHaveLength(2)
-    expect(result.value.tasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0)).toBe(22)
+    expect(result.value.tasks.reduce((sum, task) => sum + (task.estimatedMinutes ?? 0), 0)).toBe(18)
     expect(JSON.stringify(result.value.tasks)).not.toContain('garlic cloves (')
   })
 })

@@ -169,7 +169,8 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).toContain('input.candidates.filter(isWeeklyPreparationCandidateEligible)')
     expect(source).toContain('eligibleCandidateIds: eligibleIds')
     expect(source).toContain("items: { type: 'string', enum: eligibleIds }")
-    expect(source).toContain('total estimatedMinutes must not exceed availableMinutes')
+    expect(source).toContain('availableMinutes is a maximum, not a target')
+    expect(source).toContain('Count shared setup and clean-up once per task')
   })
 
   it('persists privacy-safe case evidence needed for Admin review', () => {

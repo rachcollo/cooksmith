@@ -168,3 +168,24 @@ This correction requires an Edge Function release only and no database migration
 - After merge, release the forward migration and the three Edge Functions from the exact approved
   `main` SHA, run and accept a new 30-plan evaluation, then enable AI and verify vegetable prep plus
   separately stored raw-protein prep in a real household plan.
+
+## Calibrated prep timing correction
+
+- Baseline: `main` at `0be9f4b0ac0903a77466d16dfc22baa03283acc3`.
+- Branch: `fix/cs-94-calibrated-prep-timing`.
+- The selected session duration is now a maximum, not a fill target. Model-assisted planning keeps
+  the highest-priority worthwhile tasks that fit instead of rejecting the complete plan when later
+  work would exceed the window.
+- Task estimates are capped by an average-home-cook calibration derived from the preparation
+  actions and ingredient count. Shared setup and clean-up are counted once per grouped task; a
+  normal carrot, celery and onion dice is calibrated to 12 minutes rather than 20.
+- Planner, quality-rule, prompt and corpus identities advance together. The forward migration
+  disables AI and clears smoke evidence so only a fresh evaluation of the corrected timing rules
+  can authorise activation.
+- Edge Functions changed: `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan` through their shared domain imports.
+- Database migration: `20260802090000_cs94_calibrated_prep_timing.sql`. Dependencies added: none.
+  Fixed cost impact: A$0/month and A$0/year. Evaluation usage remains 30 bounded provider calls.
+- After merge, release the forward migration and three Edge Functions from the approved `main` SHA,
+  run and accept a fresh 30-plan evaluation, then enable AI and verify a partially filled 30-minute
+  household session plus the grouped vegetable duration.

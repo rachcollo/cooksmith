@@ -1,10 +1,10 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v4' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v5' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v2',
+  version: 'weekly-preparation-quality-v3',
   timeBudgets: [15, 30, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
@@ -25,6 +25,8 @@ export const weeklyPreparationQualityRules = {
   protectedBoundaries: ['raw-protein', 'cross-contamination'],
   boundaryPolicy:
     'Allow recipe-ready raw-protein preparation with storage guidance, but keep it separate from clean and ready-to-eat preparation.',
+  durationPolicy:
+    'Estimate an average home cook, count shared setup and clean-up once, and treat the selected duration as a maximum rather than a target.',
   rejectedTaskFragments: ['preheat', 'reserve water', 'serve immediately'],
 } as const
 
@@ -207,7 +209,6 @@ export function applyAndValidateModelDecision(
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]))
   const used = new Set<string>()
   const replacementTasks: WeeklyPreparationTask[] = []
-  let plannedMinutes = 0
   for (const [priority, group] of decision.tasks.entries()) {
     if (group.candidateIds.length === 0) return { ok: false, reason: 'empty_group' }
     if (
@@ -219,8 +220,6 @@ export function applyAndValidateModelDecision(
       group.estimatedTimeSavedMinutes > 180
     )
       return { ok: false, reason: 'invalid_estimate' }
-    plannedMinutes += group.estimatedMinutes
-    if (plannedMinutes > availableMinutes) return { ok: false, reason: 'time_budget_exceeded' }
     const title = group.title.trim()
     if (
       title.length < 4 ||
@@ -245,10 +244,16 @@ export function applyAndValidateModelDecision(
       supplied.length > 1 && partitionByCompatibility(supplied).length === 1
         ? combinedTask(category, supplied)
         : separateCandidatesTask(category || 'ingredients', supplied)
+    const estimatedMinutes = calibratedTaskMinutes(supplied, group.estimatedMinutes)
+    const plannedMinutes = replacementTasks.reduce(
+      (sum, existing) => sum + (existing.estimatedMinutes ?? 0),
+      0,
+    )
+    if (plannedMinutes + estimatedMinutes > availableMinutes) continue
     replacementTasks.push({
       ...task,
       title,
-      estimatedMinutes: group.estimatedMinutes,
+      estimatedMinutes,
       estimatedTimeSavedMinutes: group.estimatedTimeSavedMinutes,
       storageGuidance: storageGuidanceFor(supplied),
       priority: priority + 1,
@@ -264,6 +269,29 @@ export function applyAndValidateModelDecision(
       fallbackReason: null,
     },
   }
+}
+
+function calibratedTaskMinutes(candidates: WeeklyPreparationCandidate[], modelEstimate: number) {
+  const actionMinutes = candidates.reduce((sum, candidate) => {
+    switch (candidate.canonicalAction) {
+      case 'marinate':
+      case 'mix':
+      case 'whisk':
+        return sum + 3
+      case 'mince':
+      case 'grate':
+      case 'shred':
+        return sum + 4
+      default:
+        return sum + 3
+    }
+  }, 0)
+  const sharedSetupAndCleanupMinutes = 3
+  const averageCookEstimate = Math.max(
+    weeklyPreparationQualityRules.minimumTaskMinutes,
+    sharedSetupAndCleanupMinutes + actionMinutes,
+  )
+  return Math.min(modelEstimate, averageCookEstimate)
 }
 
 const safePreparationActions = new Set<string>(weeklyPreparationQualityRules.safeActions)
