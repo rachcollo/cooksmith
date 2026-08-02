@@ -211,7 +211,7 @@ describe('admin feature toggles', () => {
     expect(screen.getByText(/Prepare taco vegetables/)).toBeVisible()
     expect(
       screen.getByText(
-        'The generated tasks require more time than the person said they had available.',
+        'This result came from an older planner that rejected work over the selected maximum. The current planner recalibrates durations and keeps the best useful tasks that fit.',
       ),
     ).toBeVisible()
 

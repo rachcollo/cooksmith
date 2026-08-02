@@ -258,6 +258,11 @@ Deno.serve(async (request) => {
         generatedTasks = assisted.decision.tasks
         if (!validated.ok) reasonCode = validated.reason
         else {
+          generatedTasks = validated.value.tasks.map((task) => ({
+            title: task.title,
+            estimatedMinutes: task.estimatedMinutes ?? 0,
+            estimatedTimeSavedMinutes: task.estimatedTimeSavedMinutes ?? 0,
+          }))
           validOutputCount += 1
           const usefulMinutes = validated.value.tasks.reduce(
             (sum, task) => sum + (task.estimatedMinutes ?? 0),
