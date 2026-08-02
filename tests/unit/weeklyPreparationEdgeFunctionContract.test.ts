@@ -111,6 +111,18 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(evaluationSource).not.toContain("reason_code: outcome === 'fallback' ? 'validation'")
   })
 
+  it('keeps the persisted evaluation reason in scope after model validation', () => {
+    const source = readFileSync(edgeFunctionSources[0], 'utf8')
+    const reasonDeclaration = source.indexOf('let reasonCode: string | null = null')
+    const modelBranch = source.indexOf('if (expectedModelCall) {', reasonDeclaration)
+    const persistedReason = source.indexOf('reason_code: reasonCode', modelBranch)
+
+    expect(reasonDeclaration).toBeGreaterThan(0)
+    expect(modelBranch).toBeGreaterThan(reasonDeclaration)
+    expect(persistedReason).toBeGreaterThan(modelBranch)
+    expect(source.match(/let reasonCode: string \| null = null/g)).toHaveLength(1)
+  })
+
   it('sends the selected duration and full meal context to the planning worker', () => {
     const source = readFileSync(edgeFunctionSources[2], 'utf8')
 
