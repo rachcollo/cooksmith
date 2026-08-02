@@ -145,3 +145,26 @@ This correction requires an Edge Function release only and no database migration
 - After merge, deploy the three weekly-preparation Edge Functions with the approved deployment SHA,
   run a new 30-plan evaluation, accept it only if all cases pass, enable AI, then trial a household
   15-minute and 30-minute session including end, resume and replan.
+
+## Practical vegetable and raw-protein prep correction
+
+- Baseline: `main` at `59ffcc71fad0997ab2f808f92b25ba5c7be24ab0`.
+- Branch: `fix/cs-94-practical-prep-safety`.
+- Vegetable chopping, slicing, dicing and grating remain worthwhile even as a single task. The
+  evaluation no longer requires two separate tasks merely because 30 or 60 minutes are available.
+- Raw meat may be cut, portioned, seasoned or marinated when the recipe-intelligence candidate has
+  an explicit maximum lead time and storage reference. Raw-protein preparation cannot be combined
+  into the same task as clean vegetable or ready-to-eat preparation.
+- The provider prompt, deterministic validation, synthetic corpus, Admin explanation and regression
+  tests now apply the same practical-prep policy. The evaluator still rejects unsupported work,
+  unsafe storage, mixed hygiene boundaries, cooking filler and plans exceeding the time budget.
+- Planner, quality-rule, prompt and corpus identities advance together. The cache key now includes
+  the planner and quality-rule versions, and the forward migration disables AI and clears smoke
+  evidence so no previous acceptance or cached result can authorise this behaviour.
+- Edge Functions changed: `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan` through their shared domain imports.
+- Database migration: `20260802060000_cs94_practical_prep_safety.sql`. Dependencies added: none.
+  Fixed cost impact: A$0/month and A$0/year. Evaluation usage remains 30 bounded provider calls.
+- After merge, release the forward migration and the three Edge Functions from the exact approved
+  `main` SHA, run and accept a new 30-plan evaluation, then enable AI and verify vegetable prep plus
+  separately stored raw-protein prep in a real household plan.
