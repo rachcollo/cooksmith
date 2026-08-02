@@ -135,12 +135,8 @@ describe('weekly preparation Edge Function contracts', () => {
       'utf8',
     )
 
-    expect(source).toContain(
-      'acceptances:weekly_preparation_evaluation_acceptances(id)',
-    )
-    expect(source).toContain(
-      'cases:weekly_preparation_evaluation_cases(reason_code)',
-    )
+    expect(source).toContain('acceptances:weekly_preparation_evaluation_acceptances(id)')
+    expect(source).toContain('cases:weekly_preparation_evaluation_cases(reason_code)')
     expect(source).toContain('data.cases ?? []')
     expect(source).toContain('Boolean(data.acceptances)')
     expect(source).not.toContain(
