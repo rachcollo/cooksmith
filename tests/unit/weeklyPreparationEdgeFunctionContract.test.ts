@@ -217,3 +217,4 @@ describe('weekly preparation Edge Function contracts', () => {
     ).rejects.toThrow(expectedMessage)
   })
 })
+
