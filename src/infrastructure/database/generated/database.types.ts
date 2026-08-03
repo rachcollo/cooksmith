@@ -1773,10 +1773,6 @@ export type Database = {
         Args: { target_run_id: string }
         Returns: string
       }
-      weekly_preparation_recipe_readiness: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
       activate_recipe_enrichment: {
         Args: {
           target_job_id: string
@@ -1883,6 +1879,10 @@ export type Database = {
           invitation_token: string
           invited_email: string
         }[]
+      }
+      weekly_preparation_recipe_readiness: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {
