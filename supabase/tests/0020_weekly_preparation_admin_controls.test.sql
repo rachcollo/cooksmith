@@ -258,3 +258,18 @@ select throws_ok(
       true, false, false, false, '93000000-0000-4000-8000-000000000001'
     )$$,
   '42501',
+  null,
+  'Admins cannot forge control audit evidence'
+);
+select lives_ok(
+  $$select model_identifier from cooksmith.weekly_preparation_settings$$,
+  'Admins can read only the safe configured model identifier'
+);
+select is(
+  (select emergency_stop from cooksmith.weekly_preparation_settings where singleton),
+  false,
+  'Emergency stop remains clear after the audited AI enablement'
+);
+
+select * from finish();
+rollback;
