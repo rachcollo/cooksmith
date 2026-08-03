@@ -1,4 +1,8 @@
-import type { WeeklyPreparationRepository } from '../../application/get-ahead/weeklyPreparationRepository'
+import {
+  WeeklyPreparationUnavailableError,
+  type WeeklyPreparationRepository,
+  type WeeklyPreparationUnavailableReason,
+} from '../../application/get-ahead/weeklyPreparationRepository'
 import {
   weeklyPreparationPlannerVersion,
   weeklyPreparationPlanSchemaVersion,
@@ -30,8 +34,23 @@ export function createSupabaseWeeklyPreparationRepository(
       const { data, error } = await client.functions.invoke('get-weekly-preparation-plan', {
         body: input,
       })
-      if (error || !isPlan(data?.plan))
-        throw new Error('Cooksmith could not load consolidated preparation guidance.')
+      if (error) {
+        const context = error.context
+        let reason: WeeklyPreparationUnavailableReason = 'temporarily_unavailable'
+        if (context instanceof Response) {
+          const payload = (await context
+            .clone()
+            .json()
+            .catch(() => null)) as {
+            error?: unknown
+          } | null
+          if (payload?.error === 'recipes_preparing') reason = 'recipes_preparing'
+          else if (payload?.error === 'ai_unavailable') reason = 'ai_unavailable'
+        }
+        throw new WeeklyPreparationUnavailableError(reason)
+      }
+      if (!isPlan(data?.plan))
+        throw new WeeklyPreparationUnavailableError('temporarily_unavailable')
       return data.plan
     },
   }

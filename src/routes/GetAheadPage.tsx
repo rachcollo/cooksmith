@@ -12,7 +12,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
 import { FormError } from '../components/ui/FormField'
-import { analysePreparationOpportunities } from '../domain/get-ahead/preparationOpportunities'
+import { WeeklyPreparationUnavailableError } from '../application/get-ahead/weeklyPreparationRepository'
 import {
   applyGetAheadOverride,
   createGetAheadSession,
@@ -70,7 +70,9 @@ export function GetAheadPage() {
   const [overrideError, setOverrideError] = useState<string | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPreparationPlan | null>(null)
-  const [usingFallback, setUsingFallback] = useState(false)
+  const [planUnavailable, setPlanUnavailable] = useState<
+    'recipes_preparing' | 'ai_unavailable' | null
+  >(null)
   const [planRetrying, setPlanRetrying] = useState(false)
   const [editingPlan, setEditingPlan] = useState(false)
   const [sessionBeingUpdated, setSessionBeingUpdated] = useState<GetAheadSession | null>(null)
@@ -79,23 +81,40 @@ export function GetAheadPage() {
   useEffect(() => {
     if (!householdId) return
     let active = true
+    const saved = localStorage.getItem(storageKey(householdId, planId))
+    const parsed = saved ? (JSON.parse(saved) as GetAheadSession) : null
     Promise.all([
       plannedMeals.listWeek(householdId, weekStart, weekEnd),
       recipes.list(householdId),
       weeklyPreparation
-        ?.getCurrentPlan({ householdId, weekStart, weekEnd, availableMinutes: 30 })
-        .then((plan) => ({ plan, unavailable: false }))
-        .catch(() => ({ plan: null, unavailable: true })) ??
-        Promise.resolve({ plan: null, unavailable: true }),
+        ?.getCurrentPlan({
+          householdId,
+          weekStart,
+          weekEnd,
+          availableMinutes: parsed?.selectedMinutes ?? 30,
+        })
+        .then((plan) => ({ plan, reason: null }))
+        .catch((caught: unknown) => ({
+          plan: null,
+          reason:
+            caught instanceof WeeklyPreparationUnavailableError &&
+            caught.reason === 'recipes_preparing'
+              ? ('recipes_preparing' as const)
+              : ('ai_unavailable' as const),
+        })) ?? Promise.resolve({ plan: null, reason: 'ai_unavailable' as const }),
     ])
       .then(([nextMeals, nextRecipes, preparation]) => {
         if (!active) return
         setMeals(nextMeals)
         setRecipeList(nextRecipes)
         setWeeklyPlan(preparation.plan)
-        setUsingFallback(preparation.unavailable)
-        const saved = localStorage.getItem(storageKey(householdId, planId))
-        const parsed = saved ? (JSON.parse(saved) as GetAheadSession) : null
+        setPlanUnavailable(preparation.reason)
+        if (!preparation.plan || preparation.plan.generation !== 'model-assisted') {
+          localStorage.removeItem(storageKey(householdId, planId))
+          setSession(null)
+          setShowChecklist(false)
+          return
+        }
         const fingerprint = sourceFingerprint(nextMeals, nextRecipes)
         const samePlan =
           parsed &&
@@ -143,15 +162,35 @@ export function GetAheadPage() {
         forceRetry: true,
       })
       setWeeklyPlan(next)
-      setUsingFallback(next.generation === 'fallback')
+      setPlanUnavailable(null)
+      const opportunities = opportunitiesFor(meals, recipeList, next)
+      const existing = visibleSession
+      if (existing) {
+        const rebuilt = reconcileGetAheadSession({
+          session: existing,
+          planId,
+          periodStart: weekStart,
+          periodEnd: weekEnd,
+          sourceFingerprint: sourceFingerprint(meals, recipeList),
+          selectedMinutes: existing.selectedMinutes,
+          opportunities,
+          weeklyPreparationCacheKey: next.cacheKey,
+        })
+        persist(rebuilt)
+      }
       setAnnouncement(
         next.generation === 'model-assisted'
           ? 'Your AI-assisted preparation plan is ready.'
           : 'Your usual preparation checklist is ready.',
       )
-    } catch {
+    } catch (caught) {
+      const preparing =
+        caught instanceof WeeklyPreparationUnavailableError && caught.reason === 'recipes_preparing'
+      setPlanUnavailable(preparing ? 'recipes_preparing' : 'ai_unavailable')
       setAnnouncement(
-        'Cooksmith could not refresh the preparation plan. Your usual checklist is still available.',
+        preparing
+          ? 'Cooksmith is still preparing recipe insights. Try again shortly.'
+          : 'Cooksmith could not create a preparation plan. Try again shortly.',
       )
     } finally {
       setPlanRetrying(false)
@@ -194,10 +233,18 @@ export function GetAheadPage() {
           availableMinutes: selectedMinutes,
         })
         setWeeklyPlan(planForSession)
-        setUsingFallback(planForSession.generation === 'fallback')
+        setPlanUnavailable(null)
       }
-    } catch {
-      setUsingFallback(true)
+    } catch (caught) {
+      const preparing =
+        caught instanceof WeeklyPreparationUnavailableError && caught.reason === 'recipes_preparing'
+      setPlanUnavailable(preparing ? 'recipes_preparing' : 'ai_unavailable')
+      setAnnouncement(
+        preparing
+          ? 'Cooksmith is still preparing recipe insights. Try again shortly.'
+          : 'Cooksmith could not create a preparation plan. Try again shortly.',
+      )
+      return
     } finally {
       setSessionStarting(false)
     }
@@ -272,10 +319,11 @@ export function GetAheadPage() {
         <p className="get-ahead-guidance-note" role="status">
           AI-assisted plan
         </p>
-      ) : usingFallback || weeklyPlan?.generation === 'fallback' ? (
+      ) : planUnavailable ? (
         <p className="get-ahead-guidance-note" role="status">
-          Cooksmith is using a temporary fallback. Your usual preparation checklist is still
-          available.
+          {planUnavailable === 'recipes_preparing'
+            ? 'Cooksmith is still preparing these recipes. Try again shortly.'
+            : 'Cooksmith could not create a useful preparation plan right now.'}
           <Button
             variant="secondary"
             disabled={planRetrying}
@@ -286,7 +334,7 @@ export function GetAheadPage() {
         </p>
       ) : (
         <p className="get-ahead-guidance-note" role="status">
-          Usual preparation checklist
+          Choose your meals and available time to create a preparation plan.
         </p>
       )}
       {!visibleSession || !showChecklist || editingPlan ? (
@@ -492,15 +540,9 @@ function opportunitiesFor(
   recipes: Recipe[],
   plan: WeeklyPreparationPlan | null,
 ) {
-  const deterministic = analysePreparationOpportunities(
-    meals.map((plannedMeal) => ({
-      plannedMeal,
-      recipe: recipes.find((recipe) => recipe.id === plannedMeal.recipeId) ?? null,
-    })),
-  )
-  if (!plan) return deterministic
+  if (!plan || plan.generation !== 'model-assisted') return []
   const consolidated = weeklyPreparationPlanToOpportunities(plan, meals, recipes)
-  return consolidated.length > 0 ? consolidated : deterministic
+  return consolidated
 }
 
 function sourceFingerprint(meals: PlannedMeal[], recipes: Recipe[]) {

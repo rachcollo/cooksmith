@@ -377,7 +377,7 @@ export function getAheadTotals(session: GetAheadSession): GetAheadTotals {
   return {
     selectedMinutes: session.selectedMinutes,
     plannedMinutes,
-    remainingMinutes: Math.max(0, session.selectedMinutes - completedMinutes),
+    remainingMinutes: Math.max(0, plannedMinutes - completedMinutes),
     completedMinutes,
     estimatedTimeSavedMinutes,
     remainingPotentialMinutes,

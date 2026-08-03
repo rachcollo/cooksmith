@@ -51,6 +51,7 @@ Every ADR must contain:
 | [010](../architecture/decisions/010-orchard-editorial-design-system.md)            | Proposed   | Use Orchard Editorial as the design system              |
 | [011](../architecture/decisions/011-database-backed-application-admin-controls.md) | Accepted   | Use database-backed application admin controls          |
 | [012](../architecture/decisions/012-recipe-level-preparation-intelligence.md)      | Accepted   | Use recipe-level preparation intelligence for Get Ahead |
+| [013](../architecture/decisions/013-fail-closed-get-ahead-planning.md)             | Accepted   | Fail closed when Get Ahead intelligence is unavailable  |
 
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 

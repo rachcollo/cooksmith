@@ -1880,6 +1880,7 @@ export type Database = {
           invited_email: string
         }[]
       }
+      weekly_preparation_recipe_readiness: { Args: never; Returns: boolean }
     }
     Enums: {
       application_role: 'admin' | 'content_editor' | 'support'

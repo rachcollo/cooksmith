@@ -88,10 +88,10 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   completed_at,
   deployment_sha
 ) values (
-  'weekly-preparation-corpus-v7',
+  'weekly-preparation-corpus-v8',
   'weekly-preparation-plan-v2',
-  'weekly-preparation-planner-v7',
-  'weekly-preparation-strategy-v7',
+  'weekly-preparation-planner-v8',
+  'weekly-preparation-strategy-v8',
   'test-model',
   'test-pricing',
   30,
@@ -173,6 +173,66 @@ reset role;
 update cooksmith.weekly_preparation_settings
 set smoke_deployment_sha = repeat('a', 40)
 where singleton;
+
+-- The v8 activation gate also requires every current recipe version to have
+-- completed Recipe Intelligence v2 evidence. Complete the migration-created
+-- jobs here so this fixture tests the successful control path with the same
+-- readiness contract as Production.
+update cooksmith.recipe_enrichments
+set is_active = false
+where is_active;
+
+update cooksmith.recipe_enrichment_jobs
+set
+  state = 'completed',
+  completed_at = now(),
+  leased_until = null,
+  failure_category = null
+where schema_version = 'recipe-intelligence-v2'
+  and rules_version = 'cooksmith-rules-v2'
+  and recipe_version_id in (
+    select distinct on (source_kind, recipe_id, imported_recipe_id) id
+    from cooksmith.recipe_content_versions
+    order by source_kind, recipe_id, imported_recipe_id, created_at desc, id desc
+  );
+
+update cooksmith.recipe_enrichments
+set
+  result = jsonb_build_object('preparationOpportunities', jsonb_build_array()),
+  is_active = true,
+  activated_at = now()
+where schema_version = 'recipe-intelligence-v2'
+  and rules_version = 'cooksmith-rules-v2'
+  and recipe_version_id in (
+    select distinct on (source_kind, recipe_id, imported_recipe_id) id
+    from cooksmith.recipe_content_versions
+    order by source_kind, recipe_id, imported_recipe_id, created_at desc, id desc
+  );
+
+insert into cooksmith.recipe_enrichments (
+  source_kind, recipe_id, imported_recipe_id, household_id, recipe_version_id, job_id,
+  schema_version, rules_version, provider, model_key, result, overall_confidence,
+  is_active, activated_at
+)
+select
+  job.source_kind, job.recipe_id, job.imported_recipe_id, job.household_id,
+  job.recipe_version_id, job.id, job.schema_version, job.rules_version,
+  'test', job.model_key,
+  jsonb_build_object('preparationOpportunities', jsonb_build_array()),
+  'high', true, now()
+from cooksmith.recipe_enrichment_jobs job
+where job.schema_version = 'recipe-intelligence-v2'
+  and job.rules_version = 'cooksmith-rules-v2'
+  and job.recipe_version_id in (
+    select distinct on (source_kind, recipe_id, imported_recipe_id) id
+    from cooksmith.recipe_content_versions
+    order by source_kind, recipe_id, imported_recipe_id, created_at desc, id desc
+  )
+  and not exists (
+    select 1 from cooksmith.recipe_enrichments enrichment
+    where enrichment.job_id = job.id
+  );
+
 set local role authenticated;
 select lives_ok(
   $$update cooksmith.weekly_preparation_settings

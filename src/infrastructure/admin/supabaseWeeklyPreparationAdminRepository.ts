@@ -59,6 +59,8 @@ async function evaluationErrorMessage(error: unknown): Promise<string> {
       return 'Cooksmith could not verify administrator access. Please try again.'
     case 'evaluation_already_running':
       return 'A 30-plan evaluation is already running. Wait a moment, then refresh.'
+    case 'recipes_preparing':
+      return 'Recipe preparation insights are still being prepared. Wait for enrichment to finish before running the evaluation.'
     case 'evaluation_failed':
       return 'The 30-plan evaluation started but could not complete. Review the latest evaluation before retrying.'
     case 'provider_rejected':

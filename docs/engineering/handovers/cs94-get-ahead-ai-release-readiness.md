@@ -242,3 +242,24 @@ This correction requires an Edge Function release only and no database migration
   `generate-weekly-preparation-plan` and `get-weekly-preparation-plan`.
 - Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Existing bounded provider
   controls apply to the one-off re-enrichment.
+
+## End-to-end household readiness correction
+
+- Baseline: `main` at `810a9cc`.
+- Branch: `fix/cs-94-end-to-end-get-ahead`.
+- Get Ahead no longer exposes deterministic recipe extraction or retains an obsolete fallback
+  session when current model-assisted planning is unavailable.
+- The household planner loads only active Recipe Intelligence v2, restarts the durable enrichment
+  worker when coverage is incomplete, and returns a clear preparing state instead of HTTP 503.
+- Retry and planner-version changes rebuild or invalidate the saved checklist. Initial loading uses
+  the resumed session duration, and progress reports remaining planned work rather than unused
+  session capacity.
+- The v8 release gate requires current recipe versions to have active v2 enrichment and no pending
+  or processing v2 work before evaluation or AI activation. ADR 013 records the Get Ahead-specific
+  fail-closed decision.
+- Migration: `20260803090000_cs94_end_to_end_get_ahead_readiness.sql`.
+- Edge Functions changed: `enrich-recipe` is invoked for automatic queue continuation;
+  `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan` are changed and must be deployed.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Existing bounded recipe and
+  weekly provider limits remain in force.

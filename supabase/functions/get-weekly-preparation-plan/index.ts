@@ -34,6 +34,23 @@ const serviceHeaders = () => ({
   'content-type': 'application/json',
 })
 
+const ACTIVE_RECIPE_SCHEMA = 'recipe-intelligence-v2'
+const ACTIVE_RECIPE_RULES = 'cooksmith-rules-v2'
+
+async function continueRecipeEnrichment() {
+  const workerToken = Deno.env.get('RECIPE_INTELLIGENCE_WORKER_TOKEN')
+  if (!workerToken) return
+  await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/enrich-recipe`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-cooksmith-worker-token': workerToken,
+    },
+    body: JSON.stringify({ dispatchMode: 'chain' }),
+    signal: AbortSignal.timeout(5_000),
+  }).catch(() => undefined)
+}
+
 async function rest<T>(path: string): Promise<T> {
   const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/${path}`, {
     headers: serviceHeaders(),
@@ -319,8 +336,19 @@ Deno.serve(async (request) => {
         : null,
     ].filter(Boolean)
     const enrichments = await rest<EnrichmentRow[]>(
-      `recipe_enrichments?is_active=eq.true&or=(${filters.join(',')})&select=source_kind,recipe_id,imported_recipe_id,recipe_version_id,schema_version,rules_version,result&limit=100`,
+      `recipe_enrichments?is_active=eq.true&schema_version=eq.${ACTIVE_RECIPE_SCHEMA}&rules_version=eq.${ACTIVE_RECIPE_RULES}&or=(${filters.join(',')})&select=source_kind,recipe_id,imported_recipe_id,recipe_version_id,schema_version,rules_version,result&limit=100`,
     )
+    const coveredRecipes = new Set(
+      enrichments.map((item) => `${item.source_kind}:${item.recipe_id ?? item.imported_recipe_id}`),
+    )
+    const expectedRecipes = [
+      ...recipeIds.map((id) => `household:${id}`),
+      ...importedRecipeIds.map((id) => `shared_platform:${id}`),
+    ]
+    if (expectedRecipes.some((id) => !coveredRecipes.has(id))) {
+      await continueRecipeEnrichment()
+      return json(409, { error: 'recipes_preparing' })
+    }
     const candidates = candidatesFrom(
       householdId,
       planId,
@@ -328,7 +356,7 @@ Deno.serve(async (request) => {
       meals,
       enrichments,
     )
-    if (candidates.length === 0) return json(422, { error: 'enrichment_unavailable' })
+    if (candidates.length === 0) return json(422, { error: 'no_useful_preparation' })
     const workerToken = Deno.env.get('WEEKLY_PREPARATION_WORKER_TOKEN')
     if (!workerToken) return json(503, { error: 'worker_configuration_unavailable' })
     const worker = await fetch(
@@ -349,10 +377,10 @@ Deno.serve(async (request) => {
         signal: AbortSignal.timeout(15_000),
       },
     )
-    if (!worker.ok) return json(503, { error: 'worker_unavailable' })
+    if (!worker.ok) return json(503, { error: 'ai_unavailable' })
     const result = (await worker.json()) as { plan?: WeeklyPreparationPlan }
     if (!result.plan || result.plan.householdId !== householdId || result.plan.planId !== planId)
-      return json(503, { error: 'worker_response_invalid' })
+      return json(503, { error: 'ai_unavailable' })
     return json(200, { plan: result.plan })
   } catch {
     return json(503, { error: 'plan_data_unavailable' })
@@ -362,7 +390,7 @@ Deno.serve(async (request) => {
 function emptyPlan(householdId: string, planId: string): WeeklyPreparationPlan {
   return {
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v7',
+    plannerVersion: 'weekly-preparation-planner-v8',
     householdId,
     planId,
     cacheKey: `empty:${planId}`,
