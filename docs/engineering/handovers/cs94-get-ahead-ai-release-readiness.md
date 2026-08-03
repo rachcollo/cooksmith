@@ -279,3 +279,15 @@ This correction requires an Edge Function release only and no database migration
   `get-weekly-preparation-plan` are changed and must be deployed.
 - Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Existing bounded recipe and
   weekly provider limits remain in force.
+
+## Repeated evaluation candidate correction
+
+- Baseline: `main` at `afc539995c55c122610dac6bb73f9aa9cfac18ed`.
+- Branch: `fix/cs-94-deduplicate-evaluation-candidates`.
+- Model decisions now retain the first occurrence of each supplied candidate and discard later
+  repetitions before hard validation. A later task containing only repeated candidates is omitted.
+- Unknown candidate references still fail closed. Raw-protein work remains allowed only when it is
+  kept separate from clean or ready-to-eat preparation.
+- Edge Function changed: `generate-weekly-preparation-plan` through its shared domain import.
+- Migration and dependencies: none. Fixed cost impact: A$0/month and A$0/year. Existing bounded
+  provider limits are unchanged.
