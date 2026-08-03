@@ -51,8 +51,8 @@ type Settings = {
   backfill_paused: boolean
 }
 
-const PROVIDER_TIMEOUT_MS = 60_000
-const JOB_LEASE_MS = 90_000
+const PROVIDER_TIMEOUT_MS = 105_000
+const JOB_LEASE_MS = 130_000
 const MAX_CHAIN_DEPTH = 100
 const CONCURRENCY_RETRY_DELAY_MS = 5_000
 
@@ -170,9 +170,7 @@ async function withinUsageLimits(config: Settings) {
   return dailyCount < config.daily_recipe_limit && monthlyCost < config.monthly_cost_limit_aud
 }
 
-async function claimJob(
-  modelKey?: string,
-): Promise<{
+async function claimJob(modelKey?: string): Promise<{
   job: Job | null
   outcome: 'claimed' | 'busy' | 'waiting' | 'empty'
   retryAfterMs?: number
@@ -221,9 +219,7 @@ async function claimJob(
     },
   )
   const claimed = (await claim.json()) as Job[]
-  return claimed[0]
-    ? { job: claimed[0], outcome: 'claimed' }
-    : { job: null, outcome: 'busy' }
+  return claimed[0] ? { job: claimed[0], outcome: 'claimed' } : { job: null, outcome: 'busy' }
 }
 
 async function loadVersion(job: Job): Promise<Version> {
@@ -267,11 +263,7 @@ async function currentVersionMatches(version: Version) {
   return versions[0]?.id === version.id
 }
 
-async function finishJob(
-  job: Job,
-  state: 'failed' | 'pending',
-  values: Record<string, unknown>,
-) {
+async function finishJob(job: Job, state: 'failed' | 'pending', values: Record<string, unknown>) {
   await rest(`recipe_enrichment_jobs?id=eq.${job.id}`, {
     method: 'PATCH',
     body: JSON.stringify({

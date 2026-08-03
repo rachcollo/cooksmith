@@ -1,5 +1,21 @@
 # CS-94 handover
 
+## 2026-08-03 resilient recipe-enrichment correction
+
+- Baseline: `main` at `8c8b3575e02aa3454524b063c2282968980cebde` (merge of PR #160).
+- Branch: `fix/cs-94-resilient-recipe-enrichment`.
+- Large recipe requests now preserve every ingredient and step identifier while compacting repeated
+  whitespace and bounding unusually verbose individual source lines. The provider budget increases
+  from 60 to 105 seconds, inside the hosted Edge Function request limit, with a longer job lease.
+- Harmless provider variations are normalised before Cooksmith validation: duplicate list values,
+  duplicate generated opportunity IDs, surrounding whitespace and estimates just outside supported
+  bounds. Unknown ingredient/step references and unsupported actions remain rejected.
+- Migration: none. Edge Function changed: `enrich-recipe`. Dependencies: none. Fixed cost impact:
+  A$0/month and A$0/year; compact input may reduce usage while the longer ceiling can permit an
+  existing large-recipe request to complete.
+- After merge, release `enrich-recipe` from the approved `main` SHA, then select **Retry failed** once
+  to test the oldest failed recipe before resuming the remaining failures.
+
 ## 2026-08-02 evaluation quality-threshold correction
 
 - Branch: `fix/cs-94-evaluation-quality-threshold` from `main` at `1049421`.

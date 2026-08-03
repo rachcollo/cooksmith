@@ -16,6 +16,13 @@ CS-90 adds recipe-level enrichment beside the approved recipe. It never rewrites
 7. One database function atomically checks the current recipe version, deactivates the previous result and activates the replacement.
 8. Failed or stale work keeps the previous valid result and does not affect the approved recipe.
 
+Provider requests compact repeated whitespace and bound unusually long individual source lines
+while retaining every ingredient and step identifier. The worker allows up to 105 seconds for a
+large recipe within the hosted Edge Function request limit. Before applying the provider result,
+Cooksmith normalises harmless duplication, surrounding whitespace and bounded numeric estimates.
+Unknown source references, unsupported actions and unsafe or untraceable opportunities still fail
+closed.
+
 ## Required Edge Function secrets
 
 - `OPENAI_API_KEY`
