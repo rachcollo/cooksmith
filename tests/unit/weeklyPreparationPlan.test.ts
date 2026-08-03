@@ -154,6 +154,49 @@ describe('weekly preparation plan', () => {
     ).toEqual({ ok: false, reason: 'mixed_hygiene_boundary' })
   })
 
+  it('deduplicates repeated known candidates without weakening reference validation', () => {
+    const chicken = candidate('chicken', {
+      canonicalIngredient: 'chicken breast',
+      canonicalAction: 'slice',
+      boundaries: ['cross-contamination'],
+      confidence: 'low',
+    })
+    const fallback = buildDeterministicWeeklyPreparationPlan([chicken])
+    const result = applyAndValidateModelDecision(fallback, [chicken], {
+      tasks: [
+        {
+          candidateIds: ['chicken', 'chicken'],
+          title: 'Slice the chicken',
+          estimatedMinutes: 5,
+          estimatedTimeSavedMinutes: 10,
+        },
+        {
+          candidateIds: ['chicken'],
+          title: 'Prepare the chicken',
+          estimatedMinutes: 5,
+          estimatedTimeSavedMinutes: 10,
+        },
+      ],
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.tasks).toHaveLength(1)
+
+    expect(
+      applyAndValidateModelDecision(fallback, [chicken], {
+        tasks: [
+          {
+            candidateIds: ['chicken', 'invented', 'invented'],
+            title: 'Slice the chicken',
+            estimatedMinutes: 5,
+            estimatedTimeSavedMinutes: 10,
+          },
+        ],
+      }),
+    ).toEqual({ ok: false, reason: 'unsupported_reference' })
+  })
+
   it('invalidates the cache key for plan, recipe or enrichment version changes', () => {
     const original = [candidate('a')]
     expect(createWeeklyPreparationCacheKey(original)).not.toBe(
