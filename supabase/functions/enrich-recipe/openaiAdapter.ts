@@ -6,10 +6,11 @@ import type {
   RecipeIntelligence,
   RecipeIntelligenceSource,
 } from '../../../src/domain/recipes/intelligence.ts'
+import { applyProviderIngredientSuggestions } from '../../../src/domain/recipes/intelligence.ts'
 import {
-  applyProviderIngredientSuggestions,
-  hasUniqueProviderSuggestionValues,
-} from '../../../src/domain/recipes/intelligence.ts'
+  compactRecipeSource,
+  normaliseProviderOutput,
+} from '../../../src/domain/recipes/providerEnrichment.ts'
 
 type OpenAIResponse = {
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>
@@ -87,7 +88,6 @@ function isSuggestion(value: unknown): value is ProviderIngredientSuggestion {
     isNullableString(suggestion.preparationDetail) &&
     Array.isArray(suggestion.sourceStepIds) &&
     suggestion.sourceStepIds.every((item) => typeof item === 'string') &&
-    hasUniqueProviderSuggestionValues(suggestion as ProviderIngredientSuggestion) &&
     confidenceValues.includes(suggestion.confidence as EnrichmentConfidence) &&
     Boolean(quantity) &&
     quantityStates.includes(quantity?.state as QuantityState) &&
@@ -106,7 +106,7 @@ function isOpportunity(value: unknown): value is ProviderPreparationOpportunity 
     typeof item.opportunityId === 'string' &&
     typeof item.title === 'string' &&
     typeof item.canonicalIngredient === 'string' &&
-    typeof item.action === 'string' &&
+    preparationActions.includes(item.action as (typeof preparationActions)[number]) &&
     isNullableString(item.preparationDetail) &&
     Array.isArray(item.sourceIngredientIds) &&
     item.sourceIngredientIds.every((id) => typeof id === 'string') &&
@@ -148,17 +148,7 @@ export async function resolveAmbiguousLinks(input: {
       {
         role: 'user',
         content: JSON.stringify({
-          ingredients: input.source.ingredients.map(
-            ({ id, name, originalText, quantityText, unit, preparation }) => ({
-              id,
-              name,
-              originalText,
-              quantityText,
-              unit,
-              preparation,
-            }),
-          ),
-          steps: input.source.steps,
+          ...compactRecipeSource(input.source),
         }),
       },
     ],
@@ -356,11 +346,15 @@ export async function resolveAmbiguousLinks(input: {
   )
     throw new Error('schema_invalid')
 
+  const normalised = normaliseProviderOutput({
+    ingredients: parsed.ingredients,
+    preparationOpportunities: parsed.preparationOpportunities,
+  })
   const result = applyProviderIngredientSuggestions(
     input.source,
     input.deterministic,
-    parsed.ingredients,
-    parsed.preparationOpportunities,
+    normalised.ingredients,
+    normalised.preparationOpportunities,
   )
 
   return {

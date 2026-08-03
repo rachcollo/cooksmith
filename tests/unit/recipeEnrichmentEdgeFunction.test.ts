@@ -1,6 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import {
+  compactRecipeSource,
+  normaliseProviderOutput,
+} from '../../src/domain/recipes/providerEnrichment'
+import type {
+  ProviderIngredientSuggestion,
+  ProviderPreparationOpportunity,
+  RecipeIntelligenceSource,
+} from '../../src/domain/recipes/intelligence'
 
 const source = readFileSync(
   resolve(process.cwd(), 'supabase/functions/enrich-recipe/index.ts'),
@@ -92,7 +101,7 @@ describe('recipe enrichment Edge Function', () => {
       source.match(/const JOB_LEASE_MS = (?<value>[\d_]+)/)?.groups?.value.replaceAll('_', ''),
     )
 
-    expect(providerTimeout).toBe(60_000)
+    expect(providerTimeout).toBe(105_000)
     expect(jobLease).toBeGreaterThan(providerTimeout)
     expect(source).toContain('timeoutMs: PROVIDER_TIMEOUT_MS')
     expect(source).toContain('Date.now() + JOB_LEASE_MS')
@@ -100,6 +109,94 @@ describe('recipe enrichment Edge Function', () => {
     expect(adapterSource).toContain("error.name === 'AbortError'")
     expect(adapterSource).toContain("throw new Error('timeout')")
     expect(source).toContain("'timeout'")
+  })
+
+  it('compacts verbose recipes without dropping source identifiers', () => {
+    const sourceRecipe: RecipeIntelligenceSource = {
+      recipeId: 'recipe-1',
+      recipeFingerprint: 'fingerprint',
+      ingredients: [
+        {
+          id: 'ingredient-1',
+          name: 'chicken',
+          originalText: `  500 g   chicken ${'with a long note '.repeat(30)}`,
+          quantityText: '500',
+          unit: 'g',
+          preparation: null,
+        },
+      ],
+      steps: [{ id: 'step-1', instruction: `Mix   well. ${'Continue mixing. '.repeat(80)}` }],
+    }
+
+    const compacted = compactRecipeSource(sourceRecipe)
+
+    expect(compacted.ingredients[0]?.id).toBe('ingredient-1')
+    expect(compacted.ingredients[0]?.text.length).toBeLessThanOrEqual(240)
+    expect(compacted.ingredients[0]?.text).not.toContain('  ')
+    expect(compacted.steps[0]?.id).toBe('step-1')
+    expect(compacted.steps[0]?.instruction.length).toBeLessThanOrEqual(600)
+  })
+
+  it('normalises harmless provider variations but preserves source references for validation', () => {
+    const ingredient = {
+      sourceIngredientId: 'ingredient-1',
+      canonicalName: 'chicken',
+      aliases: ['chicken', 'chicken'],
+      modifiers: ['boneless', 'boneless'],
+      quantity: {
+        state: 'known',
+        original: '500 g',
+        normalisedValue: 500,
+        normalisedMaximum: 500,
+        unit: 'g',
+        dimension: 'mass',
+      },
+      action: 'slice',
+      preparationDetail: 'sliced',
+      sourceStepIds: ['step-1', 'step-1'],
+      confidence: 'high',
+    } satisfies ProviderIngredientSuggestion
+    const opportunity = {
+      opportunityId: 'prep-chicken',
+      title: '  Slice the chicken  ',
+      canonicalIngredient: ' chicken ',
+      action: 'slice',
+      preparationDetail: ' Slice evenly ',
+      sourceIngredientIds: ['ingredient-1', 'ingredient-1'],
+      sourceStepIds: ['step-1', 'step-1'],
+      estimatedMinutes: 2,
+      estimatedTimeSavedMinutes: -1,
+      maximumLeadTimeHours: 0,
+      boundaries: ['raw-protein', 'raw-protein'],
+      confidence: 'high',
+    } satisfies ProviderPreparationOpportunity
+
+    const normalised = normaliseProviderOutput({
+      ingredients: [ingredient],
+      preparationOpportunities: [opportunity, opportunity],
+    })
+
+    expect(normalised.ingredients[0]?.aliases).toEqual(['chicken'])
+    expect(normalised.ingredients[0]?.sourceStepIds).toEqual(['step-1'])
+    expect(normalised.preparationOpportunities[0]).toMatchObject({
+      opportunityId: 'prep-chicken',
+      title: 'Slice the chicken',
+      estimatedMinutes: 3,
+      estimatedTimeSavedMinutes: 0,
+      maximumLeadTimeHours: 1,
+      sourceIngredientIds: ['ingredient-1'],
+      sourceStepIds: ['step-1'],
+      boundaries: ['raw-protein'],
+    })
+    expect(normalised.preparationOpportunities[1]?.opportunityId).toBe('prep-chicken-2')
+
+    const unknownReference = normaliseProviderOutput({
+      ingredients: [ingredient],
+      preparationOpportunities: [{ ...opportunity, sourceIngredientIds: ['unknown-ingredient'] }],
+    })
+    expect(unknownReference.preparationOpportunities[0]?.sourceIngredientIds).toEqual([
+      'unknown-ingredient',
+    ])
   })
 
   it('supports a single-job canary without dispatching the rest of the queue', () => {
