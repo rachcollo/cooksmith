@@ -28,23 +28,25 @@ as $$
     order by source_kind, recipe_id, imported_recipe_id, created_at desc, id desc
   )
   select
-    coalesce(bool_and(exists (
-      select 1
-      from cooksmith.recipe_enrichments enrichment
-      where enrichment.recipe_version_id = latest_versions.id
-        and enrichment.is_active
-        and enrichment.schema_version = 'recipe-intelligence-v2'
-        and enrichment.rules_version = 'cooksmith-rules-v2'
-        and jsonb_typeof(enrichment.result -> 'preparationOpportunities') = 'array'
-    )), true)
-    and not exists (
-      select 1
-      from cooksmith.recipe_enrichment_jobs job
-      where job.recipe_version_id = latest_versions.id
-        and job.schema_version = 'recipe-intelligence-v2'
-        and job.rules_version = 'cooksmith-rules-v2'
-        and job.state in ('pending', 'processing')
-    )
+    coalesce(bool_and(
+      exists (
+        select 1
+        from cooksmith.recipe_enrichments enrichment
+        where enrichment.recipe_version_id = latest_versions.id
+          and enrichment.is_active
+          and enrichment.schema_version = 'recipe-intelligence-v2'
+          and enrichment.rules_version = 'cooksmith-rules-v2'
+          and jsonb_typeof(enrichment.result -> 'preparationOpportunities') = 'array'
+      )
+      and not exists (
+        select 1
+        from cooksmith.recipe_enrichment_jobs job
+        where job.recipe_version_id = latest_versions.id
+          and job.schema_version = 'recipe-intelligence-v2'
+          and job.rules_version = 'cooksmith-rules-v2'
+          and job.state in ('pending', 'processing')
+      )
+    ), true)
   from latest_versions;
 $$;
 
