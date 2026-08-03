@@ -219,6 +219,12 @@ export function applyAndValidateModelDecision(
   const replacementTasks: WeeklyPreparationTask[] = []
   for (const [priority, group] of decision.tasks.entries()) {
     if (group.candidateIds.length === 0) return { ok: false, reason: 'empty_group' }
+    const candidateIds = group.candidateIds.filter((id) => {
+      if (used.has(id)) return false
+      used.add(id)
+      return true
+    })
+    if (candidateIds.length === 0) continue
     if (
       !Number.isInteger(group.estimatedMinutes) ||
       group.estimatedMinutes < 5 ||
@@ -235,11 +241,10 @@ export function applyAndValidateModelDecision(
       /[()[\]{}]|\b(preheat|reserve .*water)\b/i.test(title)
     )
       return { ok: false, reason: 'malformed_task' }
-    for (const id of group.candidateIds) {
-      if (!byId.has(id) || used.has(id)) return { ok: false, reason: 'unsupported_reference' }
-      used.add(id)
+    for (const id of candidateIds) {
+      if (!byId.has(id)) return { ok: false, reason: 'unsupported_reference' }
     }
-    const supplied = group.candidateIds.flatMap((id) => byId.get(id) ?? [])
+    const supplied = candidateIds.flatMap((id) => byId.get(id) ?? [])
     if (supplied.some((candidate) => !isWeeklyPreparationCandidateEligible(candidate)))
       return { ok: false, reason: 'unsafe_make_ahead_task' }
     if (new Set(supplied.map(preparationHygieneClass)).size > 1)
