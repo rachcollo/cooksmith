@@ -144,6 +144,8 @@ describe('weekly preparation Edge Function contracts', () => {
 
     expect(householdSource).toContain('schema_version=eq.${ACTIVE_RECIPE_SCHEMA}')
     expect(householdSource).toContain('await continueRecipeEnrichment()')
+    expect(householdSource).toContain("apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''")
+    expect(householdSource).toContain("'x-cooksmith-worker-token': workerToken")
     expect(householdSource).toContain("return json(409, { error: 'recipes_preparing' })")
     expect(workerSource).not.toContain('withWeeklyPreparationFallback')
     expect(workerSource).not.toContain("generation: 'fallback'")

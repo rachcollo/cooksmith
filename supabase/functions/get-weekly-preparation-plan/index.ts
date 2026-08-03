@@ -43,6 +43,7 @@ async function continueRecipeEnrichment() {
   await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/enrich-recipe`, {
     method: 'POST',
     headers: {
+      apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       'content-type': 'application/json',
       'x-cooksmith-worker-token': workerToken,
     },

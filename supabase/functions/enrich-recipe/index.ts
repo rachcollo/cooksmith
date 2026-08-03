@@ -136,6 +136,7 @@ async function dispatchNext(chainDepth: number) {
   const response = await fetch(`${env('SUPABASE_URL')}/functions/v1/enrich-recipe`, {
     method: 'POST',
     headers: {
+      apikey: secretKey(),
       'content-type': 'application/json',
       'x-cooksmith-worker-token': env('RECIPE_INTELLIGENCE_WORKER_TOKEN'),
     },
