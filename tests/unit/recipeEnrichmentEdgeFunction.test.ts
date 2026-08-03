@@ -139,4 +139,15 @@ describe('recipe enrichment Edge Function', () => {
     expect(source).toContain('dispatchNext(chainDepth + 1)')
     expect(source).toContain('CONCURRENCY_RETRY_DELAY_MS')
   })
+
+  it('authenticates chained worker calls at the Supabase gateway', () => {
+    const dispatch = source.match(
+      /async function dispatchNext\(chainDepth: number\) \{(?<body>[\s\S]*?)\n\}/,
+    )?.groups?.body
+
+    expect(dispatch).toContain('apikey: secretKey()')
+    expect(dispatch).toContain(
+      "'x-cooksmith-worker-token': env('RECIPE_INTELLIGENCE_WORKER_TOKEN')",
+    )
+  })
 })
