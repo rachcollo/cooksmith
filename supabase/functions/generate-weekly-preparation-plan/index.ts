@@ -3,7 +3,7 @@ import {
   buildDeterministicWeeklyPreparationPlan,
   type WeeklyPreparationCandidate,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
-import { decideAmbiguousPreparation } from './openaiAdapter.ts'
+import { decideAmbiguousPreparation, WeeklyPreparationProviderError } from './openaiAdapter.ts'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -39,6 +39,52 @@ async function loadCached(householdId: string, planId: string, cacheKey: string)
   const response = await rest(`weekly_preparation_plans?${query}`)
   const rows = (await response.json()) as Array<{ result: unknown }>
   return rows[0]?.result ?? null
+}
+
+async function deleteCached(householdId: string, planId: string, cacheKey: string) {
+  const query = new URLSearchParams({
+    household_id: `eq.${householdId}`,
+    plan_key: `eq.${planId}`,
+    cache_key: `eq.${cacheKey}`,
+  })
+  await rest(`weekly_preparation_plans?${query}`, { method: 'DELETE' })
+}
+
+function isUsablePlan(
+  value: unknown,
+): value is ReturnType<typeof buildDeterministicWeeklyPreparationPlan> {
+  if (!value || typeof value !== 'object') return false
+  const plan = value as { tasks?: unknown; generation?: unknown }
+  return plan.generation === 'model-assisted' && Array.isArray(plan.tasks) && plan.tasks.length > 0
+}
+
+async function recordAttempt(input: {
+  householdId: string
+  planId: string
+  requestKey: string
+  outcome: 'model-assisted' | 'failed'
+  reasonCode: string | null
+  modelCalled: boolean
+  latencyMs: number
+  inputTokens?: number
+  outputTokens?: number
+}) {
+  await rest('weekly_preparation_generation_attempts?on_conflict=household_id,request_key', {
+    method: 'POST',
+    headers: { prefer: 'resolution=ignore-duplicates' },
+    body: JSON.stringify({
+      household_id: input.householdId,
+      plan_key: input.planId,
+      request_key: input.requestKey,
+      outcome: input.outcome,
+      reason_code: input.reasonCode,
+      model_called: input.modelCalled,
+      latency_ms: input.latencyMs,
+      input_tokens: input.inputTokens ?? 0,
+      output_tokens: input.outputTokens ?? 0,
+      estimated_cost_aud: 0,
+    }),
+  }).catch(() => undefined)
 }
 
 async function savePlan(plan: ReturnType<typeof buildDeterministicWeeklyPreparationPlan>) {
@@ -92,6 +138,7 @@ Deno.serve(async (request) => {
     forceRetry?: unknown
     requestId?: unknown
   } | null
+  const startedAt = Date.now()
   const candidates = candidatesFrom(body?.candidates)
   const availableMinutes = body?.availableMinutes
   const meals = Array.isArray(body?.meals) ? body.meals : null
@@ -133,7 +180,9 @@ Deno.serve(async (request) => {
       deterministic.planId,
       deterministic.cacheKey,
     )
-    if (cached && body?.forceRetry !== true)
+    if (cached && !isUsablePlan(cached))
+      await deleteCached(deterministic.householdId, deterministic.planId, deterministic.cacheKey)
+    if (isUsablePlan(cached) && body?.forceRetry !== true)
       return json(200, { plan: cached, metrics: { cacheHit: true } })
     if (!settings?.ai_enabled || settings.emergency_stop) {
       return json(409, { error: 'ai_unavailable' })
@@ -144,20 +193,37 @@ Deno.serve(async (request) => {
       return json(503, { error: 'ai_unavailable' })
     }
 
-    const assisted = await decideAmbiguousPreparation({
-      apiKey: Deno.env.get('OPENAI_API_KEY') ?? '',
-      model: configuredModel,
-      candidates,
-      meals: meals as Array<{
-        plannedMealId: string
-        mealDate: string
-        recipeName: string
-        ingredients: string[]
-        instructions: string[]
-      }>,
-      availableMinutes: Number(availableMinutes),
-      timeoutMs: 10_000,
-    })
+    const requestKey = typeof body?.requestId === 'string' ? body.requestId : crypto.randomUUID()
+    let assisted: Awaited<ReturnType<typeof decideAmbiguousPreparation>>
+    try {
+      assisted = await decideAmbiguousPreparation({
+        apiKey: Deno.env.get('OPENAI_API_KEY') ?? '',
+        model: configuredModel,
+        candidates,
+        meals: meals as Array<{
+          plannedMealId: string
+          mealDate: string
+          recipeName: string
+          ingredients: string[]
+          instructions: string[]
+        }>,
+        availableMinutes: Number(availableMinutes),
+        timeoutMs: 45_000,
+      })
+    } catch (error) {
+      const reasonCode =
+        error instanceof WeeklyPreparationProviderError ? error.category : 'provider_output_invalid'
+      await recordAttempt({
+        householdId: deterministic.householdId,
+        planId: deterministic.planId,
+        requestKey,
+        outcome: 'failed',
+        reasonCode,
+        modelCalled: true,
+        latencyMs: Date.now() - startedAt,
+      })
+      return json(503, { error: reasonCode })
+    }
     const validated = applyAndValidateModelDecision(
       deterministic,
       candidates,
@@ -165,9 +231,31 @@ Deno.serve(async (request) => {
       Number(availableMinutes),
     )
     if (!validated.ok) {
-      return json(422, { error: 'ai_unavailable' })
+      await recordAttempt({
+        householdId: deterministic.householdId,
+        planId: deterministic.planId,
+        requestKey,
+        outcome: 'failed',
+        reasonCode: validated.reason,
+        modelCalled: true,
+        latencyMs: Date.now() - startedAt,
+        inputTokens: assisted.inputTokens,
+        outputTokens: assisted.outputTokens,
+      })
+      return json(422, { error: validated.reason })
     }
     await savePlan(validated.value)
+    await recordAttempt({
+      householdId: deterministic.householdId,
+      planId: deterministic.planId,
+      requestKey,
+      outcome: 'model-assisted',
+      reasonCode: null,
+      modelCalled: true,
+      latencyMs: Date.now() - startedAt,
+      inputTokens: assisted.inputTokens,
+      outputTokens: assisted.outputTokens,
+    })
     return json(200, {
       plan: validated.value,
       metrics: {

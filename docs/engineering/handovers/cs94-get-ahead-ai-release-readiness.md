@@ -1,5 +1,26 @@
 # CS-94 handover
 
+## 2026-08-04 planner lifecycle reliability correction
+
+- Baseline: `main` at `be093690ee66c47dcdb42a5301f140001c9daad9` (merge of PR #164).
+- Branch: `fix/cs-94-planner-lifecycle-reliability`.
+- v10 rejects empty plans before persistence, removes invalid cached rows and expands cache identity
+  across meal-specific, lead-time, action, preparation and safety-boundary inputs.
+- Starting or updating a session reloads current meals and recipes before requesting and adapting
+  the plan, preventing stale browser state after meal-plan edits.
+- Internal planner dispatch now includes Supabase gateway authentication. Provider and outer
+  budgets are 45 and 55 seconds respectively.
+- Successful, rejected and provider-failed model attempts write privacy-safe operational metadata
+  to the existing generation-attempt table. No recipe text, prompts or provider payloads are stored.
+- Migration `20260804210000_cs94_planner_lifecycle_reliability.sql` disables AI, advances prompt and
+  corpus identities to v10, clears hosted smoke evidence and removes obsolete or empty cache rows.
+- Edge Functions changed: `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan`. Synthetic honest-empty cases remain valid evaluation evidence but
+  cannot enter the household cache. Dependencies: none. Fixed cost: A$0/month and A$0/year.
+- Release the migration and all three functions from the exact approved `main` SHA. Keep AI disabled,
+  verify real meal changes at 15, 30, 45 and 60 minutes, run and review the v10 evaluation, accept
+  it only when eligible, then enable AI.
+
 ## 2026-08-03 resilient recipe-enrichment correction
 
 - Baseline: `main` at `8c8b3575e02aa3454524b063c2282968980cebde` (merge of PR #160).

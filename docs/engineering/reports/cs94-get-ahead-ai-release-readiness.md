@@ -1,5 +1,22 @@
 # CS-94 implementation report
 
+## Planner lifecycle reliability follow-up — 2026-08-04
+
+The v10 planner treats a useful non-empty task set as the only cacheable success. It automatically
+removes invalid cache rows, expands identity across meal and preparation eligibility inputs, and
+reloads current meals and recipes before creating a session. Internal Edge Function dispatch now
+supplies the required Supabase gateway API key and uses compatible provider and outer time budgets.
+
+The existing generation-attempt table now receives bounded outcome, reason, timing and token
+metadata for successful, validation-rejected and provider-failed attempts. The telemetry excludes
+recipe text, meal names, prompts, provider payloads, secrets and direct household identifiers in
+the request key. A forward migration disables v9, clears smoke evidence and requires fresh v10
+evaluation acceptance before AI can be enabled again.
+
+The synthetic evaluator alone may accept a zero-task decision for its deliberate honest-empty
+safety cases. Household generation does not use that option, so an empty response is never saved or
+returned as a successful Get Ahead session.
+
 ## Meal-strategy correction — 2026-08-01
 
 The household planner now sends the selected preparation duration and complete selected-meal context to the AI operation. The model creates an ordered, time-bounded make-ahead strategy instead of merely grouping candidates that deterministic code had already approved.

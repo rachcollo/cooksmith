@@ -367,3 +367,27 @@ The release deploys `enrich-recipe` before applying the migration so its new pro
 repair jobs are consumed by the correct worker contract. It then deploys
 `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
 `get-weekly-preparation-plan` from the same approved SHA.
+
+## Planner lifecycle reliability correction
+
+Real household testing after v9 exposed a poisoned-cache lifecycle: an empty model decision could
+be saved as successful and reused, meal date changes did not fully participate in cache identity,
+the browser could adapt a fresh server result against stale meals, internal worker dispatch omitted
+gateway authentication, and generation attempts were not recorded.
+
+The approved v10 correction requires:
+
+- AI to remain disabled until a fresh v10 evaluation is reviewed and accepted;
+- zero-task plans to be rejected before persistence and invalid cached rows to be removed;
+- cache identity to include meal-specific, lead-time, action, preparation and boundary inputs;
+- current meals and recipes to be reloaded before session generation and reconciliation;
+- authenticated internal dispatch with a bounded 45-second provider and 55-second orchestration
+  budget;
+- privacy-safe outcome telemetry for successful, rejected and provider-failed attempts;
+- honest-empty safety cases to remain valid only in the synthetic evaluator, never the household
+  cache; and
+- clear separation between no worthwhile prep and a genuine provider or system failure.
+
+The release changes no provider, dependency or paid tier. Fixed cost remains A$0/month and
+A$0/year. After release, verify real household meal changes and 15, 30, 45 and 60-minute attempts,
+then run, review and accept the v10 evaluation before enabling AI.
