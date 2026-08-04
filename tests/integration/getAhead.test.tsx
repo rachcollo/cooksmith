@@ -4,7 +4,10 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { PlannedMealRepository } from '../../src/application/meal-plans/plannedMealRepository'
 import type { RecipeRepository } from '../../src/application/recipes/recipeRepository'
-import type { WeeklyPreparationRepository } from '../../src/application/get-ahead/weeklyPreparationRepository'
+import {
+  WeeklyPreparationUnavailableError,
+  type WeeklyPreparationRepository,
+} from '../../src/application/get-ahead/weeklyPreparationRepository'
 import { currentWeek } from '../../src/domain/meal-plans/week'
 import {
   authenticatedTestClient,
@@ -97,7 +100,7 @@ const recipeRepository: RecipeRepository = {
 const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
   getCurrentPlan: async ({ weekStart, weekEnd }) => ({
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v9',
+    plannerVersion: 'weekly-preparation-planner-v10',
     householdId,
     planId: `${weekStart}_${weekEnd}`,
     cacheKey: 'useful-ai-plan',
@@ -145,20 +148,10 @@ describe('Get Ahead page', () => {
     const user = userEvent.setup()
     let calls = 0
     const weeklyPreparationRepository: WeeklyPreparationRepository = {
-      getCurrentPlan: async () => {
+      getCurrentPlan: async (input) => {
         calls += 1
         if (calls === 1) throw new Error('temporarily unavailable')
-        return {
-          schemaVersion: 'weekly-preparation-plan-v2',
-          plannerVersion: 'weekly-preparation-planner-v9',
-          householdId,
-          planId: `${currentWeek(new Date())}_${currentWeek(new Date())}`,
-          cacheKey: 'successful-retry',
-          tasks: [],
-          ambiguousCandidateIds: [],
-          generation: 'model-assisted',
-          fallbackReason: null,
-        }
+        return usefulWeeklyPreparationRepository.getCurrentPlan(input)
       },
     }
     renderApp(
@@ -181,6 +174,32 @@ describe('Get Ahead page', () => {
 
     expect(await screen.findByText('AI-assisted plan')).toBeVisible()
     expect(screen.queryByText(/could not create your prep plan/u)).not.toBeInTheDocument()
+  })
+
+  it('explains an honest empty result without presenting it as a system failure', async () => {
+    const weeklyPreparationRepository: WeeklyPreparationRepository = {
+      getCurrentPlan: async () => {
+        throw new WeeklyPreparationUnavailableError('no_worthwhile_preparation')
+      },
+    }
+    renderApp(
+      '/get-ahead',
+      { appEnvironment: 'test', buildCommit: 'test-build' },
+      authenticatedTestClient,
+      completedOnboardingRepository,
+      ownerHouseholdPeopleRepository,
+      defaultPantryRepository,
+      plannedMealRepository,
+      authenticatedTestAuthState,
+      recipeRepository,
+      defaultShoppingRepository,
+      undefined,
+      weeklyPreparationRepository,
+    )
+
+    expect(await screen.findByText('No worthwhile prep fits this session')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
+    expect(screen.queryByText('We could not create your prep plan')).not.toBeInTheDocument()
   })
 
   it('keeps prep rows compact and strikes through completed checklist items', async () => {

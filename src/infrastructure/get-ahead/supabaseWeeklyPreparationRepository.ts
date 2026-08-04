@@ -20,6 +20,7 @@ function isPlan(value: unknown): value is WeeklyPreparationPlan {
     typeof plan.planId === 'string' &&
     typeof plan.cacheKey === 'string' &&
     Array.isArray(plan.tasks) &&
+    plan.tasks.length > 0 &&
     (plan.generation === 'deterministic' ||
       plan.generation === 'model-assisted' ||
       plan.generation === 'fallback')
@@ -50,6 +51,8 @@ export function createSupabaseWeeklyPreparationRepository(
             reason = 'recipes_without_opportunities'
           else if (payload?.error === 'opportunities_not_ready_yet')
             reason = 'opportunities_not_ready_yet'
+          else if (payload?.error === 'no_worthwhile_preparation')
+            reason = 'no_worthwhile_preparation'
           else if (payload?.error === 'ai_unavailable') reason = 'ai_unavailable'
         }
         throw new WeeklyPreparationUnavailableError(reason)

@@ -107,9 +107,12 @@ export function GetAheadPage() {
         if (!active) return
         setMeals(nextMeals)
         setRecipeList(nextRecipes)
-        setWeeklyPlan(preparation.plan)
-        setPlanUnavailable(preparation.reason)
-        if (!preparation.plan || preparation.plan.generation !== 'model-assisted') {
+        const usablePlan = preparation.plan?.tasks.length ? preparation.plan : null
+        setWeeklyPlan(usablePlan)
+        setPlanUnavailable(
+          preparation.plan && !usablePlan ? 'no_worthwhile_preparation' : preparation.reason,
+        )
+        if (!usablePlan || usablePlan.generation !== 'model-assisted') {
           localStorage.removeItem(storageKey(householdId, planId))
           setSession(null)
           setShowChecklist(false)
@@ -119,7 +122,7 @@ export function GetAheadPage() {
         const samePlan =
           parsed &&
           parsed.sourceFingerprint === fingerprint &&
-          parsed.weeklyPreparationCacheKey === preparation.plan?.cacheKey
+          parsed.weeklyPreparationCacheKey === usablePlan.cacheKey
         if (parsed && !samePlan) {
           const reconciled = reconcileGetAheadSession({
             session: parsed,
@@ -128,8 +131,8 @@ export function GetAheadPage() {
             periodEnd: weekEnd,
             sourceFingerprint: fingerprint,
             selectedMinutes: parsed.selectedMinutes,
-            opportunities: opportunitiesFor(nextMeals, nextRecipes, preparation.plan),
-            weeklyPreparationCacheKey: preparation.plan?.cacheKey,
+            opportunities: opportunitiesFor(nextMeals, nextRecipes, usablePlan),
+            weeklyPreparationCacheKey: usablePlan.cacheKey,
           })
           localStorage.setItem(storageKey(householdId, planId), JSON.stringify(reconciled))
           setSession(reconciled)
@@ -161,6 +164,8 @@ export function GetAheadPage() {
         availableMinutes: selectedMinutes,
         forceRetry: true,
       })
+      if (next.tasks.length === 0)
+        throw new WeeklyPreparationUnavailableError('no_worthwhile_preparation')
       setWeeklyPlan(next)
       setPlanUnavailable(null)
       const opportunities = opportunitiesFor(meals, recipeList, next)
@@ -222,14 +227,24 @@ export function GetAheadPage() {
     if (sessionStarting) return
     setSessionStarting(true)
     let planForSession = weeklyPlan
+    let currentMeals = meals
+    let currentRecipes = recipeList
     try {
       if (weeklyPreparation) {
+        ;[currentMeals, currentRecipes] = await Promise.all([
+          plannedMeals.listWeek(householdId, weekStart, weekEnd),
+          recipes.list(householdId),
+        ])
+        setMeals(currentMeals)
+        setRecipeList(currentRecipes)
         planForSession = await weeklyPreparation.getCurrentPlan({
           householdId,
           weekStart,
           weekEnd,
           availableMinutes: selectedMinutes,
         })
+        if (planForSession.tasks.length === 0)
+          throw new WeeklyPreparationUnavailableError('no_worthwhile_preparation')
         setWeeklyPlan(planForSession)
         setPlanUnavailable(null)
       }
@@ -249,9 +264,9 @@ export function GetAheadPage() {
       planId,
       periodStart: weekStart,
       periodEnd: weekEnd,
-      sourceFingerprint: sourceFingerprint(meals, recipeList),
+      sourceFingerprint: sourceFingerprint(currentMeals, currentRecipes),
       selectedMinutes,
-      opportunities: opportunitiesFor(meals, recipeList, planForSession),
+      opportunities: opportunitiesFor(currentMeals, currentRecipes, planForSession),
       weeklyPreparationCacheKey: planForSession?.cacheKey,
     }
     const previousSession = sessionBeingUpdated ?? visibleSession
@@ -654,6 +669,13 @@ function unavailablePlanCopy(reason: WeeklyPreparationUnavailableReason) {
         title: 'Nothing useful to prepare yet',
         message:
           'These meals have useful prep steps, but doing them this early would reduce quality or safety. Try closer to the meal dates.',
+        retryable: false,
+      }
+    case 'no_worthwhile_preparation':
+      return {
+        title: 'No worthwhile prep fits this session',
+        message:
+          'Cooksmith found no useful preparation that fits the selected time and current meal dates. Try a different duration or closer to the meal dates.',
         retryable: false,
       }
     default:

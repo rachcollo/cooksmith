@@ -36,6 +36,36 @@ function candidate(
 }
 
 describe('weekly preparation plan', () => {
+  it('invalidates cache identity when a planned meal date or safety input changes', () => {
+    const original = candidate('a')
+    const moved = candidate('a-moved', {
+      recipeId: original.recipeId,
+      recipeVersionId: original.recipeVersionId,
+      plannedMealId: original.plannedMealId,
+      sourceIngredientId: original.sourceIngredientId,
+    })
+    const changedBoundary = candidate('a', { boundaries: ['storage'] })
+
+    expect(createWeeklyPreparationCacheKey([original])).not.toBe(
+      createWeeklyPreparationCacheKey([moved]),
+    )
+    expect(createWeeklyPreparationCacheKey([original])).not.toBe(
+      createWeeklyPreparationCacheKey([changedBoundary]),
+    )
+  })
+
+  it('rejects an empty model plan instead of caching it as successful', () => {
+    const candidates = [candidate('a')]
+    expect(
+      applyAndValidateModelDecision(
+        buildDeterministicWeeklyPreparationPlan(candidates),
+        candidates,
+        { tasks: [] },
+        45,
+      ),
+    ).toEqual({ ok: false, reason: 'no_worthwhile_preparation' })
+  })
+
   it('combines canonical equivalents with traceable quantities and sources', () => {
     const plan = buildDeterministicWeeklyPreparationPlan([candidate('a'), candidate('b')])
 

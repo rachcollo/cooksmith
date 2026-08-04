@@ -153,8 +153,7 @@ function candidatesFrom(
     return enrichment.result.preparationOpportunities.flatMap((opportunity) => {
       if (!isSupportedPreparationAction(opportunity.action)) return []
       const daysUntilMeal = Math.round(
-        (Date.parse(`${meal.meal_date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) /
-          86_400_000,
+        (Date.parse(`${meal.meal_date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000,
       )
       if (daysUntilMeal < 0 || opportunity.maximumLeadTimeHours < Math.max(1, daysUntilMeal * 24))
         return []
@@ -378,11 +377,7 @@ Deno.serve(async (request) => {
       await continueRecipeEnrichment()
       return json(409, { error: 'recipes_preparing' })
     }
-    if (
-      enrichments.some(
-        (enrichment) => enrichment.result.preparationOpportunities.length === 0,
-      )
-    ) {
+    if (enrichments.some((enrichment) => enrichment.result.preparationOpportunities.length === 0)) {
       await continueRecipeEnrichment()
       return json(409, { error: 'recipes_without_opportunities' })
     }
@@ -405,6 +400,7 @@ Deno.serve(async (request) => {
       {
         method: 'POST',
         headers: {
+          apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
           'content-type': 'application/json',
           'x-cooksmith-worker-token': workerToken,
         },
@@ -413,16 +409,21 @@ Deno.serve(async (request) => {
           meals: planningContext(meals, householdRecipes, importedRecipes),
           availableMinutes: body.availableMinutes,
           forceRetry: body.forceRetry === true,
-          requestId: `${householdId}:${planId}`,
+          requestId: crypto.randomUUID(),
         }),
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(55_000),
       },
     )
-    if (!worker.ok) return json(503, { error: 'ai_unavailable' })
+    if (!worker.ok) {
+      const failure = (await worker.json().catch(() => null)) as { error?: unknown } | null
+      if (failure?.error === 'no_worthwhile_preparation')
+        return json(422, { error: 'no_worthwhile_preparation' })
+      return json(503, { error: 'ai_unavailable' })
+    }
     const result = (await worker.json()) as { plan?: WeeklyPreparationPlan }
     if (!result.plan || result.plan.householdId !== householdId || result.plan.planId !== planId)
       return json(503, { error: 'ai_unavailable' })
-    if (result.plan.tasks.length === 0) return json(503, { error: 'ai_unavailable' })
+    if (result.plan.tasks.length === 0) return json(422, { error: 'no_worthwhile_preparation' })
     return json(200, { plan: result.plan })
   } catch {
     return json(503, { error: 'plan_data_unavailable' })

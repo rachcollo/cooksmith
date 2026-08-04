@@ -15,6 +15,7 @@ export type WeeklyPreparationUnavailableReason =
   | 'recipes_preparing'
   | 'recipes_without_opportunities'
   | 'opportunities_not_ready_yet'
+  | 'no_worthwhile_preparation'
   | 'ai_unavailable'
   | 'temporarily_unavailable'
 

@@ -1,7 +1,7 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v9' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v10' as const
 
 export const weeklyPreparationQualityRules = {
   version: 'weekly-preparation-quality-v5',
@@ -136,6 +136,7 @@ export function createWeeklyPreparationCacheKey(candidates: WeeklyPreparationCan
       .map((candidate) =>
         [
           candidate.planId,
+          candidate.id,
           candidate.plannedMealId,
           candidate.recipeId,
           candidate.recipeVersionId,
@@ -145,6 +146,10 @@ export function createWeeklyPreparationCacheKey(candidates: WeeklyPreparationCan
           candidate.quantity.state,
           candidate.quantity.value ?? 'unknown',
           candidate.quantity.unit ?? 'unknown',
+          candidate.maximumLeadTimeHours ?? 'unknown',
+          candidate.canonicalAction ?? 'unknown',
+          candidate.preparationDetail ?? 'unknown',
+          [...candidate.boundaries].sort().join(','),
         ].join(':'),
       )
       .sort(),
@@ -213,6 +218,7 @@ export function applyAndValidateModelDecision(
   candidates: WeeklyPreparationCandidate[],
   decision: WeeklyPreparationModelDecision,
   availableMinutes = 240,
+  options: { allowEmpty?: boolean } = {},
 ): { ok: true; value: WeeklyPreparationPlan } | { ok: false; reason: string } {
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]))
   const used = new Set<string>()
@@ -272,6 +278,8 @@ export function applyAndValidateModelDecision(
       priority: priority + 1,
     })
   }
+  if (replacementTasks.length === 0 && !options.allowEmpty)
+    return { ok: false, reason: 'no_worthwhile_preparation' }
   return {
     ok: true,
     value: {

@@ -132,12 +132,34 @@ describe('weekly preparation Edge Function contracts', () => {
     const source = readFileSync(edgeFunctionSources[2], 'utf8')
 
     expect(source).toContain('availableMinutes: body.availableMinutes')
+    expect(source).toContain("apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''")
+    expect(source).toContain('requestId: crypto.randomUUID()')
+    expect(source).toContain('AbortSignal.timeout(55_000)')
     expect(source).toContain('meals: planningContext(')
     expect(source).toContain('recipe_steps(instruction)')
     expect(source).toContain('instruction_steps')
     expect(source).toContain('enrichment.result.preparationOpportunities')
     expect(source).toContain('opportunity.maximumLeadTimeHours')
     expect(source).not.toContain('enrichment.result.ingredients.flatMap')
+  })
+
+  it('never reuses or persists a zero-task plan and records generation outcomes', () => {
+    const source = readFileSync(edgeFunctionSources[1], 'utf8')
+
+    expect(source).toContain('isUsablePlan(cached)')
+    expect(source).toContain('await deleteCached(')
+    expect(source).toContain('reasonCode: validated.reason')
+    expect(source).toContain("outcome: 'model-assisted'")
+    expect(source).toContain("rest('weekly_preparation_generation_attempts")
+    expect(source.indexOf('if (!validated.ok)')).toBeLessThan(source.indexOf('await savePlan('))
+  })
+
+  it('allows honest-empty safety evidence only inside the synthetic evaluator', () => {
+    const evaluationSource = readFileSync(edgeFunctionSources[0], 'utf8')
+    const workerSource = readFileSync(edgeFunctionSources[1], 'utf8')
+
+    expect(evaluationSource).toContain('{ allowEmpty: true }')
+    expect(workerSource).not.toContain('{ allowEmpty: true }')
   })
 
   it('requires current v2 enrichment and never returns a deterministic fallback checklist', () => {

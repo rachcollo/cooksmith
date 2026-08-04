@@ -261,6 +261,7 @@ Deno.serve(async (request) => {
           candidates,
           assisted.decision,
           availableMinutes,
+          { allowEmpty: true },
         )
         generatedTasks = assisted.decision.tasks
         if (!validated.ok) reasonCode = validated.reason
