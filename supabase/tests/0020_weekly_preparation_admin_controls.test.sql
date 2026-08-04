@@ -59,7 +59,7 @@ select throws_ok(
       set ai_enabled = true, emergency_stop = false
     where singleton$$,
   '23514',
-  'Current smoke test and accepted 30-plan evaluation required',
+  'Current smoke test, recipe coverage and accepted 30-plan evaluation required',
   'AI cannot be enabled before the hosted evaluation is accepted'
 );
 
@@ -88,10 +88,10 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   completed_at,
   deployment_sha
 ) values (
-  'weekly-preparation-corpus-v8',
+  'weekly-preparation-corpus-v9',
   'weekly-preparation-plan-v2',
-  'weekly-preparation-planner-v8',
-  'weekly-preparation-strategy-v8',
+  'weekly-preparation-planner-v9',
+  'weekly-preparation-strategy-v9',
   'test-model',
   'test-pricing',
   30,
@@ -198,7 +198,10 @@ where schema_version = 'recipe-intelligence-v2'
 
 update cooksmith.recipe_enrichments
 set
-  result = jsonb_build_object('preparationOpportunities', jsonb_build_array()),
+  result = jsonb_build_object(
+    'preparationOpportunities',
+    jsonb_build_array(jsonb_build_object('opportunityId', 'real-recipe-coverage'))
+  ),
   is_active = true,
   activated_at = now()
 where schema_version = 'recipe-intelligence-v2'
@@ -218,7 +221,10 @@ select
   job.source_kind, job.recipe_id, job.imported_recipe_id, job.household_id,
   job.recipe_version_id, job.id, job.schema_version, job.rules_version,
   'test', job.model_key,
-  jsonb_build_object('preparationOpportunities', jsonb_build_array()),
+  jsonb_build_object(
+    'preparationOpportunities',
+    jsonb_build_array(jsonb_build_object('opportunityId', 'real-recipe-coverage'))
+  ),
   'high', true, now()
 from cooksmith.recipe_enrichment_jobs job
 where job.schema_version = 'recipe-intelligence-v2'

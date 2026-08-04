@@ -350,7 +350,7 @@ async function processOne(modelKey?: string) {
     let outputTokens = 0
     let costAud = 0
 
-    if (job.model_key === 'provider-assisted-v1') {
+    if (job.model_key === 'provider-assisted-v1' || job.model_key === 'provider-assisted-v2') {
       if (!config.ai_enabled) throw new Error('disabled')
       if (!(await currentVersionMatches(version))) throw new Error('stale_version')
       if (!(await withinUsageLimits(config))) throw new Error('usage_limit')

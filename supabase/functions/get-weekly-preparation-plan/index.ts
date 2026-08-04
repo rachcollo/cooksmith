@@ -115,6 +115,14 @@ type EnrichmentRow = {
   result: RecipeIntelligence
 }
 
+type RecipeVersionRow = {
+  id: string
+  source_snapshot: {
+    ingredients?: Array<{ id?: string; originalText?: string; original_line_text?: string }>
+    steps?: Array<{ id?: string; instruction?: string }>
+  }
+}
+
 function validDate(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
 }
@@ -125,6 +133,7 @@ function candidatesFrom(
   servings: number,
   meals: MealRow[],
   enrichments: EnrichmentRow[],
+  versions: RecipeVersionRow[],
 ): WeeklyPreparationCandidate[] {
   const enrichmentByRecipe = new Map(
     enrichments.map((item) => [
@@ -132,6 +141,7 @@ function candidatesFrom(
       item,
     ]),
   )
+  const versionById = new Map(versions.map((version) => [version.id, version]))
   const today = new Date().toISOString().slice(0, 10)
   return meals.flatMap((meal) => {
     const sourceKind = meal.recipe_id ? 'household' : 'shared_platform'
@@ -139,6 +149,7 @@ function candidatesFrom(
     if (!recipeId) return []
     const enrichment = enrichmentByRecipe.get(`${sourceKind}:${recipeId}`)
     if (!enrichment) return []
+    const snapshot = versionById.get(enrichment.recipe_version_id)?.source_snapshot
     return enrichment.result.preparationOpportunities.flatMap((opportunity) => {
       if (!isSupportedPreparationAction(opportunity.action)) return []
       const daysUntilMeal = Math.round(
@@ -162,7 +173,7 @@ function candidatesFrom(
           servings,
           sourceIngredientId: opportunity.sourceIngredientIds.join('+'),
           sourceStepIds: opportunity.sourceStepIds,
-          originalText: opportunity.title,
+          originalText: sourceInstructions(opportunity, snapshot) || opportunity.title,
           canonicalIngredient: opportunity.canonicalIngredient,
           canonicalAction: opportunity.action,
           preparationDetail: opportunity.preparationDetail,
@@ -179,6 +190,23 @@ function candidatesFrom(
       ]
     })
   })
+}
+
+function sourceInstructions(
+  opportunity: RecipeIntelligence['preparationOpportunities'][number],
+  snapshot: RecipeVersionRow['source_snapshot'] | undefined,
+) {
+  const ingredients = (snapshot?.ingredients ?? []).flatMap((ingredient) => {
+    if (!ingredient.id || !opportunity.sourceIngredientIds.includes(ingredient.id)) return []
+    const text = ingredient.originalText ?? ingredient.original_line_text
+    return typeof text === 'string' && text.trim() ? [text.trim()] : []
+  })
+  const steps = (snapshot?.steps ?? []).flatMap((step) =>
+    step.id && opportunity.sourceStepIds.includes(step.id) && step.instruction?.trim()
+      ? [step.instruction.trim()]
+      : [],
+  )
+  return [...ingredients, ...steps].join(' ')
 }
 
 const supportedPreparationActions = new Set([
@@ -314,7 +342,7 @@ Deno.serve(async (request) => {
       ),
     ]
     if (recipeIds.length === 0 && importedRecipeIds.length === 0)
-      return json(200, { plan: emptyPlan(householdId, planId) })
+      return json(422, { error: 'no_planned_meals' })
     const settings = await householdData<Array<{ default_servings: number }>>(
       `household_settings?household_id=eq.${householdId}&select=default_servings&limit=1`,
     )
@@ -350,14 +378,26 @@ Deno.serve(async (request) => {
       await continueRecipeEnrichment()
       return json(409, { error: 'recipes_preparing' })
     }
+    if (
+      enrichments.some(
+        (enrichment) => enrichment.result.preparationOpportunities.length === 0,
+      )
+    ) {
+      await continueRecipeEnrichment()
+      return json(409, { error: 'recipes_without_opportunities' })
+    }
+    const recipeVersions = await rest<RecipeVersionRow[]>(
+      `recipe_content_versions?id=in.(${enrichments.map((item) => item.recipe_version_id).join(',')})&select=id,source_snapshot&limit=100`,
+    )
     const candidates = candidatesFrom(
       householdId,
       planId,
       settings[0]?.default_servings ?? 4,
       meals,
       enrichments,
+      recipeVersions,
     )
-    if (candidates.length === 0) return json(422, { error: 'no_useful_preparation' })
+    if (candidates.length === 0) return json(422, { error: 'opportunities_not_ready_yet' })
     const workerToken = Deno.env.get('WEEKLY_PREPARATION_WORKER_TOKEN')
     if (!workerToken) return json(503, { error: 'worker_configuration_unavailable' })
     const worker = await fetch(
@@ -382,22 +422,9 @@ Deno.serve(async (request) => {
     const result = (await worker.json()) as { plan?: WeeklyPreparationPlan }
     if (!result.plan || result.plan.householdId !== householdId || result.plan.planId !== planId)
       return json(503, { error: 'ai_unavailable' })
+    if (result.plan.tasks.length === 0) return json(503, { error: 'ai_unavailable' })
     return json(200, { plan: result.plan })
   } catch {
     return json(503, { error: 'plan_data_unavailable' })
   }
 })
-
-function emptyPlan(householdId: string, planId: string): WeeklyPreparationPlan {
-  return {
-    schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v8',
-    householdId,
-    planId,
-    cacheKey: `empty:${planId}`,
-    tasks: [],
-    ambiguousCandidateIds: [],
-    generation: 'deterministic',
-    fallbackReason: null,
-  }
-}

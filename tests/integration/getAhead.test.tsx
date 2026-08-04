@@ -97,7 +97,7 @@ const recipeRepository: RecipeRepository = {
 const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
   getCurrentPlan: async ({ weekStart, weekEnd }) => ({
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v8',
+    plannerVersion: 'weekly-preparation-planner-v9',
     householdId,
     planId: `${weekStart}_${weekEnd}`,
     cacheKey: 'useful-ai-plan',
@@ -150,7 +150,7 @@ describe('Get Ahead page', () => {
         if (calls === 1) throw new Error('temporarily unavailable')
         return {
           schemaVersion: 'weekly-preparation-plan-v2',
-          plannerVersion: 'weekly-preparation-planner-v8',
+          plannerVersion: 'weekly-preparation-planner-v9',
           householdId,
           planId: `${currentWeek(new Date())}_${currentWeek(new Date())}`,
           cacheKey: 'successful-retry',
@@ -176,13 +176,11 @@ describe('Get Ahead page', () => {
       weeklyPreparationRepository,
     )
 
-    expect(await screen.findByText(/could not create a useful preparation plan/u)).toBeVisible()
+    expect(await screen.findByText(/could not create your prep plan/u)).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Try again' }))
 
     expect(await screen.findByText('AI-assisted plan')).toBeVisible()
-    expect(
-      screen.queryByText(/could not create a useful preparation plan/u),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/could not create your prep plan/u)).not.toBeInTheDocument()
   })
 
   it('keeps prep rows compact and strikes through completed checklist items', async () => {
@@ -206,18 +204,23 @@ describe('Get Ahead page', () => {
 
     expect(await screen.findByText(/minutes saved this week/u)).toBeVisible()
     expect(screen.getByText('10 minutes of prep time remaining.')).toBeVisible()
-    const instruction = await screen.findByText('Dice onion')
-    const task = instruction.closest('li')
+    const checkbox = await screen.findByRole('checkbox')
+    const task = checkbox.closest('li')
     if (!task) throw new Error('Expected the Get Ahead instruction to render inside a task row.')
     expect(within(task).queryByText('10 min estimate')).not.toBeInTheDocument()
     expect(within(task).queryByText(/Saves \d+ min later/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/For .+ on/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/More actions/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/explicitly describes/u)).not.toBeInTheDocument()
-    expect(within(task).getByText('For Simple pasta.')).toBeVisible()
+    expect(within(task).getAllByText('For Simple pasta.')[0]).toBeVisible()
+    const disclosure = within(task).getByText('Show what to do')
+    expect(disclosure).toBeVisible()
+    await user.click(disclosure)
+    expect(disclosure.closest('details')).toHaveAttribute('open')
+    expect(within(task).getByText('Quantity: 1')).toBeVisible()
+    expect(within(task).getByText('1 onion, diced')).toBeVisible()
     expect(screen.queryByText(/Recommended because/u)).not.toBeInTheDocument()
 
-    const checkbox = within(task).getByRole('checkbox')
     await user.click(checkbox)
     expect(checkbox).toBeChecked()
     expect(task).toHaveClass('task-row-completed')

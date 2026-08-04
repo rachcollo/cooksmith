@@ -13,6 +13,7 @@ import { LoadingState } from '../components/ui/LoadingState'
 import { Panel } from '../components/ui/Panel'
 import { FormError } from '../components/ui/FormField'
 import { WeeklyPreparationUnavailableError } from '../application/get-ahead/weeklyPreparationRepository'
+import type { WeeklyPreparationUnavailableReason } from '../application/get-ahead/weeklyPreparationRepository'
 import {
   applyGetAheadOverride,
   createGetAheadSession,
@@ -70,9 +71,9 @@ export function GetAheadPage() {
   const [overrideError, setOverrideError] = useState<string | null>(null)
   const [showChecklist, setShowChecklist] = useState(false)
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPreparationPlan | null>(null)
-  const [planUnavailable, setPlanUnavailable] = useState<
-    'recipes_preparing' | 'ai_unavailable' | null
-  >(null)
+  const [planUnavailable, setPlanUnavailable] = useState<WeeklyPreparationUnavailableReason | null>(
+    null,
+  )
   const [planRetrying, setPlanRetrying] = useState(false)
   const [editingPlan, setEditingPlan] = useState(false)
   const [sessionBeingUpdated, setSessionBeingUpdated] = useState<GetAheadSession | null>(null)
@@ -97,10 +98,9 @@ export function GetAheadPage() {
         .catch((caught: unknown) => ({
           plan: null,
           reason:
-            caught instanceof WeeklyPreparationUnavailableError &&
-            caught.reason === 'recipes_preparing'
-              ? ('recipes_preparing' as const)
-              : ('ai_unavailable' as const),
+            caught instanceof WeeklyPreparationUnavailableError
+              ? caught.reason
+              : ('temporarily_unavailable' as const),
         })) ?? Promise.resolve({ plan: null, reason: 'ai_unavailable' as const }),
     ])
       .then(([nextMeals, nextRecipes, preparation]) => {
@@ -184,14 +184,12 @@ export function GetAheadPage() {
           : 'Your usual preparation checklist is ready.',
       )
     } catch (caught) {
-      const preparing =
-        caught instanceof WeeklyPreparationUnavailableError && caught.reason === 'recipes_preparing'
-      setPlanUnavailable(preparing ? 'recipes_preparing' : 'ai_unavailable')
-      setAnnouncement(
-        preparing
-          ? 'Cooksmith is still preparing recipe insights. Try again shortly.'
-          : 'Cooksmith could not create a preparation plan. Try again shortly.',
-      )
+      const reason =
+        caught instanceof WeeklyPreparationUnavailableError
+          ? caught.reason
+          : 'temporarily_unavailable'
+      setPlanUnavailable(reason)
+      setAnnouncement(unavailablePlanCopy(reason).message)
     } finally {
       setPlanRetrying(false)
     }
@@ -236,14 +234,12 @@ export function GetAheadPage() {
         setPlanUnavailable(null)
       }
     } catch (caught) {
-      const preparing =
-        caught instanceof WeeklyPreparationUnavailableError && caught.reason === 'recipes_preparing'
-      setPlanUnavailable(preparing ? 'recipes_preparing' : 'ai_unavailable')
-      setAnnouncement(
-        preparing
-          ? 'Cooksmith is still preparing recipe insights. Try again shortly.'
-          : 'Cooksmith could not create a preparation plan. Try again shortly.',
-      )
+      const reason =
+        caught instanceof WeeklyPreparationUnavailableError
+          ? caught.reason
+          : 'temporarily_unavailable'
+      setPlanUnavailable(reason)
+      setAnnouncement(unavailablePlanCopy(reason).message)
       return
     } finally {
       setSessionStarting(false)
@@ -320,18 +316,11 @@ export function GetAheadPage() {
           AI-assisted plan
         </p>
       ) : planUnavailable ? (
-        <p className="get-ahead-guidance-note" role="status">
-          {planUnavailable === 'recipes_preparing'
-            ? 'Cooksmith is still preparing these recipes. Try again shortly.'
-            : 'Cooksmith could not create a useful preparation plan right now.'}
-          <Button
-            variant="secondary"
-            disabled={planRetrying}
-            onClick={() => void retryWeeklyPlan()}
-          >
-            {planRetrying ? 'Trying again…' : 'Try again'}
-          </Button>
-        </p>
+        <PlanUnavailablePanel
+          reason={planUnavailable}
+          retrying={planRetrying}
+          onRetry={() => void retryWeeklyPlan()}
+        />
       ) : (
         <p className="get-ahead-guidance-note" role="status">
           Choose your meals and available time to create a preparation plan.
@@ -621,6 +610,82 @@ function GetAheadTaskRow({
           ) : null}
         </span>
       </label>
+      {task.taskDetails?.length ? (
+        <details className="task-row-details">
+          <summary>Show what to do</summary>
+          <ol>
+            {task.taskDetails.map((detail) => (
+              <li key={detail.id}>
+                <strong>{detail.title}</strong>
+                {detail.quantity ? <span>Quantity: {detail.quantity}</span> : null}
+                <span>{detail.instruction}</span>
+                <small>For {detail.recipeNames.join(' and ')}.</small>
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
     </li>
+  )
+}
+
+function unavailablePlanCopy(reason: WeeklyPreparationUnavailableReason) {
+  switch (reason) {
+    case 'no_planned_meals':
+      return {
+        title: 'No meals planned for these dates',
+        message: 'Add meals to your plan, then come back to create your prep session.',
+        retryable: false,
+      }
+    case 'recipes_preparing':
+      return {
+        title: 'Recipe insights are still being prepared',
+        message: 'Cooksmith is preparing the recipe details needed for a useful plan.',
+        retryable: true,
+      }
+    case 'recipes_without_opportunities':
+      return {
+        title: 'Some recipes need better prep insights',
+        message: 'Cooksmith is repairing those recipe insights before creating your plan.',
+        retryable: true,
+      }
+    case 'opportunities_not_ready_yet':
+      return {
+        title: 'Nothing useful to prepare yet',
+        message:
+          'These meals have useful prep steps, but doing them this early would reduce quality or safety. Try closer to the meal dates.',
+        retryable: false,
+      }
+    default:
+      return {
+        title: 'We could not create your prep plan',
+        message: 'Your meals are unchanged. Try again to create a fresh plan.',
+        retryable: true,
+      }
+  }
+}
+
+function PlanUnavailablePanel({
+  reason,
+  retrying,
+  onRetry,
+}: {
+  reason: WeeklyPreparationUnavailableReason
+  retrying: boolean
+  onRetry: () => void
+}) {
+  const copy = unavailablePlanCopy(reason)
+  return (
+    <section className="get-ahead-status-panel flow-stack" role="status">
+      <div>
+        <strong>{copy.title}</strong>
+        <p>{copy.message}</p>
+      </div>
+      {copy.retryable ? (
+        <Button variant="secondary" disabled={retrying} onClick={onRetry}>
+          {retrying ? 'Trying again…' : 'Try again'}
+        </Button>
+      ) : null}
+    </section>
   )
 }

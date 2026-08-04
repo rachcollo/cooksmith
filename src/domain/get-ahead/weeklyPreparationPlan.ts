@@ -1,7 +1,7 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v8' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v9' as const
 
 export const weeklyPreparationQualityRules = {
   version: 'weekly-preparation-quality-v5',

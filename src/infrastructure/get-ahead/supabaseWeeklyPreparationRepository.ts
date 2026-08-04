@@ -45,6 +45,11 @@ export function createSupabaseWeeklyPreparationRepository(
             error?: unknown
           } | null
           if (payload?.error === 'recipes_preparing') reason = 'recipes_preparing'
+          else if (payload?.error === 'no_planned_meals') reason = 'no_planned_meals'
+          else if (payload?.error === 'recipes_without_opportunities')
+            reason = 'recipes_without_opportunities'
+          else if (payload?.error === 'opportunities_not_ready_yet')
+            reason = 'opportunities_not_ready_yet'
           else if (payload?.error === 'ai_unavailable') reason = 'ai_unavailable'
         }
         throw new WeeklyPreparationUnavailableError(reason)

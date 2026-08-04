@@ -55,6 +55,15 @@ export interface PreparationOpportunity {
   estimatedTimeSavedMinutes?: number
   storageGuidance?: string
   priority?: number
+  taskDetails?: PreparationTaskDetail[]
+}
+
+export interface PreparationTaskDetail {
+  id: string
+  title: string
+  instruction: string
+  quantity: string | null
+  recipeNames: string[]
 }
 
 interface RuleMatch {

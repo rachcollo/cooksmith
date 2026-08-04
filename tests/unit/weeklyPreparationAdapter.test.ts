@@ -22,7 +22,7 @@ const recipe = {
 
 const plan: WeeklyPreparationPlan = {
   schemaVersion: 'weekly-preparation-plan-v2',
-  plannerVersion: 'weekly-preparation-planner-v8',
+  plannerVersion: 'weekly-preparation-planner-v9',
   householdId: 'household-1',
   planId: '2026-07-28_2026-08-03',
   cacheKey: 'cache-1',
@@ -68,14 +68,55 @@ describe('weekly preparation Get Ahead adapter', () => {
 
     expect(opportunities).toEqual([
       expect.objectContaining({
-        id: 'weekly:cache-1:subtask-1',
+        id: 'weekly:cache-1:task-1',
         type: 'chop',
         plannedMealId: meal.id,
         recipeId: recipe.id,
         reason: 'For Onion pasta.',
-        ingredient: expect.objectContaining({ quantity: '2', preparation: 'diced' }),
+        ingredient: expect.objectContaining({ quantity: null, preparation: 'Dice onion' }),
+        taskDetails: [
+          expect.objectContaining({
+            title: 'Dice onion',
+            quantity: '2',
+            instruction: '1 onion, diced',
+            recipeNames: ['Onion pasta'],
+          }),
+        ],
       }),
     ])
+  })
+
+  it('keeps a grouped AI task as one checklist item with all actionable subtasks', () => {
+    const grouped = {
+      ...plan,
+      tasks: [
+        {
+          ...plan.tasks[0]!,
+          title: 'Make sauce, breadcrumb mix and egg wash',
+          subtasks: [
+            plan.tasks[0]!.subtasks[0]!,
+            {
+              ...plan.tasks[0]!.subtasks[0]!,
+              id: 'subtask-2',
+              title: 'Mix breadcrumbs and parmesan',
+              quantity: { state: 'known' as const, value: 120, unit: 'g' },
+              sources: [
+                {
+                  ...plan.tasks[0]!.subtasks[0]!.sources[0]!,
+                  id: 'candidate-2',
+                  originalText: 'Combine breadcrumbs and parmesan in a shallow bowl.',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    const opportunities = weeklyPreparationPlanToOpportunities(grouped, [meal], [recipe])
+
+    expect(opportunities).toHaveLength(1)
+    expect(opportunities[0]?.taskDetails).toHaveLength(2)
   })
 
   it('rejects sources that do not belong to the loaded week and recipes', () => {

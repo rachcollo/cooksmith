@@ -1,4 +1,8 @@
-import type { PreparationOpportunity, PreparationOpportunityType } from './preparationOpportunities'
+import type {
+  PreparationOpportunity,
+  PreparationOpportunityType,
+  PreparationTaskDetail,
+} from './preparationOpportunities'
 
 export const getAheadDurationPresets = [15, 30, 45, 60, 120] as const
 export const minCustomGetAheadMinutes = 5
@@ -45,6 +49,7 @@ export interface GetAheadTaskSnapshot {
   sourceKind: string
   sourceText: string
   reason: string
+  taskDetails?: PreparationTaskDetail[]
   storageGuidance?: string
   estimatedMinutes: number
   estimatedTimeSavedMinutes: number
@@ -412,6 +417,7 @@ function toTaskSnapshot(opportunity: PreparationOpportunity): GetAheadTaskSnapsh
     sourceKind: opportunity.source.kind,
     sourceText: opportunity.source.text,
     reason: opportunity.reason,
+    ...(opportunity.taskDetails ? { taskDetails: opportunity.taskDetails } : {}),
     ...(opportunity.storageGuidance ? { storageGuidance: opportunity.storageGuidance } : {}),
     estimatedMinutes,
     estimatedTimeSavedMinutes,
