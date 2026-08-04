@@ -1,5 +1,16 @@
 # CS-94 handover
 
+## 2026-08-04 45-minute evaluation evidence correction
+
+- Migration `20260804233000_cs94_allow_45_minute_evaluation_cases.sql` forward-replaces the
+  evaluation-case duration constraint so v11 can persist its documented 15, 30, 45 and 60-minute
+  corpus. Durations outside that corpus remain rejected.
+- The pgTAP fixture now persists all four supported durations and proves an unsupported duration is
+  still blocked. The Admin guidance names the same four durations.
+- Edge Functions changed: none. Dependencies: none. Fixed cost: A$0/month and A$0/year.
+- Release this migration after merging PR #166, then rerun the v11 evaluation once. The failed runs
+  remain immutable evidence and do not need deletion.
+
 ## 2026-08-04 opportunity-level eligibility correction
 
 - Baseline: `main` at `94b2696366cdfca778858e667346eef6dd84e6a6` (merge of PR #165).

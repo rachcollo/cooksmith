@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(19);
 
 select has_table(
   'cooksmith',
@@ -113,7 +113,7 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
 );
 insert into cooksmith.weekly_preparation_evaluation_cases (
   run_id, case_number, case_key, expected_model_call, model_called, outcome,
-  latency_ms, input_tokens, output_tokens, estimated_cost_aud
+  latency_ms, input_tokens, output_tokens, estimated_cost_aud, available_minutes
 )
 select
   run.id,
@@ -125,9 +125,24 @@ select
   100,
   100,
   50,
-  0
+  0,
+  case case_number % 4
+    when 1 then 15
+    when 2 then 30
+    when 3 then 45
+    else 60
+  end
 from cooksmith.weekly_preparation_evaluation_runs run
 cross join generate_series(1, 30) case_number;
+
+select throws_ok(
+  $$update cooksmith.weekly_preparation_evaluation_cases
+      set available_minutes = 90
+    where case_number = 1$$,
+  '23514',
+  null,
+  'Evaluation evidence rejects durations outside the release corpus'
+);
 
 update cooksmith.weekly_preparation_settings
 set
