@@ -6,6 +6,8 @@ import { createSupabaseWeeklyPreparationAdminRepository } from '../../src/infras
 const status = {
   paused: false,
   aiEnabled: false,
+  dailyRecipeLimit: 100,
+  dailyProcessedCount: 21,
   monthlyCostLimitAud: 10,
   recoverableCount: 1,
   sources: {
@@ -88,6 +90,24 @@ describe('recipe enrichment dispatcher', () => {
       command: 'enable_ai',
     })
     expect(result.aiEnabled).toBe(true)
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('updates the provider processing limit through the audited admin RPC', async () => {
+    const rpc = vi.fn(async () => ({
+      data: { ...status, dailyRecipeLimit: 100 },
+      error: null,
+    }))
+    const invoke = vi.fn()
+
+    const result = await createSupabaseWeeklyPreparationAdminRepository(
+      clientWith(rpc, invoke),
+    ).setRecipeIntelligenceDailyLimit(100)
+
+    expect(rpc).toHaveBeenCalledWith('recipe_intelligence_daily_limit_command', {
+      target_daily_recipe_limit: 100,
+    })
+    expect(result.dailyRecipeLimit).toBe(100)
     expect(invoke).not.toHaveBeenCalled()
   })
 })

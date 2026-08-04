@@ -252,6 +252,13 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       if (error) throw new Error('Cooksmith could not update Recipe Intelligence AI.')
       return backfillStatus(data)
     },
+    async setRecipeIntelligenceDailyLimit(limit) {
+      const { data, error } = await database.rpc('recipe_intelligence_daily_limit_command', {
+        target_daily_recipe_limit: limit,
+      })
+      if (error) throw new Error('Cooksmith could not update the daily processing limit.')
+      return backfillStatus(data)
+    },
     async listRecipeEnrichments(input = {}) {
       const { data, error } = await database.rpc('admin_recipe_enrichment_list', {
         search_text: input.query?.trim() || undefined,

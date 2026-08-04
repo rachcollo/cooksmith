@@ -49,6 +49,8 @@ export type WeeklyPreparationEvaluationCaseEvidence = {
 export type RecipeEnrichmentBackfillStatus = {
   paused: boolean
   aiEnabled: boolean
+  dailyRecipeLimit: number
+  dailyProcessedCount: number
   monthlyCostLimitAud: number
   recoverableCount: number
   sources: {
@@ -98,6 +100,7 @@ export interface WeeklyPreparationAdminRepository {
       | 'recover_exhausted_ai_failures',
   ): Promise<RecipeEnrichmentBackfillStatus>
   setRecipeIntelligenceAi(enabled: boolean): Promise<RecipeEnrichmentBackfillStatus>
+  setRecipeIntelligenceDailyLimit(limit: number): Promise<RecipeEnrichmentBackfillStatus>
   listRecipeEnrichments(input?: {
     query?: string
     status?: AdminRecipeEnrichment['status'] | 'all'

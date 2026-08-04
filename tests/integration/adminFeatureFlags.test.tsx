@@ -75,6 +75,20 @@ describe('admin feature toggles', () => {
       smokeVerified: false,
       updatedAt: '2026-07-28T01:00:00Z',
     }))
+    const setRecipeIntelligenceDailyLimit = vi.fn(async (limit: number) => ({
+      paused: false,
+      aiEnabled: false,
+      dailyRecipeLimit: limit,
+      dailyProcessedCount: 0,
+      monthlyCostLimitAud: 10,
+      recoverableCount: 1,
+      sources: {
+        household: { eligible: 2, current: 0 },
+        sharedPlatform: { eligible: 19, current: 0 },
+      },
+      states: {},
+      latestProviderFailure: null,
+    }))
     const weeklyPreparationAdminRepository: WeeklyPreparationAdminRepository = {
       getSettings: async () => ({
         aiEnabled: false,
@@ -130,6 +144,8 @@ describe('admin feature toggles', () => {
       getRecipeEnrichmentStatus: async () => ({
         paused: false,
         aiEnabled: false,
+        dailyRecipeLimit: 100,
+        dailyProcessedCount: 0,
         monthlyCostLimitAud: 10,
         recoverableCount: 1,
         sources: {
@@ -148,6 +164,8 @@ describe('admin feature toggles', () => {
       commandRecipeEnrichment: async () => ({
         paused: false,
         aiEnabled: false,
+        dailyRecipeLimit: 100,
+        dailyProcessedCount: 0,
         monthlyCostLimitAud: 10,
         recoverableCount: 1,
         sources: {
@@ -160,6 +178,8 @@ describe('admin feature toggles', () => {
       setRecipeIntelligenceAi: async (enabled) => ({
         paused: false,
         aiEnabled: enabled,
+        dailyRecipeLimit: 100,
+        dailyProcessedCount: 0,
         monthlyCostLimitAud: 10,
         recoverableCount: 1,
         sources: {
@@ -169,6 +189,7 @@ describe('admin feature toggles', () => {
         states: {},
         latestProviderFailure: null,
       }),
+      setRecipeIntelligenceDailyLimit,
       listRecipeEnrichments: async () => [],
       retryRecipeEnrichment: async () => undefined,
     }
@@ -203,6 +224,13 @@ describe('admin feature toggles', () => {
         'Latest AI error: HTTP 400 · invalid_request_error · text.format.type · Request req_synthetic_diagnostic',
       ),
     ).toBeVisible()
+
+    const dailyLimit = screen.getByRole('spinbutton', { name: 'Daily AI processing limit' })
+    await user.clear(dailyLimit)
+    await user.type(dailyLimit, '120')
+    await user.click(screen.getByRole('button', { name: 'Save daily limit' }))
+    await waitFor(() => expect(setRecipeIntelligenceDailyLimit).toHaveBeenCalledWith(120))
+    expect(await screen.findByText('Daily AI processing limit updated to 120.')).toBeVisible()
 
     await user.click(screen.getByText('Technical case evidence'))
     const failedCase = screen.getByText('Case 4: shared taco vegetables 30')

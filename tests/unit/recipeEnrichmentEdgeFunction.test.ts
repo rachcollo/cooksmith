@@ -57,6 +57,13 @@ describe('recipe enrichment Edge Function', () => {
 
   it('applies provider usage limits only to provider-assisted jobs', () => {
     expect(source).toContain('model_key=neq.deterministic')
+    expect(source).toContain('provider_started_at=gte.')
+    expect(source).toContain('provider_started_at: providerStartedAt')
+    expect(source).not.toContain('model_key=neq.deterministic&created_at=gte.')
+    expect(source).toContain("candidate.model_key !== 'deterministic'")
+    expect(source).toContain("return { job: null, outcome: 'limited' }")
+    expect(source).toContain("return { outcome: 'usage_limited' }")
+    expect(source).not.toContain("throw new Error('usage_limit')")
     expect(source).toContain("job.model_key === 'provider-assisted-v1'")
     expect(source).toContain("job.model_key === 'provider-assisted-v2'")
   })
