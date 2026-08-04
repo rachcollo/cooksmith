@@ -166,7 +166,7 @@ select throws_ok(
       set ai_enabled = true, emergency_stop = false
     where singleton$$,
   '23514',
-  'Current smoke test and accepted 30-plan evaluation required',
+  'Current smoke test, recipe coverage and accepted 30-plan evaluation required',
   'AI cannot activate when smoke and evaluation came from different deployments'
 );
 reset role;
@@ -174,7 +174,7 @@ update cooksmith.weekly_preparation_settings
 set smoke_deployment_sha = repeat('a', 40)
 where singleton;
 
--- The v8 activation gate also requires every current recipe version to have
+-- The v9 activation gate also requires every current recipe version to have
 -- completed Recipe Intelligence v2 evidence. Complete the migration-created
 -- jobs here so this fixture tests the successful control path with the same
 -- readiness contract as Production.
