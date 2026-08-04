@@ -39,6 +39,12 @@ select throws_ok(
   null,
   'Household users cannot enable Recipe Intelligence AI'
 );
+select throws_ok(
+  $$select cooksmith.recipe_intelligence_daily_limit_command(100)$$,
+  '42501',
+  null,
+  'Household users cannot change the daily AI processing limit'
+);
 reset role;
 
 set local role authenticated;
@@ -53,6 +59,22 @@ select is(
   true,
   'An application admin can enable Recipe Intelligence AI through the authorised control'
 );
+select is(
+  (cooksmith.recipe_intelligence_daily_limit_command(100)->>'dailyRecipeLimit')::integer,
+  100,
+  'An application admin can set the daily AI processing limit'
+);
+select is(
+  (cooksmith.recipe_enrichment_backfill_status()->>'dailyProcessedCount')::integer,
+  0,
+  'Pending provider jobs do not consume the daily AI processing limit'
+);
+select throws_ok(
+  $$select cooksmith.recipe_intelligence_daily_limit_command(10001)$$,
+  '22023',
+  'invalid_daily_recipe_limit',
+  'The daily AI processing limit remains bounded'
+);
 reset role;
 
 select results_eq(
@@ -60,6 +82,12 @@ select results_eq(
     where action = 'enable_ai' order by created_at desc limit 1$$,
   array['enable_ai'::text],
   'Recipe Intelligence AI enablement is audited'
+);
+select results_eq(
+  $$select action from cooksmith.recipe_enrichment_backfill_audit
+    where action = 'update_daily_limit' order by created_at desc limit 1$$,
+  array['update_daily_limit'::text],
+  'Daily AI processing limit changes are audited'
 );
 
 set local role authenticated;

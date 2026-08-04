@@ -316,3 +316,20 @@ This correction requires an Edge Function release only and no database migration
   preparation Edge Functions from the same approved
   SHA, allow the requeued empty enrichments to finish, run and accept one fresh v9 evaluation, then
   enable AI and verify both affected real household weeks.
+
+## Configurable recipe-enrichment allowance correction
+
+- Baseline: `main` at `22e0ccc1399d92faffe2fe078775a88161a04d1d`.
+- Branch: `fix/cs-94-configurable-enrichment-limit`.
+- Pending provider jobs no longer consume the daily processing allowance or block their own queue.
+  The worker checks capacity before leasing work, so reaching the allowance leaves recipes queued
+  instead of recording a false enrichment failure.
+- The Admin Recipe enrichment section displays daily started work and allows an authorised
+  administrator to update the bounded daily allowance. The active setting and future default are
+  100 provider-assisted recipes per UTC day. Recipe creation and queue size remain unlimited.
+- Migration: `20260804193000_cs94_configurable_recipe_enrichment_daily_limit.sql`.
+- Edge Function changed: `enrich-recipe`.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Raising the allowance can
+  increase usage within the existing A$10 monthly provider ceiling.
+- Release order: apply the forward migration, deploy `enrich-recipe` from the same approved `main`
+  SHA, then select **Resume enrichment** once to drain the existing queue.

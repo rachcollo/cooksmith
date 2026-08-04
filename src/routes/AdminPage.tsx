@@ -134,6 +134,7 @@ function RecipeEnrichmentOperations() {
   const [status, setStatus] = useState<RecipeEnrichmentBackfillStatus | null>(null)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [dailyLimit, setDailyLimit] = useState('')
   const refreshSequence = useRef(0)
 
   const refresh = useCallback(async () => {
@@ -143,6 +144,7 @@ function RecipeEnrichmentOperations() {
       const next = await repository.getRecipeEnrichmentStatus()
       if (sequence !== refreshSequence.current) return
       setStatus(next)
+      setDailyLimit(String(next.dailyRecipeLimit))
       setMessage('')
     } catch {
       if (sequence !== refreshSequence.current) return
@@ -158,6 +160,7 @@ function RecipeEnrichmentOperations() {
       .then((next) => {
         if (sequence !== refreshSequence.current) return
         setStatus(next)
+        setDailyLimit(String(next.dailyRecipeLimit))
         setMessage('')
       })
       .catch(() => {
@@ -241,6 +244,25 @@ function RecipeEnrichmentOperations() {
     }
   }
 
+  async function saveDailyLimit() {
+    const nextLimit = Number(dailyLimit)
+    if (!Number.isInteger(nextLimit) || nextLimit < 0 || nextLimit > 10_000) {
+      setMessage('Enter a whole number between 0 and 10,000.')
+      return
+    }
+    setBusy(true)
+    try {
+      const next = await adminRepository.setRecipeIntelligenceDailyLimit(nextLimit)
+      setStatus(next)
+      setDailyLimit(String(next.dailyRecipeLimit))
+      setMessage(`Daily AI processing limit updated to ${next.dailyRecipeLimit}.`)
+    } catch {
+      setMessage('The daily AI processing limit could not be updated. No setting was changed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <section className="flow-stack" aria-labelledby="recipe-enrichment-title">
       <div>
@@ -264,6 +286,11 @@ function RecipeEnrichmentOperations() {
                   metric="Recipe Intelligence AI"
                   value={status.aiEnabled ? 'Enabled' : 'Disabled'}
                   details={status.paused ? 'Queue paused' : 'Queue available'}
+                />
+                <StatusRow
+                  metric="Daily AI processing"
+                  value={`${status.dailyProcessedCount} / ${status.dailyRecipeLimit}`}
+                  details="Started today; queued recipes do not count"
                 />
                 <StatusRow
                   metric="Monthly provider limit"
@@ -325,6 +352,34 @@ function RecipeEnrichmentOperations() {
                 />
               </tbody>
             </table>
+
+            <div className="form-field">
+              <label htmlFor="recipe-enrichment-daily-limit">Daily AI processing limit</label>
+              <div className="cluster">
+                <input
+                  id="recipe-enrichment-daily-limit"
+                  type="number"
+                  min="0"
+                  max="10000"
+                  step="1"
+                  inputMode="numeric"
+                  value={dailyLimit}
+                  disabled={busy}
+                  onChange={(event) => setDailyLimit(event.target.value)}
+                />
+                <Button
+                  variant="secondary"
+                  disabled={busy || dailyLimit === String(status.dailyRecipeLimit)}
+                  onClick={() => void saveDailyLimit()}
+                >
+                  Save daily limit
+                </Button>
+              </div>
+              <p>
+                Limits provider processing for cost protection. Recipe imports and queued work
+                remain unlimited.
+              </p>
+            </div>
 
             <div className="cluster">
               <Button disabled={busy} onClick={() => void setAi(!status.aiEnabled)}>

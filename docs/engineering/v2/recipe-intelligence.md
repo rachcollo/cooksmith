@@ -40,7 +40,7 @@ The Supabase project supplies `SUPABASE_URL` and either `SUPABASE_SECRET_KEYS` o
 - enqueueing on;
 - provider-assisted processing off;
 - emergency stop off;
-- 25 recipes per day;
+- 100 provider-assisted recipes per UTC day, configurable by an application administrator;
 - A$10 monthly provider ceiling; and
 - two concurrent jobs.
 
@@ -50,6 +50,11 @@ Recipe Intelligence AI is separate from weekly preparation AI. An application
 administrator can enable or disable it in the Recipe enrichment section of the
 admin portal. Enablement is confirmed, audited and displays the configured
 monthly A$ provider ceiling. It does not change existing results by itself.
+
+The daily limit is cost protection for provider work, not a recipe-library or queue limit. Only
+provider-assisted jobs that have actually started count towards it; pending jobs remain queued and
+resume when capacity is available. An application administrator can change the bounded value in
+the Recipe enrichment controls. Changes are authorised and audited.
 
 **Re-enrich with AI** creates a separate `provider-assisted-v1` job for each
 current eligible recipe version. It never reopens, deletes or overwrites the

@@ -903,6 +903,7 @@ export type Database = {
           provider_error_param: string | null
           provider_http_status: number | null
           provider_request_id: string | null
+          provider_started_at: string | null
           recipe_id: string | null
           recipe_version_id: string
           rules_version: string
@@ -931,6 +932,7 @@ export type Database = {
           provider_error_param?: string | null
           provider_http_status?: number | null
           provider_request_id?: string | null
+          provider_started_at?: string | null
           recipe_id?: string | null
           recipe_version_id: string
           rules_version?: string
@@ -959,6 +961,7 @@ export type Database = {
           provider_error_param?: string | null
           provider_http_status?: number | null
           provider_request_id?: string | null
+          provider_started_at?: string | null
           recipe_id?: string | null
           recipe_version_id?: string
           rules_version?: string
@@ -1857,6 +1860,10 @@ export type Database = {
       recipe_enrichment_backfill_status: { Args: never; Returns: Json }
       recipe_intelligence_ai_command: {
         Args: { command: string }
+        Returns: Json
+      }
+      recipe_intelligence_daily_limit_command: {
+        Args: { target_daily_recipe_limit: number }
         Returns: Json
       }
       reconcile_planned_meal_shopping: {

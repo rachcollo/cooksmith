@@ -159,20 +159,20 @@ async function withinUsageLimits(config: Settings) {
   day.setUTCHours(0, 0, 0, 0)
   const month = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1))
   const response = await rest(
-    `recipe_enrichment_jobs?model_key=neq.deterministic&created_at=gte.${encodeURIComponent(month.toISOString())}&select=created_at,estimated_cost_aud`,
+    `recipe_enrichment_jobs?model_key=neq.deterministic&provider_started_at=gte.${encodeURIComponent(month.toISOString())}&select=provider_started_at,estimated_cost_aud`,
   )
   const rows = (await response.json()) as Array<{
-    created_at: string
+    provider_started_at: string
     estimated_cost_aud: number | null
   }>
-  const dailyCount = rows.filter((row) => new Date(row.created_at) >= day).length
+  const dailyCount = rows.filter((row) => new Date(row.provider_started_at) >= day).length
   const monthlyCost = rows.reduce((total, row) => total + Number(row.estimated_cost_aud ?? 0), 0)
   return dailyCount < config.daily_recipe_limit && monthlyCost < config.monthly_cost_limit_aud
 }
 
 async function claimJob(modelKey?: string): Promise<{
   job: Job | null
-  outcome: 'claimed' | 'busy' | 'waiting' | 'empty'
+  outcome: 'claimed' | 'busy' | 'waiting' | 'limited' | 'empty'
   retryAfterMs?: number
 }> {
   const activeResponse = await rest(
@@ -204,7 +204,13 @@ async function claimJob(modelKey?: string): Promise<{
     }
   }
 
+  if (candidate.model_key !== 'deterministic' && !(await withinUsageLimits(config))) {
+    return { job: null, outcome: 'limited' }
+  }
+
   const lease = new Date(Date.now() + JOB_LEASE_MS).toISOString()
+  const providerStartedAt =
+    candidate.model_key === 'deterministic' ? undefined : new Date().toISOString()
   const claim = await rest(
     `recipe_enrichment_jobs?id=eq.${candidate.id}&state=eq.pending&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
     {
@@ -214,6 +220,7 @@ async function claimJob(modelKey?: string): Promise<{
         state: 'processing',
         attempt_count: candidate.attempt_count + 1,
         leased_until: lease,
+        provider_started_at: providerStartedAt,
         failure_category: null,
       }),
     },
@@ -334,6 +341,7 @@ async function processOne(modelKey?: string) {
     if (claimed.outcome === 'busy') return { outcome: 'busy' }
     if (claimed.outcome === 'waiting')
       return { outcome: 'waiting', retryAfterMs: claimed.retryAfterMs }
+    if (claimed.outcome === 'limited') return { outcome: 'usage_limited' }
     return { outcome: 'idle' }
   }
   const job = claimed.job
@@ -353,7 +361,6 @@ async function processOne(modelKey?: string) {
     if (job.model_key === 'provider-assisted-v1' || job.model_key === 'provider-assisted-v2') {
       if (!config.ai_enabled) throw new Error('disabled')
       if (!(await currentVersionMatches(version))) throw new Error('stale_version')
-      if (!(await withinUsageLimits(config))) throw new Error('usage_limit')
       modelKey = Deno.env.get('RECIPE_INTELLIGENCE_MODEL') ?? 'gpt-5-mini-2025-08-07'
       const assisted = await resolveAmbiguousLinks({
         apiKey: env('OPENAI_API_KEY'),
