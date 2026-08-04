@@ -2,7 +2,7 @@ import type { WeeklyPreparationCandidate } from './weeklyPreparationPlan.ts'
 
 export type WeeklyPreparationEvaluationCase = {
   key: string
-  availableMinutes: 15 | 30 | 60
+  availableMinutes: 15 | 30 | 45 | 60
   candidates: WeeklyPreparationCandidate[]
   meals: Array<{
     plannedMealId: string
@@ -268,7 +268,7 @@ function candidate(
     servings: 4,
     sourceIngredientId: `ingredient-${id}`,
     sourceStepIds: [`step-${id}`],
-    originalText: `1 ${fixture.ingredient}, ${fixture.action}`,
+    originalText: `1 ${fixture.ingredient}, ${fixture.action}. ${fixture.instruction}`,
     canonicalIngredient: fixture.ingredient,
     canonicalAction: fixture.action,
     preparationDetail: fixture.action,
@@ -282,40 +282,43 @@ function candidate(
 }
 
 export function buildWeeklyPreparationEvaluationCorpus(): WeeklyPreparationEvaluationCase[] {
-  return ([15, 30, 60] as const).flatMap((availableMinutes, durationIndex) =>
-    portfolios.map((portfolio, portfolioIndex) => {
-      const caseNumber = durationIndex * portfolios.length + portfolioIndex + 1
-      const candidates = portfolio.fixtures.map((fixture, index) =>
-        candidate(caseNumber, index + 1, fixture),
-      )
-      const meals = Array.from({ length: 5 }, (_, mealIndex) => {
-        const fixture = portfolio.fixtures[mealIndex % portfolio.fixtures.length]
-        const suppliedCandidate = candidates[mealIndex % candidates.length]
-        if (!fixture || !suppliedCandidate) throw new Error('evaluation_fixture_invalid')
-        return {
-          plannedMealId: suppliedCandidate.plannedMealId,
-          mealDate: `2026-08-${String(3 + mealIndex).padStart(2, '0')}`,
-          recipeName: fixture.recipeName,
-          ingredients: [suppliedCandidate.originalText],
-          instructions: [fixture.instruction],
-        }
-      })
-      const safeCandidateCount = candidates.filter(
-        (item) =>
-          item.maximumLeadTimeHours !== null &&
-          !['cook', 'preheat', 'crumble'].includes(item.canonicalAction ?? ''),
-      ).length
-      const expectedEmpty = portfolio.expectedEmpty === true
+  const durations = [15, 30, 45, 60] as const
+  return Array.from({ length: 30 }, (_, caseIndex) => {
+    const portfolioIndex = caseIndex % portfolios.length
+    const portfolio = portfolios[portfolioIndex]
+    const availableMinutes = durations[caseIndex % durations.length]
+    const caseNumber = caseIndex + 1
+    if (!portfolio || !availableMinutes) throw new Error('evaluation_fixture_invalid')
+    const candidates = portfolio.fixtures.map((fixture, index) =>
+      candidate(caseNumber, index + 1, fixture),
+    )
+    const meals = Array.from({ length: 5 }, (_, mealIndex) => {
+      const fixture = portfolio.fixtures[mealIndex % portfolio.fixtures.length]
+      const suppliedCandidate = candidates[mealIndex % candidates.length]
+      if (!fixture || !suppliedCandidate) throw new Error('evaluation_fixture_invalid')
       return {
-        key: `${portfolio.key}-${availableMinutes}m`,
-        availableMinutes,
-        candidates,
-        meals,
-        expectedEmpty,
-        minimumUsefulTasks: expectedEmpty || safeCandidateCount === 0 ? 0 : 1,
-        minimumUsefulMinutes: expectedEmpty || safeCandidateCount === 0 ? 0 : 5,
-        minimumMealsCovered: expectedEmpty ? 0 : Math.min(2, safeCandidateCount),
+        plannedMealId: suppliedCandidate.plannedMealId,
+        mealDate: `2026-08-${String(3 + mealIndex).padStart(2, '0')}`,
+        recipeName: fixture.recipeName,
+        ingredients: [suppliedCandidate.originalText],
+        instructions: [fixture.instruction],
       }
-    }),
-  )
+    })
+    const safeCandidateCount = candidates.filter(
+      (item) =>
+        item.maximumLeadTimeHours !== null &&
+        !['cook', 'preheat', 'crumble'].includes(item.canonicalAction ?? ''),
+    ).length
+    const expectedEmpty = portfolio.expectedEmpty === true
+    return {
+      key: `${portfolio.key}-${availableMinutes}m-${caseNumber}`,
+      availableMinutes,
+      candidates,
+      meals,
+      expectedEmpty,
+      minimumUsefulTasks: expectedEmpty || safeCandidateCount === 0 ? 0 : 1,
+      minimumUsefulMinutes: expectedEmpty || safeCandidateCount === 0 ? 0 : 5,
+      minimumMealsCovered: expectedEmpty ? 0 : Math.min(2, safeCandidateCount),
+    }
+  })
 }

@@ -1,11 +1,11 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v10' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v11' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v5',
-  timeBudgets: [15, 30, 60],
+  version: 'weekly-preparation-quality-v6',
+  timeBudgets: [15, 30, 45, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
   maximumTimeSavedMinutes: 180,
@@ -329,8 +329,7 @@ export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparatio
   const action = candidate.canonicalAction?.trim().toLowerCase()
   if (!action || !safePreparationActions.has(action)) return false
   if (!candidate.canonicalIngredient?.trim()) return false
-  if (/[()[\]{}]|^\s*$/.test(candidate.originalText)) return false
-  if (looksLikeCookingOrServingInstruction(candidate.originalText)) return false
+  if (!candidate.sourceIngredientId.trim() || candidate.sourceStepIds.length === 0) return false
   return candidate.maximumLeadTimeHours !== null
 }
 

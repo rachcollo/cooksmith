@@ -48,6 +48,7 @@ export async function decideAmbiguousPreparation(input: {
   if (eligibleIds.length === 0)
     return {
       decision: { tasks: [] },
+      modelCalled: false,
       inputTokens: 0,
       outputTokens: 0,
     }
@@ -178,6 +179,7 @@ export async function decideAmbiguousPreparation(input: {
   }
   return {
     decision,
+    modelCalled: true,
     inputTokens: body.usage?.input_tokens ?? 0,
     outputTokens: body.usage?.output_tokens ?? 0,
   }

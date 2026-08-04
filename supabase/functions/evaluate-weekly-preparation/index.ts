@@ -1,6 +1,7 @@
 import {
   applyAndValidateModelDecision,
   buildDeterministicWeeklyPreparationPlan,
+  isWeeklyPreparationCandidateEligible,
   weeklyPreparationPlannerVersion,
   weeklyPreparationPlanSchemaVersion,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
@@ -224,8 +225,8 @@ Deno.serve(async (request) => {
       const caseNumber = index + 1
       const evaluationCase = corpus[index]
       if (!evaluationCase) throw new Error('evaluation_fixture_invalid')
-      const expectedModelCall = true
       const { candidates, meals, availableMinutes } = evaluationCase
+      const expectedModelCall = candidates.some(isWeeklyPreparationCandidateEligible)
       const startedAt = Date.now()
       const deterministic = buildDeterministicWeeklyPreparationPlan(candidates)
       let outcome = 'deterministic'
@@ -239,8 +240,6 @@ Deno.serve(async (request) => {
         estimatedTimeSavedMinutes: number
       }> = []
       if (expectedModelCall) {
-        modelCalled = true
-        modelCallCount += 1
         const assisted = await decideAmbiguousPreparation({
           apiKey,
           model,
@@ -249,6 +248,8 @@ Deno.serve(async (request) => {
           availableMinutes,
           timeoutMs: 12_000,
         })
+        modelCalled = assisted.modelCalled
+        if (modelCalled) modelCallCount += 1
         caseInputTokens = assisted.inputTokens
         caseOutputTokens = assisted.outputTokens
         inputTokens += caseInputTokens
@@ -364,11 +365,7 @@ Deno.serve(async (request) => {
         input_tokens: inputTokens,
         output_tokens: outputTokens,
         estimated_cost_aud: estimatedCostAud,
-        ambiguous_decision: reviewPassed
-          ? 'accepted'
-          : rejectedCount > 0
-            ? 'rejected'
-            : 'fallback',
+        ambiguous_decision: reviewPassed ? 'accepted' : rejectedCount > 0 ? 'rejected' : 'fallback',
       }),
     })
     if (reviewPassed)
