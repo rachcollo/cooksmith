@@ -1,5 +1,33 @@
 # CS-94 implementation report
 
+## Opportunity-level eligibility follow-up — 2026-08-04
+
+The v11 planner removes the contradictory full-recipe keyword scan from candidate eligibility.
+Recipe Intelligence already identifies a specific preparation action and supplies source IDs,
+lead-time metadata and safety boundaries; those fields now form the shared eligibility contract
+used by deterministic planning, model input and output validation. Full source prose remains
+available for task detail but is not treated as though every surrounding cooking step belongs to
+the selected preparation opportunity.
+
+The 30-case release corpus now includes realistic cooking language around safe opportunities and
+covers 15, 30, 45 and 60-minute budgets. Telemetry and evaluation evidence distinguish actual
+provider requests from deliberate no-candidate safety cases. A forward migration disables v10,
+invalidates its cache and requires fresh v11 evaluation plus hosted household smoke evidence.
+
+## Opportunity-level eligibility follow-up — 2026-08-04
+
+The v11 planner removes the contradictory full-recipe keyword scan from candidate eligibility.
+Recipe Intelligence already identifies a specific preparation action and supplies source IDs,
+lead-time metadata and safety boundaries; those fields now form the shared eligibility contract
+used by deterministic planning, model input and output validation. Full source prose remains
+available for task detail but is not treated as though every surrounding cooking step belongs to
+the selected preparation opportunity.
+
+The 30-case release corpus now includes realistic cooking language around safe opportunities and
+covers 15, 30, 45 and 60-minute budgets. Telemetry and evaluation evidence distinguish actual
+provider requests from deliberate no-candidate safety cases. A forward migration disables v10,
+invalidates its cache and requires fresh v11 evaluation plus hosted household smoke evidence.
+
 ## Planner lifecycle reliability follow-up — 2026-08-04
 
 The v10 planner treats a useful non-empty task set as the only cacheable success. It automatically

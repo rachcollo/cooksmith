@@ -1,4 +1,5 @@
 export const weeklyPreparationEvaluationPlanCount = 30 as const
+export const weeklyPreparationExpectedModelCalls = 27 as const
 export const weeklyPreparationMinimumQualityPasses = 28 as const
 
 export function passesWeeklyPreparationEvaluation(input: {
@@ -11,7 +12,7 @@ export function passesWeeklyPreparationEvaluation(input: {
 }) {
   return (
     input.planCount === weeklyPreparationEvaluationPlanCount &&
-    input.modelCallCount === weeklyPreparationEvaluationPlanCount &&
+    input.modelCallCount === weeklyPreparationExpectedModelCalls &&
     input.validOutputCount === input.modelCallCount &&
     input.fallbackCount === 0 &&
     input.unsupportedCount === 0 &&

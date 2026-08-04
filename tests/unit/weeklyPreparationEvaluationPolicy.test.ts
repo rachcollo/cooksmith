@@ -4,8 +4,8 @@ import { passesWeeklyPreparationEvaluation } from '../../src/domain/get-ahead/we
 
 const evidence = {
   planCount: 30,
-  modelCallCount: 30,
-  validOutputCount: 30,
+  modelCallCount: 27,
+  validOutputCount: 27,
   fallbackCount: 0,
   unsupportedCount: 0,
   reviewedCorrectCount: 28,
@@ -23,11 +23,11 @@ describe('weekly preparation evaluation policy', () => {
   })
 
   it.each([
-    { validOutputCount: 29 },
+    { validOutputCount: 26 },
     { fallbackCount: 1 },
     { unsupportedCount: 1 },
-    { modelCallCount: 29, validOutputCount: 29 },
-    { planCount: 29, modelCallCount: 29, validOutputCount: 29 },
+    { modelCallCount: 26, validOutputCount: 26 },
+    { planCount: 29, modelCallCount: 27, validOutputCount: 27 },
   ])('keeps hard validation evidence at zero tolerance: %o', (override) => {
     expect(passesWeeklyPreparationEvaluation({ ...evidence, ...override })).toBe(false)
   })

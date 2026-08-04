@@ -390,7 +390,96 @@ describe('weekly preparation plan', () => {
       originalText: 'Simmer chopped chillies, strain and brown beef.',
     })
 
-    expect(buildDeterministicWeeklyPreparationPlan([serving, cooking]).tasks).toEqual([])
+    expect(buildDeterministicWeeklyPreparationPlan([serving, cooking]).tasks).toHaveLength(2)
+  })
+
+  it('judges a source-linked opportunity by its action when full recipe prose mentions cooking', () => {
+    const vegetables = candidate('vegetables', {
+      canonicalIngredient: 'onion, carrot and celery',
+      canonicalAction: 'dice',
+      preparationDetail: 'Dice the vegetables for the soup base.',
+      originalText:
+        '1 onion, 2 carrots and 2 celery stalks. Dice the vegetables, then simmer with stock and serve hot.',
+      sourceIngredientId: 'onion+carrot+celery',
+      sourceStepIds: ['step-dice', 'step-simmer'],
+    })
+
+    const plan = buildDeterministicWeeklyPreparationPlan([vegetables])
+
+    expect(plan.tasks).toHaveLength(1)
+    expect(plan.tasks[0]).toMatchObject({
+      title: 'Dice onion, carrot and celery',
+      validation: 'validated',
+    })
+  })
+
+  it.each([15, 30, 45, 60])(
+    'builds a traceable household plan from real instruction text within %i minutes',
+    (availableMinutes) => {
+      const opportunities = [
+        candidate('soup-vegetables', {
+          canonicalIngredient: 'onion, carrot and celery',
+          canonicalAction: 'dice',
+          preparationDetail: 'Dice the vegetables for the soup base.',
+          originalText:
+            'Dice the onion, carrot and celery, then simmer in stock for 25 minutes and serve.',
+          sourceIngredientId: 'onion+carrot+celery',
+          sourceStepIds: ['step-vegetables', 'step-simmer'],
+        }),
+        candidate('chicken', {
+          canonicalIngredient: 'chicken breast',
+          canonicalAction: 'marinate',
+          preparationDetail: 'Coat the chicken in the yoghurt marinade.',
+          originalText:
+            'Coat the chicken, refrigerate, then preheat the oven and roast until cooked through.',
+          boundaries: ['raw-protein'],
+          sourceStepIds: ['step-marinate', 'step-roast'],
+        }),
+      ]
+      const result = applyAndValidateModelDecision(
+        buildDeterministicWeeklyPreparationPlan(opportunities),
+        opportunities,
+        {
+          tasks: [
+            {
+              candidateIds: ['soup-vegetables'],
+              title: 'Dice soup vegetables',
+              estimatedMinutes: 10,
+              estimatedTimeSavedMinutes: 15,
+            },
+            {
+              candidateIds: ['chicken'],
+              title: 'Marinate chicken breast',
+              estimatedMinutes: 8,
+              estimatedTimeSavedMinutes: 12,
+            },
+          ],
+        },
+        availableMinutes,
+      )
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.value.tasks.length).toBeGreaterThan(0)
+      expect(
+        result.value.tasks.reduce((minutes, task) => minutes + (task.estimatedMinutes ?? 0), 0),
+      ).toBeLessThanOrEqual(availableMinutes)
+      expect(
+        result.value.tasks.every((task) =>
+          task.subtasks.every((subtask) => subtask.sources.length > 0),
+        ),
+      ).toBe(true)
+    },
+  )
+
+  it('still rejects unsupported, untraceable or untimed opportunities', () => {
+    expect(
+      buildDeterministicWeeklyPreparationPlan([
+        candidate('cook', { canonicalAction: 'cook' }),
+        candidate('untraceable', { sourceStepIds: [] }),
+        candidate('untimed', { maximumLeadTimeHours: null }),
+      ]).tasks,
+    ).toEqual([])
   })
 
   it('keeps useful brown vegetables and sliced garnishes eligible', () => {

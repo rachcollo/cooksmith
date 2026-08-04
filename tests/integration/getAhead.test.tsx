@@ -100,7 +100,7 @@ const recipeRepository: RecipeRepository = {
 const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
   getCurrentPlan: async ({ weekStart, weekEnd }) => ({
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v10',
+    plannerVersion: 'weekly-preparation-planner-v11',
     householdId,
     planId: `${weekStart}_${weekEnd}`,
     cacheKey: 'useful-ai-plan',

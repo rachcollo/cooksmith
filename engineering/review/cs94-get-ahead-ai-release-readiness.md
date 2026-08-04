@@ -1,5 +1,27 @@
 # Engineering Package — CS-94: Get Ahead AI release readiness
 
+## v11 reliability acceptance addition
+
+- Safe, source-linked preparation opportunities remain eligible when full recipe instructions also
+  contain later cooking or serving steps.
+- Unsupported actions, missing source traceability, expired lead times and mixed hygiene boundaries
+  continue to fail closed.
+- The release evaluation uses realistic recipe prose and covers 15, 30, 45 and 60-minute budgets.
+- Provider telemetry must match actual requests; zero-token short-circuits cannot be reported as
+  model calls.
+- AI remains disabled until v11 evaluation and hosted household smoke evidence are accepted.
+
+## v11 reliability acceptance addition
+
+- Safe, source-linked preparation opportunities remain eligible when full recipe instructions also
+  contain later cooking or serving steps.
+- Unsupported actions, missing source traceability, expired lead times and mixed hygiene boundaries
+  continue to fail closed.
+- The release evaluation uses realistic recipe prose and covers 15, 30, 45 and 60-minute budgets.
+- Provider telemetry must match actual requests; zero-token short-circuits cannot be reported as
+  model calls.
+- AI remains disabled until v11 evaluation and hosted household smoke evidence are accepted.
+
 ## Metadata
 
 - **Milestone:** CS-94

@@ -37,7 +37,7 @@ describe('Weekly preparation representative evaluation', () => {
 
     expect(corpus).toHaveLength(30)
     expect(new Set(corpus.map((item) => item.key)).size).toBe(30)
-    expect(new Set(corpus.map((item) => item.availableMinutes))).toEqual(new Set([15, 30, 60]))
+    expect(new Set(corpus.map((item) => item.availableMinutes))).toEqual(new Set([15, 30, 45, 60]))
     expect(corpus.filter((item) => item.expectedEmpty)).toHaveLength(3)
     expect(
       corpus.some((item) =>
@@ -51,6 +51,24 @@ describe('Weekly preparation representative evaluation', () => {
       corpus
         .filter((item) => item.key.startsWith('raw-protein-boundary'))
         .every((item) => item.minimumUsefulTasks === 1),
+    ).toBe(true)
+    expect(
+      corpus.some((item) =>
+        item.candidates.some(
+          (candidate) =>
+            [
+              'chop',
+              'dice',
+              'grate',
+              'marinate',
+              'mince',
+              'roughly_chop',
+              'shred',
+              'slice',
+            ].includes(candidate.canonicalAction ?? '') &&
+            /\b(?:cook|serve|preheat)\b/i.test(candidate.originalText),
+        ),
+      ),
     ).toBe(true)
   })
 

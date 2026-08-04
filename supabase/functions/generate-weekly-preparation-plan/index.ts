@@ -237,7 +237,7 @@ Deno.serve(async (request) => {
         requestKey,
         outcome: 'failed',
         reasonCode: validated.reason,
-        modelCalled: true,
+        modelCalled: assisted.modelCalled,
         latencyMs: Date.now() - startedAt,
         inputTokens: assisted.inputTokens,
         outputTokens: assisted.outputTokens,
@@ -251,7 +251,7 @@ Deno.serve(async (request) => {
       requestKey,
       outcome: 'model-assisted',
       reasonCode: null,
-      modelCalled: true,
+      modelCalled: assisted.modelCalled,
       latencyMs: Date.now() - startedAt,
       inputTokens: assisted.inputTokens,
       outputTokens: assisted.outputTokens,
@@ -259,7 +259,7 @@ Deno.serve(async (request) => {
     return json(200, {
       plan: validated.value,
       metrics: {
-        modelCalled: true,
+        modelCalled: assisted.modelCalled,
         validation: 'accepted',
         inputTokens: assisted.inputTokens,
         outputTokens: assisted.outputTokens,

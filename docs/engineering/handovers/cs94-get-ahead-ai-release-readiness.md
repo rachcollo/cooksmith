@@ -1,5 +1,49 @@
 # CS-94 handover
 
+## 2026-08-04 opportunity-level eligibility correction
+
+- Baseline: `main` at `94b2696366cdfca778858e667346eef6dd84e6a6` (merge of PR #165).
+- Branch: `fix/cs-94-opportunity-level-eligibility`.
+- v11 judges each enriched preparation opportunity by its validated action, traceable source IDs,
+  lead time and safety boundaries. Unrelated cooking language in the complete source recipe no
+  longer removes otherwise useful vegetable, sauce, marinade or raw-protein preparation.
+- Full recipe prose is retained for expandable checklist detail, while model-created visible task
+  titles continue to reject cooking, serving and malformed content.
+- Evaluation fixtures now include realistic surrounding recipe instructions and cover 15, 30, 45
+  and 60-minute sessions. Provider telemetry records a model call only when a request is attempted;
+  the three deliberate no-candidate safety cases remain honest deterministic evidence.
+- Migration `20260804230000_cs94_opportunity_level_preparation_eligibility.sql` disables AI,
+  advances planner, prompt and corpus identities to v11, invalidates v10 caches and requires a
+  fresh accepted v11 evaluation and hosted smoke evidence.
+- Edge Functions changed: `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan` through the shared planner contract. Dependencies: none. Fixed cost:
+  A$0/month and A$0/year.
+- Release the migration and all three functions from the exact approved `main` SHA. Keep AI
+  disabled until the v11 evaluation is accepted and real household plans at 15, 30, 45 and 60
+  minutes produce at least one traceable task whenever eligible opportunities exist.
+
+## 2026-08-04 opportunity-level eligibility correction
+
+- Baseline: `main` at `94b2696366cdfca778858e667346eef6dd84e6a6` (merge of PR #165).
+- Branch: `fix/cs-94-opportunity-level-eligibility`.
+- v11 judges each enriched preparation opportunity by its validated action, traceable source IDs,
+  lead time and safety boundaries. Unrelated cooking language in the complete source recipe no
+  longer removes otherwise useful vegetable, sauce, marinade or raw-protein preparation.
+- Full recipe prose is retained for expandable checklist detail, while model-created visible task
+  titles continue to reject cooking, serving and malformed content.
+- Evaluation fixtures now include realistic surrounding recipe instructions and cover 15, 30, 45
+  and 60-minute sessions. Provider telemetry records a model call only when a request is attempted;
+  the three deliberate no-candidate safety cases remain honest deterministic evidence.
+- Migration `20260804230000_cs94_opportunity_level_preparation_eligibility.sql` disables AI,
+  advances planner, prompt and corpus identities to v11, invalidates v10 caches and requires a
+  fresh accepted v11 evaluation and hosted smoke evidence.
+- Edge Functions changed: `evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan` through the shared planner contract. Dependencies: none. Fixed cost:
+  A$0/month and A$0/year.
+- Release the migration and all three functions from the exact approved `main` SHA. Keep AI
+  disabled until the v11 evaluation is accepted and real household plans at 15, 30, 45 and 60
+  minutes produce at least one traceable task whenever eligible opportunities exist.
+
 ## 2026-08-04 planner lifecycle reliability correction
 
 - Baseline: `main` at `be093690ee66c47dcdb42a5301f140001c9daad9` (merge of PR #164).
