@@ -229,6 +229,20 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(migration).toContain('never household recipe data')
   })
 
+  it('allows every v11 evaluation duration in persisted case evidence', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260804233000_cs94_allow_45_minute_evaluation_cases.sql',
+      'utf8',
+    )
+
+    expect(migration).toContain(
+      'available_minutes is null or available_minutes in (15, 30, 45, 60)',
+    )
+    expect(migration).toContain(
+      'drop constraint weekly_preparation_evaluation_available_minutes_valid',
+    )
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],

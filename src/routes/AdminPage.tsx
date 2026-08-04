@@ -579,7 +579,7 @@ function WeeklyPreparationOperations() {
               correct individual evaluation cases.
             </p>
             <ul>
-              <li>Sessions must stay within 15, 30 or 60 minutes.</li>
+              <li>Sessions must stay within 15, 30, 45 or 60 minutes.</li>
               <li>Tasks must use supplied recipe preparation and take at least 5 minutes.</li>
               <li>
                 Recipe-ready vegetable prep is useful work, including a single chopping task or a
