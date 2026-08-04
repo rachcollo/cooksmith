@@ -291,3 +291,28 @@ This correction requires an Edge Function release only and no database migration
 - Edge Function changed: `generate-weekly-preparation-plan` through its shared domain import.
 - Migration and dependencies: none. Fixed cost impact: A$0/month and A$0/year. Existing bounded
   provider limits are unchanged.
+
+## Complete household plan experience correction
+
+- Baseline: `main` at `c029cdf`.
+- Branch: `fix/cs-94-complete-prep-plan-experience`.
+- Each validated AI task remains one checklist card. Its source-linked subtasks, recipe names,
+  ingredient quantities and exact source instructions are retained in the saved session and shown
+  through an accessible disclosure.
+- Household failures now distinguish no planned meals, recipes still preparing, completed
+  enrichments with no useful opportunities, opportunities that are too early, and genuine provider
+  or generation failure. The status action no longer overlaps the duration form on mobile.
+- Planner and evaluation identities advance to v9. Readiness now requires at least one active v2
+  preparation opportunity for every current recipe version, and the migration requeues only current
+  empty v2 results for bounded repair.
+- Migration: `20260804120000_cs94_complete_get_ahead_plan_experience.sql`.
+- Edge Functions changed: `enrich-recipe` for the bounded repair job,
+  `evaluate-weekly-preparation` and
+  `generate-weekly-preparation-plan` through the shared v9 planner contract, plus
+  `get-weekly-preparation-plan` directly.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year. Existing provider limits
+  remain unchanged.
+- Release order: deploy `enrich-recipe`, apply the forward migration, deploy the three weekly
+  preparation Edge Functions from the same approved
+  SHA, allow the requeued empty enrichments to finish, run and accept one fresh v9 evaluation, then
+  enable AI and verify both affected real household weeks.

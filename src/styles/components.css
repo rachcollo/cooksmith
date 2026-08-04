@@ -2456,6 +2456,50 @@ button.card:hover {
   text-decoration: line-through;
 }
 
+.task-row-details {
+  border-top: 1px solid var(--colour-border);
+  padding: 0 var(--space-4) var(--space-4) calc(var(--space-4) + 2.35rem);
+}
+
+.task-row-details summary {
+  color: var(--colour-brand);
+  cursor: pointer;
+  font-weight: 700;
+  min-height: var(--touch-target);
+  padding: var(--space-3) 0;
+}
+
+.task-row-details ol {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.task-row-details li > span {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.get-ahead-status-panel {
+  align-items: start;
+  background: var(--colour-surface-raised);
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius-large);
+  margin-bottom: var(--space-4);
+  max-width: 48rem;
+  padding: var(--space-4);
+}
+
+.get-ahead-status-panel p {
+  color: var(--colour-text-muted);
+  margin: var(--space-1) 0 0;
+}
+
+.get-ahead-status-panel .button {
+  width: 100%;
+}
+
 .compact-page-header {
   margin-bottom: var(--space-3);
 }

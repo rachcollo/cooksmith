@@ -338,3 +338,32 @@ Package PR title: `chore(package): CS-94 — Get Ahead AI release readiness`
 Implementation PR title: `CS-94: Make Get Ahead AI generation safe to evaluate, activate and operate`
 
 Both PRs must link [CS-94](https://smillins.atlassian.net/browse/CS-94). The package PR is documentation-only and declares **Migrations in this PR: no** and **Edge Functions changed in this PR: no**. The implementation PR must list every migration, both weekly-preparation Edge Functions, configuration prerequisite, baseline, RLS evidence, test/Preview evidence, unrun checks, cost, deployment order, explicit evaluation/acceptance/activation actions, rollback and limitations.
+
+## Complete household plan experience correction
+
+Real household testing after v8 showed that a validated grouped AI task was flattened into repeated
+checklist cards and its useful source detail was discarded. It also showed that recipes with an
+empty `preparationOpportunities` array could satisfy the release gate, while no-meal, empty-insight,
+lead-time and provider outcomes collapsed into one generic failure.
+
+The approved correction advances Get Ahead to v9 and requires:
+
+- one checklist card per validated AI task, with its subtasks preserved in the saved session;
+- an accessible tap-to-expand section containing source-linked instructions, ingredient quantities
+  and recipe attribution;
+- distinct calm states for no planned meals, incomplete recipe insights, empty recipe insights,
+  preparation that is too early and genuine generation failure;
+- a real recipe-bank readiness gate requiring at least one validated v2 preparation opportunity for
+  every current recipe version;
+- bounded re-enrichment of current empty v2 results during the forward release; and
+- invalidation of v8 plans and evaluation acceptance before v9 activation.
+
+This supports Product Principles 1, 2, 5, 7, 8 and 10. It removes duplicate checklist work and the
+need to reopen recipes while keeping safety and source validation authoritative. No dependency or
+provider change is introduced. Fixed cost remains A$0/month and A$0/year; the one-off repair uses
+the existing bounded enrichment controls.
+
+The release deploys `enrich-recipe` before applying the migration so its new provider-assisted-v2
+repair jobs are consumed by the correct worker contract. It then deploys
+`evaluate-weekly-preparation`, `generate-weekly-preparation-plan` and
+`get-weekly-preparation-plan` from the same approved SHA.

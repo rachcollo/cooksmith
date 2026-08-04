@@ -58,6 +58,7 @@ describe('recipe enrichment Edge Function', () => {
   it('applies provider usage limits only to provider-assisted jobs', () => {
     expect(source).toContain('model_key=neq.deterministic')
     expect(source).toContain("job.model_key === 'provider-assisted-v1'")
+    expect(source).toContain("job.model_key === 'provider-assisted-v2'")
   })
 
   it('uses a strict Responses API schema with Cooksmith validation and safe diagnostics', () => {

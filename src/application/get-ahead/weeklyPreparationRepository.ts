@@ -11,7 +11,12 @@ export interface WeeklyPreparationRepository {
 }
 
 export type WeeklyPreparationUnavailableReason =
-  'recipes_preparing' | 'ai_unavailable' | 'temporarily_unavailable'
+  | 'no_planned_meals'
+  | 'recipes_preparing'
+  | 'recipes_without_opportunities'
+  | 'opportunities_not_ready_yet'
+  | 'ai_unavailable'
+  | 'temporarily_unavailable'
 
 export class WeeklyPreparationUnavailableError extends Error {
   constructor(readonly reason: WeeklyPreparationUnavailableReason) {

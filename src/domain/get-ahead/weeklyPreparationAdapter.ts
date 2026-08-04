@@ -27,65 +27,86 @@ export function weeklyPreparationPlanToOpportunities(
   const mealById = new Map(meals.map((meal) => [meal.id, meal]))
   const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]))
 
-  return plan.tasks.flatMap((task) =>
-    task.subtasks.flatMap((subtask) => {
-      const primary = subtask.sources[0]
-      if (!primary) return []
-      const meal = mealById.get(primary.plannedMealId)
-      const recipe = recipeById.get(primary.recipeId)
-      if (!meal || !recipe) return []
+  return plan.tasks.flatMap((task) => {
+    const sources = task.subtasks.flatMap((subtask) => subtask.sources)
+    const primary = sources[0]
+    if (!primary) return []
+    const meal = mealById.get(primary.plannedMealId)
+    const recipe = recipeById.get(primary.recipeId)
+    if (
+      !meal ||
+      !recipe ||
+      sources.some(
+        (source) => !mealById.has(source.plannedMealId) || !recipeById.has(source.recipeId),
+      )
+    )
+      return []
+    const recipeNames = namesFor(sources, recipeById)
 
-      return [
-        {
-          id: `weekly:${plan.cacheKey}:${subtask.id}`,
-          ruleVersion: preparationOpportunityRuleVersion,
-          type: opportunityType(subtask),
-          householdId: plan.householdId,
-          plannedMealId: meal.id,
-          mealDate: meal.mealDate,
-          mealType: meal.mealType,
-          recipeId: recipe.id,
-          recipeName: recipe.name,
-          recipeUpdatedAt: recipe.updatedAt,
-          source: {
-            kind: 'ingredient',
-            ingredientId: primary.sourceIngredientId,
-            position: 0,
-            text: primary.originalText,
-          },
-          ingredient: {
-            name: task.canonicalCategory,
-            quantity: displayQuantity(subtask),
-            unit: subtask.quantity.unit,
-            preparation: subtask.preparationDetail,
-          },
-          reason: sourceSummary(subtask, recipeById),
-          suggestedTitle: task.title,
-          estimatedMinutes: task.estimatedMinutes,
-          estimatedTimeSavedMinutes: task.estimatedTimeSavedMinutes,
-          storageGuidance: task.storageGuidance,
-          priority: task.priority,
-        } satisfies PreparationOpportunity,
-      ]
-    }),
+    return [
+      {
+        id: `weekly:${plan.cacheKey}:${task.id}`,
+        ruleVersion: preparationOpportunityRuleVersion,
+        type: opportunityType(task.subtasks[0]),
+        householdId: plan.householdId,
+        plannedMealId: meal.id,
+        mealDate: meal.mealDate,
+        mealType: meal.mealType,
+        recipeId: recipe.id,
+        recipeName: recipe.name,
+        recipeUpdatedAt: recipe.updatedAt,
+        source: {
+          kind: 'ingredient',
+          ingredientId: primary.sourceIngredientId,
+          position: 0,
+          text: task.title,
+        },
+        ingredient: {
+          name: task.canonicalCategory,
+          quantity: null,
+          unit: null,
+          preparation: task.title,
+        },
+        reason:
+          recipeNames.length > 0
+            ? `For ${recipeNames.join(' and ')}.`
+            : 'For this week’s planned meals.',
+        suggestedTitle: task.title,
+        estimatedMinutes: task.estimatedMinutes,
+        estimatedTimeSavedMinutes: task.estimatedTimeSavedMinutes,
+        storageGuidance: task.storageGuidance,
+        priority: task.priority,
+        taskDetails: task.subtasks.map((subtask) => ({
+          id: subtask.id,
+          title: subtask.title,
+          instruction: subtask.sources.map((source) => source.originalText).join(' '),
+          quantity: displayQuantity(subtask),
+          recipeNames: namesFor(subtask.sources, recipeById),
+        })),
+      } satisfies PreparationOpportunity,
+    ]
+  })
+}
+
+function opportunityType(
+  subtask: WeeklyPreparationSubtask | undefined,
+): PreparationOpportunityType {
+  return (
+    actionTypes[subtask?.canonicalAction?.toLowerCase() ?? ''] ?? 'duplicate-preparation-signal'
   )
 }
 
-function opportunityType(subtask: WeeklyPreparationSubtask): PreparationOpportunityType {
-  return actionTypes[subtask.canonicalAction?.toLowerCase() ?? ''] ?? 'duplicate-preparation-signal'
-}
-
 function displayQuantity(subtask: WeeklyPreparationSubtask) {
-  return subtask.quantity.value === null ? null : String(subtask.quantity.value)
+  if (subtask.quantity.value === null) return null
+  return `${subtask.quantity.value}${subtask.quantity.unit ? ` ${subtask.quantity.unit}` : ''}`
 }
 
-function sourceSummary(subtask: WeeklyPreparationSubtask, recipes: Map<string, Recipe>) {
-  const names = [
+function namesFor(sources: WeeklyPreparationSubtask['sources'], recipes: Map<string, Recipe>) {
+  return [
     ...new Set(
-      subtask.sources
+      sources
         .map((source) => recipes.get(source.recipeId)?.name)
         .filter((name): name is string => Boolean(name)),
     ),
   ]
-  return names.length > 0 ? `For ${names.join(' and ')}.` : 'For this week’s planned meals.'
 }
