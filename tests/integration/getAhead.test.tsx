@@ -100,7 +100,7 @@ const recipeRepository: RecipeRepository = {
 const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
   getCurrentPlan: async ({ weekStart, weekEnd }) => ({
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v11',
+    plannerVersion: 'weekly-preparation-planner-v12',
     householdId,
     planId: `${weekStart}_${weekEnd}`,
     cacheKey: 'useful-ai-plan',
@@ -116,6 +116,7 @@ const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
         reasonCode: 'compatible',
         confidence: 'high',
         validation: 'validated',
+        storageGuidance: 'Refrigerate in a covered container until ready to use.',
         subtasks: [
           {
             id: 'subtask-onion',
@@ -232,12 +233,17 @@ describe('Get Ahead page', () => {
     expect(within(task).queryByText(/More actions/u)).not.toBeInTheDocument()
     expect(within(task).queryByText(/explicitly describes/u)).not.toBeInTheDocument()
     expect(within(task).getAllByText('For Simple pasta.')[0]).toBeVisible()
+    expect(
+      within(task).getByText('Refrigerate in a covered container until ready to use.'),
+    ).toBeVisible()
     const disclosure = within(task).getByText('Show what to do')
     expect(disclosure).toBeVisible()
     await user.click(disclosure)
     expect(disclosure.closest('details')).toHaveAttribute('open')
     expect(within(task).getByText('Quantity: 1')).toBeVisible()
     expect(within(task).getByText('1 onion, diced')).toBeVisible()
+    expect(within(task).getByText('Simple pasta')).toBeVisible()
+    expect(within(task).queryAllByText('Dice onion')).toHaveLength(1)
     expect(screen.queryByText(/Recommended because/u)).not.toBeInTheDocument()
 
     await user.click(checkbox)
