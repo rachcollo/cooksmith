@@ -182,13 +182,38 @@ function candidatesFrom(
             unit: ingredient?.quantity.unit ?? null,
           },
           maximumLeadTimeHours: opportunity.maximumLeadTimeHours,
-          storageGuidanceReference: null,
+          storageGuidanceReference: storageGuidanceReferenceFor(opportunity),
           boundaries: opportunity.boundaries,
           confidence: opportunity.confidence,
         } satisfies WeeklyPreparationCandidate,
       ]
     })
   })
+}
+
+function storageGuidanceReferenceFor(
+  opportunity: RecipeIntelligence['preparationOpportunities'][number],
+) {
+  const ingredient = opportunity.canonicalIngredient.trim().toLocaleLowerCase('en-AU')
+  if (
+    ingredient.includes('potato') &&
+    ['slice', 'dice', 'chop', 'roughly_chop'].includes(opportunity.action)
+  )
+    return 'refrigerate-potatoes-covered-in-water'
+  if (
+    opportunity.boundaries.includes('raw-protein') ||
+    opportunity.boundaries.includes('cross-contamination')
+  )
+    return 'refrigerate-raw-protein-covered'
+  if (
+    ['slice', 'dice', 'chop', 'roughly_chop', 'mince', 'grate', 'shred'].includes(
+      opportunity.action,
+    )
+  )
+    return 'refrigerate-prepared-produce-covered'
+  if (['marinate', 'mix', 'whisk', 'blend'].includes(opportunity.action))
+    return 'refrigerate-prepared-component-covered'
+  return null
 }
 
 function sourceInstructions(

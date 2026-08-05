@@ -1,10 +1,10 @@
 import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v11' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v12' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v6',
+  version: 'weekly-preparation-quality-v7',
   timeBudgets: [15, 30, 45, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
@@ -147,6 +147,7 @@ export function createWeeklyPreparationCacheKey(candidates: WeeklyPreparationCan
           candidate.quantity.value ?? 'unknown',
           candidate.quantity.unit ?? 'unknown',
           candidate.maximumLeadTimeHours ?? 'unknown',
+          candidate.storageGuidanceReference ?? 'unknown',
           candidate.canonicalAction ?? 'unknown',
           candidate.preparationDetail ?? 'unknown',
           [...candidate.boundaries].sort().join(','),
@@ -330,7 +331,18 @@ export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparatio
   if (!action || !safePreparationActions.has(action)) return false
   if (!candidate.canonicalIngredient?.trim()) return false
   if (!candidate.sourceIngredientId.trim() || candidate.sourceStepIds.length === 0) return false
-  return candidate.maximumLeadTimeHours !== null
+  if (candidate.maximumLeadTimeHours === null) return false
+  return isWorthwhilePreparation(candidate)
+}
+
+function isWorthwhilePreparation(candidate: WeeklyPreparationCandidate) {
+  const ingredient = candidate.canonicalIngredient?.trim().toLocaleLowerCase('en-AU') ?? ''
+  const action = candidate.canonicalAction?.trim().toLocaleLowerCase('en-AU') ?? ''
+
+  // Handling butter on its own does not remove meaningful midweek work. Butter can still be
+  // included when it forms part of a source-backed sauce, dough, batter or other component.
+  if (ingredient === 'butter' && ['mix', 'whisk'].includes(action)) return false
+  return true
 }
 
 function isConcisePreparationTitle(title: string) {
@@ -387,8 +399,23 @@ function preparationHygieneClass(candidate: WeeklyPreparationCandidate) {
     : 'clean'
 }
 
-function storageGuidanceFor(_candidates: WeeklyPreparationCandidate[]) {
-  return undefined
+function storageGuidanceFor(candidates: WeeklyPreparationCandidate[]) {
+  if (candidates.every((candidate) => preparationHygieneClass(candidate) === 'raw-protein'))
+    return 'Season if required, then refrigerate in a covered container until ready to cook.'
+  const references = [...new Set(candidates.map((candidate) => candidate.storageGuidanceReference))]
+  if (references.length !== 1) return undefined
+  switch (references[0]) {
+    case 'refrigerate-potatoes-covered-in-water':
+      return 'Store covered in water in the fridge until ready to cook.'
+    case 'refrigerate-raw-protein-covered':
+      return 'Season if required, then refrigerate in a covered container until ready to cook.'
+    case 'refrigerate-prepared-produce-covered':
+      return 'Refrigerate in a covered container until ready to use.'
+    case 'refrigerate-prepared-component-covered':
+      return 'Refrigerate in a covered container until ready to use.'
+    default:
+      return undefined
+  }
 }
 
 export function withWeeklyPreparationFallback(
@@ -406,6 +433,7 @@ function partitionByCompatibility(candidates: WeeklyPreparationCandidate[]) {
       candidate.preparationDetail ?? '',
       candidate.quantity.unit ?? '',
       candidate.maximumLeadTimeHours ?? 'unknown',
+      candidate.storageGuidanceReference ?? 'unknown',
       [...candidate.boundaries].sort().join(','),
       candidate.confidence === 'low' || candidate.confidence === 'unknown' ? candidate.id : '',
     ].join('|')

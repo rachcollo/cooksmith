@@ -1,5 +1,26 @@
 # CS-94 handover
 
+## 2026-08-05 useful preparation task correction
+
+- Baseline: `main` at `5c8bf7fa676a9f3f15a20412fa913c88aa8a34e0` (merge of PR #167).
+- Branch: `fix/cs-94-useful-prep-task-presentation`.
+- v12 rejects low-value standalone ingredient handling such as melting butter, adds validated
+  handling guidance to worthwhile potato, produce, component and raw-protein tasks, and includes
+  that guidance in cache and compatibility identity.
+- The task card shows the make-ahead action and handling guidance before expansion. **Show what to
+  do** shows each recipe name, quantity and source instruction once, without repeating the generated
+  task title.
+- Work outside its validated lead time remains excluded. The household message now explains that
+  the prep is better done closer to cooking day rather than presenting the safety outcome as a
+  generation error.
+- Migration `20260805010000_cs94_useful_preparation_tasks.sql` disables AI, advances planner,
+  prompt and corpus identities to v12, clears hosted smoke evidence and invalidates v11 caches.
+- Edge Functions changed: `generate-weekly-preparation-plan` and
+  `get-weekly-preparation-plan`. Dependencies: none. Fixed cost: A$0/month and A$0/year.
+- After merge, release the migration and both Edge Functions from the exact approved `main` SHA,
+  then run, review and accept the v12 evaluation and verify real this-week and too-early next-week
+  plans before enabling AI.
+
 ## 2026-08-04 45-minute evaluation evidence correction
 
 - Migration `20260804233000_cs94_allow_45_minute_evaluation_cases.sql` forward-replaces the

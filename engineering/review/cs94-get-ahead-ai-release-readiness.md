@@ -1,5 +1,18 @@
 # Engineering Package — CS-94: Get Ahead AI release readiness
 
+## v12 useful-task acceptance addition
+
+- A checklist card describes one worthwhile make-ahead outcome, not a trivial ingredient-handling
+  step such as melting butter.
+- The visible task pairs the preparation action with validated storage or handling guidance when
+  Cooksmith has an approved rule for it.
+- Expanding a task shows each source recipe and its relevant instruction once; generated and source
+  text are not duplicated.
+- Preparation that is genuinely too early remains excluded and is explained as a scheduling and
+  food-quality outcome rather than a generation error.
+- The planner, prompt and quality identities advance together, invalidate cached v11 plans and
+  require fresh v12 evaluation and smoke evidence before activation.
+
 ## v11 reliability acceptance addition
 
 - Safe, source-linked preparation opportunities remain eligible when full recipe instructions also

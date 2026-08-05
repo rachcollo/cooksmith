@@ -608,7 +608,7 @@ function GetAheadTaskRow({
         />
         <span className="task-row-title">
           <strong>{task.title}</strong>
-          {task.storageGuidance ? <small>{task.storageGuidance}</small> : null}
+          {task.storageGuidance ? <span>{task.storageGuidance}</span> : null}
           {task.consolidation && task.consolidation.sources.length > 1 ? (
             <small>
               Helps with{' '}
@@ -631,10 +631,9 @@ function GetAheadTaskRow({
           <ol>
             {task.taskDetails.map((detail) => (
               <li key={detail.id}>
-                <strong>{detail.title}</strong>
+                <strong>{detail.recipeNames.join(' and ')}</strong>
                 {detail.quantity ? <span>Quantity: {detail.quantity}</span> : null}
                 <span>{detail.instruction}</span>
-                <small>For {detail.recipeNames.join(' and ')}.</small>
               </li>
             ))}
           </ol>
@@ -666,9 +665,9 @@ function unavailablePlanCopy(reason: WeeklyPreparationUnavailableReason) {
       }
     case 'opportunities_not_ready_yet':
       return {
-        title: 'Nothing useful to prepare yet',
+        title: 'This prep is better done closer to cooking day',
         message:
-          'These meals have useful prep steps, but doing them this early would reduce quality or safety. Try closer to the meal dates.',
+          'Cooksmith found useful steps, but storing them from today would reduce quality or safety. Your meals are still ready to plan closer to their cooking dates.',
         retryable: false,
       }
     case 'no_worthwhile_preparation':

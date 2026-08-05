@@ -167,7 +167,9 @@ describe('weekly preparation plan', () => {
     })
     expect(rawOnly.ok).toBe(true)
     if (rawOnly.ok) {
-      expect(rawOnly.value.tasks[0]?.storageGuidance).toBeUndefined()
+      expect(rawOnly.value.tasks[0]?.storageGuidance).toBe(
+        'Season if required, then refrigerate in a covered container until ready to cook.',
+      )
     }
 
     expect(
@@ -182,6 +184,54 @@ describe('weekly preparation plan', () => {
         ],
       }),
     ).toEqual({ ok: false, reason: 'mixed_hygiene_boundary' })
+  })
+
+  it('rejects low-value standalone butter handling', () => {
+    const butter = candidate('butter', {
+      canonicalIngredient: 'butter',
+      canonicalAction: 'mix',
+      preparationDetail: 'melted',
+    })
+
+    expect(buildDeterministicWeeklyPreparationPlan([butter]).tasks).toEqual([])
+    expect(
+      applyAndValidateModelDecision(
+        buildDeterministicWeeklyPreparationPlan([butter]),
+        [butter],
+        {
+          tasks: [
+            {
+              candidateIds: ['butter'],
+              title: 'Melt butter',
+              estimatedMinutes: 5,
+              estimatedTimeSavedMinutes: 1,
+            },
+          ],
+        },
+        30,
+      ),
+    ).toEqual({ ok: false, reason: 'unsafe_make_ahead_task' })
+  })
+
+  it('adds validated storage guidance for potatoes and raw protein', () => {
+    const potatoes = candidate('potatoes', {
+      canonicalIngredient: 'potatoes',
+      canonicalAction: 'slice',
+      storageGuidanceReference: 'refrigerate-potatoes-covered-in-water',
+    })
+    const beef = candidate('beef', {
+      canonicalIngredient: 'chuck beef',
+      canonicalAction: 'dice',
+      boundaries: ['raw-protein'],
+      storageGuidanceReference: 'refrigerate-raw-protein-covered',
+    })
+
+    expect(buildDeterministicWeeklyPreparationPlan([potatoes]).tasks[0]?.storageGuidance).toBe(
+      'Store covered in water in the fridge until ready to cook.',
+    )
+    expect(buildDeterministicWeeklyPreparationPlan([beef]).tasks[0]?.storageGuidance).toBe(
+      'Season if required, then refrigerate in a covered container until ready to cook.',
+    )
   })
 
   it('deduplicates repeated known candidates without weakening reference validation', () => {

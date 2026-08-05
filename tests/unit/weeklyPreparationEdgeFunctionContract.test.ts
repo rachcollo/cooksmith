@@ -243,6 +243,18 @@ describe('weekly preparation Edge Function contracts', () => {
     )
   })
 
+  it('requires v12 acceptance after the useful-task contract changes', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260805010000_cs94_useful_preparation_tasks.sql',
+      'utf8',
+    )
+
+    expect(migration).toContain("corpus_version = 'weekly-preparation-corpus-v12'")
+    expect(migration).toContain("prompt_version = 'weekly-preparation-strategy-v12'")
+    expect(migration).toContain("acceptance.planner_version = 'weekly-preparation-planner-v12'")
+    expect(migration).toContain('ai_enabled = false')
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],
