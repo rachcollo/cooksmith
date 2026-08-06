@@ -59,7 +59,7 @@ select throws_ok(
       set ai_enabled = true, emergency_stop = false
     where singleton$$,
   '23514',
-  'Current smoke test, recipe coverage and accepted 30-plan evaluation required',
+  'Current v13 smoke test, recipe coverage and accepted evaluation required',
   'AI cannot be enabled before the hosted evaluation is accepted'
 );
 
@@ -88,10 +88,10 @@ insert into cooksmith.weekly_preparation_evaluation_runs (
   completed_at,
   deployment_sha
 ) values (
-  'weekly-preparation-corpus-v12',
+  'weekly-preparation-corpus-v13',
   'weekly-preparation-plan-v2',
-  'weekly-preparation-planner-v12',
-  'weekly-preparation-strategy-v12',
+  'weekly-preparation-planner-v13',
+  'weekly-preparation-strategy-v13',
   'test-model',
   'test-pricing',
   30,
@@ -181,7 +181,7 @@ select throws_ok(
       set ai_enabled = true, emergency_stop = false
     where singleton$$,
   '23514',
-  'Current smoke test, recipe coverage and accepted 30-plan evaluation required',
+  'Current v13 smoke test, recipe coverage and accepted evaluation required',
   'AI cannot activate when smoke and evaluation came from different deployments'
 );
 reset role;
@@ -189,8 +189,8 @@ update cooksmith.weekly_preparation_settings
 set smoke_deployment_sha = repeat('a', 40)
 where singleton;
 
--- The v9 activation gate also requires every current recipe version to have
--- completed Recipe Intelligence v2 evidence. Complete the migration-created
+-- The v13 activation gate also requires every current recipe version to have
+-- completed bounded Recipe Intelligence v3 evidence. Complete the migration-created
 -- jobs here so this fixture tests the successful control path with the same
 -- readiness contract as Production.
 update cooksmith.recipe_enrichments
@@ -203,8 +203,8 @@ set
   completed_at = now(),
   leased_until = null,
   failure_category = null
-where schema_version = 'recipe-intelligence-v2'
-  and rules_version = 'cooksmith-rules-v2'
+where schema_version = 'recipe-intelligence-v3'
+  and rules_version = 'cooksmith-rules-v3'
   and recipe_version_id in (
     select distinct on (source_kind, recipe_id, imported_recipe_id) id
     from cooksmith.recipe_content_versions
@@ -215,12 +215,20 @@ update cooksmith.recipe_enrichments
 set
   result = jsonb_build_object(
     'preparationOpportunities',
-    jsonb_build_array(jsonb_build_object('opportunityId', 'real-recipe-coverage'))
+    jsonb_build_array(jsonb_build_object(
+      'opportunityId', 'real-recipe-coverage',
+      'kind', 'component_prep',
+      'ingredientLines', jsonb_build_array('1 onion, diced'),
+      'instructionSteps', jsonb_build_array('Dice the onion.'),
+      'stoppingPoint', 'Stop when the onion is diced.',
+      'storageGuidance', 'Refrigerate in a covered container.',
+      'finishingGuidance', 'Add to the recipe on the night.'
+    ))
   ),
   is_active = true,
   activated_at = now()
-where schema_version = 'recipe-intelligence-v2'
-  and rules_version = 'cooksmith-rules-v2'
+where schema_version = 'recipe-intelligence-v3'
+  and rules_version = 'cooksmith-rules-v3'
   and recipe_version_id in (
     select distinct on (source_kind, recipe_id, imported_recipe_id) id
     from cooksmith.recipe_content_versions
@@ -238,12 +246,20 @@ select
   'test', job.model_key,
   jsonb_build_object(
     'preparationOpportunities',
-    jsonb_build_array(jsonb_build_object('opportunityId', 'real-recipe-coverage'))
+    jsonb_build_array(jsonb_build_object(
+      'opportunityId', 'real-recipe-coverage',
+      'kind', 'component_prep',
+      'ingredientLines', jsonb_build_array('1 onion, diced'),
+      'instructionSteps', jsonb_build_array('Dice the onion.'),
+      'stoppingPoint', 'Stop when the onion is diced.',
+      'storageGuidance', 'Refrigerate in a covered container.',
+      'finishingGuidance', 'Add to the recipe on the night.'
+    ))
   ),
   'high', true, now()
 from cooksmith.recipe_enrichment_jobs job
-where job.schema_version = 'recipe-intelligence-v2'
-  and job.rules_version = 'cooksmith-rules-v2'
+where job.schema_version = 'recipe-intelligence-v3'
+  and job.rules_version = 'cooksmith-rules-v3'
   and job.recipe_version_id in (
     select distinct on (source_kind, recipe_id, imported_recipe_id) id
     from cooksmith.recipe_content_versions
