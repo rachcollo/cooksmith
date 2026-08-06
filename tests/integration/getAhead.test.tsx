@@ -100,7 +100,7 @@ const recipeRepository: RecipeRepository = {
 const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
   getCurrentPlan: async ({ weekStart, weekEnd }) => ({
     schemaVersion: 'weekly-preparation-plan-v2',
-    plannerVersion: 'weekly-preparation-planner-v12',
+    plannerVersion: 'weekly-preparation-planner-v13',
     householdId,
     planId: `${weekStart}_${weekEnd}`,
     cacheKey: 'useful-ai-plan',
@@ -133,6 +133,10 @@ const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
                 sourceIngredientId: 'ingredient-onion',
                 sourceStepIds: [],
                 originalText: '1 onion, diced',
+                ingredientLines: ['1 onion'],
+                instructionSteps: ['Peel and dice the onion.'],
+                stoppingPoint: 'The onion is diced.',
+                finishingGuidance: 'Add to the pasta sauce on the night.',
               },
             ],
           },
@@ -240,8 +244,12 @@ describe('Get Ahead page', () => {
     expect(disclosure).toBeVisible()
     await user.click(disclosure)
     expect(disclosure.closest('details')).toHaveAttribute('open')
-    expect(within(task).getByText('Quantity: 1')).toBeVisible()
-    expect(within(task).getByText('1 onion, diced')).toBeVisible()
+    expect(within(task).getByText('Ingredients')).toBeVisible()
+    expect(within(task).getByText('1 onion')).toBeVisible()
+    expect(within(task).getByText('Steps')).toBeVisible()
+    expect(within(task).getByText('Peel and dice the onion.')).toBeVisible()
+    expect(within(task).getByText(/The onion is diced/u)).toBeVisible()
+    expect(within(task).getByText(/Add to the pasta sauce on the night/u)).toBeVisible()
     expect(within(task).getByText('Simple pasta')).toBeVisible()
     expect(within(task).queryAllByText('Dice onion')).toHaveLength(1)
     expect(screen.queryByText(/Recommended because/u)).not.toBeInTheDocument()

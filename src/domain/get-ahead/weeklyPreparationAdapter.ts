@@ -82,10 +82,29 @@ export function weeklyPreparationPlanToOpportunities(
           instruction: subtask.sources.map((source) => source.originalText).join(' '),
           quantity: displayQuantity(subtask),
           recipeNames: namesFor(subtask.sources, recipeById),
+          ingredients: uniqueSourceValues(subtask.sources, 'ingredientLines'),
+          steps: uniqueSourceValues(subtask.sources, 'instructionSteps'),
+          stoppingPoint: firstSourceValue(subtask.sources, 'stoppingPoint'),
+          finishingGuidance: firstSourceValue(subtask.sources, 'finishingGuidance'),
         })),
       } satisfies PreparationOpportunity,
     ]
   })
+}
+
+function uniqueSourceValues(
+  sources: WeeklyPreparationSubtask['sources'],
+  key: 'ingredientLines' | 'instructionSteps',
+) {
+  const values = [...new Set(sources.flatMap((source) => source[key] ?? []))]
+  return values.length > 0 ? values : undefined
+}
+
+function firstSourceValue(
+  sources: WeeklyPreparationSubtask['sources'],
+  key: 'stoppingPoint' | 'finishingGuidance',
+) {
+  return sources.map((source) => source[key]).find((value): value is string => Boolean(value))
 }
 
 function opportunityType(

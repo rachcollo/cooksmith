@@ -1,25 +1,36 @@
-import type { EnrichmentConfidence, QuantityState } from '../recipes/intelligence'
+import type {
+  EnrichmentConfidence,
+  QuantityState,
+  RecipePreparationOpportunityKind,
+} from '../recipes/intelligence'
 
 export const weeklyPreparationPlanSchemaVersion = 'weekly-preparation-plan-v2' as const
-export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v12' as const
+export const weeklyPreparationPlannerVersion = 'weekly-preparation-planner-v13' as const
 
 export const weeklyPreparationQualityRules = {
-  version: 'weekly-preparation-quality-v7',
+  version: 'weekly-preparation-quality-v8',
   timeBudgets: [15, 30, 45, 60],
   minimumTaskMinutes: 5,
   maximumTaskMinutes: 120,
   maximumTimeSavedMinutes: 180,
   safeActions: [
     'blend',
+    'bake',
+    'boil',
     'chop',
     'dice',
     'grate',
     'marinate',
     'mince',
     'mix',
+    'cook',
+    'roast',
     'roughly_chop',
     'shred',
     'slice',
+    'simmer',
+    'steam',
+    'toast',
     'whisk',
   ],
   protectedBoundaries: ['raw-protein', 'cross-contamination'],
@@ -56,6 +67,12 @@ export type WeeklyPreparationCandidate = {
   canonicalIngredient: string | null
   canonicalAction: string | null
   preparationDetail: string | null
+  opportunityKind?: RecipePreparationOpportunityKind
+  ingredientLines?: string[]
+  instructionSteps?: string[]
+  stoppingPoint?: string
+  finishingGuidance?: string
+  providerStorageGuidance?: string
   quantity: {
     state: QuantityState
     value: number | null
@@ -76,6 +93,11 @@ export type WeeklyPreparationSource = Pick<
   | 'sourceIngredientId'
   | 'sourceStepIds'
   | 'originalText'
+  | 'ingredientLines'
+  | 'instructionSteps'
+  | 'stoppingPoint'
+  | 'finishingGuidance'
+  | 'providerStorageGuidance'
 >
 
 export type WeeklyPreparationSubtask = {
@@ -85,6 +107,10 @@ export type WeeklyPreparationSubtask = {
   preparationDetail: string | null
   quantity: WeeklyPreparationCandidate['quantity']
   sources: WeeklyPreparationSource[]
+  ingredientLines?: string[]
+  instructionSteps?: string[]
+  stoppingPoint?: string
+  finishingGuidance?: string
 }
 
 export type WeeklyPreparationTask = {
@@ -150,6 +176,9 @@ export function createWeeklyPreparationCacheKey(candidates: WeeklyPreparationCan
           candidate.storageGuidanceReference ?? 'unknown',
           candidate.canonicalAction ?? 'unknown',
           candidate.preparationDetail ?? 'unknown',
+          candidate.opportunityKind ?? 'unknown',
+          ...(candidate.instructionSteps ?? []),
+          candidate.stoppingPoint ?? 'unknown',
           [...candidate.boundaries].sort().join(','),
         ].join(':'),
       )
@@ -294,6 +323,12 @@ export function applyAndValidateModelDecision(
 }
 
 function calibratedTaskMinutes(candidates: WeeklyPreparationCandidate[], modelEstimate: number) {
+  if (
+    candidates.some((candidate) =>
+      ['component_cook', 'meal_cook'].includes(candidate.opportunityKind ?? ''),
+    )
+  )
+    return modelEstimate
   const actionMinutes = candidates.reduce((sum, candidate) => {
     switch (candidate.canonicalAction) {
       case 'marinate':
@@ -329,6 +364,11 @@ function isDeterministicallyUseful(candidate: WeeklyPreparationCandidate) {
 export function isWeeklyPreparationCandidateEligible(candidate: WeeklyPreparationCandidate) {
   const action = candidate.canonicalAction?.trim().toLowerCase()
   if (!action || !safePreparationActions.has(action)) return false
+  if (
+    ['bake', 'boil', 'cook', 'roast', 'simmer', 'steam', 'toast'].includes(action) &&
+    !['component_cook', 'meal_cook'].includes(candidate.opportunityKind ?? '')
+  )
+    return false
   if (!candidate.canonicalIngredient?.trim()) return false
   if (!candidate.sourceIngredientId.trim() || candidate.sourceStepIds.length === 0) return false
   if (candidate.maximumLeadTimeHours === null) return false
@@ -400,6 +440,14 @@ function preparationHygieneClass(candidate: WeeklyPreparationCandidate) {
 }
 
 function storageGuidanceFor(candidates: WeeklyPreparationCandidate[]) {
+  const providerGuidance = [
+    ...new Set(
+      candidates
+        .map((candidate) => candidate.providerStorageGuidance)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ]
+  if (providerGuidance.length === 1) return providerGuidance[0]
   if (candidates.every((candidate) => preparationHygieneClass(candidate) === 'raw-protein'))
     return 'Season if required, then refrigerate in a covered container until ready to cook.'
   const references = [...new Set(candidates.map((candidate) => candidate.storageGuidanceReference))]
@@ -589,6 +637,11 @@ function sourceFor(candidate: WeeklyPreparationCandidate): WeeklyPreparationSour
     sourceIngredientId: candidate.sourceIngredientId,
     sourceStepIds: [...candidate.sourceStepIds],
     originalText: candidate.originalText,
+    ingredientLines: candidate.ingredientLines,
+    instructionSteps: candidate.instructionSteps,
+    stoppingPoint: candidate.stoppingPoint,
+    finishingGuidance: candidate.finishingGuidance,
+    providerStorageGuidance: candidate.providerStorageGuidance,
   }
 }
 

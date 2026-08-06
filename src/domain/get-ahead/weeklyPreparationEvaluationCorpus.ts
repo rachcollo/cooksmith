@@ -24,6 +24,11 @@ type CandidateFixture = {
   instruction: string
   boundaries?: WeeklyPreparationCandidate['boundaries']
   maximumLeadTimeHours?: number | null
+  kind?: WeeklyPreparationCandidate['opportunityKind']
+  ingredients?: string[]
+  steps?: string[]
+  stoppingPoint?: string
+  finishingGuidance?: string
 }
 
 const portfolios: Array<{
@@ -31,6 +36,27 @@ const portfolios: Array<{
   fixtures: CandidateFixture[]
   expectedEmpty?: boolean
 }> = [
+  {
+    key: 'high-value-cooked-component',
+    fixtures: [
+      {
+        ingredient: 'beef ragu sauce',
+        action: 'simmer',
+        kind: 'component_cook',
+        recipeName: 'Beef ragu pasta',
+        instruction:
+          'Simmer the meat sauce until rich and tender. Cook pasta separately on the night.',
+        ingredients: ['500 g beef mince', '1 onion, diced', '400 g tomatoes'],
+        steps: [
+          'Brown the beef and onion.',
+          'Add tomatoes and simmer until the sauce is complete.',
+        ],
+        stoppingPoint: 'The meat sauce is fully cooked; do not cook the pasta.',
+        finishingGuidance: 'Reheat the sauce while cooking fresh pasta.',
+        maximumLeadTimeHours: 72,
+      },
+    ],
+  },
   {
     key: 'shared-taco-vegetables',
     fixtures: [
@@ -264,7 +290,7 @@ function candidate(
     plannedMealId: `meal-${id}`,
     recipeId: `recipe-${id}`,
     recipeVersionId: `version-${id}`,
-    enrichmentVersion: 'recipe-intelligence-v2',
+    enrichmentVersion: 'recipe-intelligence-v3',
     servings: 4,
     sourceIngredientId: `ingredient-${id}`,
     sourceStepIds: [`step-${id}`],
@@ -272,6 +298,12 @@ function candidate(
     canonicalIngredient: fixture.ingredient,
     canonicalAction: fixture.action,
     preparationDetail: fixture.action,
+    opportunityKind: fixture.kind ?? 'ingredient_prep',
+    ingredientLines: fixture.ingredients ?? [`1 ${fixture.ingredient}`],
+    instructionSteps: fixture.steps ?? [fixture.instruction],
+    stoppingPoint: fixture.stoppingPoint ?? `Stop when ${fixture.ingredient} is prepared.`,
+    finishingGuidance: fixture.finishingGuidance ?? 'Continue with the recipe on the night.',
+    providerStorageGuidance: 'Cool promptly and refrigerate covered until needed.',
     quantity: { state: 'known', value: 1, unit: null },
     maximumLeadTimeHours:
       fixture.maximumLeadTimeHours === undefined ? 24 : fixture.maximumLeadTimeHours,

@@ -1,5 +1,21 @@
 # Engineering Package — CS-94: Get Ahead AI release readiness
 
+## v13 bounded-stage and cooked-component acceptance addition
+
+- Recipe enrichment produces explicit `ingredient_prep`, `component_prep`, `component_cook`,
+  `meal_cook` and `assembly` opportunities with source IDs, task-only ingredients, numbered steps,
+  a stopping point, storage guidance and meal-night finishing guidance.
+- Task instructions stop at the selected opportunity. A sauce or paste task cannot continue into
+  browning meat or another later recipe stage unless that work belongs to the selected opportunity.
+- Planning maximises safe meal-night minutes saved. Complete sauces, ragùs, curries, stews,
+  braises, soups and other suitable components outrank lower-value ingredient prep when they fit.
+- **Show what to do** presents readable Ingredients and Steps sections, followed by **Stop when**
+  and **On the night**, without repeating the complete source recipe.
+- Cooking actions fail closed unless recipe intelligence explicitly classifies them as
+  `component_cook` or `meal_cook`; traceability, lead-time, storage and hygiene rules remain active.
+- Existing v2 enrichments and v12 plans are not silently reused. v13 requires v3 recipe coverage,
+  fresh evaluation evidence and hosted household smoke tests before activation.
+
 ## v12 useful-task acceptance addition
 
 - A checklist card describes one worthwhile make-ahead outcome, not a trivial ingredient-handling

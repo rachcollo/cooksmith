@@ -632,8 +632,40 @@ function GetAheadTaskRow({
             {task.taskDetails.map((detail) => (
               <li key={detail.id}>
                 <strong>{detail.recipeNames.join(' and ')}</strong>
-                {detail.quantity ? <span>Quantity: {detail.quantity}</span> : null}
-                <span>{detail.instruction}</span>
+                {detail.ingredients?.length ? (
+                  <div>
+                    <span>Ingredients</span>
+                    <ul>
+                      {detail.ingredients.map((ingredient) => (
+                        <li key={ingredient}>{ingredient}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : detail.quantity ? (
+                  <span>Quantity: {detail.quantity}</span>
+                ) : null}
+                {detail.steps?.length ? (
+                  <div>
+                    <span>Steps</span>
+                    <ol>
+                      {detail.steps.map((step) => (
+                        <li key={step}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : (
+                  <span>{detail.instruction}</span>
+                )}
+                {detail.stoppingPoint ? (
+                  <p>
+                    <strong>Stop when:</strong> {detail.stoppingPoint}
+                  </p>
+                ) : null}
+                {detail.finishingGuidance ? (
+                  <p>
+                    <strong>On the night:</strong> {detail.finishingGuidance}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ol>

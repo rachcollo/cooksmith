@@ -1,5 +1,26 @@
 # CS-94 handover
 
+## 2026-08-06 bounded-stage and cooked-component intelligence
+
+- Baseline: `main` at `a5719fa847513ae28343d2a2c4d293246831a260` (merge of PR #168).
+- Branch: `fix/cs-94-bounded-cooked-components`.
+- Recipe intelligence v3 stores task-only ingredients, bounded numbered steps, an explicit stopping
+  point, safe storage guidance and meal-night finishing guidance for five opportunity kinds.
+- Planner v13 ranks safe cooked components by meal-night time saved. Cooking remains ineligible
+  unless enrichment explicitly classifies it as `component_cook` or `meal_cook`.
+- **Show what to do** renders Ingredients, Steps, Stop when and On the night, preventing a paste or
+  sauce task from leaking into later recipe stages.
+- Migration `20260806090000_cs94_bounded_cooked_component_intelligence.sql` disables AI, advances
+  recipe defaults and planner evidence, queues active recipes for v3 enrichment, invalidates older
+  plans and blocks activation until v3 coverage plus v13 evaluation and smoke evidence exist.
+- Edge Functions changed: `enrich-recipe`, `generate-weekly-preparation-plan`,
+  `get-weekly-preparation-plan`, and `evaluate-weekly-preparation` through shared v13 contracts.
+  Dependencies: none. Fixed cost: A$0/month and A$0/year; provider usage temporarily increases once
+  while current recipes are re-enriched within the existing daily and monthly limits.
+- Release migration first, deploy all four Edge Functions and the application, drain v3 enrichment,
+  run and accept v13 evaluation, then verify real 15, 30, 45 and 60-minute household plans before
+  enabling AI.
+
 ## 2026-08-05 useful preparation task correction
 
 - Baseline: `main` at `5c8bf7fa676a9f3f15a20412fa913c88aa8a34e0` (merge of PR #167).

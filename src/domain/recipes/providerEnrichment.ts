@@ -54,6 +54,15 @@ export function normaliseProviderOutput(input: {
         canonicalIngredient: opportunity.canonicalIngredient.trim(),
         action: opportunity.action.trim(),
         preparationDetail: opportunity.preparationDetail?.trim() || null,
+        ingredientLines: uniqueStrings(
+          (opportunity.ingredientLines ?? []).map((line) => line.trim()),
+        ).filter(Boolean),
+        instructionSteps: (opportunity.instructionSteps ?? [])
+          .map((step) => step.trim())
+          .filter(Boolean),
+        stoppingPoint: opportunity.stoppingPoint?.trim() ?? '',
+        storageGuidance: opportunity.storageGuidance?.trim() ?? '',
+        finishingGuidance: opportunity.finishingGuidance?.trim() ?? '',
         sourceIngredientIds: uniqueStrings(opportunity.sourceIngredientIds),
         sourceStepIds: uniqueStrings(opportunity.sourceStepIds),
         boundaries: uniqueStrings(
