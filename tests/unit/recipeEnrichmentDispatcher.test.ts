@@ -10,6 +10,9 @@ const status = {
   dailyProcessedCount: 21,
   monthlyCostLimitAud: 10,
   recoverableCount: 1,
+  terminalUnsupportedCount: 0,
+  evaluationReady: false,
+  recipesReady: false,
   sources: {
     household: { eligible: 2, current: 0 },
     sharedPlatform: { eligible: 19, current: 0 },
@@ -47,13 +50,10 @@ describe('recipe enrichment dispatcher', () => {
 
     expect(rpc).toHaveBeenCalledWith('recipe_enrichment_backfill_command', {
       command,
-      batch_limit: command === 'retry_failed' ? 1 : 100,
+      batch_limit: 100,
     })
     expect(invoke).toHaveBeenCalledWith('enrich-recipe', {
-      body:
-        command === 'retry_failed'
-          ? { dispatchMode: 'single', modelKey: 'provider-assisted-v1' }
-          : {},
+      body: {},
     })
     expect(result).toEqual(status)
   })

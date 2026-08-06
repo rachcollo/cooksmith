@@ -139,6 +139,19 @@ Running the evaluation makes ten bounded calls to the already approved configure
 Actual token counts and estimated A$ cost are persisted using the existing approved pricing-rate
 configuration.
 
+## Current enrichment recovery correction — 2026-08-07
+
+Production evidence after the v13 release showed 81 completed current enrichments, five current
+terminal failures and no pending or processing v3 work. The Admin total mixed obsolete v1/v2
+failures into the active release, while **Retry failed** released only one oldest cross-version job
+and the re-enrichment command still created v1 identities. The evaluator also treated every
+terminal recipe failure as unfinished enrichment.
+
+The forward correction filters progress and recovery to v3, retries all bounded actionable
+failures through the durable worker chain, treats genuine unsupported recipes as terminal, and
+separates evaluation settlement from the stricter feature-activation coverage gate. No schema
+columns, provider, dependency, RLS policy or cost limit changes.
+
 ## Trustworthy household task follow-up — 2026-08-02
 
 Real household testing showed that model-assisted plans could copy long recipe instructions into

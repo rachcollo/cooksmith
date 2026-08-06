@@ -229,15 +229,12 @@ export function createSupabaseWeeklyPreparationAdminRepository(
     async commandRecipeEnrichment(command) {
       const { data, error } = await database.rpc('recipe_enrichment_backfill_command', {
         command,
-        batch_limit: command === 'retry_failed' ? 1 : 100,
+        batch_limit: 100,
       })
       if (error) throw new Error('Cooksmith could not update recipe enrichment.')
       if (command !== 'pause') {
         const { error: dispatchError } = await client.functions.invoke('enrich-recipe', {
-          body:
-            command === 'retry_failed'
-              ? { dispatchMode: 'single', modelKey: 'provider-assisted-v1' }
-              : {},
+          body: {},
         })
         if (dispatchError) throw new Error('Cooksmith could not start recipe enrichment.')
       }

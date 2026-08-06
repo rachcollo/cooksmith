@@ -324,7 +324,7 @@ function RecipeEnrichmentOperations() {
                 />
                 <StatusRow
                   metric="Failed"
-                  value={status.states.failed ?? 0}
+                  value={Math.max((status.states.failed ?? 0) - status.terminalUnsupportedCount, 0)}
                   details={
                     status.latestProviderFailure
                       ? [
@@ -338,6 +338,29 @@ function RecipeEnrichmentOperations() {
                           .filter(Boolean)
                           .join(' · ')
                       : 'No current provider error'
+                  }
+                />
+                <StatusRow
+                  metric="Not suitable for Get Ahead"
+                  value={status.terminalUnsupportedCount}
+                  details="Finished safely and does not block evaluation"
+                />
+                <StatusRow
+                  metric="Evaluation readiness"
+                  value={status.evaluationReady ? 'Ready' : 'Preparing'}
+                  details={
+                    status.evaluationReady
+                      ? 'No current recipe jobs are still running'
+                      : 'Current recipe insights are still processing'
+                  }
+                />
+                <StatusRow
+                  metric="Feature activation readiness"
+                  value={status.recipesReady ? 'Ready' : 'Needs attention'}
+                  details={
+                    status.recipesReady
+                      ? 'Current recipe coverage is ready'
+                      : 'Retry the remaining current recipe failures'
                   }
                 />
                 <StatusRow
@@ -406,7 +429,9 @@ function RecipeEnrichmentOperations() {
               </Button>
               <Button
                 variant="secondary"
-                disabled={busy || !status.states.failed}
+                disabled={
+                  busy || (status.states.failed ?? 0) - status.terminalUnsupportedCount <= 0
+                }
                 onClick={() => void command('retry_failed')}
               >
                 Retry failed

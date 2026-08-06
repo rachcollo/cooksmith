@@ -451,3 +451,22 @@ This correction requires an Edge Function release only and no database migration
   increase usage within the existing A$10 monthly provider ceiling.
 - Release order: apply the forward migration, deploy `enrich-recipe` from the same approved `main`
   SHA, then select **Resume enrichment** once to drain the existing queue.
+
+## Current enrichment recovery and readiness correction
+
+- Baseline: `main` at `bef2423`.
+- Branch: `fix/cs-94-enrichment-readiness-recovery`.
+- Admin progress now reports only the active v3 contract, distinguishes terminal unsupported
+  recipes from actionable failures, and shows evaluation and activation readiness separately.
+- **Retry failed** releases all retryable current-v3 blockers in one bounded batch and restarts the
+  durable worker chain. It no longer spends retries on obsolete v1/v2 jobs.
+- The re-enrichment command creates v3 jobs rather than obsolete v1 work. Genuine
+  `unsupported_data` outcomes are terminal and safely excluded from planning.
+- The synthetic v13 evaluation waits only for pending or processing v3 work. Feature activation
+  remains stricter and still requires bounded recipe coverage for every supported current recipe.
+- Migration: `20260807100000_cs94_enrichment_readiness_recovery.sql`.
+- Edge Functions changed: none. Dependencies added: none. Fixed cost impact: A$0/month and
+  A$0/year; retries remain within existing daily and monthly provider limits.
+- Release order: apply the forward migration and deploy the application from the same approved
+  `main` SHA. Retry any actionable current failure once, run and accept the v13 evaluation, then
+  enable AI only when feature activation readiness is **Ready**.
