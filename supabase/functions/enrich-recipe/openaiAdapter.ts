@@ -55,17 +55,31 @@ const opportunityBoundaries = [
   'timing',
 ] as const
 const preparationActions = [
+  'bake',
   'blend',
+  'boil',
   'chop',
   'dice',
   'grate',
   'marinate',
   'mince',
   'mix',
+  'cook',
+  'roast',
   'roughly_chop',
   'shred',
   'slice',
+  'simmer',
+  'steam',
+  'toast',
   'whisk',
+] as const
+const opportunityKinds = [
+  'ingredient_prep',
+  'component_prep',
+  'component_cook',
+  'meal_cook',
+  'assembly',
 ] as const
 
 function isNullableString(value: unknown): value is string | null {
@@ -107,11 +121,19 @@ function isOpportunity(value: unknown): value is ProviderPreparationOpportunity 
     typeof item.title === 'string' &&
     typeof item.canonicalIngredient === 'string' &&
     preparationActions.includes(item.action as (typeof preparationActions)[number]) &&
+    opportunityKinds.includes(item.kind as (typeof opportunityKinds)[number]) &&
     isNullableString(item.preparationDetail) &&
     Array.isArray(item.sourceIngredientIds) &&
     item.sourceIngredientIds.every((id) => typeof id === 'string') &&
     Array.isArray(item.sourceStepIds) &&
     item.sourceStepIds.every((id) => typeof id === 'string') &&
+    Array.isArray(item.ingredientLines) &&
+    item.ingredientLines.every((line) => typeof line === 'string') &&
+    Array.isArray(item.instructionSteps) &&
+    item.instructionSteps.every((step) => typeof step === 'string') &&
+    typeof item.stoppingPoint === 'string' &&
+    typeof item.storageGuidance === 'string' &&
+    typeof item.finishingGuidance === 'string' &&
     Number.isInteger(item.estimatedMinutes) &&
     Number.isInteger(item.estimatedTimeSavedMinutes) &&
     Number.isInteger(item.maximumLeadTimeHours) &&
@@ -143,7 +165,7 @@ export async function resolveAmbiguousLinks(input: {
       {
         role: 'system',
         content:
-          'Structure the supplied complete recipe into ingredient intelligence and useful recipe-level make-ahead opportunities. Return one ingredient result for every supplied ingredient ID. Opportunities may include grouped vegetable preparation, cutting or marinating protein, sauces, dressings, spice mixes, doughs, batters and genuinely suitable advance-cooked components. Each opportunity must materially reduce weeknight work, use only supplied ingredient and step IDs, have a concise 3-to-8-word action title, and be possible to complete independently. Do not include preheating, boiling water, serving, garnishing, reheating, or ordinary cooking that does not benefit from being done ahead. Estimate an average home cook and count setup and cleanup once per opportunity. Use maximumLeadTimeHours only as internal planning metadata. Do not write storage instructions or use-within advice in titles or preparation details. Mark raw protein boundaries but do not exclude sensible cutting, portioning, seasoning or marinating. Use null or unknown when evidence does not support an ingredient value.',
+          'Structure the supplied complete recipe into ingredient intelligence and bounded make-ahead stages. Return one ingredient result for every supplied ingredient ID. For each worthwhile stage choose ingredient_prep, component_prep, component_cook, meal_cook or assembly. Prefer fully cooking sauces, ragus, curries, stews, braises, soups and other components when safe and when this saves substantially more meal-night time without harming quality. Each opportunity must be independently completable, materially useful, and use only supplied ingredient and step IDs. ingredientLines and instructionSteps must contain only what is needed to complete this opportunity. End instructionSteps exactly at stoppingPoint: never continue into the next recipe stage. Include safe storageGuidance and concise finishingGuidance for meal night. Do not include filler such as preheating, boiling water, serving, garnishing or melting butter alone. Estimate an average home cook and count setup and cleanup once. Mark raw protein boundaries. Use null or unknown when evidence does not support an ingredient value.',
       },
       {
         role: 'user',
@@ -224,9 +246,15 @@ export async function resolveAmbiguousLinks(input: {
                   'title',
                   'canonicalIngredient',
                   'action',
+                  'kind',
                   'preparationDetail',
                   'sourceIngredientIds',
                   'sourceStepIds',
+                  'ingredientLines',
+                  'instructionSteps',
+                  'stoppingPoint',
+                  'storageGuidance',
+                  'finishingGuidance',
                   'estimatedMinutes',
                   'estimatedTimeSavedMinutes',
                   'maximumLeadTimeHours',
@@ -238,6 +266,7 @@ export async function resolveAmbiguousLinks(input: {
                   title: { type: 'string' },
                   canonicalIngredient: { type: 'string' },
                   action: { type: 'string', enum: preparationActions },
+                  kind: { type: 'string', enum: opportunityKinds },
                   preparationDetail: nullableString,
                   sourceIngredientIds: {
                     type: 'array',
@@ -248,6 +277,11 @@ export async function resolveAmbiguousLinks(input: {
                     items:
                       stepIds.length > 0 ? { type: 'string', enum: stepIds } : { type: 'string' },
                   },
+                  ingredientLines: { type: 'array', items: { type: 'string' } },
+                  instructionSteps: { type: 'array', items: { type: 'string' } },
+                  stoppingPoint: { type: 'string' },
+                  storageGuidance: { type: 'string' },
+                  finishingGuidance: { type: 'string' },
                   estimatedMinutes: { type: 'integer' },
                   estimatedTimeSavedMinutes: { type: 'integer' },
                   maximumLeadTimeHours: { type: 'integer' },

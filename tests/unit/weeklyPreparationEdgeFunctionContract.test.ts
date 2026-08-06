@@ -255,6 +255,22 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(migration).toContain('ai_enabled = false')
   })
 
+  it('requires bounded v13 recipe stages before cooked-component planning is enabled', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260806090000_cs94_bounded_cooked_component_intelligence.sql',
+      'utf8',
+    )
+    const enrichment = readFileSync('supabase/functions/enrich-recipe/openaiAdapter.ts', 'utf8')
+
+    expect(migration).toContain("'recipe-intelligence-v3'")
+    expect(migration).toContain("corpus_version = 'weekly-preparation-corpus-v13'")
+    expect(migration).toContain("acceptance.planner_version = 'weekly-preparation-planner-v13'")
+    expect(migration).toContain('ai_enabled = false')
+    expect(enrichment).toContain('End instructionSteps exactly at stoppingPoint')
+    expect(enrichment).toContain('component_cook')
+    expect(enrichment).toContain('meal_cook')
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],

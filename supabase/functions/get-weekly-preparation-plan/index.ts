@@ -34,8 +34,8 @@ const serviceHeaders = () => ({
   'content-type': 'application/json',
 })
 
-const ACTIVE_RECIPE_SCHEMA = 'recipe-intelligence-v2'
-const ACTIVE_RECIPE_RULES = 'cooksmith-rules-v2'
+const ACTIVE_RECIPE_SCHEMA = 'recipe-intelligence-v3'
+const ACTIVE_RECIPE_RULES = 'cooksmith-rules-v3'
 
 async function continueRecipeEnrichment() {
   const workerToken = Deno.env.get('RECIPE_INTELLIGENCE_WORKER_TOKEN')
@@ -176,6 +176,12 @@ function candidatesFrom(
           canonicalIngredient: opportunity.canonicalIngredient,
           canonicalAction: opportunity.action,
           preparationDetail: opportunity.preparationDetail,
+          opportunityKind: opportunity.kind,
+          ingredientLines: opportunity.ingredientLines ?? [],
+          instructionSteps: opportunity.instructionSteps ?? [],
+          stoppingPoint: opportunity.stoppingPoint ?? '',
+          finishingGuidance: opportunity.finishingGuidance ?? '',
+          providerStorageGuidance: opportunity.storageGuidance ?? '',
           quantity: {
             state: ingredient?.quantity.state ?? 'unknown',
             value: ingredient?.quantity.normalisedValue ?? null,
@@ -194,6 +200,8 @@ function candidatesFrom(
 function storageGuidanceReferenceFor(
   opportunity: RecipeIntelligence['preparationOpportunities'][number],
 ) {
+  if (opportunity.kind === 'component_cook' || opportunity.kind === 'meal_cook')
+    return 'provider-validated-cooked-storage'
   const ingredient = opportunity.canonicalIngredient.trim().toLocaleLowerCase('en-AU')
   if (
     ingredient.includes('potato') &&

@@ -64,6 +64,10 @@ export interface PreparationTaskDetail {
   instruction: string
   quantity: string | null
   recipeNames: string[]
+  ingredients?: string[]
+  steps?: string[]
+  stoppingPoint?: string
+  finishingGuidance?: string
 }
 
 interface RuleMatch {

@@ -1,5 +1,8 @@
-export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v2'
-export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v2'
+export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v3'
+export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v3'
+
+export type RecipePreparationOpportunityKind =
+  'ingredient_prep' | 'component_prep' | 'component_cook' | 'meal_cook' | 'assembly'
 
 export type EnrichmentProvenance = 'deterministic' | 'model' | 'unknown'
 export type EnrichmentConfidence = 'high' | 'medium' | 'low' | 'unknown'
@@ -31,9 +34,15 @@ export type RecipePreparationOpportunity = {
   title: string
   canonicalIngredient: string
   action: string
+  kind?: RecipePreparationOpportunityKind
   preparationDetail: string | null
   sourceIngredientIds: string[]
   sourceStepIds: string[]
+  ingredientLines?: string[]
+  instructionSteps?: string[]
+  stoppingPoint?: string
+  storageGuidance?: string
+  finishingGuidance?: string
   estimatedMinutes: number
   estimatedTimeSavedMinutes: number
   maximumLeadTimeHours: number
@@ -286,6 +295,19 @@ export function applyProviderIngredientSuggestions(
         ) ||
         item.canonicalIngredient.trim().length === 0 ||
         item.action.trim().length === 0 ||
+        !['ingredient_prep', 'component_prep', 'component_cook', 'meal_cook', 'assembly'].includes(
+          item.kind ?? '',
+        ) ||
+        !item.ingredientLines?.length ||
+        !item.instructionSteps?.length ||
+        item.instructionSteps.length > 12 ||
+        item.instructionSteps.some((step) => step.trim().length < 3 || step.length > 300) ||
+        !item.stoppingPoint ||
+        item.stoppingPoint.trim().length < 3 ||
+        !item.storageGuidance ||
+        item.storageGuidance.trim().length < 3 ||
+        !item.finishingGuidance ||
+        item.finishingGuidance.trim().length < 3 ||
         !Number.isInteger(item.estimatedMinutes) ||
         item.estimatedMinutes < 3 ||
         item.estimatedMinutes > 120 ||
