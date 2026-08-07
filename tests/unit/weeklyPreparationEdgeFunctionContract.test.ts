@@ -271,6 +271,23 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(enrichment).toContain('meal_cook')
   })
 
+  it('recovers only current v3 enrichment blockers and accepts terminal unsupported recipes', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260807100000_cs94_enrichment_readiness_recovery.sql',
+      'utf8',
+    )
+
+    expect(migration).toContain("candidates.schema_version = 'recipe-intelligence-v3'")
+    expect(migration).toContain("candidates.rules_version = 'cooksmith-rules-v3'")
+    expect(migration).toContain("candidates.failure_category <> 'unsupported_data'")
+    expect(migration).toContain("job.failure_category = 'unsupported_data'")
+    expect(migration).toContain('select cooksmith_private.weekly_preparation_enrichment_settled()')
+    expect(migration).toContain("jobs.state in ('pending', 'processing')")
+    expect(migration).toContain(
+      "'recipesReady', cooksmith_private.weekly_preparation_recipes_ready()",
+    )
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],

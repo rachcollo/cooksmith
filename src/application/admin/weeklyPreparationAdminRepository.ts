@@ -53,6 +53,9 @@ export type RecipeEnrichmentBackfillStatus = {
   dailyProcessedCount: number
   monthlyCostLimitAud: number
   recoverableCount: number
+  terminalUnsupportedCount: number
+  evaluationReady: boolean
+  recipesReady: boolean
   sources: {
     household: { eligible: number; current: number }
     sharedPlatform: { eligible: number; current: number }

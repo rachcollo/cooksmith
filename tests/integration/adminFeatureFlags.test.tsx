@@ -82,6 +82,9 @@ describe('admin feature toggles', () => {
       dailyProcessedCount: 0,
       monthlyCostLimitAud: 10,
       recoverableCount: 1,
+      terminalUnsupportedCount: 0,
+      evaluationReady: false,
+      recipesReady: false,
       sources: {
         household: { eligible: 2, current: 0 },
         sharedPlatform: { eligible: 19, current: 0 },
@@ -148,6 +151,9 @@ describe('admin feature toggles', () => {
         dailyProcessedCount: 0,
         monthlyCostLimitAud: 10,
         recoverableCount: 1,
+        terminalUnsupportedCount: 0,
+        evaluationReady: false,
+        recipesReady: false,
         sources: {
           household: { eligible: 2, current: 0 },
           sharedPlatform: { eligible: 19, current: 0 },
@@ -168,6 +174,9 @@ describe('admin feature toggles', () => {
         dailyProcessedCount: 0,
         monthlyCostLimitAud: 10,
         recoverableCount: 1,
+        terminalUnsupportedCount: 0,
+        evaluationReady: false,
+        recipesReady: false,
         sources: {
           household: { eligible: 2, current: 0 },
           sharedPlatform: { eligible: 19, current: 0 },
@@ -182,6 +191,9 @@ describe('admin feature toggles', () => {
         dailyProcessedCount: 0,
         monthlyCostLimitAud: 10,
         recoverableCount: 1,
+        terminalUnsupportedCount: 0,
+        evaluationReady: false,
+        recipesReady: false,
         sources: {
           household: { eligible: 2, current: 0 },
           sharedPlatform: { eligible: 19, current: 0 },
