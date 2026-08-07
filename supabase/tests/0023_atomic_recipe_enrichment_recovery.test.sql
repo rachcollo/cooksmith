@@ -119,7 +119,7 @@ select cooksmith.activate_recipe_enrichment(
 );
 
 update cooksmith.recipe_enrichment_jobs
-set state = 'failed', attempt_count = 3
+set state = 'failed', attempt_count = 3, failure_category = 'internal_validation'
 where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
   and model_key = 'deterministic';
 
