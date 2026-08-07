@@ -123,6 +123,11 @@ set state = 'failed', attempt_count = 3, failure_category = 'internal_validation
 where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
   and model_key = 'deterministic';
 
+update cooksmith.recipe_enrichment_jobs
+set failure_category = 'internal_validation'
+where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
+  and model_key = 'provider-assisted-v1';
+
 set local role authenticated;
 select set_config(
   'request.jwt.claims',
