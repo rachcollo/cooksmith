@@ -27,6 +27,17 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(source).toContain('smoke_verified_at: null')
   })
 
+  it('aligns the v13 evaluator and database acceptance gate to 28 assisted cases', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260807190000_cs94_v13_evaluation_acceptance.sql',
+      'utf8',
+    )
+
+    expect(migration).toContain('run.model_call_count = 28')
+    expect(migration).toContain('run.valid_output_count = run.model_call_count')
+    expect(migration).toContain('run.reviewed_correct_count >= 28')
+  })
+
   it('checks administrator access with the caller JWT instead of reading the roles table', () => {
     const source = readFileSync(edgeFunctionSources[0], 'utf8')
 

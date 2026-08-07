@@ -1,5 +1,5 @@
 export const weeklyPreparationEvaluationPlanCount = 30 as const
-export const weeklyPreparationExpectedModelCalls = 27 as const
+export const weeklyPreparationExpectedModelCalls = 28 as const
 export const weeklyPreparationMinimumQualityPasses = 28 as const
 
 export function passesWeeklyPreparationEvaluation(input: {

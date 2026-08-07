@@ -470,3 +470,17 @@ This correction requires an Edge Function release only and no database migration
 - Release order: apply the forward migration and deploy the application from the same approved
   `main` SHA. Retry any actionable current failure once, run and accept the v13 evaluation, then
   enable AI only when feature activation readiness is **Ready**.
+
+## v13 evaluation acceptance correction
+
+- Baseline: `main` at `d516ff6`.
+- Branch: `fix/cs-94-v13-evaluation-acceptance`.
+- The v13 corpus contains 28 provider-assisted cases and two intentional deterministic empty-plan
+  cases. The shared application policy and database acceptance gate now require that exact split.
+- A perfect 30-of-30 run is no longer rejected by the obsolete 27-call expectation. Admin feedback
+  distinguishes a genuine quality-threshold miss from inconsistent release evidence.
+- Migration: `20260807190000_cs94_v13_evaluation_acceptance.sql`.
+- Edge Functions changed: `evaluate-weekly-preparation` through its shared domain policy import.
+- Dependencies added: none. Fixed cost impact: A$0/month and A$0/year.
+- Release order: merge, apply the forward migration and deploy `evaluate-weekly-preparation` from
+  the same approved `main` SHA, then run and accept one fresh v13 evaluation.

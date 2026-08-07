@@ -163,7 +163,9 @@ export function createSupabaseWeeklyPreparationAdminRepository(
           acceptanceEligible && data.reviewed_correct_count < data.plan_count
             ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed. This meets the ${weeklyPreparationMinimumQualityPasses}-case quality threshold. Review the ${data.plan_count - data.reviewed_correct_count} quality ${data.plan_count - data.reviewed_correct_count === 1 ? 'miss' : 'misses'}, then accept this evaluation when you are comfortable.`
             : data.error_reason === 'review_failed'
-              ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed. This is below the ${weeklyPreparationMinimumQualityPasses}-case quality threshold, or a hard validation check failed.`
+              ? data.reviewed_correct_count < weeklyPreparationMinimumQualityPasses
+                ? `${data.reviewed_correct_count} of ${data.plan_count} cases passed. This is below the ${weeklyPreparationMinimumQualityPasses}-case quality threshold.`
+                : `${data.reviewed_correct_count} of ${data.plan_count} cases passed, but the release evidence is inconsistent. Run the evaluation again after the current release correction is deployed.`
               : data.status === 'running'
                 ? 'The evaluation is still running.'
                 : !acceptanceEligible && !data.acceptances
