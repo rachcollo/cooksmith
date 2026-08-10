@@ -502,3 +502,21 @@ This correction requires an Edge Function release only and no database migration
 - Dependencies added: none. Fixed cost impact: A$0/month and A$0/year.
 - Release order: merge, apply the forward migration and deploy `evaluate-weekly-preparation` from
   the same approved `main` SHA, then run and accept one fresh v13 evaluation.
+
+## Reprocessed enrichment activation correction
+
+- Baseline: `main` at `45262a232cdb9e17ff6f0c5c2b6166918f003383`.
+- Branch: `fix/cs-94-enrichment-internal-validation`.
+- Root cause: the empty-result recovery deliberately requeued completed durable jobs while keeping
+  their previous enrichment rows. Activation attempted a second insert for the same unique job ID,
+  so every corrected provider result failed after the provider call and appeared as
+  `internal_validation`.
+- Activation now updates the existing enrichment for an intentionally reprocessed job and keeps
+  the job/result transition atomic. A pgTAP regression proves the first activation and subsequent
+  replacement both succeed while preserving one enrichment row per job.
+- Migration: `20260810130000_cs94_reprocessed_enrichment_activation.sql`.
+- Edge Functions changed: none. Dependencies added: none. Fixed cost impact: A$0/month and
+  A$0/year. The correction prevents repeated provider spend caused by guaranteed activation
+  failures.
+- Release order: apply the forward migration from the approved `main` SHA, then use **Retry
+  failed** once to release the affected current v3 jobs and resume the durable queue.
