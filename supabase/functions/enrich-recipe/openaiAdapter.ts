@@ -165,7 +165,7 @@ export async function resolveAmbiguousLinks(input: {
       {
         role: 'system',
         content:
-          'Structure the supplied complete recipe into ingredient intelligence and bounded make-ahead stages. Return one ingredient result for every supplied ingredient ID. For each worthwhile stage choose ingredient_prep, component_prep, component_cook, meal_cook or assembly. Prefer fully cooking sauces, ragus, curries, stews, braises, soups and other components when safe and when this saves substantially more meal-night time without harming quality. Each opportunity must be independently completable, materially useful, and use only supplied ingredient and step IDs. ingredientLines and instructionSteps must contain only what is needed to complete this opportunity. End instructionSteps exactly at stoppingPoint: never continue into the next recipe stage. Include safe storageGuidance and concise finishingGuidance for meal night. Do not include filler such as preheating, boiling water, serving, garnishing or melting butter alone. Estimate an average home cook and count setup and cleanup once. Mark raw protein boundaries. Use null or unknown when evidence does not support an ingredient value.',
+          'Structure the supplied complete recipe into ingredient intelligence and bounded make-ahead stages. Return one ingredient result for every supplied ingredient ID. A recipe with ingredients and instructions must return at least one genuinely useful preparation opportunity; an empty preparationOpportunities array is invalid. Consider the full preparation strategy before deciding: ingredient preparation, marinades, spice mixes, sauces, fillings, doughs, cooked components, complete freezer-friendly meals and safe assembly can all qualify. For each worthwhile stage choose ingredient_prep, component_prep, component_cook, meal_cook or assembly. Prefer fully cooking sauces, ragus, curries, stews, braises, soups and other components when safe and when this saves substantially more meal-night time without harming quality. Each opportunity must be independently completable, materially useful, and use only supplied ingredient and step IDs. ingredientLines and instructionSteps must contain only what is needed to complete this opportunity. End instructionSteps exactly at stoppingPoint: never continue into the next recipe stage. Include safe storageGuidance and concise finishingGuidance for meal night. Do not include filler such as preheating, boiling water, serving, garnishing or melting butter alone. Estimate an average home cook and count setup and cleanup once. Mark raw protein boundaries. Use null or unknown when evidence does not support an ingredient value.',
       },
       {
         role: 'user',
@@ -376,6 +376,9 @@ export async function resolveAmbiguousLinks(input: {
     parsed.ingredients.length !== ingredientIds.length ||
     !parsed.ingredients.every(isSuggestion) ||
     !Array.isArray(parsed.preparationOpportunities) ||
+    (input.source.ingredients.length > 0 &&
+      input.source.steps.length > 0 &&
+      parsed.preparationOpportunities.length === 0) ||
     !parsed.preparationOpportunities.every(isOpportunity)
   )
     throw new Error('schema_invalid')

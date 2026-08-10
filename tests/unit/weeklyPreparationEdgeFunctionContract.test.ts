@@ -299,6 +299,22 @@ describe('weekly preparation Edge Function contracts', () => {
     )
   })
 
+  it('releases completed empty v3 enrichments for corrected provider processing', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260810120000_cs94_recover_empty_recipe_opportunities.sql',
+      'utf8',
+    )
+
+    expect(migration).toContain("jobs.state = 'completed'")
+    expect(migration).toContain("state = 'pending'")
+    expect(migration).toContain('attempt_count = 0')
+    expect(migration).toContain(
+      "jsonb_array_length(enrichment.result -> 'preparationOpportunities') = 0",
+    )
+    expect(migration).toContain("jobs.schema_version = 'recipe-intelligence-v3'")
+    expect(migration).toContain("jobs.rules_version = 'cooksmith-rules-v3'")
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],

@@ -399,7 +399,9 @@ async function processOne(modelKey?: string) {
     return { outcome: 'completed', jobId: job.id, provider }
   } catch (error) {
     const category = failureCategory(error)
-    const retry = category === 'transient_provider' && job.attempt_count + 1 < 3
+    const retry =
+      (category === 'transient_provider' || category === 'schema_invalid') &&
+      job.attempt_count + 1 < 3
     await finishJob(job, retry ? 'pending' : 'failed', {
       failure_category: category,
       available_at: retry ? new Date(Date.now() + 30_000).toISOString() : undefined,

@@ -460,6 +460,7 @@ function WeeklyPreparationOperations() {
   const repository = useWeeklyPreparationAdminRepository()
   const [settings, setSettings] = useState<WeeklyPreparationSettings | null>(null)
   const [evaluation, setEvaluation] = useState<WeeklyPreparationEvaluation | null>(null)
+  const [recipesReady, setRecipesReady] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(Boolean(repository))
   const [saving, setSaving] = useState(false)
   const [evaluating, setEvaluating] = useState(false)
@@ -468,11 +469,16 @@ function WeeklyPreparationOperations() {
   useEffect(() => {
     if (!repository) return
     let active = true
-    void Promise.all([repository.getSettings(), repository.getLatestEvaluation()])
-      .then(([nextSettings, nextEvaluation]) => {
+    void Promise.all([
+      repository.getSettings(),
+      repository.getLatestEvaluation(),
+      repository.getRecipeEnrichmentStatus(),
+    ])
+      .then(([nextSettings, nextEvaluation, enrichmentStatus]) => {
         if (!active) return
         setSettings(nextSettings)
         setEvaluation(nextEvaluation)
+        setRecipesReady(enrichmentStatus.recipesReady)
       })
       .catch(() => {
         if (active) setMessage('Weekly preparation controls could not be loaded.')
@@ -499,12 +505,14 @@ function WeeklyPreparationOperations() {
   const adminRepository = repository
 
   async function refresh() {
-    const [nextSettings, nextEvaluation] = await Promise.all([
+    const [nextSettings, nextEvaluation, enrichmentStatus] = await Promise.all([
       adminRepository.getSettings(),
       adminRepository.getLatestEvaluation(),
+      adminRepository.getRecipeEnrichmentStatus(),
     ])
     setSettings(nextSettings)
     setEvaluation(nextEvaluation)
+    setRecipesReady(enrichmentStatus.recipesReady)
     setMessage('')
   }
 
@@ -562,7 +570,9 @@ function WeeklyPreparationOperations() {
     } catch {
       setMessage(
         next.aiEnabled
-          ? 'AI assistance remains disabled. Complete the hosted smoke test, run and accept the current 30-plan evaluation, then try again.'
+          ? recipesReady === false
+            ? 'AI assistance remains disabled because current recipe preparation insights need attention. Retry the remaining current recipe failures, then refresh readiness.'
+            : 'AI assistance remains disabled. Complete every release readiness requirement, then refresh and try again.'
           : 'No weekly preparation controls were changed. Try again.',
       )
     } finally {
@@ -590,6 +600,14 @@ function WeeklyPreparationOperations() {
             30-plan evaluation: {evaluation?.status === 'completed' ? 'Completed' : 'Not completed'}
           </li>
           <li>Evaluation acceptance: {evaluation?.accepted ? 'Accepted' : 'Not accepted'}</li>
+          <li>
+            Recipe preparation insights:{' '}
+            {recipesReady === null
+              ? 'Could not verify'
+              : recipesReady
+                ? 'Ready'
+                : 'Needs attention'}
+          </li>
           <li>Emergency stop: {settings.emergencyStop ? 'Active' : 'Clear'}</li>
           <li>AI assistance: {settings.aiEnabled ? 'Enabled' : 'Disabled'}</li>
         </ol>
@@ -646,7 +664,11 @@ function WeeklyPreparationOperations() {
         <div className="cluster">
           <Button
             disabled={
-              saving || settings.emergencyStop || !settings.smokeVerified || !evaluation?.accepted
+              saving ||
+              settings.emergencyStop ||
+              !settings.smokeVerified ||
+              !evaluation?.accepted ||
+              (!settings.aiEnabled && recipesReady !== true)
             }
             onClick={() =>
               void update({
@@ -670,10 +692,11 @@ function WeeklyPreparationOperations() {
             {settings.emergencyStop ? 'Clear emergency stop' : 'Activate emergency stop'}
           </Button>
         </div>
-        {!settings.aiEnabled && (!settings.smokeVerified || !evaluation?.accepted) ? (
+        {!settings.aiEnabled &&
+        (!settings.smokeVerified || !evaluation?.accepted || recipesReady !== true) ? (
           <p>
-            Enable AI assistance becomes available after the hosted smoke test and the current
-            evaluation are accepted.
+            Enable AI assistance becomes available after the hosted smoke test, the current
+            evaluation is accepted and current recipe preparation insights are ready.
           </p>
         ) : null}
       </Panel>

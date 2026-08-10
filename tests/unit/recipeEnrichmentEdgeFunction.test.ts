@@ -79,6 +79,7 @@ describe('recipe enrichment Edge Function', () => {
     expect(adapterSource).toContain("? { type: 'string', enum: stepIds }")
     expect(adapterSource).toContain('parsed.ingredients.length !== ingredientIds.length')
     expect(adapterSource).toContain('parsed.ingredients.every(isSuggestion)')
+    expect(adapterSource).toContain('parsed.preparationOpportunities.length === 0')
     expect(adapterSource).toContain('parsed.preparationOpportunities.every(isOpportunity)')
     expect(adapterSource).toContain('storageGuidance')
     expect(adapterSource).toContain('stoppingPoint')
@@ -118,6 +119,7 @@ describe('recipe enrichment Edge Function', () => {
     expect(adapterSource).toContain("error.name === 'AbortError'")
     expect(adapterSource).toContain("throw new Error('timeout')")
     expect(source).toContain("'timeout'")
+    expect(source).toContain("category === 'schema_invalid'")
   })
 
   it('compacts verbose recipes without dropping source identifiers', () => {

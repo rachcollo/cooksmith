@@ -72,7 +72,7 @@ describe('admin feature toggles', () => {
       modelIdentifier: 'gpt-5-mini',
       corpusVersion: 'weekly-preparation-corpus-v1',
       promptVersion: 'weekly-preparation-prompt-v1',
-      smokeVerified: false,
+      smokeVerified: true,
       updatedAt: '2026-07-28T01:00:00Z',
     }))
     const setRecipeIntelligenceDailyLimit = vi.fn(async (limit: number) => ({
@@ -99,14 +99,14 @@ describe('admin feature toggles', () => {
         modelIdentifier: 'gpt-5-mini',
         corpusVersion: 'weekly-preparation-corpus-v1',
         promptVersion: 'weekly-preparation-prompt-v1',
-        smokeVerified: false,
+        smokeVerified: true,
         updatedAt: '2026-07-28T00:00:00Z',
       }),
       updateSettings,
       getLatestEvaluation: async () => ({
         id: '94000000-0000-4000-8000-000000000001',
-        status: 'failed',
-        accepted: false,
+        status: 'completed',
+        accepted: true,
         createdAt: '2026-08-02T00:00:00Z',
         planCount: 30,
         deterministicCount: 0,
@@ -121,7 +121,7 @@ describe('admin feature toggles', () => {
         outputTokens: 500,
         estimatedCostAud: 0.1,
         ambiguousDecision: 'fallback',
-        acceptanceEligible: false,
+        acceptanceEligible: true,
         reviewMessage: '29 of 30 cases passed review.',
         failureReasons: [{ reason: 'time_budget_exceeded', count: 1 }],
         failedCases: [
@@ -234,6 +234,13 @@ describe('admin feature toggles', () => {
     expect(
       screen.getByText(
         'Latest AI error: HTTP 400 · invalid_request_error · text.format.type · Request req_synthetic_diagnostic',
+      ),
+    ).toBeVisible()
+    expect(screen.getByText('Recipe preparation insights: Needs attention')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Enable AI assistance' })).toBeDisabled()
+    expect(
+      screen.getByText(
+        'Enable AI assistance becomes available after the hosted smoke test, the current evaluation is accepted and current recipe preparation insights are ready.',
       ),
     ).toBeVisible()
 

@@ -1,5 +1,23 @@
 # CS-94 handover
 
+## 2026-08-10 empty recipe-opportunity activation recovery
+
+- Baseline: `main` at `249b65a46e134393d65f47f06661861d8c53c431`.
+- Branch: `fix/cs-94-ai-activation-readiness`.
+- Empty provider-assisted v3 recipe results are rejected before activation and retried up to the
+  existing three-attempt ceiling instead of being recorded as successful enrichment.
+- The provider instruction explicitly assesses bounded ingredient, component, cooked-component,
+  complete-meal and assembly preparation before returning its opportunities.
+- Migration `20260810120000_cs94_recover_empty_recipe_opportunities.sql` releases only current
+  completed v3 provider jobs backed by an active empty opportunity result. Valid recipe intelligence,
+  recipe content and evaluation evidence are preserved.
+- The Admin activation checklist aligns with the database recipe-readiness gate, disables activation
+  while recovered recipes are processing and explains the remaining action safely.
+- Edge Function changed: `enrich-recipe`. Dependencies: none. Fixed cost: A$0/month and A$0/year.
+  Reprocessing the affected recipes uses the existing approved provider budget and limits.
+- Release the migration and Edge Function from the approved merge SHA, drain enrichment, verify
+  recipe readiness, then enable AI using the already accepted current evaluation.
+
 ## 2026-08-06 bounded-stage and cooked-component intelligence
 
 - Baseline: `main` at `a5719fa847513ae28343d2a2c4d293246831a260` (merge of PR #168).

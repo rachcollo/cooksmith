@@ -1,5 +1,24 @@
 # CS-94 implementation report
 
+## Empty recipe-opportunity activation recovery - 2026-08-10
+
+The release-readiness review found that provider-assisted v3 enrichment permitted an empty
+`preparationOpportunities` array, activated it as a successful recipe result and marked its job
+completed. Those jobs could not be selected by either failed-job retry control, while the stricter
+activation guard correctly rejected the unusable recipe coverage.
+
+The provider contract now requires at least one useful, bounded opportunity for a recipe containing
+ingredients and instructions, explicitly considers cooked components and complete make-ahead meal
+stages, and treats an empty result as invalid provider output. Invalid structured output receives the
+same bounded automatic retry as a transient provider response. Forward migration
+`20260810120000_cs94_recover_empty_recipe_opportunities.sql` releases only current completed v3
+provider jobs whose active result is empty, preserving recipe content and all valid enrichments.
+
+After merge, release the migration and the `enrich-recipe` Edge Function from the exact approved
+`main` SHA, allow the recovered queue to drain, confirm recipe preparation insights are ready, then
+use the existing accepted evaluation and hosted smoke evidence to enable AI assistance. No provider,
+dependency, RLS policy or fixed-cost limit changes.
+
 ## Opportunity-level eligibility follow-up — 2026-08-04
 
 The v11 planner removes the contradictory full-recipe keyword scan from candidate eligibility.
