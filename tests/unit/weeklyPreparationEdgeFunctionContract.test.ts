@@ -315,6 +315,17 @@ describe('weekly preparation Edge Function contracts', () => {
     expect(migration).toContain("jobs.rules_version = 'cooksmith-rules-v3'")
   })
 
+  it('replaces the prior enrichment when a durable job is intentionally reprocessed', () => {
+    const migration = readFileSync(
+      'supabase/migrations/20260810130000_cs94_reprocessed_enrichment_activation.sql',
+      'utf8',
+    )
+
+    expect(migration).toContain('on conflict (job_id) do update set')
+    expect(migration).toContain('result = excluded.result')
+    expect(migration).toContain('is_active = true')
+  })
+
   it.each([
     ['configuration_incomplete', 'missing provider or release configuration'],
     ['evaluation_persistence_unavailable', 'could not access Cooksmith evaluation storage'],
