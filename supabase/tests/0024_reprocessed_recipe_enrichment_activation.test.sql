@@ -12,7 +12,8 @@ insert into cooksmith.recipe_content_versions
   (id, source_kind, recipe_id, household_id, fingerprint, source_snapshot)
 values ('30000000-0000-0000-0000-000000000024', 'household',
   '20000000-0000-0000-0000-000000000024', '10000000-0000-0000-0000-000000000024',
-  'activation-fingerprint', '{"ingredients":[],"steps":[]}'::jsonb);
+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  '{"ingredients":[],"steps":[]}'::jsonb);
 
 insert into cooksmith.recipe_enrichment_jobs
   (id, source_kind, recipe_id, household_id, recipe_version_id, state,
