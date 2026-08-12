@@ -57,7 +57,7 @@ select lives_ok(
      where imported_recipe_id = '96000000-0000-4000-8000-000000000010'
        and model_key = 'provider-assisted-v1'),
     'openai', 'gpt-test',
-    '{"recipeId":"atomic","ingredients":[],"unresolvedIngredientIds":[],"overallConfidence":"high"}',
+    '{"recipeId":"atomic","ingredients":[],"unresolvedIngredientIds":[],"overallConfidence":"high","preparationOpportunities":[{"opportunityId":"atomic-useful"}]}',
     'high'
   )$$,
   'Activation and completion commit through one database function'
@@ -114,7 +114,7 @@ select cooksmith.activate_recipe_enrichment(
    where imported_recipe_id = '96000000-0000-4000-8000-000000000011'
      and model_key = 'deterministic'),
   'deterministic', 'deterministic',
-  '{"recipeId":"recoverable","ingredients":[],"unresolvedIngredientIds":[],"overallConfidence":"high"}',
+  '{"recipeId":"recoverable","ingredients":[],"unresolvedIngredientIds":[],"overallConfidence":"high","preparationOpportunities":[{"opportunityId":"recoverable-useful"}]}',
   'high'
 );
 
