@@ -406,23 +406,27 @@ Deno.serve(async (request) => {
       ...recipeIds.map((id) => `household:${id}`),
       ...importedRecipeIds.map((id) => `shared_platform:${id}`),
     ]
-    if (expectedRecipes.some((id) => !coveredRecipes.has(id))) {
+    const hasUnreadyRecipes =
+      expectedRecipes.some((id) => !coveredRecipes.has(id)) ||
+      enrichments.some((enrichment) => enrichment.result.preparationOpportunities.length === 0)
+    const usableEnrichments = enrichments.filter(
+      (enrichment) => enrichment.result.preparationOpportunities.length > 0,
+    )
+    if (hasUnreadyRecipes) {
       await continueRecipeEnrichment()
-      return json(409, { error: 'recipes_preparing' })
     }
-    if (enrichments.some((enrichment) => enrichment.result.preparationOpportunities.length === 0)) {
-      await continueRecipeEnrichment()
+    if (usableEnrichments.length === 0) {
       return json(409, { error: 'recipes_without_opportunities' })
     }
     const recipeVersions = await rest<RecipeVersionRow[]>(
-      `recipe_content_versions?id=in.(${enrichments.map((item) => item.recipe_version_id).join(',')})&select=id,source_snapshot&limit=100`,
+      `recipe_content_versions?id=in.(${usableEnrichments.map((item) => item.recipe_version_id).join(',')})&select=id,source_snapshot&limit=100`,
     )
     const candidates = candidatesFrom(
       householdId,
       planId,
       settings[0]?.default_servings ?? 4,
       meals,
-      enrichments,
+      usableEnrichments,
       recipeVersions,
     )
     if (candidates.length === 0) return json(422, { error: 'opportunities_not_ready_yet' })

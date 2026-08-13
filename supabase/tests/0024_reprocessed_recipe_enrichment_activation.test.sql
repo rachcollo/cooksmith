@@ -27,7 +27,7 @@ values ('40000000-0000-0000-0000-000000000024', 'household',
 select lives_ok(
   $$select cooksmith.activate_recipe_enrichment(
     '40000000-0000-0000-0000-000000000024', 'openai', 'test-model',
-    '{"revision":1}'::jsonb, 'high')$$,
+    '{"revision":1,"preparationOpportunities":[{"opportunityId":"revision-1"}]}'::jsonb, 'high')$$,
   'first activation succeeds');
 
 update cooksmith.recipe_enrichment_jobs
@@ -37,7 +37,7 @@ where id = '40000000-0000-0000-0000-000000000024';
 select lives_ok(
   $$select cooksmith.activate_recipe_enrichment(
     '40000000-0000-0000-0000-000000000024', 'openai', 'test-model',
-    '{"revision":2}'::jsonb, 'medium')$$,
+    '{"revision":2,"preparationOpportunities":[{"opportunityId":"revision-2"}]}'::jsonb, 'medium')$$,
   'reprocessing the same durable job replaces its enrichment');
 
 select is((select count(*)::integer from cooksmith.recipe_enrichments

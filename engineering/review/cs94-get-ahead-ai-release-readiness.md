@@ -442,3 +442,24 @@ The approved v10 correction requires:
 The release changes no provider, dependency or paid tier. Fixed cost remains A$0/month and
 A$0/year. After release, verify real household meal changes and 15, 30, 45 and 60-minute attempts,
 then run, review and accept the v10 evaluation before enabling AI.
+
+## Partial-plan enrichment repair correction
+
+Real household testing after activation showed that one empty active enrichment blocked a useful
+plan for every other ready meal. The empty deterministic result had also displaced an earlier
+provider-assisted result containing valid opportunities, while the repair call had no eligible job
+to process.
+
+The approved correction requires:
+
+- planning to continue from every ready recipe while unavailable recipes repair in the background;
+- a 409 response only when none of the selected recipes has usable opportunities;
+- an empty deterministic result never to replace a usable result for the same recipe version;
+- automatic provider-assisted repair when no usable result exists; and
+- a forward data repair that restores the newest usable v3 result before requeuing unresolved
+  empty results.
+
+The release adds one forward migration and changes `get-weekly-preparation-plan`. Deploy the
+migration first, then the Edge Function from the same approved `main` SHA. It adds no dependency,
+provider or paid tier. Fixed cost remains A$0/month and A$0/year; any repair calls remain within the
+existing provider limits.
