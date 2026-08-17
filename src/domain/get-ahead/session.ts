@@ -7,7 +7,7 @@ import type {
 export const getAheadDurationPresets = [15, 30, 45, 60, 120] as const
 export const minCustomGetAheadMinutes = 5
 export const maxCustomGetAheadMinutes = 240
-export const getAheadSessionVersion = 'get-ahead-session-v1' as const
+export const getAheadSessionVersion = 'get-ahead-session-v2' as const
 export const getAheadPriorityScoreVersion = 'get-ahead-priority-v1' as const
 export const getAheadConsolidationVersion = 'get-ahead-consolidation-v1' as const
 
@@ -97,6 +97,109 @@ export interface GetAheadSession {
   recommendationExplanation: string
   overrides: GetAheadUserOverrides
   tasks: GetAheadTaskSnapshot[]
+}
+
+const getAheadTaskStates: GetAheadTaskState[] = ['remaining', 'completed', 'skipped', 'deferred']
+const getAheadSessionStatuses: GetAheadSessionStatus[] = ['active', 'ended', 'completed']
+
+export function restoreGetAheadSession(raw: string | null): GetAheadSession | null {
+  if (!raw) return null
+  try {
+    const value: unknown = JSON.parse(raw)
+    return isGetAheadSession(value) ? value : null
+  } catch {
+    return null
+  }
+}
+
+function isGetAheadSession(value: unknown): value is GetAheadSession {
+  if (!isRecord(value)) return false
+  if (
+    value.version !== getAheadSessionVersion ||
+    value.scoreVersion !== getAheadPriorityScoreVersion ||
+    typeof value.id !== 'string' ||
+    typeof value.householdId !== 'string' ||
+    typeof value.planId !== 'string' ||
+    typeof value.selectedMinutes !== 'number' ||
+    !Number.isInteger(value.selectedMinutes) ||
+    !getAheadSessionStatuses.includes(value.status as GetAheadSessionStatus) ||
+    typeof value.createdAt !== 'string' ||
+    typeof value.updatedAt !== 'string' ||
+    !(value.endedAt === null || typeof value.endedAt === 'string') ||
+    typeof value.recommendationExplanation !== 'string' ||
+    !isGetAheadOverrides(value.overrides) ||
+    !Array.isArray(value.tasks)
+  )
+    return false
+  return value.tasks.every(isGetAheadTaskSnapshot)
+}
+
+function isGetAheadOverrides(value: unknown): value is GetAheadUserOverrides {
+  return (
+    isRecord(value) &&
+    isStringArray(value.excludedTaskIds) &&
+    isStringArray(value.includedTaskIds) &&
+    isStringArray(value.orderedTaskIds)
+  )
+}
+
+function isGetAheadTaskSnapshot(value: unknown): value is GetAheadTaskSnapshot {
+  if (!isRecord(value)) return false
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.opportunityId !== 'string' ||
+    typeof value.title !== 'string' ||
+    typeof value.recipeId !== 'string' ||
+    typeof value.recipeName !== 'string' ||
+    typeof value.recipeUpdatedAt !== 'string' ||
+    typeof value.plannedMealId !== 'string' ||
+    typeof value.mealDate !== 'string' ||
+    typeof value.estimatedMinutes !== 'number' ||
+    !Number.isFinite(value.estimatedMinutes) ||
+    typeof value.estimatedTimeSavedMinutes !== 'number' ||
+    !Number.isFinite(value.estimatedTimeSavedMinutes) ||
+    !getAheadTaskStates.includes(value.state as GetAheadTaskState) ||
+    typeof value.selected !== 'boolean' ||
+    !isGetAheadScoreEvidence(value.scoreEvidence)
+  )
+    return false
+  if (
+    value.consolidation !== null &&
+    (!isRecord(value.consolidation) || !Array.isArray(value.consolidation.sources))
+  )
+    return false
+  if (
+    value.taskDetails !== undefined &&
+    (!Array.isArray(value.taskDetails) ||
+      !value.taskDetails.every(
+        (detail) =>
+          isRecord(detail) &&
+          typeof detail.id === 'string' &&
+          isStringArray(detail.recipeNames) &&
+          (detail.ingredients === undefined || isStringArray(detail.ingredients)) &&
+          (detail.steps === undefined || isStringArray(detail.steps)),
+      ))
+  )
+    return false
+  return true
+}
+
+function isGetAheadScoreEvidence(value: unknown): value is GetAheadScoreEvidence {
+  return (
+    isRecord(value) &&
+    value.version === getAheadPriorityScoreVersion &&
+    typeof value.score === 'number' &&
+    Number.isFinite(value.score) &&
+    isStringArray(value.explanationFactors)
+  )
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string')
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
 export function reconcileGetAheadSession(input: {

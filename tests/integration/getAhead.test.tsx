@@ -9,6 +9,7 @@ import {
   type WeeklyPreparationRepository,
 } from '../../src/application/get-ahead/weeklyPreparationRepository'
 import { currentWeek } from '../../src/domain/meal-plans/week'
+import { periodForPreset } from '../../src/domain/get-ahead/preparationPeriod'
 import {
   authenticatedTestClient,
   authenticatedTestAuthState,
@@ -148,6 +149,38 @@ const usefulWeeklyPreparationRepository: WeeklyPreparationRepository = {
 
 describe('Get Ahead page', () => {
   beforeEach(() => localStorage.clear())
+
+  it('discards an obsolete saved session and rebuilds Get Ahead without crashing', async () => {
+    const period = periodForPreset('next-weekdays')
+    const key = `cooksmith:get-ahead:${householdId}:${period.start}_${period.end}`
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        version: 'get-ahead-session-v1',
+        selectedMinutes: 30,
+        tasks: [{ id: 'obsolete-task' }],
+      }),
+    )
+
+    renderApp(
+      '/get-ahead',
+      { appEnvironment: 'test', buildCommit: 'test-build' },
+      authenticatedTestClient,
+      completedOnboardingRepository,
+      ownerHouseholdPeopleRepository,
+      defaultPantryRepository,
+      plannedMealRepository,
+      authenticatedTestAuthState,
+      recipeRepository,
+      defaultShoppingRepository,
+      undefined,
+      usefulWeeklyPreparationRepository,
+    )
+
+    expect(await screen.findByRole('button', { name: 'Start' })).toBeVisible()
+    expect(screen.queryByText('That page did not come together')).not.toBeInTheDocument()
+    expect(localStorage.getItem(key)).toBeNull()
+  })
 
   it('shows a clear unavailable state and replaces it after a successful retry', async () => {
     const user = userEvent.setup()

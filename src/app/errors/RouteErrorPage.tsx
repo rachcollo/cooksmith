@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom'
 
 import { ErrorState } from '../../components/ui/ErrorState'
@@ -6,13 +8,22 @@ import { createCorrelationId } from '../../shared/utils/createCorrelationId'
 
 export function RouteErrorPage() {
   const error = useRouteError()
-  const correlationId = createCorrelationId()
+  const [correlationId] = useState(createCorrelationId)
   const status = isRouteErrorResponse(error) ? error.status : undefined
 
-  logger.error('route_render_failed', {
-    correlationId,
-    status,
-  })
+  useEffect(() => {
+    logger.error('route_render_failed', {
+      correlationId,
+      status,
+    })
+    Sentry.captureException(
+      error instanceof Error ? error : new Error('Unknown route rendering failure'),
+      {
+        tags: { correlationId, routeFailure: 'true' },
+        extra: { status },
+      },
+    )
+  }, [correlationId, error, status])
 
   return (
     <main className="container page-content">

@@ -21,6 +21,17 @@ function isPlan(value: unknown): value is WeeklyPreparationPlan {
     typeof plan.cacheKey === 'string' &&
     Array.isArray(plan.tasks) &&
     plan.tasks.length > 0 &&
+    plan.tasks.every(
+      (task) =>
+        Array.isArray(task.subtasks) &&
+        task.subtasks.length > 0 &&
+        task.subtasks.every(
+          (subtask) =>
+            Boolean(subtask.quantity) &&
+            Array.isArray(subtask.sources) &&
+            subtask.sources.length > 0,
+        ),
+    ) &&
     (plan.generation === 'deterministic' ||
       plan.generation === 'model-assisted' ||
       plan.generation === 'fallback')
