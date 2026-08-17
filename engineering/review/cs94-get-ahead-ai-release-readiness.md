@@ -464,7 +464,6 @@ migration first, then the Edge Function from the same approved `main` SHA. It ad
 provider or paid tier. Fixed cost remains A$0/month and A$0/year; any repair calls remain within the
 existing provider limits.
 
-
 ## Browser session recovery and traceability correction
 
 Real household testing after v13 activation exposed a browser-only route failure when Get Ahead

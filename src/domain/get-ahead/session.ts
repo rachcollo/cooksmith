@@ -120,6 +120,7 @@ function isGetAheadSession(value: unknown): value is GetAheadSession {
     typeof value.id !== 'string' ||
     typeof value.householdId !== 'string' ||
     typeof value.planId !== 'string' ||
+    typeof value.selectedMinutes !== 'number' ||
     !Number.isInteger(value.selectedMinutes) ||
     !getAheadSessionStatuses.includes(value.status as GetAheadSessionStatus) ||
     typeof value.createdAt !== 'string' ||
@@ -153,7 +154,9 @@ function isGetAheadTaskSnapshot(value: unknown): value is GetAheadTaskSnapshot {
     typeof value.recipeUpdatedAt !== 'string' ||
     typeof value.plannedMealId !== 'string' ||
     typeof value.mealDate !== 'string' ||
+    typeof value.estimatedMinutes !== 'number' ||
     !Number.isFinite(value.estimatedMinutes) ||
+    typeof value.estimatedTimeSavedMinutes !== 'number' ||
     !Number.isFinite(value.estimatedTimeSavedMinutes) ||
     !getAheadTaskStates.includes(value.state as GetAheadTaskState) ||
     typeof value.selected !== 'boolean' ||
@@ -185,6 +188,7 @@ function isGetAheadScoreEvidence(value: unknown): value is GetAheadScoreEvidence
   return (
     isRecord(value) &&
     value.version === getAheadPriorityScoreVersion &&
+    typeof value.score === 'number' &&
     Number.isFinite(value.score) &&
     isStringArray(value.explanationFactors)
   )
