@@ -22,6 +22,7 @@ import {
   getAheadTotals,
   isTaskStale,
   reconcileGetAheadSession,
+  restoreGetAheadSession,
   transitionGetAheadTask,
   validateGetAheadDuration,
   type GetAheadSession,
@@ -82,8 +83,10 @@ export function GetAheadPage() {
   useEffect(() => {
     if (!householdId) return
     let active = true
-    const saved = localStorage.getItem(storageKey(householdId, planId))
-    const parsed = saved ? (JSON.parse(saved) as GetAheadSession) : null
+    const key = storageKey(householdId, planId)
+    const saved = localStorage.getItem(key)
+    const parsed = restoreGetAheadSession(saved)
+    if (saved && !parsed) localStorage.removeItem(key)
     Promise.all([
       plannedMeals.listWeek(householdId, weekStart, weekEnd),
       recipes.list(householdId),
@@ -631,7 +634,9 @@ function GetAheadTaskRow({
           <ol>
             {task.taskDetails.map((detail) => (
               <li key={detail.id}>
-                <strong>{detail.recipeNames.join(' and ')}</strong>
+                <strong>
+                  {detail.recipeNames?.length ? detail.recipeNames.join(' and ') : task.recipeName}
+                </strong>
                 {detail.ingredients?.length ? (
                   <div>
                     <span>Ingredients</span>

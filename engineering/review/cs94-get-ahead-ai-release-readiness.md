@@ -463,3 +463,25 @@ The release adds one forward migration and changes `get-weekly-preparation-plan`
 migration first, then the Edge Function from the same approved `main` SHA. It adds no dependency,
 provider or paid tier. Fixed cost remains A$0/month and A$0/year; any repair calls remain within the
 existing provider limits.
+
+
+## Browser session recovery and traceability correction
+
+Real household testing after v13 activation exposed a browser-only route failure when Get Ahead
+restored an obsolete or malformed checklist snapshot from local storage. The server plan and
+generation attempt remained valid, but the browser trusted the persisted snapshot as the current
+TypeScript shape and could throw while rendering nested task detail.
+
+The approved correction requires:
+
+- a new saved-session version and runtime validation before any persisted snapshot is used;
+- invalid or unreadable snapshots to be removed and rebuilt automatically from the current
+  authorised weekly preparation plan;
+- nested server plan structures to fail closed at the repository boundary;
+- checklist recipe attribution to remain readable when optional detail is incomplete;
+- the displayed route-failure reference to be stable and attached to the captured Sentry exception;
+  and
+- unit and integration regression coverage for obsolete, malformed and incomplete snapshots.
+
+This correction changes no database migration, Edge Function, provider, dependency or paid tier.
+Fixed cost remains A$0/month and A$0/year.

@@ -9,6 +9,7 @@ import {
   getAheadTotals,
   moveGetAheadTask,
   reconcileGetAheadSession,
+  restoreGetAheadSession,
   toggleGetAheadTask,
   transitionGetAheadTask,
   validateGetAheadDuration,
@@ -73,6 +74,29 @@ function ingredientOpportunity(input: {
 }
 
 describe('Get Ahead session domain', () => {
+  it('restores only current, structurally valid saved sessions', () => {
+    const session = createGetAheadSession({
+      householdId: 'household-1',
+      planId: '2026-W30',
+      selectedMinutes: 15,
+      opportunities: [opportunity('a', 'chop')],
+    })
+
+    expect(restoreGetAheadSession(JSON.stringify(session))).toEqual(session)
+    expect(restoreGetAheadSession('{not-json')).toBeNull()
+    expect(
+      restoreGetAheadSession(JSON.stringify({ ...session, version: 'get-ahead-session-v1' })),
+    ).toBeNull()
+    expect(
+      restoreGetAheadSession(
+        JSON.stringify({
+          ...session,
+          tasks: [{ ...session.tasks[0], scoreEvidence: undefined }],
+        }),
+      ),
+    ).toBeNull()
+  })
+
   it('validates custom whole-minute durations', () => {
     expect(validateGetAheadDuration(4)).toBe('Choose at least 5 minutes.')
     expect(validateGetAheadDuration(241)).toBe('Choose 240 minutes or less.')
