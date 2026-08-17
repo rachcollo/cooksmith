@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import * as Sentry from '@sentry/react'
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom'
 
@@ -8,7 +8,7 @@ import { createCorrelationId } from '../../shared/utils/createCorrelationId'
 
 export function RouteErrorPage() {
   const error = useRouteError()
-  const correlationId = useRef(createCorrelationId()).current
+  const [correlationId] = useState(createCorrelationId)
   const status = isRouteErrorResponse(error) ? error.status : undefined
 
   useEffect(() => {
