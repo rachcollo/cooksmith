@@ -22,6 +22,8 @@ At baseline commit `6ff417394f156e3b1f7b50cb37a1a45561fb4c26`, the Welcome page 
 
 The callback bootstrap reads an authorisation code from `/auth/confirm`, calls `exchangeCodeForSession`, removes the code from browser history and fails the application bootstrap when the exchange cannot produce a session. `AuthCallbackError` tells every failed user to request another magic link in the same browser. `EmailConfirmationPage` also routes an unauthenticated callback to **Request another link**. This can create an expired/retry loop and is not contextual for a newly confirmed account whose session exchange failed.
 
+A production defect was reproduced on 23 August 2026: a first-time user created an account, opened the verification email from Outlook on iOS, and Outlook handed the link to Safari. Supabase verified the account, but Cooksmith then displayed `pkce_exchange_failed` because Safari did not contain the PKCE verifier created in the browser context that initiated signup. This is an expected limitation of PKCE code exchange, but it is not an acceptable Cooksmith user journey. Cross-browser and email-client browser hand-off must be a supported primary path, not merely a recovery test.
+
 The accepted onboarding gate already routes an authenticated user with incomplete onboarding to `/onboarding` and a completed user into the application. Profile and household writes must remain idempotent and household-safe.
 
 Implementation must start from the latest accepted `main`, revalidate this baseline, and follow the Product Principles, AIEOS lifecycle, Codex build rules and authentication, database, testing, accessibility, security and release standards.
@@ -35,6 +37,9 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 - Keep password sign-in and password account creation available as secondary paths.
 - Neutral request/success copy that cannot reveal whether an account exists.
 - One callback and post-auth routing contract for returning and first-time email users.
+- Supabase email templates for signup confirmation and passwordless email continuation use `{{ .TokenHash }}` and route to the canonical `/auth/confirm` endpoint with an allow-listed `type`.
+- `/auth/confirm` verifies token-hash email links with Supabase `verifyOtp()` so the flow does not depend on browser-local PKCE state.
+- A bounded compatibility path for already-issued PKCE `code` links during rollout, without allowing the legacy path to remain the default.
 - Safe preservation of an internal `returnTo` destination.
 - Contextual invalid, expired, reused and failed-session recovery without callback/retry loops.
 - Idempotent onboarding/profile/household provisioning under callback refresh or duplicate invocation.
@@ -63,14 +68,17 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 
 ### Callback
 
-1. Accept only the Supabase-supported callback parameters required by the selected flow.
-2. Establish or recover the authenticated session without exposing codes, tokens or provider errors.
-3. Remove sensitive one-time callback parameters from browser history as soon as safely possible.
-4. Resolve the destination from authenticated application state:
+1. Make a token-hash email callback the required default for signup confirmation and passwordless email continuation. Accept only `token_hash`, an allow-listed email verification `type`, and a validated internal destination.
+2. Verify the token hash with `supabase.auth.verifyOtp({ token_hash, type })` and establish the authenticated session without relying on the requesting browser's locally stored PKCE verifier.
+3. During a bounded rollout window, recognise an already-issued `code` callback and use `exchangeCodeForSession` only as a compatibility path. Remove this path when issued legacy links can no longer be valid.
+4. Never accept both callback contracts ambiguously; reject malformed, duplicated, mismatched or unsupported parameter combinations.
+5. Establish or recover the authenticated session without exposing codes, token hashes, PKCE details or provider errors.
+6. Remove sensitive one-time callback parameters from browser history as soon as safely possible.
+7. Resolve the destination from authenticated application state:
    - incomplete onboarding/profile state → `/onboarding`;
    - completed onboarding state → validated internal `returnTo` or the application home.
-5. Refresh, duplicate opening and already-consumed links must fail safely. They cannot duplicate profile, household or membership records.
-6. The implementation must explicitly test links opened in a different browser context. If the current PKCE flow cannot establish a session without its original verifier, use a supported Supabase email callback design that completes first-time confirmation safely across the approved browser contexts; do not weaken token verification or copy secrets into URLs.
+8. Refresh, duplicate opening and already-consumed links must fail safely. They cannot duplicate profile, household or membership records.
+9. The implementation must prove that a link requested in one browser and opened from Outlook, Apple Mail or an in-app email client into Safari/WebKit can establish a session through the token-hash contract. Do not weaken token verification, persist token hashes, or expose them beyond the one-time callback URL.
 
 ### Recovery
 
@@ -111,7 +119,11 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 
 ### FR-4 — Reliable callback and recovery
 
-- [ ] Same-browser and approved cross-browser/in-app-browser email opening are covered by the selected Supabase callback contract.
+- [ ] Signup-confirmation and passwordless email templates emit token-hash links to the canonical `/auth/confirm` route rather than making PKCE code exchange the default.
+- [ ] `/auth/confirm` allow-lists the verification type and calls `verifyOtp()` with the token hash; the handler does not require the originating browser's PKCE verifier.
+- [ ] Same-browser and approved cross-browser/in-app-browser email opening are covered by the token-hash callback contract.
+- [ ] A first-time user can request signup in one browser, open the email from Outlook on iOS into Safari, receive a session and reach onboarding without seeing `pkce_exchange_failed`.
+- [ ] Already-issued legacy `code` links have a bounded, tested compatibility path during rollout; malformed mixed callback parameters fail closed.
 - [ ] Invalid, expired, reused, malformed and missing callback parameters produce distinct internal categories but calm, actionable user copy.
 - [ ] Sensitive callback parameters are removed from browser history and are absent from logs, telemetry and screenshots.
 - [ ] A confirmed user whose session exchange fails receives a valid sign-in route rather than an endless resend loop.
@@ -150,6 +162,8 @@ Use synthetic addresses and identities for tests. Never commit a real confirmati
 ## Technical Direction
 
 - Change `src/app/auth/AuthProvider.tsx` so the unified email action opts into supported account creation.
+- Update the applicable Supabase **Confirm signup** and **Magic Link** email templates to build `https://app.smillins.com.au/auth/confirm?token_hash={{ .TokenHash }}&type=email` links, with the equivalent explicitly allow-listed Preview origin only where required by the environment contract.
+- Implement a typed `/auth/confirm` parser that accepts the token-hash contract, allow-lists `type`, invokes `verifyOtp()`, sanitises browser history, and treats legacy `code` exchange only as a time-bounded compatibility path.
 - Refine `src/routes/auth/AuthPages.tsx` so Welcome, email request, confirmation and recovery copy/actions form one coherent journey while password paths remain available.
 - Refactor `src/application/auth/initialSession.ts` and `src/application/auth/bootstrapAuth.ts` only as needed to represent safe callback outcomes and clear sensitive URL state.
 - Replace the blanket same-browser resend advice in `src/app/errors/AuthCallbackError.tsx` with category-aware recovery that does not expose implementation details.
@@ -165,7 +179,9 @@ Use synthetic addresses and identities for tests. Never commit a real confirmati
 
 - OTP options use `shouldCreateUser: true` and the correct environment callback.
 - Internal safe-return validation rejects absolute, protocol-relative, encoded and malformed external destinations.
-- Callback outcome classification covers success, empty session, invalid, expired, reused, missing verifier and unexpected failure without exposing raw errors.
+- Token-hash callback parsing and `verifyOtp()` cover success, invalid, expired, reused, missing hash, unsupported type and unexpected failure without exposing raw errors.
+- Legacy PKCE-code compatibility covers success and missing verifier without making same-browser PKCE the required email journey.
+- Mixed `code`/`token_hash`, duplicated and malformed callback parameters fail closed.
 - Welcome/email/recovery copy and links match the unified contract.
 - Existing and new email request results render the same enumeration-safe state.
 - Focus, accessible names, error association, busy state and live status behaviour.
@@ -185,6 +201,7 @@ Use synthetic addresses and identities for tests. Never commit a real confirmati
 
 - Chromium/WebKit representative desktop and mobile flows at 320px and 390px.
 - Request and open links in the same browser and a separate/in-app browser context using synthetic accounts.
+- Reproduce the reported iOS hand-off: initiate first-time signup outside Safari, open the confirmation from Outlook, allow Outlook to hand off to Safari/WebKit, and prove the user reaches onboarding with no `pkce_exchange_failed` screen.
 - Browser Back, refresh, reused link, expired link and fresh-email recovery.
 - Preview link returns to the originating allow-listed Preview; Production link returns only to `app.smillins.com.au`.
 - Keyboard-only completion, focus recovery, axe, forced colours and no horizontal overflow.
@@ -222,18 +239,19 @@ Live email delivery and one-time-link handling must be verified in hosted Previe
 2. Add regression tests reproducing the unregistered-email silent success and expired/retry loop.
 3. Define typed request, callback outcome, destination and recovery contracts.
 4. Enable supported account creation for the unified email request and update the Welcome/email UI.
-5. Implement callback/session handling and internal destination routing for existing and new users.
-6. Implement category-aware recovery and stale-history clearing.
-7. Prove provisioning idempotency; add the smallest database safeguard only if the accepted schema lacks it.
-8. Complete unit, integration, browser, responsive, accessibility and security checks.
-9. Validate real email delivery and same/cross-browser links in hosted Preview, then verify the Production origin with fresh synthetic accounts.
-10. Record exact evidence and release declarations in the implementation PR and Jira.
+5. Implement token-hash `verifyOtp()` callback/session handling, bounded legacy-code compatibility, and internal destination routing for existing and new users.
+6. Deploy the compatible callback handler before changing Supabase email templates; then update Confirm signup and Magic Link templates and verify canonical Production/Preview origins.
+7. Implement category-aware recovery and stale-history clearing.
+8. Prove provisioning idempotency; add the smallest database safeguard only if the accepted schema lacks it.
+9. Complete unit, integration, browser, responsive, accessibility and security checks.
+10. Validate real email delivery and same/cross-browser links in hosted Preview, then verify the Production origin with fresh synthetic accounts.
+11. Record exact evidence and release declarations in the implementation PR and Jira.
 
 ## Release, Rollback and Cost
 
 - **Expected migration:** None. Confirm profile/household idempotency against latest `main`; any required additive safeguard must be declared, tested and released through the protected database workflow.
 - **Expected Edge Function:** None.
-- **Supabase configuration/template change:** None expected. The current Production Site URL and confirmation template have been inspected as correct; re-verify redirect allow-list and both applicable email templates without broadening them.
+- **Supabase configuration/template change:** Required. Update the applicable **Confirm signup** and **Magic Link** templates to use `{{ .TokenHash }}` and the canonical `/auth/confirm` route, and re-verify the Production Site URL and redirect allow-list. Capture redacted before/after evidence. Roll template changes out with the compatible application callback handler already deployed so existing and newly issued links remain safe.
 - **Application release:** Human-approved merge to `main`.
 - **Rollback:** Revert the application change to restore the previous separate flows. Do not edit accepted migrations. If an additive safeguard was released, preserve it and forward-fix.
 - **New dependency/provider:** None expected.
