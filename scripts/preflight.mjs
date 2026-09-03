@@ -4,6 +4,8 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 
+import { supportsNodeVersion } from './tool-version-support.mjs'
+
 const require = createRequire(import.meta.url)
 const pkg = require('../package.json')
 
@@ -28,6 +30,15 @@ function checkVersion(name, actual, expected) {
       }
 }
 
+function checkNodeVersion(actual, expected) {
+  return supportsNodeVersion(actual)
+    ? { ok: true, message: `Node.js ${actual} (supported range ${expected})` }
+    : {
+        ok: false,
+        message: `Node.js ${expected} is required. Found ${actual || 'unavailable'}. Install a supported version before running repository checks.`,
+      }
+}
+
 export function collectPreflight({
   env = process.env,
   argv = process.argv.slice(2),
@@ -45,7 +56,7 @@ export function collectPreflight({
   const expectedNode = pkg.engines.node
   const expectedNpm = pkg.engines.npm
 
-  checks.push(checkVersion('Node.js', nodeVersion, expectedNode))
+  checks.push(checkNodeVersion(nodeVersion, expectedNode))
 
   const npm = runner('npm', ['--version'], { cwd })
   checks.push(checkVersion('npm', npm.status === 0 ? npm.stdout.trim() : '', expectedNpm))
