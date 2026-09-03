@@ -155,17 +155,65 @@ describe('deterministic authentication bootstrap', () => {
     expect(window.location.href).toBe('http://localhost:3000/auth/confirm?next=%2F')
   })
 
-  it('shows only the safe callback error reference for a failed PKCE exchange', () => {
+  it('shows calm recovery without raw callback details for a failed legacy exchange', () => {
     render(<AuthCallbackError category="pkce_exchange_failed" />)
 
-    expect(
-      screen.getByRole('heading', { name: 'Sign-in link could not be completed' }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Request a new magic link' })).toBeInTheDocument()
-    expect(screen.getByText(/same browser/i)).toBeInTheDocument()
-    expect(screen.getByText(/Reference: pkce_exchange_failed\./)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Please sign in to continue' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Return to sign in' })).toBeInTheDocument()
+    expect(screen.queryByText(/same browser/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/pkce_exchange_failed/)).not.toBeInTheDocument()
     expect(screen.queryByText(/provider/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/bad-code/i)).not.toBeInTheDocument()
+  })
+
+  it('establishes a session from a token hash without browser-local PKCE state', async () => {
+    const user = { id: 'cross-browser-user' } as User
+    const session = { user } as Session
+    const verifyOtp = vi.fn(async () => ({ data: { session, user }, error: null }))
+    const exchangeCodeForSession = vi.fn()
+    const client = clientWithAuth({ verifyOtp, exchangeCodeForSession })
+
+    window.history.replaceState(
+      null,
+      '',
+      '/auth/confirm?returnTo=%2Frecipes&token_hash=one-time-value&type=email',
+    )
+
+    await expect(bootstrapAuth(client)).resolves.toEqual({ session, user })
+    expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'one-time-value', type: 'email' })
+    expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    expect(window.location.href).toBe('http://localhost:3000/auth/confirm?returnTo=%2Frecipes')
+  })
+
+  it.each([
+    '/auth/confirm?token_hash=value',
+    '/auth/confirm?token_hash=value&type=signup',
+    '/auth/confirm?token_hash=value&type=email&code=legacy',
+    '/auth/confirm?token_hash=first&token_hash=second&type=email',
+  ])('fails closed for malformed or mixed callback contract %s', async (path) => {
+    const verifyOtp = vi.fn()
+    const exchangeCodeForSession = vi.fn()
+    const client = clientWithAuth({ verifyOtp, exchangeCodeForSession })
+    window.history.replaceState(null, '', path)
+
+    await bootstrapAuth(client).catch((error: unknown) =>
+      expectAuthBootstrapError(error, 'callback_invalid'),
+    )
+    expect(verifyOtp).not.toHaveBeenCalled()
+    expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    expect(window.location.search).toBe('')
+  })
+
+  it('categorises expired or reused token hashes without exposing provider errors', async () => {
+    const client = clientWithAuth({
+      verifyOtp: vi.fn(async () => ({ data: { session: null }, error: new Error('raw provider') })),
+    })
+    window.history.replaceState(null, '', '/auth/confirm?token_hash=expired&type=email')
+
+    await bootstrapAuth(client).catch((error: unknown) =>
+      expectAuthBootstrapError(error, 'email_link_invalid'),
+    )
+    expect(window.location.search).toBe('')
   })
 
   it('categorises an empty PKCE exchange result', async () => {

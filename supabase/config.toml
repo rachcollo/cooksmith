@@ -76,6 +76,14 @@ max_frequency = "1s"
 otp_length = 6
 otp_expiry = 3600
 
+[auth.email.template.confirmation]
+subject = "Confirm your Cooksmith email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Continue to Cooksmith"
+content_path = "./supabase/templates/magic-link.html"
+
 [auth.sms]
 enable_signup = false
 enable_confirmations = false

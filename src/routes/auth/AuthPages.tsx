@@ -1,7 +1,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { authRedirectUrl, safeReturnPath } from '../../application/auth/redirects'
+import {
+  authRedirectUrl,
+  emailAuthRedirectUrl,
+  safeReturnPath,
+} from '../../application/auth/redirects'
 import { useAuth } from '../../app/auth/authContext'
 import { Button } from '../../components/ui/Button'
 import { FeedbackState } from '../../components/ui/FeedbackState'
@@ -34,7 +38,7 @@ export function WelcomePage() {
       </AuthHeading>
       <div className="auth-actions">
         <Link className="button button-primary" to={`/auth/magic-link${suffix}`}>
-          Email me a magic link
+          Continue with email
         </Link>
         <Link className="button button-secondary" to={`/auth/sign-in${suffix}`}>
           Sign in with a password
@@ -110,7 +114,7 @@ export function SignInPage() {
       </form>
       <p>
         <Link to="/auth/forgot-password">Forgot password?</Link> ·{' '}
-        <Link to="/auth/magic-link">Use a magic link</Link>
+        <Link to="/auth/magic-link">Continue with email instead</Link>
       </p>
     </>
   )
@@ -173,13 +177,16 @@ export function CreateAccountPage() {
 }
 
 export function MagicLinkPage() {
+  const [params] = useSearchParams()
   return (
     <EmailActionPage
-      title="Get a magic link"
-      description="We’ll send a one-time sign-in link to your email."
-      action="Send magic link"
-      success="Check your email for your sign-in link."
-      perform={(auth, email) => auth.sendMagicLink(email, authRedirectUrl('/auth/confirm'))}
+      title="Continue with email"
+      description="Enter your email and we’ll send a secure link to continue."
+      action="Continue with email"
+      success="If this address can receive a Cooksmith email, use the link to continue."
+      perform={(auth, email) =>
+        auth.sendMagicLink(email, emailAuthRedirectUrl(params.get('returnTo')))
+      }
     />
   )
 }
@@ -225,7 +232,7 @@ function EmailActionPage({
     return (
       <FeedbackState
         tone="success"
-        title="Email sent"
+        title="Check your email"
         message={`${success} If it does not arrive, wait a minute before trying again.`}
       />
     )
@@ -309,10 +316,15 @@ export function EmailConfirmationPage() {
     <>
       <FeedbackState
         tone="info"
-        title="Link not confirmed"
-        message="The link may be invalid or expired. Request a fresh sign-in link."
+        title="This link can’t be used"
+        message="It may have expired or already been used. You can send a fresh email to continue."
       />
-      <Link to="/auth/magic-link">Request another link</Link>
+      <Link className="button button-primary" replace to="/auth/magic-link">
+        Send a new email
+      </Link>
+      <Link replace to="/auth/sign-in">
+        Sign in with a password
+      </Link>
     </>
   )
 }
