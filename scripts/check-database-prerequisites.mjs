@@ -1,6 +1,8 @@
 import { spawnSync } from 'node:child_process'
 
-const expectedNode = '24.14.0'
+import { supportsNodeVersion } from './tool-version-support.mjs'
+
+const expectedNode = '>=24.14.0 <25'
 const expectedNpm = '11.9.0'
 
 export function checkCommand(command, args = []) {
@@ -10,7 +12,7 @@ export function checkCommand(command, args = []) {
 export function validateToolVersions({ nodeVersion, npmVersion }) {
   const problems = []
 
-  if (nodeVersion !== expectedNode) {
+  if (!supportsNodeVersion(nodeVersion)) {
     problems.push(`Node.js ${expectedNode} is required. Found ${nodeVersion}.`)
   }
 

@@ -5,6 +5,11 @@ declare module '*.mjs' {
   export const collectPreflight: (options: Record<string, unknown>) => Check[]
   export const formatPreflight: (checks: Check[]) => Report
   export const environmentVariableNames: string[]
+  export const supportsNodeVersion: (
+    version: string,
+    minimum?: string,
+    maximumMajor?: number,
+  ) => boolean
 
   export const collectGovernanceChecks: (options: Record<string, unknown>) => Check[]
   export const formatGovernanceReport: (checks: Check[]) => Report
