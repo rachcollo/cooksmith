@@ -2,6 +2,7 @@ import type { AuthError, Session, User } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import type { InitialAuthState } from '../../application/auth/bootstrapAuth'
+import { recordAuthEvent } from '../../application/auth/authTelemetry'
 import type { CooksmithSupabaseClient } from '../../infrastructure/auth/supabaseAuthClient'
 import { AuthContext, type AuthContextValue } from './authContext'
 import { authErrorMessage } from './authErrors'
@@ -56,14 +57,12 @@ export function AuthProvider({
         )
       },
       async sendMagicLink(email, emailRedirectTo) {
-        throwIfError(
-          (
-            await requireClient().auth.signInWithOtp({
-              email,
-              options: { emailRedirectTo, shouldCreateUser: false },
-            })
-          ).error,
-        )
+        const result = await requireClient().auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo, shouldCreateUser: true },
+        })
+        recordAuthEvent({ name: 'email_requested', outcome: result.error ? 'failed' : 'accepted' })
+        throwIfError(result.error)
       },
       async requestPasswordReset(email, redirectTo) {
         throwIfError(

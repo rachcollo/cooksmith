@@ -20,7 +20,7 @@ test('renders every public authentication screen', async ({ page }) => {
     ['/welcome', 'Welcome to Cooksmith'],
     ['/auth/sign-in', 'Sign in'],
     ['/auth/create-account', 'Create account'],
-    ['/auth/magic-link', 'Get a magic link'],
+    ['/auth/magic-link', 'Continue with email'],
     ['/auth/forgot-password', 'Reset your password'],
   ]) {
     await page.goto(route[0])

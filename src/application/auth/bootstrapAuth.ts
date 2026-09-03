@@ -13,6 +13,9 @@ export type AuthBootstrapErrorCategory =
   | 'pkce_exchange_empty'
   | 'pkce_validation_failed'
   | 'session_restore_failed'
+  | 'email_link_invalid'
+  | 'email_session_failed'
+  | 'callback_invalid'
 
 export class AuthBootstrapError extends Error {
   constructor(public readonly category: AuthBootstrapErrorCategory) {
@@ -37,6 +40,15 @@ export async function bootstrapAuth(
       throw new AuthBootstrapError('pkce_exchange_failed')
     case 'pkce-exchange-empty':
       throw new AuthBootstrapError('pkce_exchange_empty')
+    case 'email-verification-error':
+      throw new AuthBootstrapError('email_link_invalid')
+    case 'email-verification-empty':
+      throw new AuthBootstrapError('email_session_failed')
+    case 'invalid-callback':
+      throw new AuthBootstrapError('callback_invalid')
+    case 'email-verification-success':
+      if (!result.session.user) throw new AuthBootstrapError('email_session_failed')
+      return { session: result.session, user: result.session.user }
     case 'pkce-exchange-success':
       if (!result.session.user) throw new AuthBootstrapError('pkce_validation_failed')
       return { session: result.session, user: result.session.user }

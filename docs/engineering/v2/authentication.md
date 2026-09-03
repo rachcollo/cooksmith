@@ -4,7 +4,7 @@ Milestone 6A adds authentication only. Profile and household creation remain del
 
 ## Architecture
 
-The browser creates one typed Supabase client with PKCE, persisted sessions, automatic token refresh, and callback detection enabled. `AuthProvider` owns session restoration and validates a restored session with `getUser()` before protected routes render. Supabase Auth establishes identity; the database RLS model from Milestone 5 remains the final authorisation boundary.
+The browser creates one typed Supabase client with PKCE, persisted sessions and automatic token refresh. `AuthProvider` owns session restoration and validates a restored session with `getUser()` before protected routes render. Supabase Auth establishes identity; the database RLS model from Milestone 5 remains the final authorisation boundary.
 
 Only `/health` and authentication routes are public. Product routes use `RequireAuth`. Public-only sign-in routes redirect an already authenticated user. Return destinations must be relative same-application paths; external and protocol-relative redirects are rejected.
 
@@ -29,7 +29,9 @@ For the temporary private MVP, the primary Vercel deployment URL is the canonica
 2. Set the Site URL to the primary deployment URL for the `main` environment.
 3. Allow exact primary callback URLs for `/auth/confirm` and `/auth/reset-password`. Add dedicated Preview callback URLs to the Preview project only. Avoid a broad wildcard when exact URLs are available.
 
-The browser client uses PKCE and exchanges an incoming `code` explicitly before protected route guards render. Supabase's automatic URL detection remains disabled to prevent competing exchanges. The bootstrap removes the one-time code from the address bar after the exchange and also accepts a provider fallback to the application root, while `/auth/confirm` remains the canonical callback. 4. Keep refresh-token rotation enabled and anonymous sign-ins disabled.
+Email confirmation and passwordless templates send `token_hash` and the allow-listed `email` type to `/auth/confirm`. The bootstrap calls `verifyOtp()` so opening an email from Outlook or another client in Safari does not depend on browser-local PKCE state. Supabase's automatic URL detection remains disabled to prevent competing exchanges. A legacy `code` exchange remains only for already-issued links during rollout. Mixed, duplicated or unsupported callback parameters fail closed, and one-time parameters are removed from browser history before verification completes.
+
+The email redirect passed by Cooksmith always includes a validated internal `returnTo` value. Hosted templates use `{{ .RedirectTo }}` so Production resolves to `https://app.smillins.com.au/auth/confirm` while an explicitly allow-listed Preview remains on its requesting Preview origin. Keep refresh-token rotation enabled and anonymous sign-ins disabled.
 
 Household invitations reuse the same Supabase magic-link delivery channel and exact `/auth/confirm` callback. The callback carries a validated same-origin return path to `/invitations/accept`; no additional redirect domain, browser email credential, or alternative code-exchange path is introduced. The invitation token is distinct from the Supabase authentication code.
 
