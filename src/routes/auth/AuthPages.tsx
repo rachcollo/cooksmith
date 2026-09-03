@@ -122,14 +122,15 @@ export function SignInPage() {
 
 export function CreateAccountPage() {
   const auth = useAuth(),
-    form = useAuthForm()
+    form = useAuthForm(),
+    [params] = useSearchParams()
   const [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
     [sent, setSent] = useState(false)
   async function submit(e: FormEvent) {
     e.preventDefault()
     await form.run(async () => {
-      await auth.signUp({ email, password }, authRedirectUrl('/auth/confirm'))
+      await auth.signUp({ email, password }, emailAuthRedirectUrl(params.get('returnTo')))
       setSent(true)
     })
   }

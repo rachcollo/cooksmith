@@ -58,4 +58,39 @@ describe('unified email authentication', () => {
     expect(screen.getByText(/If this address can receive a Cooksmith email/i)).toBeInTheDocument()
     expect(screen.queryByText(/account (exists|created|not found)/i)).not.toBeInTheDocument()
   })
+
+  it('gives password signup a redirect that the confirmation template can append to', async () => {
+    const signUp = vi.fn(async () => ({
+      data: { user: null, session: null as Session | null },
+      error: null,
+    }))
+    const client = {
+      auth: {
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+        signUp,
+      },
+    } as unknown as CooksmithSupabaseClient
+    renderApp(
+      '/auth/create-account?returnTo=%2Frecipes',
+      undefined,
+      client,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      signedOutTestAuthState,
+    )
+
+    await userEvent.type(screen.getByLabelText('Email'), 'person@example.invalid')
+    await userEvent.type(screen.getByLabelText('Password'), 'secure-pass-123')
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(signUp).toHaveBeenCalledWith({
+      email: 'person@example.invalid',
+      password: 'secure-pass-123',
+      options: {
+        emailRedirectTo: 'http://localhost:3000/auth/confirm?returnTo=%2Frecipes',
+      },
+    })
+  })
 })
