@@ -38,6 +38,24 @@ describe('environment preflight', () => {
     expect(formatPreflight(checks).ok).toBe(true)
   })
 
+  it('accepts a newer compatible Node 24 patch release', () => {
+    const checks = collectPreflight({
+      env: completeEnv,
+      argv: [],
+      nodeVersion: '24.19.0',
+      runner: runner({
+        'npm --version': { status: 0, stdout: '11.9.0\n' },
+        'git remote': { status: 0, stdout: 'origin\n' },
+        'git branch --show-current': { status: 0, stdout: 'feature\n' },
+        'npx supabase --version': { status: 0, stdout: '2.109.1\n' },
+      }),
+    })
+
+    const output = formatPreflight(checks)
+    expect(output.ok).toBe(true)
+    expect(output.text).toContain('Node.js 24.19.0 (supported range >=24.14.0 <25)')
+  })
+
   it('reports wrong Node and npm versions with actionable messages', () => {
     const checks = collectPreflight({
       env: completeEnv,
@@ -53,7 +71,7 @@ describe('environment preflight', () => {
 
     const output = formatPreflight(checks)
     expect(output.ok).toBe(false)
-    expect(output.text).toContain('Node.js 24.14.0 is required. Found 22.0.0.')
+    expect(output.text).toContain('Node.js >=24.14.0 <25 is required. Found 22.0.0.')
     expect(output.text).toContain('npm 11.9.0 is required. Found 10.0.0.')
   })
 
