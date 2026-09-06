@@ -58,7 +58,8 @@ describe('first-run onboarding', () => {
     expect(
       await screen.findByRole('heading', { name: 'You’re ready to cook lighter' }),
     ).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Enter Cooksmith' }))
+    expect(screen.getByLabelText('Create a password')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Skip for now' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/'))
 
     expect(saveProfile).toHaveBeenCalledOnce()
@@ -86,5 +87,47 @@ describe('first-run onboarding', () => {
     expect(
       await screen.findByRole('heading', { name: 'Make planning fit real life' }),
     ).toBeVisible()
+  })
+
+  it('allows a magic-link user to create a password before entering Cooksmith', async () => {
+    let state: OnboardingState = {
+      step: 4,
+      complete: false,
+      householdId: 'household-1',
+      dietary: { requirements: [], allergies: [] },
+    }
+    const completeDietaryPreferences = vi.fn(async () => {
+      state = { ...state, step: 5, complete: true }
+    })
+    const repository: OnboardingRepository = {
+      load: async () => state,
+      saveProfile: async () => undefined,
+      bootstrapHousehold: async () => 'household-1',
+      saveHouseholdPreferences: async () => undefined,
+      completeDietaryPreferences,
+    }
+    const updateUser = vi.fn(async () => ({ data: {}, error: null }))
+    const client = {
+      ...authenticatedTestClient,
+      auth: { ...authenticatedTestClient.auth, updateUser },
+    } as unknown as typeof authenticatedTestClient
+    const user = userEvent.setup()
+    const { router } = renderApp('/', undefined, client, repository)
+
+    expect(await screen.findByRole('heading', { name: 'Keep every meal suitable' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }))
+    await user.type(screen.getByLabelText('Create a password'), 'new-password-123')
+    await user.type(screen.getByLabelText('Confirm password'), 'different-password-456')
+    await user.click(screen.getByRole('button', { name: 'Set password and enter Cooksmith' }))
+
+    expect(await screen.findByText('The passwords do not match.')).toBeVisible()
+    expect(updateUser).not.toHaveBeenCalled()
+
+    await user.clear(screen.getByLabelText('Confirm password'))
+    await user.type(screen.getByLabelText('Confirm password'), 'new-password-123')
+    await user.click(screen.getByRole('button', { name: 'Set password and enter Cooksmith' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    expect(updateUser).toHaveBeenCalledWith({ password: 'new-password-123' })
   })
 })

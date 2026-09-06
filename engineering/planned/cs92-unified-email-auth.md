@@ -38,6 +38,7 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 - Neutral request/success copy that cannot reveal whether an account exists.
 - One callback and post-auth routing contract for returning and first-time email users.
 - Supabase email templates for signup confirmation and passwordless email continuation use `{{ .TokenHash }}` and route to the canonical `/auth/confirm` endpoint with an allow-listed `type`.
+- The password-recovery template uses `{{ .TokenHash }}` with `type=recovery`, and `/auth/reset-password` verifies it without browser-local PKCE state.
 - `/auth/confirm` verifies token-hash email links with Supabase `verifyOtp()` so the flow does not depend on browser-local PKCE state.
 - A bounded compatibility path for already-issued PKCE `code` links during rollout, without allowing the legacy path to remain the default.
 - Safe preservation of an internal `returnTo` destination.
@@ -45,12 +46,13 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 - Idempotent onboarding/profile/household provisioning under callback refresh or duplicate invocation.
 - Privacy-safe auth telemetry and complete automated/browser coverage.
 - Preview and Production verification for existing and genuinely new synthetic users, including cross-browser/in-app-browser link opening.
+- A skippable final onboarding action lets email-link users create a password while already authenticated, without making password creation mandatory.
 
 ### Explicitly Out of Scope
 
 - Social identity providers, passkeys, MFA, phone authentication or identity linking.
 - Removal of password authentication.
-- A general onboarding redesign.
+- A general onboarding redesign beyond the optional password action on the existing completion step.
 - Custom SMTP or a broad email-template redesign.
 - Changes to Supabase as identity authority.
 - Automatically merging users, households or multiple email identities.
@@ -82,6 +84,9 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 
 ### Recovery
 
+- Password reset links must work when requested in one browser and opened from an email app in another browser.
+- A verified recovery link must establish a recovery session and open **Choose a new password** directly.
+- Password reset requests use the same enumeration-safe response whether or not an account exists.
 - Invalid, malformed, expired or reused link: explain that the link cannot be used and offer **Send a new email** plus a secondary route back to sign in.
 - Email confirmed but no session established: route to a valid sign-in option and explain that the email is confirmed; do not keep resending an account-creation-incompatible link.
 - Stale `/auth/confirm` navigation without callback material: clear callback state and return to the unified email entry point.
@@ -151,6 +156,13 @@ Implementation must start from the latest accepted `main`, revalidate this basel
 - [ ] Supported 320px, 390px, tablet and desktop widths have no horizontal overflow.
 - [ ] Reduced-motion and forced-colour/high-contrast modes remain usable.
 
+### FR-7 — Optional onboarding password
+
+- [ ] The existing onboarding completion step offers **Create a password** and **Skip for now**.
+- [ ] Password creation is optional and does not block email-link users from entering Cooksmith.
+- [ ] A password entered while authenticated is updated through Supabase Auth without sending another email.
+- [ ] Password and confirmation must match and meet the configured minimum requirements.
+
 ## Data, Security and Privacy
 
 No database migration is expected for the core change. Before implementation, confirm whether existing profile/household provisioning has uniqueness constraints and transaction/idempotency protection adequate for duplicate callback/onboarding execution. If a confirmed gap requires a database change, use only an additive forward migration, preserve existing data, update generated types and add pgTAP/RLS evidence.
@@ -162,7 +174,7 @@ Use synthetic addresses and identities for tests. Never commit a real confirmati
 ## Technical Direction
 
 - Change `src/app/auth/AuthProvider.tsx` so the unified email action opts into supported account creation.
-- Update the applicable Supabase **Confirm signup** and **Magic Link** email templates to build `https://app.smillins.com.au/auth/confirm?token_hash={{ .TokenHash }}&type=email` links, with the equivalent explicitly allow-listed Preview origin only where required by the environment contract.
+- Update the applicable Supabase **Confirm signup**, **Magic Link** and **Reset password** email templates to use token-hash links, with the equivalent explicitly allow-listed Preview origin only where required by the environment contract.
 - Implement a typed `/auth/confirm` parser that accepts the token-hash contract, allow-lists `type`, invokes `verifyOtp()`, sanitises browser history, and treats legacy `code` exchange only as a time-bounded compatibility path.
 - Refine `src/routes/auth/AuthPages.tsx` so Welcome, email request, confirmation and recovery copy/actions form one coherent journey while password paths remain available.
 - Refactor `src/application/auth/initialSession.ts` and `src/application/auth/bootstrapAuth.ts` only as needed to represent safe callback outcomes and clear sensitive URL state.
@@ -251,7 +263,7 @@ Live email delivery and one-time-link handling must be verified in hosted Previe
 
 - **Expected migration:** None. Confirm profile/household idempotency against latest `main`; any required additive safeguard must be declared, tested and released through the protected database workflow.
 - **Expected Edge Function:** None.
-- **Supabase configuration/template change:** Required. Update the applicable **Confirm signup** and **Magic Link** templates to use `{{ .TokenHash }}` and the canonical `/auth/confirm` route, and re-verify the Production Site URL and redirect allow-list. Capture redacted before/after evidence. Roll template changes out with the compatible application callback handler already deployed so existing and newly issued links remain safe.
+- **Supabase configuration/template change:** Required. Update **Confirm signup** and **Magic Link** to use `{{ .TokenHash }}` and the canonical `/auth/confirm` route. Update **Reset password** to use `{{ .TokenHash }}` with `type=recovery` and the requested `/auth/reset-password` redirect. Re-verify the Production Site URL and redirect allow-list. Capture redacted before/after evidence. Roll template changes out with the compatible application callback handler already deployed so existing and newly issued links remain safe.
 - **Application release:** Human-approved merge to `main`.
 - **Rollback:** Revert the application change to restore the previous separate flows. Do not edit accepted migrations. If an additive safeguard was released, preserve it and forward-fix.
 - **New dependency/provider:** None expected.

@@ -155,6 +155,22 @@ describe('deterministic authentication bootstrap', () => {
     expect(window.location.href).toBe('http://localhost:3000/auth/confirm?next=%2F')
   })
 
+  it('categorises an already-issued failed recovery code for a fresh password reset', async () => {
+    const client = clientWithAuth({
+      exchangeCodeForSession: vi.fn(async () => ({
+        data: { session: null },
+        error: new Error('missing browser verifier'),
+      })),
+    })
+
+    window.history.replaceState(null, '', '/auth/reset-password?code=legacy-recovery-code')
+
+    await bootstrapAuth(client).catch((error: unknown) =>
+      expectAuthBootstrapError(error, 'recovery_link_invalid'),
+    )
+    expect(window.location.search).toBe('')
+  })
+
   it('shows calm recovery without raw callback details for a failed legacy exchange', () => {
     render(<AuthCallbackError category="pkce_exchange_failed" />)
 
@@ -185,9 +201,33 @@ describe('deterministic authentication bootstrap', () => {
     expect(window.location.href).toBe('http://localhost:3000/auth/confirm?returnTo=%2Frecipes')
   })
 
+  it('establishes a password recovery session across browsers from a token hash', async () => {
+    const user = { id: 'recovery-user' } as User
+    const session = { user } as Session
+    const verifyOtp = vi.fn(async () => ({ data: { session, user }, error: null }))
+    const exchangeCodeForSession = vi.fn()
+    const client = clientWithAuth({ verifyOtp, exchangeCodeForSession })
+
+    window.history.replaceState(
+      null,
+      '',
+      '/auth/reset-password?token_hash=recovery-value&type=recovery',
+    )
+
+    await expect(bootstrapAuth(client)).resolves.toEqual({ session, user })
+    expect(verifyOtp).toHaveBeenCalledWith({
+      token_hash: 'recovery-value',
+      type: 'recovery',
+    })
+    expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    expect(window.location.href).toBe('http://localhost:3000/auth/reset-password')
+  })
+
   it.each([
     '/auth/confirm?token_hash=value',
     '/auth/confirm?token_hash=value&type=signup',
+    '/auth/confirm?token_hash=value&type=recovery',
+    '/auth/reset-password?token_hash=value&type=email',
     '/auth/confirm?token_hash=value&type=email&code=legacy',
     '/auth/confirm?token_hash=first&token_hash=second&type=email',
   ])('fails closed for malformed or mixed callback contract %s', async (path) => {
@@ -214,6 +254,28 @@ describe('deterministic authentication bootstrap', () => {
       expectAuthBootstrapError(error, 'email_link_invalid'),
     )
     expect(window.location.search).toBe('')
+  })
+
+  it('categorises an expired recovery token for password-specific recovery', async () => {
+    const client = clientWithAuth({
+      verifyOtp: vi.fn(async () => ({ data: { session: null }, error: new Error('raw provider') })),
+    })
+    window.history.replaceState(null, '', '/auth/reset-password?token_hash=expired&type=recovery')
+
+    await bootstrapAuth(client).catch((error: unknown) =>
+      expectAuthBootstrapError(error, 'recovery_link_invalid'),
+    )
+    expect(window.location.search).toBe('')
+  })
+
+  it('offers a fresh password reset without exposing provider details', () => {
+    render(<AuthCallbackError category="recovery_link_invalid" />)
+
+    expect(
+      screen.getByRole('heading', { name: 'This password reset link can’t be used' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send a new reset email' })).toBeInTheDocument()
+    expect(screen.queryByText(/provider/i)).not.toBeInTheDocument()
   })
 
   it('categorises an empty PKCE exchange result', async () => {

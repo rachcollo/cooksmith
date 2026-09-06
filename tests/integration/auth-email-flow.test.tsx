@@ -95,6 +95,38 @@ describe('unified email authentication', () => {
     })
   })
 
+  it('requests password recovery with neutral account-existence copy', async () => {
+    const resetPasswordForEmail = vi.fn(async () => ({ data: {}, error: null }))
+    const client = {
+      auth: {
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+        resetPasswordForEmail,
+      },
+    } as unknown as CooksmithSupabaseClient
+    renderApp(
+      '/auth/forgot-password',
+      undefined,
+      client,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      signedOutTestAuthState,
+    )
+
+    await userEvent.type(screen.getByLabelText('Email'), 'person@example.invalid')
+    await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }))
+
+    expect(resetPasswordForEmail).toHaveBeenCalledWith('person@example.invalid', {
+      redirectTo: 'http://localhost:3000/auth/reset-password',
+    })
+    expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument()
+    expect(
+      screen.getByText(/If an account exists for this email, we’ve sent a password reset link/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/not found|\+tag/i)).not.toBeInTheDocument()
+  })
+
   it('continues a completed user directly to their safe destination after confirmation', async () => {
     const { router } = renderApp(
       '/auth/confirm?returnTo=%2Frecipes',
