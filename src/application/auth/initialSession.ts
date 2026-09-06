@@ -13,6 +13,9 @@ export type InitialSessionResult =
   | { status: 'email-verification-success'; session: Session; error: null }
   | { status: 'email-verification-error'; session: null; error: unknown }
   | { status: 'email-verification-empty'; session: null; error: null }
+  | { status: 'recovery-verification-success'; session: Session; error: null }
+  | { status: 'recovery-verification-error'; session: null; error: unknown }
+  | { status: 'recovery-verification-empty'; session: null; error: null }
   | { status: 'invalid-callback'; session: null; error: null }
 
 function removeCallbackSecrets(url: URL) {
@@ -25,7 +28,7 @@ function removeCallbackSecrets(url: URL) {
 type AuthCallback =
   | { kind: 'none' }
   | { kind: 'invalid' }
-  | { kind: 'legacy-code'; code: string }
+  | { kind: 'legacy-code'; code: string; purpose: 'email' | 'recovery' }
   | { kind: 'token-hash'; tokenHash: string; type: EmailOtpType }
 
 export function parseAuthCallback(url: URL): AuthCallback {
@@ -36,16 +39,20 @@ export function parseAuthCallback(url: URL): AuthCallback {
 
   if (!hasCallbackParameter) return { kind: 'none' }
   if (codes.length === 1 && codes[0] && hashes.length === 0 && types.length === 0) {
-    return { kind: 'legacy-code', code: codes[0] }
+    return {
+      kind: 'legacy-code',
+      code: codes[0],
+      purpose: url.pathname === '/auth/reset-password' ? 'recovery' : 'email',
+    }
   }
-  if (
-    codes.length === 0 &&
-    hashes.length === 1 &&
-    hashes[0] &&
-    types.length === 1 &&
-    types[0] === 'email'
-  ) {
-    return { kind: 'token-hash', tokenHash: hashes[0], type: 'email' }
+  if (codes.length === 0 && hashes.length === 1 && hashes[0] && types.length === 1) {
+    const type = types[0]
+    if (url.pathname === '/auth/confirm' && type === 'email') {
+      return { kind: 'token-hash', tokenHash: hashes[0], type }
+    }
+    if (url.pathname === '/auth/reset-password' && type === 'recovery') {
+      return { kind: 'token-hash', tokenHash: hashes[0], type }
+    }
   }
   return { kind: 'invalid' }
 }
@@ -80,25 +87,52 @@ export async function resolveInitialSession(
     })
     if (error) {
       recordAuthEvent({ name: 'auth_callback', outcome: 'token_hash_failed' })
-      return { status: 'email-verification-error', session: null, error }
+      return {
+        status:
+          callback.type === 'recovery' ? 'recovery-verification-error' : 'email-verification-error',
+        session: null,
+        error,
+      }
     }
     if (!hasSessionUser(data.session)) {
       recordAuthEvent({ name: 'auth_callback', outcome: 'token_hash_failed' })
-      return { status: 'email-verification-empty', session: null, error: null }
+      return {
+        status:
+          callback.type === 'recovery' ? 'recovery-verification-empty' : 'email-verification-empty',
+        session: null,
+        error: null,
+      }
     }
     recordAuthEvent({ name: 'auth_callback', outcome: 'token_hash_success' })
-    return { status: 'email-verification-success', session: data.session, error: null }
+    return {
+      status:
+        callback.type === 'recovery'
+          ? 'recovery-verification-success'
+          : 'email-verification-success',
+      session: data.session,
+      error: null,
+    }
   }
 
   {
     const { data, error } = await client.auth.exchangeCodeForSession(callback.code)
     if (error) {
       recordAuthEvent({ name: 'auth_callback', outcome: 'legacy_failed' })
-      return { status: 'pkce-exchange-error', session: null, error }
+      return {
+        status:
+          callback.purpose === 'recovery' ? 'recovery-verification-error' : 'pkce-exchange-error',
+        session: null,
+        error,
+      }
     }
     if (!hasSessionUser(data.session)) {
       recordAuthEvent({ name: 'auth_callback', outcome: 'legacy_failed' })
-      return { status: 'pkce-exchange-empty', session: null, error: null }
+      return {
+        status:
+          callback.purpose === 'recovery' ? 'recovery-verification-empty' : 'pkce-exchange-empty',
+        session: null,
+        error: null,
+      }
     }
     recordAuthEvent({ name: 'auth_callback', outcome: 'legacy_success' })
     return { status: 'pkce-exchange-success', session: data.session, error: null }

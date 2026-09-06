@@ -15,6 +15,8 @@ export type AuthBootstrapErrorCategory =
   | 'session_restore_failed'
   | 'email_link_invalid'
   | 'email_session_failed'
+  | 'recovery_link_invalid'
+  | 'recovery_session_failed'
   | 'callback_invalid'
 
 export class AuthBootstrapError extends Error {
@@ -44,10 +46,17 @@ export async function bootstrapAuth(
       throw new AuthBootstrapError('email_link_invalid')
     case 'email-verification-empty':
       throw new AuthBootstrapError('email_session_failed')
+    case 'recovery-verification-error':
+      throw new AuthBootstrapError('recovery_link_invalid')
+    case 'recovery-verification-empty':
+      throw new AuthBootstrapError('recovery_session_failed')
     case 'invalid-callback':
       throw new AuthBootstrapError('callback_invalid')
     case 'email-verification-success':
       if (!result.session.user) throw new AuthBootstrapError('email_session_failed')
+      return { session: result.session, user: result.session.user }
+    case 'recovery-verification-success':
+      if (!result.session.user) throw new AuthBootstrapError('recovery_session_failed')
       return { session: result.session, user: result.session.user }
     case 'pkce-exchange-success':
       if (!result.session.user) throw new AuthBootstrapError('pkce_validation_failed')

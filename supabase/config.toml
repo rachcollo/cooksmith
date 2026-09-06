@@ -84,6 +84,10 @@ content_path = "./supabase/templates/confirmation.html"
 subject = "Continue to Cooksmith"
 content_path = "./supabase/templates/magic-link.html"
 
+[auth.email.template.recovery]
+subject = "Reset your Cooksmith password"
+content_path = "./supabase/templates/recovery.html"
+
 [auth.sms]
 enable_signup = false
 enable_confirmations = false

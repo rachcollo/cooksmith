@@ -197,7 +197,7 @@ export function ForgotPasswordPage() {
       title="Reset your password"
       description="We’ll email you a secure password reset link."
       action="Send reset link"
-      success="Check your email for your password reset link."
+      success="If an account exists for this email, we’ve sent a password reset link."
       perform={(auth, email) =>
         auth.requestPasswordReset(email, authRedirectUrl('/auth/reset-password'))
       }

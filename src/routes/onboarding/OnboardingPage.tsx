@@ -371,6 +371,64 @@ function DietaryStep({ onFinished }: { onFinished(): void }) {
   )
 }
 
+function CompletionStep({ onEnter }: { onEnter(): Promise<void> }) {
+  const { updatePassword } = useAuth()
+  const action = useAction()
+  const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    await action.run(async () => {
+      if (password.length < 10 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        throw new Error('Use at least 10 characters, including a letter and a number.')
+      }
+      if (password !== confirmation) throw new Error('The passwords do not match.')
+      await updatePassword(password)
+      await onEnter()
+    })
+  }
+
+  async function skip() {
+    await action.run(onEnter)
+  }
+
+  return (
+    <form className="onboarding-form" onSubmit={(event) => void submit(event)}>
+      <Intro title="You’re ready to cook lighter">
+        Add a password if you would also like to sign in that way, or skip this step and keep using
+        secure email links.
+      </Intro>
+      <TextField
+        autoComplete="new-password"
+        hint="Use at least 10 characters, including a letter and a number."
+        label="Create a password"
+        minLength={10}
+        required
+        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
+      <TextField
+        autoComplete="new-password"
+        label="Confirm password"
+        minLength={10}
+        required
+        type="password"
+        value={confirmation}
+        onChange={(event) => setConfirmation(event.target.value)}
+      />
+      {action.error ? <FormError>{action.error}</FormError> : null}
+      <Button busy={action.busy} type="submit">
+        Set password and enter Cooksmith
+      </Button>
+      <Button disabled={action.busy} onClick={() => void skip()} variant="secondary">
+        Skip for now
+      </Button>
+    </form>
+  )
+}
+
 export function OnboardingPage() {
   const { state, refresh } = useOnboarding()
   const navigate = useNavigate()
@@ -381,6 +439,11 @@ export function OnboardingPage() {
   useEffect(() => {
     card.current?.focus()
   }, [step])
+
+  async function enterCooksmith() {
+    await refresh()
+    navigate('/', { replace: true })
+  }
 
   return (
     <main className="onboarding-shell" id="main-content">
@@ -398,16 +461,7 @@ export function OnboardingPage() {
           {step === 2 ? <HouseholdStep /> : null}
           {step === 3 ? <PreferencesStep /> : null}
           {step === 4 ? <DietaryStep onFinished={() => setFinished(true)} /> : null}
-          {step === 5 ? (
-            <div className="onboarding-form">
-              <Intro title="You’re ready to cook lighter">
-                Your household defaults are saved and ready for the features ahead.
-              </Intro>
-              <Button onClick={() => void refresh().then(() => navigate('/', { replace: true }))}>
-                Enter Cooksmith
-              </Button>
-            </div>
-          ) : null}
+          {step === 5 ? <CompletionStep onEnter={enterCooksmith} /> : null}
         </Stack>
       </section>
     </main>
