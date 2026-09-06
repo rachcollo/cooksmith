@@ -299,21 +299,12 @@ export function EmailConfirmationPage() {
   const auth = useAuth(),
     location = useLocation()
   if (auth.loading) return <p role="status">Confirming your email…</p>
-  return auth.user ? (
-    <>
-      <FeedbackState
-        tone="success"
-        title="Email confirmed"
-        message="Your Cooksmith sign-in is ready."
-      />
-      <Link
-        className="button button-primary"
-        to={safeReturnPath(new URLSearchParams(location.search).get('returnTo'))}
-      >
-        Continue to Cooksmith
-      </Link>
-    </>
-  ) : (
+  if (auth.user) {
+    return (
+      <Navigate replace to={safeReturnPath(new URLSearchParams(location.search).get('returnTo'))} />
+    )
+  }
+  return (
     <>
       <FeedbackState
         tone="info"
