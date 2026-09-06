@@ -1,10 +1,11 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Session } from '@supabase/supabase-js'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { CooksmithSupabaseClient } from '../../src/infrastructure/auth/supabaseAuthClient'
-import { renderApp, signedOutTestAuthState } from '../renderApp'
+import type { OnboardingRepository } from '../../src/application/onboarding/onboardingRepository'
+import { authenticatedTestClient, renderApp, signedOutTestAuthState } from '../renderApp'
 
 function signedOutClient(signInWithOtp: ReturnType<typeof vi.fn>) {
   return {
@@ -92,5 +93,37 @@ describe('unified email authentication', () => {
         emailRedirectTo: 'http://localhost:3000/auth/confirm?returnTo=%2Frecipes',
       },
     })
+  })
+
+  it('continues a completed user directly to their safe destination after confirmation', async () => {
+    const { router } = renderApp(
+      '/auth/confirm?returnTo=%2Frecipes',
+      undefined,
+      authenticatedTestClient,
+    )
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'))
+    expect(screen.queryByText('Email confirmed')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Continue to Cooksmith' })).not.toBeInTheDocument()
+  })
+
+  it('continues a first-time user directly into onboarding after confirmation', async () => {
+    const onboardingRepository: OnboardingRepository = {
+      load: async () => ({ step: 1, complete: false }),
+      saveProfile: async () => undefined,
+      bootstrapHousehold: async () => 'household-1',
+      saveHouseholdPreferences: async () => undefined,
+      completeDietaryPreferences: async () => undefined,
+    }
+    const { router } = renderApp(
+      '/auth/confirm',
+      undefined,
+      authenticatedTestClient,
+      onboardingRepository,
+    )
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/onboarding'))
+    expect(await screen.findByRole('heading', { name: 'First, tell us about you' })).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Continue to Cooksmith' })).not.toBeInTheDocument()
   })
 })
