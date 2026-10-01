@@ -7,9 +7,9 @@
 - **Epic:** CS-64 — Get Ahead AI Preparation Assistant
 - **Status:** `In Review`
 - **Branch:** `feat/cs-81-weekly-preparation-plan-consolidation`
-- **Depends on:** CS-65 plus approved shared recipe enrichment and canonical food schema
+- **Depends on:** CS-65 and CS-90 (both Done); CS-91 integration is Done
 - **Blocks:** AI-assisted Get Ahead plan quality
-- **Package path:** `engineering/ready/cs81-weekly-preparation-plan-consolidation.md`
+- **Package path:** `engineering/review/cs81-weekly-preparation-plan-consolidation.md`
 
 ## Product Outcome
 
@@ -119,3 +119,18 @@ Implementation must begin from the latest accepted `main`, recheck all reference
 PR title: `CS-81: AI-assisted weekly preparation plan consolidation`
 
 Link Jira and this package; state the approved outcome, preserved behaviour, exact baseline, changed files, tests and real results, Preview/manual evidence, migrations, Edge Functions, production release needs, rollback, security/privacy and monthly/annual cost.
+
+## Delivery reconciliation: 1 October 2026
+
+Implementation and production release are evidenced; current authenticated household smoke confirmation and this documentation PR review remain pending. The In Review status reflects these closure steps, not outstanding CS-81 implementation.
+
+- Package PR #97 and implementation PR #115 are merged. Implementation commits: `29e3ecb`, `322fe9f`, `bb1f2f9`, `d698d30`; merge: `b548220670fb8103930d529b8c5205171d144694`.
+- Final implementation CI passed, including database tests, security contracts, generated types, build and Playwright, as verified in the review handoff.
+- Production migration `20260727220000_weekly_preparation_plans.sql` is applied; the generation worker and authenticated retrieval/evaluation functions are active.
+- CS-91 integration PR #119 is merged. Its early release comment cites CS-81's SHA and is not proof of the CS-91 integration release.
+- CS-94's accepted v13 evaluation supplies the hosted provider evidence missing from the original deterministic evaluation. See the [evaluation report](../../docs/engineering/reports/cs81-weekly-preparation-evaluation.md).
+- Core assembly, compatibility/quantity rules, traceability, strict source validation, household persistence, fallback and cache contracts are delivered by PR #115 and hardened by CS-94. Current UI/cache/fallback smoke confirmation is still required; unchecked broad completion checklists must not be treated as proof of unfinished code or silently checked in full.
+- Correct dependency sequence: CS-65/CS-90 precede CS-81; CS-81 precedes CS-91. Existing reversed Jira links need correction.
+- Original migration and worker declarations above supersede the earlier determine-during-implementation wording. This reconciliation adds no migration, Edge Function, dependency, provider or configuration change; A$0 additional fixed monthly/annual cost.
+- A signed-out browser reached the hosted welcome page on 1 October. Authenticated task details, repeated-view cache reuse, meal/serving-change invalidation and fallback were not exercised in this reconciliation.
+- Keep the 15-minute fresh-finishers coverage limitation under CS-94. Do not weaken the accepted quality policy or report 29/30 as 30/30.
