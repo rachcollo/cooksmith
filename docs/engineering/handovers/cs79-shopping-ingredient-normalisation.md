@@ -3,7 +3,7 @@
 - Date: 4 October 2026
 - Branch: `feat/cs-79-shopping-ingredient-normalisation`
 - Base: `main` at `fd0fe1b5303dcee7652794f1dcd5889c6b00897f`
-- Status: Implementation review; hosted release not performed
+- Status: Draft PR [#185](https://github.com/rachcollo/cooksmith/pull/185); implementation CI passed; hosted release not performed
 - Engineering package: [CS-79](../../../engineering/ready/cs79-shopping-ingredient-normalisation.md)
 - Durable contract: [proposed ADR 014](../../architecture/decisions/014-purchasing-ingredient-identity.md)
 
@@ -35,7 +35,8 @@ Local full Supabase Docker image expansion exceeded the environment's disk capac
 - Pinned CLI database lint against the isolated local database: no schema errors or warnings. Generated types exactly match the final schema.
 - Preflight, 56-migration configuration check, documentation audit, secret scan and production dependency audit passed (existing reviewed GHSA-qwww-vcr4-c8h2 exception).
 - Upgrade fixtures are retained under `tests/database-upgrades/` for reproduction.
-- GitHub Actions and hosted preview results: pending draft publication.
+- GitHub Actions at implementation SHA `3afa67eb51c1b27e200bf8a01360878edd32ee8d`: all applicable checks passed, including the standard full Supabase reset/lint/pgTAP/security/generated-type gate, browser checks and PR governance. Vercel Preview build passed.
+- Preview: https://cooksmith-8fao-git-feat-cs-79-shopping-ingredie-09f256-smillins.vercel.app . Read-only `/welcome` request redirected to Vercel SSO; no hosted authenticated journey was performed. Supabase Preview integration is skipped, so this is not evidence of an isolated preview database.
 
 Synthetic browser repositories do not prove hosted authentication or live PostgREST behaviour. Hosted Preview with the new schema, household switching and mobile Safari remain release checks. CS-98 retains unavailable-item restoration and durable bought-item receipt idempotency; this work must not be represented as fixing those separate defects.
 
