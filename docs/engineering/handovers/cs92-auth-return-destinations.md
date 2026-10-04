@@ -4,7 +4,7 @@
 - **Branch:** `fix/cs-92-auth-return-destinations`
 - **Target:** `main`
 - **Baseline:** `fd0fe1b5303dcee7652794f1dcd5889c6b00897f`, verified against remote main
-- **Status:** Implemented, hosted validation pending; publication awaiting repository visibility decision
+- **Status:** Draft PR [#184](https://github.com/rachcollo/cooksmith/pull/184) published; CI passed; hosted functional validation pending
 
 ## Outcome
 
@@ -43,7 +43,8 @@ are unchanged and remain covered by tests.
 - Local Supabase full-image pull exhausted the Docker image store. Stopped; no local database
   reset, pgTAP or type generation claimed. No persistence changes in this package. An initial
   browser run hit ENOSPC during that pull; after stopping it, the full browser run passed.
-- GitHub Actions and hosted Preview: not yet run for this branch; no PR uploaded yet.
+- GitHub Actions at implementation SHA `3fcb098f7ba1b6bb95a68897d0d6b96f5d3a8546`: all applicable checks passed, including the full database gate, Playwright, security and PR governance. Vercel Preview build succeeded. This does not establish hosted email delivery or authenticated functional correctness.
+- Publication was authorised with the repository remaining public; no visibility, workflow or security settings were changed.
 
 ## Hosted review still required
 
