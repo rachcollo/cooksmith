@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { safeReturnPath } from '../../application/auth/redirects'
 
 import { useAuth } from '../../app/auth/authContext'
 import { useOnboarding } from '../../app/onboarding/onboardingContext'
@@ -432,6 +433,7 @@ function CompletionStep({ onEnter }: { onEnter(): Promise<void> }) {
 export function OnboardingPage() {
   const { state, refresh } = useOnboarding()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [finished, setFinished] = useState(false)
   const step = finished ? 5 : state.step
   const card = useRef<HTMLElement>(null)
@@ -442,7 +444,7 @@ export function OnboardingPage() {
 
   async function enterCooksmith() {
     await refresh()
-    navigate('/', { replace: true })
+    navigate(safeReturnPath(params.get('returnTo')), { replace: true })
   }
 
   return (

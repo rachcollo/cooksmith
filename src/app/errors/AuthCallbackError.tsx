@@ -1,5 +1,6 @@
 import type { AuthBootstrapErrorCategory } from '../../application/auth/bootstrapAuth'
 import { recordAuthEvent } from '../../application/auth/authTelemetry'
+import { authEntryPath } from '../../application/auth/redirects'
 import { ErrorState } from '../../components/ui/ErrorState'
 
 interface AuthCallbackErrorProps {
@@ -37,11 +38,14 @@ export function AuthCallbackError({ category }: AuthCallbackErrorProps) {
             outcome: recoveryFailed || !sessionFailed ? 'fresh_email' : 'password_sign_in',
           })
           window.location.replace(
-            recoveryFailed
-              ? '/auth/forgot-password'
-              : sessionFailed
-                ? '/auth/sign-in'
-                : '/auth/magic-link',
+            authEntryPath(
+              recoveryFailed
+                ? '/auth/forgot-password'
+                : sessionFailed
+                  ? '/auth/sign-in'
+                  : '/auth/magic-link',
+              new URLSearchParams(window.location.search).get('returnTo'),
+            ),
           )
         }}
       />
