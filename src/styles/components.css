@@ -1961,6 +1961,17 @@ button.card:hover {
   flex: none;
 }
 
+.shopping-item-sources {
+  grid-column: 2 / -1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.shopping-item-sources ul {
+  margin-block: var(--space-2);
+  padding-inline-start: var(--space-4);
+}
+
 .shopping-item-completed .shopping-item-copy {
   color: var(--colour-text-muted);
   text-decoration: line-through;

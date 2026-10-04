@@ -32,6 +32,7 @@ Local full Supabase Docker image expansion exceeded the environment's disk capac
 - `npm run validate:static`: passed, including format, lint, types, 458 tests in 72 files and production build. Existing bundle-size warning remains.
 - `npm run test:e2e`: 16 public-route desktop/mobile Chromium checks passed.
 - Synthetic authenticated Pantry duplicate-review and Shopping source-amount disclosure: no overflow or serious/critical axe issues at 320, 390 and 1280px; review dialog keyboard dismissal passed. A local Vite allow-list accommodated shared worktree dependencies; no app configuration changed.
+- Visual follow-up: moved expanded recipe amounts beneath the shopping row after a 320px screenshot exposed cramped text despite no overflow. Repeated all six synthetic viewport/axe checks, inspected the resulting screenshot, and reran shopping integration (6 tests), lint and types successfully. Final head CI remains the review authority.
 - Pinned CLI database lint against the isolated local database: no schema errors or warnings. Generated types exactly match the final schema.
 - Preflight, 56-migration configuration check, documentation audit, secret scan and production dependency audit passed (existing reviewed GHSA-qwww-vcr4-c8h2 exception).
 - Upgrade fixtures are retained under `tests/database-upgrades/` for reproduction.
