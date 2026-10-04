@@ -32,7 +32,7 @@ function pantryItem(name: string, overrides: Partial<PantryItem> = {}): PantryIt
 describe('pantry-aware shopping matching', () => {
   it('normalises case, Unicode, whitespace and punctuation deterministically', () => {
     expect(normalisePantryMatchName('  MILK—full cream  ')).toBe('milk full cream')
-    expect(pantryMatchVersion).toBe(1)
+    expect(pantryMatchVersion).toBe(2)
   })
 
   it.each([
@@ -64,12 +64,12 @@ describe('pantry-aware shopping matching', () => {
     ]
     const pantry = [pantryItem('Milk'), pantryItem('Rice vinegar')]
     expect([...buildPantryMatchIndex(shopping, pantry)]).toEqual([
-      ['milk', { state: 'match', pantryItemId: 'pantry-Milk', version: 1 }],
-      ['rice', { state: 'ambiguous', version: 1 }],
+      ['milk', { state: 'match', pantryItemId: 'pantry-Milk', version: 2 }],
+      ['rice', { state: 'ambiguous', version: 2 }],
     ])
     expect([...buildPantryMatchIndex(shopping, pantry.reverse())]).toEqual([
-      ['milk', { state: 'match', pantryItemId: 'pantry-Milk', version: 1 }],
-      ['rice', { state: 'ambiguous', version: 1 }],
+      ['milk', { state: 'match', pantryItemId: 'pantry-Milk', version: 2 }],
+      ['rice', { state: 'ambiguous', version: 2 }],
     ])
   })
 })

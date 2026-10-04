@@ -25,6 +25,7 @@ import {
 import { classifyPantryItem } from '../domain/pantry/classification'
 import { createPantryInsights, type PantryInsight } from '../domain/pantry/intelligence'
 import { pantryItemInputSchema } from '../domain/pantry/validationSchemas'
+import { canonicalIngredientName } from '../domain/shopping/ingredientIdentity'
 
 const emptyInput: PantryItemInput = {
   name: '',
@@ -72,6 +73,14 @@ export function PantryPage() {
   const [pantrySuggestionsOpen, setPantrySuggestionsOpen] = useState(false)
   const [addingInsightId, setAddingInsightId] = useState<string | null>(null)
   const [savingInsightId, setSavingInsightId] = useState<string | null>(null)
+  const duplicateGroups = useMemo(() => {
+    const groups = new Map<string, PantryItem[]>()
+    for (const item of items) {
+      const key = canonicalIngredientName(item.name)
+      groups.set(key, [...(groups.get(key) ?? []), item])
+    }
+    return [...groups.entries()].filter(([, candidates]) => candidates.length > 1)
+  }, [items])
 
   useEffect(() => {
     let active = true
@@ -226,14 +235,24 @@ export function PantryPage() {
       }
     }
     const parsedName = result.success ? result.data.name : input.name.trim()
-    const duplicate = items.some(
-      (item) =>
-        item.id !== currentItemId &&
-        item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
-    )
+    const identityChanged =
+      !currentItemId ||
+      canonicalIngredientName(items.find((item) => item.id === currentItemId)?.name ?? '') !==
+        canonicalIngredientName(parsedName)
+    const duplicate =
+      identityChanged &&
+      items.some(
+        (item) =>
+          item.id !== currentItemId &&
+          canonicalIngredientName(item.name) === canonicalIngredientName(parsedName),
+      )
     if (duplicate) {
       nextErrors.duplicate = 'That item is already in your household pantry.'
-      nextErrors.name = nextErrors.name ?? 'Use a different item name.'
+      nextErrors.name =
+        nextErrors.name ??
+        (currentItemId
+          ? 'Use a different item name.'
+          : 'That item is already in your household pantry.')
     }
     if (currentItemId) setEditErrors(nextErrors)
     else setFieldErrors(nextErrors)
@@ -416,6 +435,36 @@ export function PantryPage() {
       </div>
 
       {error ? <ErrorState title="Pantry needs a quick check" message={error} /> : null}
+      {duplicateGroups.length > 0 ? (
+        <Panel>
+          <details>
+            <summary>Review possible duplicate products ({duplicateGroups.length})</summary>
+            <p>
+              These names may describe the same product. Compare their locations and amounts before
+              editing or removing a record. Nothing is combined automatically.
+            </p>
+            {duplicateGroups.map(([identity, candidates]) => (
+              <section key={identity} aria-label={`Review ${identity}`}>
+                <h2>{identity}</h2>
+                <ul>
+                  {candidates.map((item) => (
+                    <li key={item.id}>
+                      <p>
+                        {item.name} · {pantryStorageLocationLabels[item.storageLocation]} ·{' '}
+                        {item.available ? 'Available' : 'Out of stock'}
+                        {item.quantity !== null ? ` · ${item.quantity} ${item.unit ?? ''}` : ''}
+                      </p>
+                      <Button variant="secondary" onClick={() => openEdit(item)}>
+                        Review {item.name}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </details>
+        </Panel>
+      ) : null}
       {insightError ? (
         <ErrorState title="Pantry suggestions need a quick check" message={insightError} />
       ) : null}

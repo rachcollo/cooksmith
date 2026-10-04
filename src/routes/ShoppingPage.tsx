@@ -202,7 +202,9 @@ export function ShoppingPage() {
     if (
       items.some(
         (item) =>
-          item.id !== currentId && item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
+          item.id !== currentId &&
+          item.manual !== false &&
+          item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
       )
     ) {
       nextErrors.name = 'That item is already on your shopping list.'
@@ -781,6 +783,20 @@ function ShoppingItemRow({
           <div className="shopping-item-copy">
             {amount ? <span>{amount}</span> : null}
             <strong>{item.name}</strong>
+            {!item.manual && Boolean(item.sourceQuantities?.length) ? (
+              <details>
+                <summary>Recipe amounts</summary>
+                <ul>
+                  {item.sourceQuantities?.map((source, index) => (
+                    <li key={index}>
+                      {[source.quantity, source.unit, source.name]
+                        .filter((value) => value !== null && value !== '')
+                        .join(' ')}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
           </div>
           <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
             {pantryMatch ? (

@@ -68,3 +68,7 @@ For each future private table:
 5. Add both `using` and `with check` to updates.
 6. Add cross-household tests before the table is exposed.
 7. Keep application-role and household-role decisions separate.
+
+## CS-79 purchasing identity
+
+Shopping contribution rows now have composite foreign keys binding both shopping item and planned meal to `household_id`. Existing active-member RLS applies to the nested contribution source-quantity read. Reconciliation checks active membership and meal ownership and uses a household advisory lock. Pantry identity validation is an invoker trigger under existing RLS, with an identity-scoped transaction lock; it does not read or merge another household’s Pantry. See [ADR 014](../../architecture/decisions/014-purchasing-ingredient-identity.md).

@@ -1,6 +1,7 @@
 import type { PantryItem } from '../pantry/types'
+import { canonicalIngredientName } from './ingredientIdentity'
 
-export const pantryMatchVersion = 1 as const
+export const pantryMatchVersion = 2 as const
 
 export type PantryMatch =
   | { state: 'match'; pantryItemId: string; version: typeof pantryMatchVersion }
@@ -8,12 +9,7 @@ export type PantryMatch =
   | { state: 'no-match'; version: typeof pantryMatchVersion }
 
 export function normalisePantryMatchName(value: string): string {
-  return value
-    .normalize('NFKC')
-    .toLocaleLowerCase('en-AU')
-    .replace(/[\p{P}\p{S}]+/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return canonicalIngredientName(value)
 }
 
 export function matchShoppingItemToPantry(
