@@ -305,6 +305,14 @@ export function RecipesPage() {
     try {
       const saved = await repository.update(householdId, selectedRecipe.id, parsed)
       setRecipes((current) => current.map((recipe) => (recipe.id === saved.id ? saved : recipe)))
+      try {
+        await shopping.refreshRecipe?.(householdId, saved)
+      } catch {
+        setEditErrors({
+          form: 'Your recipe was saved, but the shopping list could not refresh. Save again to retry.',
+        })
+        return
+      }
       setEditing(false)
     } catch (saveError) {
       setEditErrors({

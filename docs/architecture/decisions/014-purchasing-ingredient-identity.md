@@ -25,3 +25,15 @@ Backfill generated shopping rows from their contribution records, retaining raw 
 ## Consequences
 
 The TypeScript and SQL contracts need shared corpus evidence. False negatives are preferable to unsafe merges. No provider or recurring cost is introduced. Migration release needs a backup, exact-SHA dry run and authenticated shopping/household verification. Roll back application code only to a compatible schema consumer; forward-fix released database migrations.
+
+## CS-79 purchase-total follow-up (2026-10-04)
+
+The live review showed that one record per unit is not one useful purchase row. The Shopping presentation now groups household records by product, with one checkbox and edit/remove action. The recipe-amount disclosure is removed; original names and amounts stay on contributions internally. Mixed units appear concisely on the same product, for example `60 ml + 3 tbsp`. Manual and generated records can share a presentation row without deleting their underlying records.
+
+Shopping uses a separate purchasing projection for older text/derived ingredient lines, mixed and Unicode fractions, conservative produce preparation wording and trailing usage notes. This does not rewrite recipes, the Pantry v1 contract or Get Ahead tasks. `to taste` remains a note, never a numeric zero. If unspecified sea salt coexists with explicitly requested flakes and no fine/coarse sea salt, Shopping chooses flakes for that purchase. Explicit fine/coarse forms remain distinct; no salt density is inferred.
+
+Use metric teaspoons at 5 mL and existing exact metric scale conversions. Imported recipes do not record a regional tablespoon/cup standard, so retain those units explicitly. No weight/volume density conversions are introduced. See the [Taste publisher measurement chart](https://www.taste.com.au/images/common/Taste-Weights-Measurements-A3-V4.pdf) for the metric teaspoon convention and Australian tablespoon distinction. New SQL v2 purchase-unit helpers leave released v1 functions unchanged.
+
+Grouped mutations use household-scoped atomic invoker RPCs with RLS and an advisory lock. Editing a combined amount distributes that override across existing records (one amount and zero on other records of the same unit), preserving contribution links. `plan_override` exempts those protected records from the ordinary manual-name uniqueness index. Regeneration recognises retained source identities and avoids re-adding the same requirement beside its override. Equivalent totals retain bought state, including legacy tsp/mL consolidation; increased generated requirements become outstanding. Recipe edits refresh linked planned contributions without provider calls in the shopping adapter.
+
+Migration `20261004115348_shopping_purchase_groups.sql` preserves existing IDs and quantities and identifies existing source-linked manual adjustments. Apply it before the application uses the new RPCs. Quantity adjustments remain deliberate household overrides when later recipe requirements change. Reverting application code does not remove the additive column/functions; released migrations require forward fixes.

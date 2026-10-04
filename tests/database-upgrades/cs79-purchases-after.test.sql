@@ -1,0 +1,13 @@
+begin;
+select plan(6);
+select is((select count(*)::integer from cooksmith.shopping_list_items where id in('90000000-0000-4000-8000-000000000071','90000000-0000-4000-8000-000000000072','90000000-0000-4000-8000-000000000073')),3,'Migration preserves existing item IDs');
+select is((select quantity from cooksmith.shopping_list_items where id='90000000-0000-4000-8000-000000000073'),150::numeric,'Migration preserves family adjustment');
+select ok((select plan_override from cooksmith.shopping_list_items where id='90000000-0000-4000-8000-000000000073'),'Existing manual source-linked row becomes protected override');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','80000000-0000-4000-8000-000000000079','[{"name":"extra virgin olive oil","quantity":60,"unit":"ml","category":"pantry"},{"name":"extra virgin olive oil","quantity":2,"unit":"tsp","category":"pantry"},{"name":"review flour","quantity":100,"unit":"g","category":"pantry"}]');
+select results_eq($$select quantity,unit,completed from cooksmith.shopping_list_items where display_name='extra virgin olive oil'$$,$$select 70::numeric,'ml'::text,true$$,'Equivalent old teaspoon/mL records consolidate and remain bought');
+select is((select quantity from cooksmith.shopping_list_items where id='90000000-0000-4000-8000-000000000073'),150::numeric,'Regeneration preserves older manual adjustment');
+select is((select jsonb_array_length(source_quantities) from cooksmith.shopping_item_contributions c join cooksmith.shopping_list_items i on i.id=c.shopping_item_id where i.display_name='extra virgin olive oil'),2,'Both original amounts remain in provenance');
+select * from finish();
+rollback;

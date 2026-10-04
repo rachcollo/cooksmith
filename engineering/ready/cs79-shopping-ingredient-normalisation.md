@@ -5,7 +5,7 @@
 - **Jira issue:** [CS-79](https://smillins.atlassian.net/browse/CS-79)
 - **Epic:** Shopping Lists (CS-6)
 - **Status:** Implementation review (draft PR; no release)
-- **Branch:** `feat/cs-79-shopping-ingredient-normalisation`
+- **Branch:** `fix/cs-79-shopping-purchase-totals`
 - **Depends on:** CS-22
 - **Blocks:** CS-98
 
@@ -17,11 +17,11 @@ Show one trustworthy shopping row for equivalent recipe ingredients without merg
 
 - Introduce a deterministic, versioned canonical ingredient identity.
 - Normalise case, punctuation, common plurals and an approved Australian synonym dictionary.
-- Sum only compatible units. Keep incompatible units separate and show their source quantities.
+- Show one purchase row per product. Sum compatible metric units; show incompatible units concisely in that row. Keep original source quantities internally without a recipe dropdown.
 - Ignore preparation wording only when it does not alter the purchased product.
 - Preserve fresh, powdered, dietary, package and other material distinctions.
 - Preserve contribution provenance so meal-plan reconciliation remains exact.
-- Do not silently merge manual items and do not require an AI provider.
+- Preserve manual records and household adjustments beneath the combined presentation; do not require an AI provider.
 - Share purchasing identity with Pantry add/edit and shopping-to-Pantry matching. Existing aliases require user review; do not silently combine their quantities or delete records.
 - Preserve original recipe preparation names and Get Ahead task semantics.
 
@@ -65,3 +65,9 @@ Title: `CS-79: Consolidate equivalent shopping ingredients`
 ## Implementation evidence
 
 See [handover](../../docs/engineering/handovers/cs79-shopping-ingredient-normalisation.md) and [proposed ADR 014](../../docs/architecture/decisions/014-purchasing-ingredient-identity.md). Local database tests cover RLS and upgrade behaviour; hosted authenticated household switching remains a release check. CS-98 still owns unavailable-item restoration and durable put-away idempotency.
+
+## Live-review follow-up
+
+The owner requested one clean purchase total, no recipe-amount dropdown and support for old saved data and plan edits. Follow-up migration: `20261004115348_shopping_purchase_groups.sql` (the earlier migration is already released and immutable). Acceptance includes legacy text/fraction parsing, usage notes, tsp/mL aggregation, conservative material forms, atomic grouped completion/edit/removal and preserving explicit household overrides. Tablespoons/cups stay explicit until recipe measure conventions are known; no density guesses.
+
+See [follow-up handover](../../docs/engineering/handovers/cs79-shopping-purchase-totals.md) for exact local, API, browser and upgrade evidence. Hosted authenticated testing requires a designated disposable account/household; public smoke checks are not functional proof.

@@ -1,5 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 
+import { buildPlanAdditions } from '../../domain/shopping/planGeneration'
 import type { ShoppingRepository } from '../../application/shopping/shoppingRepository'
 import type { ShoppingItem, ShoppingSourceQuantity } from '../../domain/shopping/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
@@ -101,21 +102,72 @@ export function createSupabaseShoppingRepository(
       shoppingError(result.error)
     },
 
+    async setCompletedMany(householdId, itemIds, completed) {
+      const result = await database.rpc(
+        'set_shopping_purchase_completed' as never,
+        {
+          target_household_id: householdId,
+          item_ids: itemIds,
+          target_completed: completed,
+        } as never,
+      )
+      shoppingError(result.error)
+    },
+    async removeMany(householdId, itemIds) {
+      const result = await database.rpc(
+        'remove_shopping_purchase' as never,
+        { target_household_id: householdId, item_ids: itemIds } as never,
+      )
+      shoppingError(result.error)
+    },
+    async updatePurchase(householdId, inputs) {
+      const result = await database.rpc(
+        'update_shopping_purchase' as never,
+        { target_household_id: householdId, item_inputs: inputs } as never,
+      )
+      shoppingError(result.error)
+    },
+    async refreshRecipe(householdId, recipe) {
+      const result = await database
+        .from('planned_meals')
+        .select('id')
+        .eq('household_id', householdId)
+        .eq(
+          recipe.scope === 'household' || !recipe.scope ? 'recipe_id' : 'imported_recipe_id',
+          recipe.id,
+        )
+      shoppingError(result.error)
+      const inputs = buildPlanAdditions(
+        [
+          {
+            recipeState: {
+              kind: 'active',
+              recipe: { id: recipe.id, name: recipe.name, archivedAt: recipe.archivedAt },
+            },
+          },
+        ],
+        [recipe],
+        [],
+      ).additions
+      for (const meal of result.data ?? [])
+        await this.createFromPlan?.(householdId, meal.id, inputs)
+    },
     async update(itemId, input) {
+      const current = await database
+        .from('shopping_list_items')
+        .select('household_id')
+        .eq('id', itemId)
+        .single()
+      shoppingError(current.error)
+      if (!current.data) throw new Error('Cooksmith could not find that shopping item.')
+      await this.updatePurchase?.(current.data.household_id, [{ ...input, id: itemId }])
       const result = await database
         .from('shopping_list_items')
-        .update({
-          display_name: input.name,
-          quantity: input.quantity,
-          unit: input.unit,
-          category: input.category,
-          manual: true,
-        } as never)
-        .eq('id', itemId)
         .select(selection)
+        .eq('id', itemId)
         .single()
       shoppingError(result.error)
-      if (!result.data) throw new Error('Cooksmith could not update that shopping item.')
+      if (!result.data) throw new Error('Cooksmith could not save that shopping item.')
       return mapRow(result.data as unknown as ShoppingRow)
     },
 

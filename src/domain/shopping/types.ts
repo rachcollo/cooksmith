@@ -23,6 +23,7 @@ export interface ShoppingItem {
 }
 
 export interface ShoppingSourceQuantity {
+  purchaseName?: string
   name: string
   quantity: string | number | null
   unit: string | null

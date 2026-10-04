@@ -1847,6 +1847,14 @@ button.card:hover {
   padding: var(--space-1);
 }
 
+.shopping-item:not(.shopping-item-pantry-match) {
+  grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target) var(--touch-target);
+}
+
+.shopping-pantry-info[aria-hidden='true'] {
+  display: none;
+}
+
 .shopping-item-pantry-match {
   background: transparent;
 }
@@ -1939,10 +1947,15 @@ button.card:hover {
 }
 
 .shopping-item-copy {
-  align-items: baseline;
+  align-items: flex-start;
   display: flex;
-  gap: var(--space-2);
+  flex-direction: column;
+  gap: var(--space-1);
   min-width: 0;
+}
+
+.shopping-item-copy strong {
+  order: -1;
 }
 
 .shopping-item-copy strong,
@@ -1959,17 +1972,6 @@ button.card:hover {
   color: var(--colour-text-muted);
   font-size: inherit;
   flex: none;
-}
-
-.shopping-item-sources {
-  grid-column: 2 / -1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.shopping-item-sources ul {
-  margin-block: var(--space-2);
-  padding-inline-start: var(--space-4);
 }
 
 .shopping-item-completed .shopping-item-copy {

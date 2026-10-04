@@ -1,10 +1,10 @@
 import type { PlannedMeal } from '../meal-plans/types'
-import { splitMeaningfulLines } from '../recipes/multilineContent'
+import { purchaseIngredientsFor, purchaseProductName } from './purchaseIngredients'
+import { purchaseMeasure } from './purchaseGroups'
 import type { Recipe } from '../recipes/types'
 import type { ShoppingCategory, ShoppingItem, ShoppingItemInput } from './types'
 import {
   canonicalIngredientName,
-  canonicalIngredientUnit,
   ingredientPurchaseKey,
   parseIngredientQuantity,
 } from './ingredientIdentity'
@@ -17,7 +17,6 @@ export interface PlanAdditions {
 }
 
 const maxNameLength = 100
-const maxUnitLength = 40
 
 const categoryKeywords: [ShoppingCategory, string[]][] = [
   ['frozen', ['frozen', 'ice cream']],
@@ -148,29 +147,8 @@ export function categoriseIngredient(name: string): ShoppingCategory {
   return orderedKeywords.find(({ keyword }) => normalised.includes(keyword))?.category ?? 'other'
 }
 
-interface CandidateRow {
-  name: string
-  quantity: string | null
-  unit: string | null
-}
-
-function candidateRowsFor(recipe: Recipe): CandidateRow[] {
-  if (recipe.ingredientRows.length > 0) {
-    return recipe.ingredientRows.map((row) => ({
-      name: row.name,
-      quantity: row.quantity,
-      unit: row.unit?.trim().slice(0, maxUnitLength) || null,
-    }))
-  }
-  return splitMeaningfulLines(recipe.ingredients).map((line) => ({
-    name: line,
-    quantity: null,
-    unit: null,
-  }))
-}
-
 export function buildPlanAdditions(
-  meals: PlannedMeal[],
+  meals: Pick<PlannedMeal, 'recipeState'>[],
   recipes: Recipe[],
   existingItems: ShoppingItem[],
 ): PlanAdditions {
@@ -178,7 +156,7 @@ export function buildPlanAdditions(
   const existingKeys = new Set(
     existingItems
       .filter((item) => item.manual === false)
-      .map((item) => ingredientPurchaseKey(item.name, item.unit)),
+      .map((item) => ingredientPurchaseKey(item.name, purchaseMeasure(item.unit).unit)),
   )
   const merged = new Map<string, ShoppingItemInput>()
   const alreadyListed = new Map<string, string>()
@@ -193,17 +171,25 @@ export function buildPlanAdditions(
       continue
     }
     linkedMealCount += 1
-    for (const row of candidateRowsFor(recipe)) {
-      const displayName = canonicalIngredientName(row.name).slice(0, maxNameLength)
-      const key = ingredientPurchaseKey(displayName, row.unit)
+    for (const row of purchaseIngredientsFor(recipe)) {
+      const displayName = canonicalIngredientName(purchaseProductName(row.name)).slice(
+        0,
+        maxNameLength,
+      )
+      const canonicalUnit = purchaseMeasure(row.unit)
+      const key = ingredientPurchaseKey(displayName, canonicalUnit.unit)
       if (displayName === '') continue
-      const canonicalUnit = canonicalIngredientUnit(row.unit)
       const parsedQuantity = parseIngredientQuantity(row.quantity)
       const quantity =
         parsedQuantity === null
           ? null
           : Math.round(parsedQuantity * canonicalUnit.multiplier * 100) / 100
-      const source = { name: row.name, quantity: row.quantity, unit: row.unit }
+      const source = {
+        purchaseName: displayName,
+        name: row.name,
+        quantity: row.quantity,
+        unit: row.unit,
+      }
       if (existingKeys.has(key)) {
         alreadyListed.set(key, displayName)
         continue

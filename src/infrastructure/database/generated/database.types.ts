@@ -1301,6 +1301,7 @@ export type Database = {
           ingredient_identity_version: number
           manual: boolean
           normalised_name: string | null
+          plan_override: boolean
           position: number
           quantity: number | null
           shopping_list_id: string
@@ -1321,6 +1322,7 @@ export type Database = {
           ingredient_identity_version?: number
           manual?: boolean
           normalised_name?: string | null
+          plan_override?: boolean
           position?: number
           quantity?: number | null
           shopping_list_id: string
@@ -1341,6 +1343,7 @@ export type Database = {
           ingredient_identity_version?: number
           manual?: boolean
           normalised_name?: string | null
+          plan_override?: boolean
           position?: number
           quantity?: number | null
           shopping_list_id?: string
@@ -1871,6 +1874,8 @@ export type Database = {
           user_id: string
         }[]
       }
+      purchase_unit_multiplier_v2: { Args: { value: string }; Returns: number }
+      purchase_unit_v2: { Args: { value: string }; Returns: string }
       recipe_enrichment_backfill_command: {
         Args: { batch_limit?: number; command: string }
         Returns: Json
@@ -1896,6 +1901,10 @@ export type Database = {
         Args: { p_member_id: string }
         Returns: undefined
       }
+      remove_shopping_purchase: {
+        Args: { item_ids: string[]; target_household_id: string }
+        Returns: undefined
+      }
       resend_household_invitation: {
         Args: { p_invitation_id: string }
         Returns: {
@@ -1904,6 +1913,18 @@ export type Database = {
           invitation_token: string
           invited_email: string
         }[]
+      }
+      set_shopping_purchase_completed: {
+        Args: {
+          item_ids: string[]
+          target_completed: boolean
+          target_household_id: string
+        }
+        Returns: undefined
+      }
+      update_shopping_purchase: {
+        Args: { item_inputs: Json; target_household_id: string }
+        Returns: undefined
       }
       weekly_preparation_recipe_readiness: { Args: never; Returns: boolean }
     }
