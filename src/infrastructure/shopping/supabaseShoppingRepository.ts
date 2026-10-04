@@ -1,7 +1,7 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 
 import type { ShoppingRepository } from '../../application/shopping/shoppingRepository'
-import type { ShoppingItem } from '../../domain/shopping/types'
+import type { ShoppingItem, ShoppingSourceQuantity } from '../../domain/shopping/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
 type ShoppingRow = {
@@ -14,6 +14,8 @@ type ShoppingRow = {
   completed: boolean
   position: number
   updated_at: string
+  manual: boolean
+  shopping_item_contributions?: { source_quantities: ShoppingSourceQuantity[] }[]
 }
 
 function mapRow(row: ShoppingRow): ShoppingItem {
@@ -27,6 +29,10 @@ function mapRow(row: ShoppingRow): ShoppingItem {
     completed: row.completed,
     position: row.position,
     updatedAt: row.updated_at,
+    manual: row.manual,
+    sourceQuantities:
+      row.shopping_item_contributions?.flatMap((contribution) => contribution.source_quantities) ??
+      [],
   }
 }
 
@@ -47,7 +53,7 @@ export function createSupabaseShoppingRepository(
 ): ShoppingRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, display_name, quantity, unit, category, completed, position, updated_at'
+    'id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(source_quantities)'
 
   return {
     async list(householdId) {

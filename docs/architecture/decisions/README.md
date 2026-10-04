@@ -34,3 +34,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [011](011-database-backed-application-admin-controls.md) | Accepted | Use database-backed application administrator controls |
 | [012](012-recipe-level-preparation-intelligence.md) | Accepted | Use recipe-level preparation intelligence for Get Ahead |
 | [013](013-fail-closed-get-ahead-planning.md) | Accepted | Fail closed when Get Ahead intelligence is unavailable |
+| [014](014-purchasing-ingredient-identity.md) | Proposed | Share purchasing ingredient identity across Shopping and Pantry |

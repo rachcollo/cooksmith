@@ -28,6 +28,41 @@ function pantryItem(overrides: Partial<PantryItem>): PantryItem {
 }
 
 describe('household staples experience', () => {
+  it('blocks new aliases and lets households review existing duplicates without automatic changes', async () => {
+    const create = vi.fn(async () => pantryItem({ id: 'created' }))
+    const update = vi.fn(async (id: string, input: Parameters<PantryRepository['update']>[1]) =>
+      pantryItem({ id, ...input }),
+    )
+    const remove = vi.fn(async () => undefined)
+    const repository: PantryRepository = {
+      list: async () => [
+        pantryItem({ name: 'onion' }),
+        pantryItem({ id: 'alias', name: 'sliced onions', available: false }),
+      ],
+      create,
+      update,
+      remove,
+    }
+    renderApp('/pantry', undefined, undefined, undefined, undefined, repository)
+    const review = await screen.findByText('Review possible duplicate products (1)')
+    await userEvent.click(review)
+    expect(screen.getByRole('button', { name: 'Review sliced onions' })).toBeVisible()
+    expect(create).not.toHaveBeenCalled()
+    expect(update).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Add pantry item' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add pantry item' })
+    await userEvent.type(within(dialog).getByLabelText('Item name'), 'diced onions')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Add item' }))
+    expect(await screen.findByText('That item is already in your household pantry.')).toBeVisible()
+    expect(create).not.toHaveBeenCalled()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Review sliced onions' }))
+    expect(screen.getByRole('dialog', { name: 'Edit sliced onions' })).toBeVisible()
+    expect(update).not.toHaveBeenCalled()
+    expect(remove).not.toHaveBeenCalled()
+  })
+
   it('shows locations, filters staples and adds a fridge item', async () => {
     const create = vi.fn(async (householdId, input) => ({
       id: 'new-item',

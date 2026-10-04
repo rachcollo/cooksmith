@@ -202,7 +202,9 @@ export function ShoppingPage() {
     if (
       items.some(
         (item) =>
-          item.id !== currentId && item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
+          item.id !== currentId &&
+          item.manual !== false &&
+          item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
       )
     ) {
       nextErrors.name = 'That item is already on your shopping list.'
@@ -838,6 +840,20 @@ function ShoppingItemRow({
           >
             <Trash2 aria-hidden="true" />
           </button>
+          {!item.manual && Boolean(item.sourceQuantities?.length) ? (
+            <details className="shopping-item-sources">
+              <summary>Recipe amounts</summary>
+              <ul>
+                {item.sourceQuantities?.map((source, index) => (
+                  <li key={index}>
+                    {[source.quantity, source.unit, source.name]
+                      .filter((value) => value !== null && value !== '')
+                      .join(' ')}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </>
       )}
     </li>

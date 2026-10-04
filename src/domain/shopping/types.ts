@@ -18,6 +18,14 @@ export interface ShoppingItem {
   completed: boolean
   position: number
   updatedAt: string
+  manual?: boolean
+  sourceQuantities?: ShoppingSourceQuantity[]
+}
+
+export interface ShoppingSourceQuantity {
+  name: string
+  quantity: string | number | null
+  unit: string | null
 }
 
 export interface ShoppingItemInput {
@@ -25,6 +33,7 @@ export interface ShoppingItemInput {
   quantity: number | null
   unit: string | null
   category: ShoppingCategory
+  sourceQuantities?: ShoppingSourceQuantity[]
 }
 
 export const shoppingCategoryLabels: Record<ShoppingCategory, string> = {

@@ -1241,6 +1241,7 @@ export type Database = {
           planned_meal_id: string
           quantity: number | null
           shopping_item_id: string
+          source_quantities: Json
           unit: string | null
         }
         Insert: {
@@ -1250,6 +1251,7 @@ export type Database = {
           planned_meal_id: string
           quantity?: number | null
           shopping_item_id: string
+          source_quantities?: Json
           unit?: string | null
         }
         Update: {
@@ -1259,28 +1261,29 @@ export type Database = {
           planned_meal_id?: string
           quantity?: number | null
           shopping_item_id?: string
+          source_quantities?: Json
           unit?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: 'shopping_contributions_item_household_fkey'
+            columns: ['shopping_item_id', 'household_id']
+            isOneToOne: false
+            referencedRelation: 'shopping_list_items'
+            referencedColumns: ['id', 'household_id']
+          },
+          {
+            foreignKeyName: 'shopping_contributions_meal_household_fkey'
+            columns: ['planned_meal_id', 'household_id']
+            isOneToOne: false
+            referencedRelation: 'planned_meals'
+            referencedColumns: ['id', 'household_id']
+          },
           {
             foreignKeyName: 'shopping_item_contributions_household_id_fkey'
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'shopping_item_contributions_planned_meal_id_fkey'
-            columns: ['planned_meal_id']
-            isOneToOne: false
-            referencedRelation: 'planned_meals'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'shopping_item_contributions_shopping_item_id_fkey'
-            columns: ['shopping_item_id']
-            isOneToOne: false
-            referencedRelation: 'shopping_list_items'
             referencedColumns: ['id']
           },
         ]
@@ -1294,12 +1297,15 @@ export type Database = {
           display_name: string
           household_id: string
           id: string
+          ingredient_identity: string | null
+          ingredient_identity_version: number
           manual: boolean
           normalised_name: string | null
           position: number
           quantity: number | null
           shopping_list_id: string
           unit: string | null
+          unit_identity: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1311,12 +1317,15 @@ export type Database = {
           display_name: string
           household_id: string
           id?: string
+          ingredient_identity?: string | null
+          ingredient_identity_version?: number
           manual?: boolean
           normalised_name?: string | null
           position?: number
           quantity?: number | null
           shopping_list_id: string
           unit?: string | null
+          unit_identity?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1328,12 +1337,15 @@ export type Database = {
           display_name?: string
           household_id?: string
           id?: string
+          ingredient_identity?: string | null
+          ingredient_identity_version?: number
           manual?: boolean
           normalised_name?: string | null
           position?: number
           quantity?: number | null
           shopping_list_id?: string
           unit?: string | null
+          unit_identity?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1816,6 +1828,8 @@ export type Database = {
         Args: { p_invitation_id: string }
         Returns: undefined
       }
+      canonical_ingredient_name_v1: { Args: { value: string }; Returns: string }
+      canonical_ingredient_unit_v1: { Args: { value: string }; Returns: string }
       create_household_invitation: {
         Args: { p_email: string; p_household_id: string }
         Returns: {
@@ -1837,6 +1851,10 @@ export type Database = {
           target_household_id: string
         }
         Returns: boolean
+      }
+      ingredient_unit_multiplier_v1: {
+        Args: { value: string }
+        Returns: number
       }
       is_active_household_member: {
         Args: { target_household_id: string }

@@ -2,6 +2,12 @@ import type { PlannedMeal } from '../meal-plans/types'
 import { splitMeaningfulLines } from '../recipes/multilineContent'
 import type { Recipe } from '../recipes/types'
 import type { ShoppingCategory, ShoppingItem, ShoppingItemInput } from './types'
+import {
+  canonicalIngredientName,
+  canonicalIngredientUnit,
+  ingredientPurchaseKey,
+  parseIngredientQuantity,
+} from './ingredientIdentity'
 
 export interface PlanAdditions {
   additions: ShoppingItemInput[]
@@ -142,20 +148,9 @@ export function categoriseIngredient(name: string): ShoppingCategory {
   return orderedKeywords.find(({ keyword }) => normalised.includes(keyword))?.category ?? 'other'
 }
 
-function normaliseKey(name: string): string {
-  return name.trim().replace(/\s+/gu, ' ').toLocaleLowerCase()
-}
-
-function parseQuantity(quantity: string | null): number | null {
-  if (quantity === null) return null
-  const value = Number(quantity.trim())
-  if (!Number.isFinite(value) || value < 0) return null
-  return Math.round(value * 100) / 100
-}
-
 interface CandidateRow {
   name: string
-  quantity: number | null
+  quantity: string | null
   unit: string | null
 }
 
@@ -163,7 +158,7 @@ function candidateRowsFor(recipe: Recipe): CandidateRow[] {
   if (recipe.ingredientRows.length > 0) {
     return recipe.ingredientRows.map((row) => ({
       name: row.name,
-      quantity: parseQuantity(row.quantity),
+      quantity: row.quantity,
       unit: row.unit?.trim().slice(0, maxUnitLength) || null,
     }))
   }
@@ -180,7 +175,11 @@ export function buildPlanAdditions(
   existingItems: ShoppingItem[],
 ): PlanAdditions {
   const recipesById = new Map(recipes.map((recipe) => [recipe.id, recipe]))
-  const existingKeys = new Set(existingItems.map((item) => normaliseKey(item.name)))
+  const existingKeys = new Set(
+    existingItems
+      .filter((item) => item.manual === false)
+      .map((item) => ingredientPurchaseKey(item.name, item.unit)),
+  )
   const merged = new Map<string, ShoppingItemInput>()
   const alreadyListed = new Map<string, string>()
   let linkedMealCount = 0
@@ -195,9 +194,16 @@ export function buildPlanAdditions(
     }
     linkedMealCount += 1
     for (const row of candidateRowsFor(recipe)) {
-      const displayName = row.name.trim().replace(/\s+/gu, ' ').slice(0, maxNameLength)
-      const key = normaliseKey(displayName)
-      if (key === '') continue
+      const displayName = canonicalIngredientName(row.name).slice(0, maxNameLength)
+      const key = ingredientPurchaseKey(displayName, row.unit)
+      if (displayName === '') continue
+      const canonicalUnit = canonicalIngredientUnit(row.unit)
+      const parsedQuantity = parseIngredientQuantity(row.quantity)
+      const quantity =
+        parsedQuantity === null
+          ? null
+          : Math.round(parsedQuantity * canonicalUnit.multiplier * 100) / 100
+      const source = { name: row.name, quantity: row.quantity, unit: row.unit }
       if (existingKeys.has(key)) {
         alreadyListed.set(key, displayName)
         continue
@@ -206,19 +212,18 @@ export function buildPlanAdditions(
       if (!current) {
         merged.set(key, {
           name: displayName,
-          quantity: row.quantity,
-          unit: row.unit,
+          quantity,
+          unit: canonicalUnit.unit,
           category: categoriseIngredient(displayName),
+          sourceQuantities: [source],
         })
         continue
       }
-      const sameUnit =
-        (current.unit ?? '').toLocaleLowerCase() === (row.unit ?? '').toLocaleLowerCase()
-      if (current.quantity !== null && row.quantity !== null && sameUnit) {
-        current.quantity = Math.round((current.quantity + row.quantity) * 100) / 100
+      current.sourceQuantities?.push(source)
+      if (current.quantity !== null && quantity !== null) {
+        current.quantity = Math.round((current.quantity + quantity) * 100) / 100
       } else {
         current.quantity = null
-        current.unit = null
       }
     }
   }
