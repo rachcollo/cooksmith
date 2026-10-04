@@ -24,10 +24,11 @@ select lives_ok($$select cooksmith.remove_shopping_purchase('20000000-0000-4000-
 select is((select count(*)::integer from cooksmith.shopping_item_contributions where planned_meal_id='80000000-0000-4000-8000-000000000079'),0,'Removal cleans up corresponding contribution links');
 -- A changed amount becomes outstanding; equivalent regeneration stays bought.
 select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','80000000-0000-4000-8000-000000000079','[{"name":"review oil","quantity":2,"unit":"tsp.","category":"pantry"}]');
-select is((select quantity from cooksmith.shopping_list_items where display_name='review oil'),10::numeric,'Metric teaspoon punctuation converts to mL in SQL');
+select is((select quantity from cooksmith.shopping_list_items where display_name='review oil'),2::numeric,'Unspecified teaspoon punctuation retains the stated amount in SQL');
 select cooksmith.set_shopping_purchase_completed('20000000-0000-4000-8000-000000000001',(select array_agg(id) from cooksmith.shopping_list_items where display_name='review oil'),true);
 select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','80000000-0000-4000-8000-000000000079','[{"name":"review oil","quantity":10,"unit":"ml","category":"pantry"}]');
-select ok((select completed from cooksmith.shopping_list_items where display_name='review oil'),'Equivalent regeneration preserves bought state');
+select ok(not (select completed from cooksmith.shopping_list_items where display_name='review oil'),'An unverified teaspoon/mL change does not preserve bought state');
+select cooksmith.set_shopping_purchase_completed('20000000-0000-4000-8000-000000000001',(select array_agg(id) from cooksmith.shopping_list_items where display_name='review oil'),true);
 select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','80000000-0000-4000-8000-000000000079','[{"name":"review oil","quantity":15,"unit":"ml","category":"pantry"}]');
 select ok(not (select completed from cooksmith.shopping_list_items where display_name='review oil'),'Increased requirements become outstanding');
 reset role;

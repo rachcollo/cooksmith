@@ -1,8 +1,9 @@
 import {
-  canonicalIngredientName,
-  canonicalIngredientUnit,
-  parseIngredientQuantity,
-} from './ingredientIdentity'
+  convertPurchaseAmount,
+  normaliseMeasure,
+  type MeasurementSystem,
+} from '../measurements/purchaseMeasures'
+import { canonicalIngredientName, parseIngredientQuantity } from './ingredientIdentity'
 import { parsePurchaseLine, purchaseProductName } from './purchaseIngredients'
 import type { ShoppingItem } from './types'
 
@@ -10,6 +11,7 @@ export interface PurchaseAmount {
   quantity: number | null
   unit: string | null
   asNeeded?: boolean
+  approximate?: boolean
 }
 export interface ShoppingPurchase extends ShoppingItem {
   members: ShoppingItem[]
@@ -17,36 +19,43 @@ export interface ShoppingPurchase extends ShoppingItem {
   amountLabel: string
 }
 
-// Cooksmith uses metric teaspoons (5 mL). Tablespoons/cups retain their stated units
-// because imported recipes do not yet record which regional measure they use.
-export function purchaseMeasure(unit: string | null) {
-  const canonical = canonicalIngredientUnit(unit?.trim().replace(/\.$/u, '') ?? null)
-  return canonical.unit === 'tsp' ? { unit: 'ml', multiplier: 5 } : canonical
+export function purchaseMeasure(unit: string | null, system: MeasurementSystem = 'unknown') {
+  return normaliseMeasure(unit, system)
 }
 export function purchasingName(name: string) {
   return canonicalIngredientName(purchaseProductName(name))
 }
 export function purchaseAmount(
-  item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit'>,
+  item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'measurementSystem'>,
 ): PurchaseAmount {
   const legacy = item.quantity === null && !item.unit ? parsePurchaseLine(item.name) : null
-  const measure = purchaseMeasure(legacy?.unit ?? item.unit)
   const quantity = legacy ? parseIngredientQuantity(legacy.quantity) : item.quantity
-  return { quantity: quantity === null ? null : quantity * measure.multiplier, unit: measure.unit }
+  return convertPurchaseAmount(
+    purchasingName(legacy?.name ?? item.name),
+    quantity,
+    legacy?.unit ?? item.unit,
+    item.measurementSystem,
+  )
 }
 export function purchaseName(item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit'>) {
   return purchasingName(
     item.quantity === null && !item.unit ? parsePurchaseLine(item.name).name : item.name,
   )
 }
+export function purchaseDisplayQuantity(quantity: number, approximate = false): number {
+  const scale = approximate ? (quantity < 10 ? 10 : 1) : 100
+  return approximate
+    ? Math.ceil(quantity * scale - 1e-9) / scale
+    : Math.round(quantity * scale) / scale
+}
 export function formatPurchaseAmounts(amounts: PurchaseAmount[]): string {
   return amounts
-    .map(({ quantity, unit, asNeeded }) =>
+    .map(({ quantity, unit, asNeeded, approximate }) =>
       asNeeded
         ? 'to taste'
         : quantity === null
-          ? 'quantity not specified'
-          : `${Math.round(quantity * 100) / 100}${unit ? ` ${unit}` : ''}`,
+          ? 'amount to check'
+          : `${approximate ? 'about ' : ''}${purchaseDisplayQuantity(quantity, approximate)}${unit ? ` ${unit}` : ''}`,
     )
     .join(' + ')
 }
@@ -62,12 +71,16 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
       !names.has(`${prefix}coarse sea salt`)
     // An unspecified sea salt can use the explicitly requested flakes. Never infer a density.
     if (key === 'sea salt' && useFlakes) key = 'sea salt flakes'
-    groups.set(prefix + key, [...(groups.get(prefix + key) ?? []), item])
+    const groupKey =
+      prefix +
+      key +
+      (item.manual !== false && !item.combineWithPlan ? `\u0000manual:${item.id}` : '')
+    groups.set(groupKey, [...(groups.get(groupKey) ?? []), item])
   }
   return [...groups].map(([key, members]) => {
-    const name = key.slice(key.indexOf('\u0000') + 1)
+    const name = key.slice(key.indexOf('\u0000') + 1).split('\u0000')[0]!
     const only = members[0]!
-    if (members.length === 1 && only.manual !== false) {
+    if (members.length === 1 && only.manual !== false && !purchaseAmount(only).approximate) {
       const amounts = [{ quantity: only.quantity, unit: only.unit }]
       return { ...only, members, amounts, amountLabel: formatPurchaseAmounts(amounts) }
     }
@@ -84,18 +97,23 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
                   ? source.quantity
                   : parseIngredientQuantity(source.quantity),
               unit: source.unit,
+              measurementSystem: source.measurementSystem,
             }))
           : [item]
       for (const source of sources) {
         const amount = purchaseAmount(source)
+        if (item.manual === false && item.sourceQuantities?.some((source) => source.approximate))
+          amount.approximate = true
         const asNeeded = /\b(to taste|as needed|as required)\b/iu.test(source.name)
         if (asNeeded) byUnit.set('as-needed', { quantity: null, unit: null, asNeeded: true })
         if (asNeeded && amount.quantity === null) continue
         const key = `${amount.unit ?? ''}:${amount.quantity === null ? 'unknown' : 'known'}`
         const current = byUnit.get(key)
         if (!current) byUnit.set(key, { ...amount })
-        else if (current.quantity !== null && amount.quantity !== null)
+        else if (current.quantity !== null && amount.quantity !== null) {
           current.quantity += amount.quantity
+          current.approximate ||= amount.approximate
+        }
       }
       if (
         item.sourceQuantities?.some((source) =>

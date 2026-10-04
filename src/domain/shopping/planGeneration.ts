@@ -1,3 +1,4 @@
+import { convertPurchaseAmount, recipeMeasures } from '../measurements/purchaseMeasures'
 import type { PlannedMeal } from '../meal-plans/types'
 import { purchaseIngredientsFor, purchaseProductName } from './purchaseIngredients'
 import { purchaseMeasure } from './purchaseGroups'
@@ -176,16 +177,24 @@ export function buildPlanAdditions(
         0,
         maxNameLength,
       )
-      const canonicalUnit = purchaseMeasure(row.unit)
+      const convention = recipeMeasures(recipe)
+      const converted = convertPurchaseAmount(
+        row.conversionName ?? displayName,
+        parseIngredientQuantity(row.quantity),
+        row.unit,
+        convention.system,
+      )
+      const canonicalUnit = { unit: converted.unit, multiplier: 1 }
       const key = ingredientPurchaseKey(displayName, canonicalUnit.unit)
       if (displayName === '') continue
-      const parsedQuantity = parseIngredientQuantity(row.quantity)
-      const quantity =
-        parsedQuantity === null
-          ? null
-          : Math.round(parsedQuantity * canonicalUnit.multiplier * 100) / 100
+      const quantity = converted.quantity
       const source = {
         purchaseName: displayName,
+        measurementSystem: convention.system,
+        measureSource: convention.source,
+        purchaseUnit: converted.unit,
+        approximate: converted.approximate,
+        conversionId: converted.conversionId,
         name: row.name,
         quantity: row.quantity,
         unit: row.unit,
@@ -207,7 +216,7 @@ export function buildPlanAdditions(
       }
       current.sourceQuantities?.push(source)
       if (current.quantity !== null && quantity !== null) {
-        current.quantity = Math.round((current.quantity + quantity) * 100) / 100
+        current.quantity += quantity
       } else {
         current.quantity = null
       }

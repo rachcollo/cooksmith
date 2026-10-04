@@ -1,3 +1,4 @@
+import { MeasurementSelect } from '../components/ui/MeasurementSelect'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 
@@ -32,6 +33,7 @@ import { buildPantryMatchIndex, normalisePantryMatchName } from '../domain/shopp
 import {
   groupShoppingPurchases,
   purchaseAmount,
+  purchaseDisplayQuantity,
   type ShoppingPurchase,
   type PurchaseAmount,
 } from '../domain/shopping/purchaseGroups'
@@ -55,6 +57,7 @@ export function ShoppingPage() {
   const [draft, setDraft] = useState<ShoppingItemInput>(emptyInput)
   const [purchaseEdit, setPurchaseEdit] = useState<{
     purchase: ShoppingPurchase
+    combineWithPlan?: boolean
     name: string
     amounts: PurchaseAmount[]
   } | null>(null)
@@ -221,6 +224,7 @@ export function ShoppingPage() {
         (item) =>
           item.id !== currentId &&
           item.manual !== false &&
+          !item.combineWithPlan &&
           item.name.toLocaleLowerCase() === parsedName.toLocaleLowerCase(),
       )
     ) {
@@ -272,13 +276,31 @@ export function ShoppingPage() {
               : (previous?.quantity ?? 0) + amount.quantity,
         })
       }
-      setPurchaseEdit({ purchase, name: purchase.name, amounts: [...amounts.values()] })
+      setPurchaseEdit({
+        purchase,
+        combineWithPlan: purchase.members[0]?.combineWithPlan,
+        name: purchase.name,
+        amounts: [...amounts.values()].map((amount) => ({
+          ...amount,
+          quantity:
+            amount.quantity === null
+              ? null
+              : purchaseDisplayQuantity(
+                  amount.quantity,
+                  purchase.amounts.some(
+                    (source) => source.unit === amount.unit && source.approximate,
+                  ),
+                ),
+        })),
+      })
       setEditErrors({})
       return
     }
     setEditing(item)
     setEditDraft({
       name: item.name,
+      measurementSystem: item.measurementSystem,
+      combineWithPlan: item.combineWithPlan,
       quantity: item.quantity,
       unit: item.unit,
       category: item.category,
@@ -363,7 +385,16 @@ export function ShoppingPage() {
       const key = unit ?? ''
       const quantity = assigned.has(key) ? 0 : (amount?.quantity ?? null)
       assigned.add(key)
-      return { id: member.id, name, quantity, unit, category: member.category }
+      return {
+        id: member.id,
+        name,
+        quantity,
+        unit,
+        category: member.category,
+        ...(purchaseEdit.purchase.members.length === 1 && member.manual !== false
+          ? { combineWithPlan: purchaseEdit.combineWithPlan ?? false }
+          : {}),
+      }
     })
     setSaving(true)
     try {
@@ -631,6 +662,19 @@ export function ShoppingPage() {
               value={purchaseEdit.name}
               onChange={(event) => setPurchaseEdit({ ...purchaseEdit, name: event.target.value })}
             />
+            {purchaseEdit.purchase.members.length === 1 &&
+            purchaseEdit.purchase.manual !== false ? (
+              <label className="shopping-combine-choice">
+                <input
+                  type="checkbox"
+                  checked={purchaseEdit.combineWithPlan ?? false}
+                  onChange={(event) =>
+                    setPurchaseEdit({ ...purchaseEdit, combineWithPlan: event.target.checked })
+                  }
+                />{' '}
+                Include in this product’s planned total
+              </label>
+            ) : null}
             {purchaseEdit.amounts.map((amount, index) => (
               <TextField
                 key={`${amount.unit}-${index}`}
@@ -872,7 +916,7 @@ function ShoppingItemRow({
   onSaveEdit: (event: FormEvent<HTMLFormElement>) => void
   onToggle: (item: ShoppingItem) => void
 }) {
-  const amount = item.amountLabel === 'quantity not specified' ? null : item.amountLabel
+  const amount = item.amountLabel === 'amount to check' ? null : item.amountLabel
   return (
     <li
       className={`shopping-item${item.completed ? ' shopping-item-completed' : ''}${pantryMatch ? ' shopping-item-pantry-match' : ''}`}
@@ -913,6 +957,47 @@ function ShoppingItemRow({
             value={editDraft.name}
             onChange={(event) => onEditDraftChange({ ...editDraft, name: event.target.value })}
           />
+          <label className="visually-hidden" htmlFor={`shopping-unit-${item.id}`}>
+            Unit
+          </label>
+          <input
+            id={`shopping-unit-${item.id}`}
+            aria-label="Unit"
+            placeholder="Unit"
+            value={editDraft.unit ?? ''}
+            onChange={(event) =>
+              onEditDraftChange({ ...editDraft, unit: event.target.value || null })
+            }
+          />
+          {[
+            'tsp',
+            'teaspoon',
+            'teaspoons',
+            'tbsp',
+            'tablespoon',
+            'tablespoons',
+            'cup',
+            'cups',
+          ].includes(editDraft.unit?.toLowerCase() ?? '') ? (
+            <MeasurementSelect
+              value={editDraft.measurementSystem}
+              onChange={(measurementSystem) =>
+                onEditDraftChange({ ...editDraft, measurementSystem })
+              }
+            />
+          ) : null}
+          {item.manual !== false ? (
+            <label className="shopping-combine-choice">
+              <input
+                type="checkbox"
+                checked={editDraft.combineWithPlan ?? false}
+                onChange={(event) =>
+                  onEditDraftChange({ ...editDraft, combineWithPlan: event.target.checked })
+                }
+              />{' '}
+              Include in this product’s planned total
+            </label>
+          ) : null}
           <button
             aria-label={`Save changes to ${item.name}`}
             className="shopping-icon-action"
@@ -941,46 +1026,48 @@ function ShoppingItemRow({
           <div className="shopping-item-copy">
             {amount ? <span>{amount}</span> : null}
             <strong>{item.name}</strong>
-          </div>
-          <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
-            {pantryMatch ? (
-              <>
-                <button
-                  aria-describedby={pantryInfoOpen ? `pantry-match-message-${item.id}` : undefined}
-                  aria-expanded={pantryInfoOpen}
-                  aria-label={`Why should I check my pantry for ${item.name}?`}
-                  className="shopping-pantry-info-button"
-                  type="button"
-                  onBlur={(event) => {
-                    if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) {
-                      onPantryInfoChange(false)
+            <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
+              {pantryMatch ? (
+                <>
+                  <button
+                    aria-describedby={
+                      pantryInfoOpen ? `pantry-match-message-${item.id}` : undefined
                     }
-                  }}
-                  onClick={() => onPantryInfoChange(true)}
-                  onFocus={() => onPantryInfoChange(true)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Escape') {
-                      event.preventDefault()
-                      onPantryInfoChange(false)
-                    }
-                  }}
-                  onMouseEnter={() => onPantryInfoChange(true)}
-                  onMouseLeave={() => onPantryInfoChange(false)}
-                >
-                  ?
-                </button>
-                {pantryInfoOpen ? (
-                  <span
-                    className="shopping-pantry-tooltip"
-                    id={`pantry-match-message-${item.id}`}
-                    role="tooltip"
+                    aria-expanded={pantryInfoOpen}
+                    aria-label={`Why should I check my pantry for ${item.name}?`}
+                    className="shopping-pantry-info-button"
+                    type="button"
+                    onBlur={(event) => {
+                      if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) {
+                        onPantryInfoChange(false)
+                      }
+                    }}
+                    onClick={() => onPantryInfoChange(true)}
+                    onFocus={() => onPantryInfoChange(true)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.preventDefault()
+                        onPantryInfoChange(false)
+                      }
+                    }}
+                    onMouseEnter={() => onPantryInfoChange(true)}
+                    onMouseLeave={() => onPantryInfoChange(false)}
                   >
-                    Check your pantry — you might already have this item, and we hate wasting food
-                    and money!
-                  </span>
-                ) : null}
-              </>
-            ) : null}
+                    ?
+                  </button>
+                  {pantryInfoOpen ? (
+                    <span
+                      className="shopping-pantry-tooltip"
+                      id={`pantry-match-message-${item.id}`}
+                      role="tooltip"
+                    >
+                      Check your pantry — you might already have this item, and we hate wasting food
+                      and money!
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
           </div>
           <button
             aria-label={`Edit ${item.name}`}

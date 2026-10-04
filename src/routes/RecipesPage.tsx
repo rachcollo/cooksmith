@@ -1,3 +1,4 @@
+import { MeasurementSelect } from '../components/ui/MeasurementSelect'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -99,6 +100,11 @@ function RecipeMultilineEditor({
 }) {
   return (
     <>
+      <MeasurementSelect
+        allowSource
+        value={draft.measurementSystem}
+        onChange={(measurementSystem) => setDraft({ ...draft, measurementSystem })}
+      />
       <TextArea
         label="Ingredients"
         hint="Paste or type one ingredient per line, for example: 1 cup lentils."
@@ -254,6 +260,7 @@ export function RecipesPage() {
     const input: RecipeInput = {
       ...emptyInput,
       name: importDraft.name,
+      measurementSystem: importDraft.measurementSystem,
       ingredients: importDraft.ingredients,
       description: importDraft.description,
       sourceUrl: importDraft.sourceUrl,
@@ -551,6 +558,7 @@ export function RecipesPage() {
               draft={{
                 ...emptyInput,
                 name: importDraft.name,
+                measurementSystem: importDraft.measurementSystem,
                 ingredients: importDraft.ingredients,
                 description: importDraft.description,
               }}
@@ -559,6 +567,7 @@ export function RecipesPage() {
                 updateImportedDraft({
                   ingredients: next.ingredients,
                   description: next.description,
+                  measurementSystem: next.measurementSystem,
                 })
               }
             />

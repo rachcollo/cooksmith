@@ -29,6 +29,7 @@ export function recipeToMultilineInput(recipe: Recipe): RecipeInput {
 
   return {
     name: recipe.name,
+    measurementSystem: recipe.measurementSystem,
     ingredients,
     description,
     sourceNote: recipe.sourceNote,

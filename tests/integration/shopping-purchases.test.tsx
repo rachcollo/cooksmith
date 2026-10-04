@@ -20,6 +20,7 @@ const item = (
   category: 'pantry',
   completed: false,
   manual: false,
+  measurementSystem: 'au',
   position: 0,
   updatedAt: '2026-10-04T00:00:00Z',
   ...extra,
@@ -31,9 +32,11 @@ function mount(initial: ShoppingItem[]) {
     create: async () => {
       throw new Error('not used')
     },
-    update: async () => {
-      throw new Error('not used')
-    },
+    update: vi.fn(async (id: string, input: ShoppingItemInput) => {
+      const updated = { ...rows.find((row) => row.id === id)!, ...input }
+      rows = rows.map((row) => (row.id === id ? updated : row))
+      return updated
+    }),
     setCompleted: async () => {
       throw new Error('must use atomic group action')
     },
@@ -50,7 +53,7 @@ function mount(initial: ShoppingItem[]) {
       async (_householdId: string, inputs: (ShoppingItemInput & { id: string })[]) => {
         rows = rows.map((row) => {
           const input = inputs.find((input) => input.id === row.id)
-          return input ? { ...row, ...input, manual: true } : row
+          return input ? { ...row, ...input, manual: true, combineWithPlan: true } : row
         })
       },
     ),
@@ -128,5 +131,37 @@ describe('clean combined purchases', () => {
     expect(screen.getAllByText('extra virgin olive oil', { exact: true })).toHaveLength(1)
     expect(screen.queryByRole('heading', { name: 'Done' })).not.toBeInTheDocument()
     expect(screen.queryByText('Private product')).not.toBeInTheDocument()
+  })
+  it('keeps a manual amount separate until the shopper explicitly includes it', async () => {
+    const repository = mount([
+      item('plan', 'plain flour', 150, 'g', {
+        sourceQuantities: [
+          {
+            name: 'plain flour',
+            quantity: '1',
+            unit: 'cup',
+            approximate: true,
+            conversionId: 'taste-plain-flour-v1',
+          },
+        ],
+      }),
+      item('manual', 'plain flour', 50, 'g', { manual: true }),
+    ])
+    expect(await screen.findByText('about 150 g')).toBeVisible()
+    expect(screen.getByText('50 g')).toBeVisible()
+    const manualRow = screen.getByText('50 g').closest('li')!
+    await userEvent.click(within(manualRow).getByRole('button', { name: 'Edit plain flour' }))
+    await userEvent.click(
+      within(manualRow).getByLabelText('Include in this product’s planned total'),
+    )
+    await userEvent.click(
+      within(manualRow).getByRole('button', { name: 'Save changes to plain flour' }),
+    )
+    expect(await screen.findByText('about 200 g')).toBeVisible()
+    expect(screen.getAllByText('plain flour', { exact: true })).toHaveLength(1)
+    expect(repository.update).toHaveBeenCalledWith(
+      'manual',
+      expect.objectContaining({ combineWithPlan: true, quantity: 50 }),
+    )
   })
 })

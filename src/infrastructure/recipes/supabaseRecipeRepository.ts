@@ -1,3 +1,4 @@
+import type { MeasurementSystem } from '../../domain/measurements/purchaseMeasures'
 import type { PostgrestError } from '@supabase/supabase-js'
 
 import type { RecipeRepository } from '../../application/recipes/recipeRepository'
@@ -33,6 +34,7 @@ type RecipeStepRow = {
 }
 
 type RecipeRow = {
+  measurement_system?: MeasurementSystem
   id: string
   household_id: string
   name: string
@@ -95,6 +97,7 @@ function mapRow(row: RecipeRow): Recipe {
     householdId: row.household_id,
     scope: 'household',
     name: row.name,
+    measurementSystem: row.measurement_system,
     ingredients: row.ingredients,
     description: row.description,
     sourceNote: row.source_note,
@@ -224,9 +227,9 @@ function wakeRecipeEnrichment(client: CooksmithSupabaseClient) {
 export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient): RecipeRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_name, quantity_text, unit, preparation, original_line_text, parser_version, derivation_status, position), recipe_steps(id, instruction, original_line_text, parser_version, derivation_status, position)'
+    'measurement_system, id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_name, quantity_text, unit, preparation, original_line_text, parser_version, derivation_status, position), recipe_steps(id, instruction, original_line_text, parser_version, derivation_status, position)'
   const importedSelection =
-    'id, visibility, owner_id, name, ingredients, description, ingredient_rows, instruction_steps, source_url, author_name, publisher_name, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at'
+    'measurement_system, id, visibility, owner_id, name, ingredients, description, ingredient_rows, instruction_steps, source_url, author_name, publisher_name, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at'
 
   return {
     async importFromUrl(url) {
@@ -269,6 +272,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .insert({
           visibility,
           name: input.name,
+          measurement_system: input.measurementSystem ?? 'unknown',
           ingredients: input.ingredients,
           description: input.description,
           ingredient_rows: derivedContent.ingredients.map((ingredient, index) => ({
@@ -336,6 +340,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .insert({
           household_id: householdId,
           name: input.name,
+          measurement_system: input.measurementSystem ?? 'unknown',
           ingredients: input.ingredients,
           description: input.description,
           source_note: input.sourceNote,
@@ -369,6 +374,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .from('household_recipes')
         .update({
           name: input.name,
+          measurement_system: input.measurementSystem ?? 'unknown',
           ingredients: input.ingredients,
           description: input.description,
           source_note: input.sourceNote,

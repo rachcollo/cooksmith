@@ -22,6 +22,7 @@ const row = (
   position: 0,
   updatedAt: '2026-10-04T00:00:00Z',
   manual: false,
+  measurementSystem: 'au',
   ...extra,
 })
 describe('one purchasing row per product', () => {
@@ -38,7 +39,7 @@ describe('one purchasing row per product', () => {
   it('keeps regional tablespoons explicit in a single row instead of guessing their size', () => {
     const result = groupShoppingPurchases([
       row('a', 'extra virgin olive oil', 60, 'ml'),
-      row('b', 'extra virgin olive oil', 3, 'tbsp'),
+      row('b', 'extra virgin olive oil', 3, 'tbsp', { measurementSystem: 'unknown' }),
     ])
     expect(result).toHaveLength(1)
     expect(result[0]?.amountLabel).toBe('60 ml + 3 tbsp')
@@ -152,6 +153,7 @@ describe('one purchasing row per product', () => {
   it('normalises teaspoon punctuation before adding plan contributions', () => {
     const recipe = {
       id: 'r',
+      measurementSystem: 'au',
       ingredients: '60 mL extra virgin olive oil\n2 tsp. extra virgin olive oil',
       ingredientRows: [],
     } as unknown as Recipe

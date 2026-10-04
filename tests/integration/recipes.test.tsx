@@ -94,10 +94,15 @@ describe('recipe library experience', () => {
     const review = await screen.findByRole('dialog', { name: 'Review imported recipe' })
     expect(within(review).getByRole('radio', { name: /Public/ })).toBeChecked()
     expect(within(review).getByLabelText(/Author/)).toHaveValue('Jamie Example')
+    await userEvent.selectOptions(within(review).getByLabelText('Cup and spoon measures'), 'au')
     await userEvent.click(within(review).getByRole('radio', { name: /Private/ }))
     await userEvent.click(within(review).getByRole('button', { name: 'Save imported recipe' }))
     expect(createImported).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Imported noodles', authorName: 'Jamie Example' }),
+      expect.objectContaining({
+        name: 'Imported noodles',
+        authorName: 'Jamie Example',
+        measurementSystem: 'au',
+      }),
       'private',
     )
     expect(await screen.findByText('Private recipe')).toBeVisible()

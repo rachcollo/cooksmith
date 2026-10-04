@@ -448,6 +448,7 @@ export type Database = {
           id: string
           image_url: string | null
           ingredients: string | null
+          measurement_system: string
           name: string
           normalised_name: string | null
           notes: string | null
@@ -471,6 +472,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           ingredients?: string | null
+          measurement_system?: string
           name: string
           normalised_name?: string | null
           notes?: string | null
@@ -494,6 +496,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           ingredients?: string | null
+          measurement_system?: string
           name?: string
           normalised_name?: string | null
           notes?: string | null
@@ -621,6 +624,7 @@ export type Database = {
           ingredient_rows: Json
           ingredients: string | null
           instruction_steps: Json
+          measurement_system: string
           name: string
           normalised_name: string | null
           normalised_source_url: string | null
@@ -647,6 +651,7 @@ export type Database = {
           ingredient_rows?: Json
           ingredients?: string | null
           instruction_steps?: Json
+          measurement_system?: string
           name: string
           normalised_name?: string | null
           normalised_source_url?: string | null
@@ -673,6 +678,7 @@ export type Database = {
           ingredient_rows?: Json
           ingredients?: string | null
           instruction_steps?: Json
+          measurement_system?: string
           name?: string
           normalised_name?: string | null
           normalised_source_url?: string | null
@@ -1291,6 +1297,7 @@ export type Database = {
       shopping_list_items: {
         Row: {
           category: Database['cooksmith']['Enums']['shopping_item_category']
+          combine_with_plan: boolean
           completed: boolean
           created_at: string
           created_by: string | null
@@ -1300,6 +1307,7 @@ export type Database = {
           ingredient_identity: string | null
           ingredient_identity_version: number
           manual: boolean
+          measurement_system: string
           normalised_name: string | null
           plan_override: boolean
           position: number
@@ -1312,6 +1320,7 @@ export type Database = {
         }
         Insert: {
           category?: Database['cooksmith']['Enums']['shopping_item_category']
+          combine_with_plan?: boolean
           completed?: boolean
           created_at?: string
           created_by?: string | null
@@ -1321,6 +1330,7 @@ export type Database = {
           ingredient_identity?: string | null
           ingredient_identity_version?: number
           manual?: boolean
+          measurement_system?: string
           normalised_name?: string | null
           plan_override?: boolean
           position?: number
@@ -1333,6 +1343,7 @@ export type Database = {
         }
         Update: {
           category?: Database['cooksmith']['Enums']['shopping_item_category']
+          combine_with_plan?: boolean
           completed?: boolean
           created_at?: string
           created_by?: string | null
@@ -1342,6 +1353,7 @@ export type Database = {
           ingredient_identity?: string | null
           ingredient_identity_version?: number
           manual?: boolean
+          measurement_system?: string
           normalised_name?: string | null
           plan_override?: boolean
           position?: number
@@ -1875,7 +1887,9 @@ export type Database = {
         }[]
       }
       purchase_unit_multiplier_v2: { Args: { value: string }; Returns: number }
+      purchase_unit_multiplier_v3: { Args: { value: string }; Returns: number }
       purchase_unit_v2: { Args: { value: string }; Returns: string }
+      purchase_unit_v3: { Args: { value: string }; Returns: string }
       recipe_enrichment_backfill_command: {
         Args: { batch_limit?: number; command: string }
         Returns: Json

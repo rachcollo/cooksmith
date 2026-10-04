@@ -1,6 +1,6 @@
 import type { Recipe } from '../recipes/types'
 
-const quantityToken = String.raw`(?:\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?(?:[¼½¾⅓⅔⅛⅜⅝⅞])?|[¼½¾⅓⅔⅛⅜⅝⅞])`
+const quantityToken = String.raw`(?:\d+\s+\d+\/\d+|\d+\s+[¼½¾⅓⅔⅛⅜⅝⅞]|\d+\/\d+|(?:\d+(?:\.\d+)?|\.\d+)(?:[¼½¾⅓⅔⅛⅜⅝⅞])?|[¼½¾⅓⅔⅛⅜⅝⅞])`
 const linePattern = new RegExp(
   String.raw`^(${quantityToken})(?:\s*(?:-|–|—|to)\s*(${quantityToken}))?\s+(.+)$`,
   'u',
@@ -41,6 +41,7 @@ const units = new Set([
 ])
 
 export interface PurchaseIngredient {
+  conversionName?: string
   name: string
   quantity: string | null
   unit: string | null
@@ -107,6 +108,16 @@ export function purchaseIngredientsFor(recipe: Recipe): PurchaseIngredient[] {
     )
       return parsePurchaseLine(row.originalLineText)
     if (row.quantity === null && !row.unit) return parsePurchaseLine(row.name)
-    return { name: row.name, quantity: row.quantity, unit: row.unit }
+    return {
+      name: row.name,
+      quantity: row.quantity,
+      unit: row.unit,
+      conversionName: [
+        row.originalLineText ? parsePurchaseLine(row.originalLineText).name : row.name,
+        row.preparation,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    }
   })
 }

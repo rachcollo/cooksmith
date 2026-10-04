@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 export const shoppingItemInputSchema = z.object({
+  combineWithPlan: z.boolean().optional(),
+  measurementSystem: z.enum(['unknown', 'au', 'metric', 'us']).optional(),
   name: z.string().trim().min(1, 'Enter an item name.').max(100, 'Use 100 characters or fewer.'),
   quantity: z.number().finite().nonnegative('Quantity cannot be negative.').nullable(),
   unit: z

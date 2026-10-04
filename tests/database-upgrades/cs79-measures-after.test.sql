@@ -1,0 +1,13 @@
+begin;
+select plan(6);
+select is((select count(*)::integer from cooksmith.shopping_list_items where id in('90000000-0000-4000-8000-000000000071','90000000-0000-4000-8000-000000000072','90000000-0000-4000-8000-000000000073')),3,'Measurement migration retains old shopping IDs');
+select is((select count(*)::integer from cooksmith.shopping_list_items where id in('90000000-0000-4000-8000-000000000071','90000000-0000-4000-8000-000000000072','90000000-0000-4000-8000-000000000073') and measurement_system='unknown'),3,'Legacy convention is not guessed');
+select is((select quantity from cooksmith.shopping_list_items where id='90000000-0000-4000-8000-000000000073'),150::numeric,'Original family quantity survives');
+select ok((select plan_override from cooksmith.shopping_list_items where id='90000000-0000-4000-8000-000000000073'),'Original manual adjustment remains protected');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','80000000-0000-4000-8000-000000000079','[{"name":"extra virgin olive oil","quantity":60,"unit":"ml","category":"pantry"},{"name":"extra virgin olive oil","quantity":2,"unit":"tsp","category":"pantry"},{"name":"review flour","quantity":100,"unit":"g","category":"pantry"}]');
+select results_eq($$select quantity,unit,completed from cooksmith.shopping_list_items where display_name='extra virgin olive oil' order by unit$$,$$values (60::numeric,'ml'::text,true),(2::numeric,'tsp'::text,true)$$,'Unknown legacy spoons stay truthful and equivalent regeneration stays bought');
+select is((select quantity from cooksmith.shopping_list_items where id='90000000-0000-4000-8000-000000000073'),150::numeric,'Regeneration preserves older household override');
+select * from finish();
+rollback;

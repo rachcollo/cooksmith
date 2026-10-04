@@ -14,6 +14,9 @@ let rows: ShoppingItem[] = [
   ['extra virgin olive oil', 2, 'tsp'],
   ['extra virgin olive oil', 3, 'tbsp'],
   ['fine sea salt', 10, 'g'],
+  ['plain flour', 1, 'cup'],
+  ['plain flour', 50, 'g'],
+  ['caster sugar', 1, 'cup'],
 ].map(([name, quantity, unit], index) => ({
   id: String(index),
   householdId,
@@ -22,7 +25,8 @@ let rows: ShoppingItem[] = [
   unit: unit as string | null,
   category: 'pantry',
   completed: false,
-  manual: false,
+  manual: name === 'caster sugar',
+  measurementSystem: unit === 'tbsp' || name === 'caster sugar' ? 'unknown' : 'au',
   position: index,
   updatedAt: '2026-10-04T00:00:00Z',
 }))
@@ -32,7 +36,11 @@ const unused = async (): Promise<never> => {
 const shopping: ShoppingRepository = {
   list: async () => rows,
   create: unused,
-  update: unused,
+  update: async (id, input) => {
+    const updated = { ...rows.find((row) => row.id === id)!, ...input }
+    rows = rows.map((row) => (row.id === id ? updated : row))
+    return updated
+  },
   setCompleted: unused,
   remove: unused,
   setCompletedMany: async (_householdId, ids, completed) => {
@@ -44,7 +52,7 @@ const shopping: ShoppingRepository = {
   updatePurchase: async (_householdId, inputs) => {
     rows = rows.map((row) => {
       const input = inputs.find((input) => input.id === row.id)
-      return input ? { ...row, ...input, manual: true } : row
+      return input ? { ...row, ...input, manual: true, combineWithPlan: true } : row
     })
   },
 }

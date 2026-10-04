@@ -82,6 +82,7 @@ export const recipeStepInputSchema = z.object({
 })
 
 export const recipeInputSchema = z.object({
+  measurementSystem: z.enum(['unknown', 'au', 'metric', 'us']).optional(),
   name: z.string().trim().min(1, 'Enter a recipe name.').max(120, 'Use 120 characters or fewer.'),
   ingredients: optionalTrimmedText(4000, 'Use 4000 characters or fewer.'),
   description: optionalTrimmedText(5000, 'Use 5000 characters or fewer.'),

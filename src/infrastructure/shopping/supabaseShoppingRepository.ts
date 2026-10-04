@@ -1,3 +1,4 @@
+import type { MeasurementSystem } from '../../domain/measurements/purchaseMeasures'
 import type { PostgrestError } from '@supabase/supabase-js'
 
 import { buildPlanAdditions } from '../../domain/shopping/planGeneration'
@@ -6,6 +7,8 @@ import type { ShoppingItem, ShoppingSourceQuantity } from '../../domain/shopping
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
 type ShoppingRow = {
+  measurement_system?: MeasurementSystem
+  combine_with_plan?: boolean
   id: string
   household_id: string
   display_name: string
@@ -24,6 +27,8 @@ function mapRow(row: ShoppingRow): ShoppingItem {
     id: row.id,
     householdId: row.household_id,
     name: row.display_name,
+    measurementSystem: row.measurement_system,
+    combineWithPlan: row.combine_with_plan,
     quantity: row.quantity === null ? null : Number(row.quantity),
     unit: row.unit,
     category: row.category,
@@ -54,7 +59,7 @@ export function createSupabaseShoppingRepository(
 ): ShoppingRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(source_quantities)'
+    'combine_with_plan, measurement_system, id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(source_quantities)'
 
   return {
     async list(householdId) {
@@ -75,6 +80,8 @@ export function createSupabaseShoppingRepository(
         .insert({
           household_id: householdId,
           display_name: input.name,
+          measurement_system: input.measurementSystem ?? 'unknown',
+          combine_with_plan: input.combineWithPlan ?? false,
           quantity: input.quantity,
           unit: input.unit,
           category: input.category,

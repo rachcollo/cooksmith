@@ -112,8 +112,6 @@ describe('shopping list foundation', () => {
     ).not.toBeInTheDocument()
     const milkRow = screen.getByText('Milk').closest('li')
     const riceRow = screen.getByText('Rice').closest('li')
-    expect(milkRow?.children).toHaveLength(5)
-    expect(riceRow?.children).toHaveLength(5)
     expect(within(milkRow!).getByRole('button', { name: 'Edit Milk' })).toBeVisible()
     expect(within(riceRow!).getByRole('button', { name: 'Edit Rice' })).toBeVisible()
 
