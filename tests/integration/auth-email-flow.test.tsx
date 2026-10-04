@@ -17,6 +17,57 @@ function signedOutClient(signInWithOtp: ReturnType<typeof vi.fn>) {
 }
 
 describe('unified email authentication', () => {
+  it('keeps the invitation destination when switching from password to email', async () => {
+    const destination = '/invitations/accept?token=synthetic-invitation'
+    const signInWithOtp = vi.fn(async () => ({ data: { user: null, session: null }, error: null }))
+    const { router } = renderApp(
+      `/auth/sign-in?returnTo=${encodeURIComponent(destination)}`,
+      undefined,
+      signedOutClient(signInWithOtp),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      signedOutTestAuthState,
+    )
+    await userEvent.click(await screen.findByRole('link', { name: 'Continue with email instead' }))
+    expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe(destination)
+    await userEvent.type(screen.getByLabelText('Email'), 'person@example.invalid')
+    await userEvent.click(screen.getByRole('button', { name: 'Continue with email' }))
+    expect(signInWithOtp).toHaveBeenCalledWith({
+      email: 'person@example.invalid',
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `http://localhost:3000/auth/confirm?returnTo=${encodeURIComponent(destination)}`,
+      },
+    })
+  })
+
+  it('preserves the destination through the brand and stale confirmation recovery links', async () => {
+    const { router } = renderApp('/auth/confirm?returnTo=%2Fshopping', undefined, null)
+    await userEvent.click(await screen.findByRole('link', { name: 'Send a new email' }))
+    expect(router.state.location.pathname).toBe('/auth/magic-link')
+    expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/shopping')
+    await userEvent.click(screen.getByRole('link', { name: 'Cooksmith' }))
+    await userEvent.click(screen.getByRole('link', { name: 'Sign in with a password' }))
+    await userEvent.click(screen.getByRole('link', { name: 'Forgot password?' }))
+    expect(router.state.location.pathname).toBe('/auth/forgot-password')
+    expect(new URLSearchParams(router.state.location.search).get('returnTo')).toBe('/shopping')
+  })
+
+  it('returns to the requested recipe screen after changing a recovered password', async () => {
+    const updateUser = vi.fn(async () => ({ data: { user: null }, error: null }))
+    const client = {
+      ...authenticatedTestClient,
+      auth: { ...authenticatedTestClient.auth, updateUser },
+    } as unknown as CooksmithSupabaseClient
+    const { router } = renderApp('/auth/reset-password?returnTo=%2Frecipes', undefined, client)
+    await userEvent.type(await screen.findByLabelText('New password'), 'secure-pass-123')
+    await userEvent.click(screen.getByRole('button', { name: 'Save new password' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'))
+    expect(updateUser).toHaveBeenCalledWith({ password: 'secure-pass-123' })
+  })
+
   it('presents one primary email path while preserving password alternatives', () => {
     renderApp('/welcome?returnTo=%2Frecipes', undefined, null)
 

@@ -5,6 +5,7 @@ import type { OnboardingState } from '../../domain/onboarding/types'
 import { createSupabaseOnboardingRepository } from '../../infrastructure/onboarding/supabaseOnboardingRepository'
 import { ErrorState } from '../../components/ui/ErrorState'
 import { LoadingState } from '../../components/ui/LoadingState'
+import { safeReturnPath } from '../../application/auth/redirects'
 import { useAuth } from '../auth/authContext'
 import { OnboardingContext, OnboardingRepositoryContext } from './onboardingContext'
 
@@ -56,8 +57,14 @@ export function OnboardingGate() {
   if (!state || !repository) return <LoadingState label="Checking your Cooksmith setup" fullPage />
 
   const onOnboardingRoute = location.pathname === '/onboarding'
-  if (!state.complete && !onOnboardingRoute) return <Navigate replace to="/onboarding" />
-  if (state.complete && onOnboardingRoute) return <Navigate replace to="/" />
+  if (!state.complete && !onOnboardingRoute) {
+    const destination = safeReturnPath(location.pathname + location.search + location.hash)
+    return <Navigate replace to={`/onboarding?${new URLSearchParams({ returnTo: destination })}`} />
+  }
+  if (state.complete && onOnboardingRoute)
+    return (
+      <Navigate replace to={safeReturnPath(new URLSearchParams(location.search).get('returnTo'))} />
+    )
 
   return (
     <OnboardingContext.Provider value={{ repository, state, refresh }}>

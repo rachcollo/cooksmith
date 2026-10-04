@@ -32,6 +32,7 @@ test('auth forms have labels, keyboard focus, and no serious accessibility issue
   page,
 }) => {
   await page.goto('/auth/sign-in')
+  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: 'Cooksmith' })).toBeFocused()
   await expect(page.getByLabel('Email')).toBeVisible()
@@ -82,6 +83,7 @@ test('captures responsive Orchard public-route evidence without overflow', async
 test('honours reduced motion and retains visible keyboard focus', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/auth/sign-in')
+  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible()
   await page.keyboard.press('Tab')
 
   const brandLink = page.getByRole('link', { name: 'Cooksmith' })
@@ -103,4 +105,28 @@ test('rejects an external return destination', async ({ page }) => {
 test('keeps the health endpoint public', async ({ page }) => {
   await page.goto('/health')
   await expect(page.getByRole('heading', { name: 'The forge is ready.' })).toBeVisible()
+})
+
+test('preserves invitation destinations across auth alternatives and recovery', async ({
+  page,
+}) => {
+  const destination = '/invitations/accept?token=synthetic-invitation'
+  await page.goto(`/auth/sign-in?returnTo=${encodeURIComponent(destination)}`)
+  await page.getByRole('link', { name: 'Continue with email instead' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Continue with email', exact: true }),
+  ).toBeVisible()
+  expect(new URL(page.url()).searchParams.get('returnTo')).toBe(destination)
+  await page.getByRole('link', { name: 'Cooksmith' }).click()
+  await page.getByRole('link', { name: 'Sign in with a password' }).click()
+  await page.getByRole('link', { name: 'Forgot password?' }).click()
+  await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible()
+  expect(new URL(page.url()).searchParams.get('returnTo')).toBe(destination)
+  await page.goto(`/auth/confirm?returnTo=${encodeURIComponent(destination)}`)
+  await page.getByRole('link', { name: 'Send a new email' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Continue with email', exact: true }),
+  ).toBeVisible()
+  expect(new URL(page.url()).searchParams.get('returnTo')).toBe(destination)
+  await expectNoSeriousAccessibilityIssues(page)
 })

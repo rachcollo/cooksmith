@@ -1,4 +1,27 @@
 const authCallbackPaths = new Set(['/auth/confirm', '/auth/reset-password'])
+const applicationPaths = new Set([
+  '/',
+  '/pantry',
+  '/recipes',
+  '/plan',
+  '/shopping',
+  '/get-ahead',
+  '/settings',
+  '/admin',
+  '/admin/recipes',
+  '/invitations/accept',
+])
+
+type AuthEntryPath =
+  | '/welcome'
+  | '/auth/sign-in'
+  | '/auth/create-account'
+  | '/auth/magic-link'
+  | '/auth/forgot-password'
+
+export function authEntryPath(path: AuthEntryPath, returnTo: string | null | undefined) {
+  return `${path}?${new URLSearchParams({ returnTo: safeReturnPath(returnTo) })}`
+}
 
 export function safeReturnPath(value: string | null | undefined, fallback = '/') {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\'))
@@ -6,7 +29,10 @@ export function safeReturnPath(value: string | null | undefined, fallback = '/')
 
   try {
     const url = new URL(value, 'https://cooksmith.invalid')
-    return url.origin === 'https://cooksmith.invalid' && !url.username && !url.password
+    return url.origin === 'https://cooksmith.invalid' &&
+      !url.username &&
+      !url.password &&
+      applicationPaths.has(url.pathname)
       ? `${url.pathname}${url.search}${url.hash}`
       : fallback
   } catch {
