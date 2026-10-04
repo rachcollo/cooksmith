@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 
 import {
   authRedirectUrl,
+  authEntryPath,
   emailAuthRedirectUrl,
   safeReturnPath,
 } from '../../application/auth/redirects'
@@ -113,8 +114,13 @@ export function SignInPage() {
         </Button>
       </form>
       <p>
-        <Link to="/auth/forgot-password">Forgot password?</Link> ·{' '}
-        <Link to="/auth/magic-link">Continue with email instead</Link>
+        <Link to={authEntryPath('/auth/forgot-password', params.get('returnTo'))}>
+          Forgot password?
+        </Link>{' '}
+        ·{' '}
+        <Link to={authEntryPath('/auth/magic-link', params.get('returnTo'))}>
+          Continue with email instead
+        </Link>
       </p>
     </>
   )
@@ -263,13 +269,15 @@ export function ResetPasswordPage() {
   const auth = useAuth(),
     form = useAuthForm(),
     navigate = useNavigate(),
+    [params] = useSearchParams(),
     [password, setPassword] = useState('')
-  if (!auth.loading && !auth.session) return <Navigate replace to="/auth/forgot-password" />
+  if (!auth.loading && !auth.session)
+    return <Navigate replace to={authEntryPath('/auth/forgot-password', params.get('returnTo'))} />
   async function submit(e: FormEvent) {
     e.preventDefault()
     await form.run(async () => {
       await auth.updatePassword(password)
-      navigate('/', { replace: true })
+      navigate(safeReturnPath(params.get('returnTo')), { replace: true })
     })
   }
   return (
@@ -311,10 +319,17 @@ export function EmailConfirmationPage() {
         title="This link can’t be used"
         message="It may have expired or already been used. You can send a fresh email to continue."
       />
-      <Link className="button button-primary" replace to="/auth/magic-link">
+      <Link
+        className="button button-primary"
+        replace
+        to={authEntryPath('/auth/magic-link', new URLSearchParams(location.search).get('returnTo'))}
+      >
         Send a new email
       </Link>
-      <Link replace to="/auth/sign-in">
+      <Link
+        replace
+        to={authEntryPath('/auth/sign-in', new URLSearchParams(location.search).get('returnTo'))}
+      >
         Sign in with a password
       </Link>
     </>

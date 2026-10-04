@@ -277,3 +277,27 @@ Package PR title: `chore(package): CS-92 — Unified low-click email authenticat
 Implementation PR title: `CS-92: Unify email sign-in and signup`
 
 Both PRs must link [CS-92](https://smillins.atlassian.net/browse/CS-92) and this package. The implementation PR must state the baseline commit, changed files, primary/recovery journeys, exact test results, hosted same/cross-browser evidence, migration/Edge/config declarations, Production callback origin, rollback, security/privacy/accessibility review and A$0 recurring cost.
+
+## October beta follow-up: preserve authentication destinations
+
+Approved follow-up starts from `main` at `fd0fe1b5303dcee7652794f1dcd5889c6b00897f`
+on `fix/cs-92-auth-return-destinations`. Earlier signup, token-hash and optional-password
+implementation is retained; this follow-up does not claim historical unchecked criteria are done.
+
+- Preserve the validated internal destination through password/email alternatives, the auth brand
+  link, stale confirmation recovery, bootstrap-error recovery, and interrupted onboarding.
+- Reject authentication/onboarding routes and unknown destinations to avoid redirect loops; allow
+  the existing application routes and household invitation acceptance, including their query values.
+- When a reset page already carries a safe destination, preserve it on missing-session recovery and
+  after password update. Keep the existing bare password-reset email redirect and token-hash
+  template compatible. Cross-browser reset emails currently return to Home: carrying a destination
+  through that email requires a separately verified template/application rollout, not a unilateral
+  change from `?token_hash` to `&token_hash`.
+- Test real browser navigation and one complete onboarding continuation, plus callback contract,
+  external-destination rejection and neutral reset-request regressions.
+- Browser focus tests wait for the auth heading before pressing Tab, so lazy route loading cannot
+  consume a keystroke before the page exists.
+
+No migration, Edge Function, dependency or hosted configuration changes are included. No CS-95
+Home/cross-app polish is included. Hosted signup/magic-link/recovery email verification on mobile
+Safari and Chrome remains required and must be recorded separately from mocked local tests.

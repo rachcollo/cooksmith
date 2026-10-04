@@ -112,7 +112,7 @@ describe('first-run onboarding', () => {
       auth: { ...authenticatedTestClient.auth, updateUser },
     } as unknown as typeof authenticatedTestClient
     const user = userEvent.setup()
-    const { router } = renderApp('/', undefined, client, repository)
+    const { router } = renderApp('/recipes', undefined, client, repository)
 
     expect(await screen.findByRole('heading', { name: 'Keep every meal suitable' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Finish setup' }))
@@ -127,7 +127,7 @@ describe('first-run onboarding', () => {
     await user.type(screen.getByLabelText('Confirm password'), 'new-password-123')
     await user.click(screen.getByRole('button', { name: 'Set password and enter Cooksmith' }))
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/recipes'))
     expect(updateUser).toHaveBeenCalledWith({ password: 'new-password-123' })
   })
 })
