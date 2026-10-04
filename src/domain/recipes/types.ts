@@ -1,3 +1,4 @@
+import type { MeasurementSystem } from '../measurements/purchaseMeasures'
 export interface RecipeIngredient {
   id: string
   name: string
@@ -20,6 +21,7 @@ export interface RecipeStep {
 }
 
 export interface Recipe {
+  measurementSystem?: MeasurementSystem
   id: string
   householdId: string
   scope?: 'household' | 'public' | 'private'
@@ -57,6 +59,7 @@ export interface RecipeStepInput {
 }
 
 export interface RecipeInput {
+  measurementSystem?: MeasurementSystem
   name: string
   ingredients: string | null
   description: string | null
@@ -79,6 +82,7 @@ export interface RecipeInput {
 export type ImportedRecipeVisibility = 'public' | 'private'
 
 export interface RecipeImportDraft {
+  measurementSystem?: MeasurementSystem
   name: string
   ingredients: string | null
   description: string | null

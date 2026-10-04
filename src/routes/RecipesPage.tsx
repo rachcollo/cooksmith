@@ -1,3 +1,4 @@
+import { MeasurementSelect } from '../components/ui/MeasurementSelect'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -99,6 +100,11 @@ function RecipeMultilineEditor({
 }) {
   return (
     <>
+      <MeasurementSelect
+        allowSource
+        value={draft.measurementSystem}
+        onChange={(measurementSystem) => setDraft({ ...draft, measurementSystem })}
+      />
       <TextArea
         label="Ingredients"
         hint="Paste or type one ingredient per line, for example: 1 cup lentils."
@@ -254,6 +260,7 @@ export function RecipesPage() {
     const input: RecipeInput = {
       ...emptyInput,
       name: importDraft.name,
+      measurementSystem: importDraft.measurementSystem,
       ingredients: importDraft.ingredients,
       description: importDraft.description,
       sourceUrl: importDraft.sourceUrl,
@@ -305,6 +312,14 @@ export function RecipesPage() {
     try {
       const saved = await repository.update(householdId, selectedRecipe.id, parsed)
       setRecipes((current) => current.map((recipe) => (recipe.id === saved.id ? saved : recipe)))
+      try {
+        await shopping.refreshRecipe?.(householdId, saved)
+      } catch {
+        setEditErrors({
+          form: 'Your recipe was saved, but the shopping list could not refresh. Save again to retry.',
+        })
+        return
+      }
       setEditing(false)
     } catch (saveError) {
       setEditErrors({
@@ -543,6 +558,7 @@ export function RecipesPage() {
               draft={{
                 ...emptyInput,
                 name: importDraft.name,
+                measurementSystem: importDraft.measurementSystem,
                 ingredients: importDraft.ingredients,
                 description: importDraft.description,
               }}
@@ -551,6 +567,7 @@ export function RecipesPage() {
                 updateImportedDraft({
                   ingredients: next.ingredients,
                   description: next.description,
+                  measurementSystem: next.measurementSystem,
                 })
               }
             />

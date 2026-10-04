@@ -80,7 +80,14 @@ describe('v1 purchasing identity', () => {
         name: 'onion',
         quantity: 4,
         unit: null,
-        sourceQuantities: rows.slice(0, 3),
+        sourceQuantities: rows.slice(0, 3).map((row) =>
+          expect.objectContaining({
+            ...row,
+            purchaseName: 'onion',
+            measurementSystem: 'unknown',
+            approximate: false,
+          }),
+        ),
       }),
       expect.objectContaining({ name: 'onion', quantity: 1, unit: 'cup' }),
       expect.objectContaining({ name: 'carrot', quantity: 750, unit: 'g' }),

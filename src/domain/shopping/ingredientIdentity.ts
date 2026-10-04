@@ -78,10 +78,25 @@ export function canonicalIngredientUnit(unit: string | null): {
 
 export function parseIngredientQuantity(value: string | null): number | null {
   if (value === null || !value.trim()) return null
-  const fraction = value.trim().match(/^(?:(\d+)\s+)?(\d+)\/(\d+)$/u)
+  const glyphs: Readonly<Record<string, string>> = {
+    '¼': '1/4',
+    '½': '1/2',
+    '¾': '3/4',
+    '⅓': '1/3',
+    '⅔': '2/3',
+    '⅛': '1/8',
+    '⅜': '3/8',
+    '⅝': '5/8',
+    '⅞': '7/8',
+  }
+  const normalised = value
+    .trim()
+    .replace(/([¼½¾⅓⅔⅛⅜⅝⅞])/gu, (glyph) => ` ${glyphs[glyph]}`)
+    .trim()
+  const fraction = normalised.match(/^(?:(\d+)\s+)?(\d+)\/(\d+)$/u)
   const quantity = fraction
     ? Number(fraction[1] ?? 0) + Number(fraction[2]) / Number(fraction[3])
-    : Number(value)
+    : Number(normalised)
   return Number.isFinite(quantity) && quantity >= 0 ? quantity : null
 }
 

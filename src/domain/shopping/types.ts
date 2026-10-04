@@ -1,3 +1,4 @@
+import type { MeasurementSystem } from '../measurements/purchaseMeasures'
 export type ShoppingCategory =
   | 'produce'
   | 'meat_and_seafood'
@@ -9,6 +10,8 @@ export type ShoppingCategory =
   | 'other'
 
 export interface ShoppingItem {
+  measurementSystem?: MeasurementSystem
+  combineWithPlan?: boolean
   id: string
   householdId: string
   name: string
@@ -23,12 +26,20 @@ export interface ShoppingItem {
 }
 
 export interface ShoppingSourceQuantity {
+  measurementSystem?: MeasurementSystem
+  measureSource?: string | null
+  purchaseUnit?: string | null
+  approximate?: boolean
+  conversionId?: string | null
+  purchaseName?: string
   name: string
   quantity: string | number | null
   unit: string | null
 }
 
 export interface ShoppingItemInput {
+  measurementSystem?: MeasurementSystem
+  combineWithPlan?: boolean
   name: string
   quantity: number | null
   unit: string | null

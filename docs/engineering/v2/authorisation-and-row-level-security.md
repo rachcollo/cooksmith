@@ -72,3 +72,5 @@ For each future private table:
 ## CS-79 purchasing identity
 
 Shopping contribution rows now have composite foreign keys binding both shopping item and planned meal to `household_id`. Existing active-member RLS applies to the nested contribution source-quantity read. Reconciliation checks active membership and meal ownership and uses a household advisory lock. Pantry identity validation is an invoker trigger under existing RLS, with an identity-scoped transaction lock; it does not read or merge another household’s Pantry. See [ADR 014](../../architecture/decisions/014-purchasing-ingredient-identity.md).
+
+CS-79 measurement settings reuse the existing household-recipe, private-import ownership and shopping membership policies. No new exposed table or definer function is introduced. Conventions are constrained to the declared enum, manual combination defaults false, and grouped RPCs validate household membership/all item IDs before writing either setting. `0037_purchase_measure_conventions.test.sql` verifies persisted provenance, invalid settings, explicit overrides and cross-household denial.
