@@ -25,10 +25,11 @@ const item = (
   updatedAt: '2026-10-04T00:00:00Z',
   ...extra,
 })
-function mount(initial: ShoppingItem[]) {
+function mount(initial: ShoppingItem[], refreshStructure?: ShoppingRepository['refreshStructure']) {
   let rows = initial
   const repository: ShoppingRepository = {
     list: async () => rows,
+    refreshStructure,
     create: async () => {
       throw new Error('not used')
     },
@@ -94,6 +95,7 @@ describe('clean combined purchases', () => {
       }),
     ])
   })
+
   it('shows one row without recipe disclosures and completes/restores all source members', async () => {
     const repository = mount([
       item('s1', 'sea salt', 1, 'tsp'),
@@ -184,5 +186,26 @@ describe('clean combined purchases', () => {
       'manual',
       expect.objectContaining({ combineWithPlan: true, quantity: 50 }),
     )
+  })
+})
+
+describe('explicit recipe amount refresh', () => {
+  it('reports a failed refresh without losing the visible saved list', async () => {
+    const refresh = vi.fn(async () => {
+      throw new Error('stale snapshot')
+    })
+    mount(
+      [
+        item('legacy', 'brown sugar', 55, 'g', {
+          completed: true,
+          sourceQuantities: [{ name: 'brown sugar', quantity: '55', unit: 'g' }],
+        }),
+      ],
+      refresh,
+    )
+    await userEvent.click(await screen.findByRole('button', { name: 'Refresh recipe amounts' }))
+    expect(await screen.findByText(/Cooksmith could not finish refreshing/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Mark as needed: brown sugar' })).toBeVisible()
+    expect(refresh).toHaveBeenCalledWith(householdId)
   })
 })

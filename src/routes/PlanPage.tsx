@@ -220,7 +220,7 @@ export function PlanPage() {
       ? {
           ...dialog.input,
           recipeId: recipe.id,
-          recipeSource: recipe.scope === 'household' ? 'household' : 'imported',
+          recipeSource: recipeSourceForPlan(recipe),
           title: snapshotTitleForRecipe(recipe),
         }
       : { ...dialog.input, recipeId: null, recipeSource: null }

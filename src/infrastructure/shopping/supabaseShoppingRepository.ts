@@ -1,3 +1,8 @@
+import {
+  refreshedIngredientInputs,
+  sameIngredientSources,
+} from '../../domain/shopping/structureRefresh'
+import { createSupabaseRecipeRepository } from '../recipes/supabaseRecipeRepository'
 import type { MeasurementSystem } from '../../domain/measurements/purchaseMeasures'
 import type { PostgrestError } from '@supabase/supabase-js'
 
@@ -72,6 +77,72 @@ export function createSupabaseShoppingRepository(
         .order('display_name')
       shoppingError(result.error)
       return ((result.data ?? []) as unknown as ShoppingRow[]).map(mapRow)
+    },
+
+    async refreshStructure(householdId) {
+      const [contributions, meals, recipes] = await Promise.all([
+        database
+          .from('shopping_item_contributions')
+          .select('id, shopping_item_id, planned_meal_id, quantity, unit, source_quantities')
+          .eq('household_id', householdId),
+        database
+          .from('planned_meals')
+          .select('id, recipe_id, imported_recipe_id')
+          .eq('household_id', householdId),
+        createSupabaseRecipeRepository(client).list(householdId),
+      ])
+      shoppingError(contributions.error)
+      shoppingError(meals.error)
+      const batches = []
+      let skipped = 0
+      for (const meal of meals.data ?? []) {
+        const existing = (contributions.data ?? []).filter((row) => row.planned_meal_id === meal.id)
+        if (!existing.length) continue
+        const recipe = recipes.find(
+          (candidate) =>
+            candidate.id === (meal.recipe_id ?? meal.imported_recipe_id) &&
+            (meal.recipe_id
+              ? !candidate.scope || candidate.scope === 'household'
+              : candidate.scope !== 'household'),
+        )
+        const inputs =
+          recipe && !recipe.archivedAt
+            ? refreshedIngredientInputs(
+                recipe,
+                existing.flatMap(
+                  (row) => row.source_quantities as unknown as ShoppingSourceQuantity[],
+                ),
+              )
+            : null
+        if (
+          inputs &&
+          sameIngredientSources(
+            existing.flatMap((row) => row.source_quantities as unknown as ShoppingSourceQuantity[]),
+            inputs.flatMap((input) => input.sourceQuantities ?? []),
+          )
+        )
+          continue
+        if (!inputs || batches.length >= 100) {
+          skipped++
+          continue
+        }
+        batches.push({
+          mealId: meal.id,
+          recipeId: recipe!.id,
+          recipeSource: meal.recipe_id ? 'household' : 'imported',
+          recipeVersion: recipe!.updatedAt,
+          expected: existing,
+          inputs,
+        })
+      }
+      if (batches.length) {
+        const result = await database.rpc(
+          'refresh_shopping_ingredient_structure' as never,
+          { target_household_id: householdId, batches } as never,
+        )
+        shoppingError(result.error)
+      }
+      return { refreshed: batches.length, skipped }
     },
 
     async create(householdId, input) {

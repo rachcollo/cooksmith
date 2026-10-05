@@ -1,5 +1,8 @@
+import type { IngredientStructure } from './ingredientStructure'
 import type { MeasurementSystem } from '../measurements/purchaseMeasures'
 export interface RecipeIngredient {
+  legacyName?: string
+  structure?: IngredientStructure
   id: string
   name: string
   quantity: string | null
@@ -48,6 +51,7 @@ export interface Recipe {
 }
 
 export interface RecipeIngredientInput {
+  structure?: IngredientStructure
   name: string
   quantity: string | null
   unit: string | null

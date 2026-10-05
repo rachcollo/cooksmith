@@ -1,5 +1,6 @@
 import {
   buildDeterministicRecipeIntelligence,
+  recipeIntelligenceRulesVersion,
   validateProviderEnrichment,
   type RecipeIntelligenceSource,
 } from '../../../src/domain/recipes/intelligence.ts'
@@ -28,6 +29,7 @@ type SnapshotIngredient = Partial<RecipeIntelligenceSource['ingredients'][number
   ingredient_name?: string
   original_line_text?: string
   quantity_text?: string | null
+  parser_version?: string | null
 }
 
 type Version = {
@@ -37,6 +39,7 @@ type Version = {
   imported_recipe_id: string | null
   fingerprint: string
   source_snapshot: {
+    recipe?: { sourceUrl?: string | null; measurementSystem?: RecipeIntelligenceSource['measurementSystem'] }
     ingredients?: SnapshotIngredient[]
     steps?: RecipeIntelligenceSource['steps']
   }
@@ -184,13 +187,13 @@ async function claimJob(modelKey?: string): Promise<{
 
   const modelFilter = modelKey ? `&model_key=eq.${encodeURIComponent(modelKey)}` : ''
   const response = await rest(
-    `recipe_enrichment_jobs?state=eq.pending&available_at=lte.now()${modelFilter}&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
+    `recipe_enrichment_jobs?rules_version=eq.${recipeIntelligenceRulesVersion}&state=eq.pending&available_at=lte.now()${modelFilter}&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
   )
   const jobs = (await response.json()) as Job[]
   const candidate = jobs[0]
   if (!candidate) {
     const waitingResponse = await rest(
-      `recipe_enrichment_jobs?state=eq.pending${modelFilter}&order=available_at.asc&limit=1&select=available_at`,
+      `recipe_enrichment_jobs?rules_version=eq.${recipeIntelligenceRulesVersion}&state=eq.pending${modelFilter}&order=available_at.asc&limit=1&select=available_at`,
     )
     const waiting = (await waitingResponse.json()) as Array<{ available_at: string }>
     if (!waiting[0]) return { job: null, outcome: 'empty' }
@@ -248,6 +251,10 @@ function intelligenceSource(version: Version): RecipeIntelligenceSource {
   return {
     recipeId: version.recipe_id ?? version.imported_recipe_id ?? '',
     recipeFingerprint: version.fingerprint,
+    sourceKind: version.source_kind,
+    versionId: version.id,
+    sourceUrl: version.source_snapshot.recipe?.sourceUrl,
+    measurementSystem: version.source_snapshot.recipe?.measurementSystem,
     ingredients: (version.source_snapshot.ingredients ?? []).map((ingredient) => ({
       id: ingredient.id ?? '',
       name: ingredient.name ?? ingredient.ingredient_name ?? '',
@@ -255,6 +262,7 @@ function intelligenceSource(version: Version): RecipeIntelligenceSource {
       quantityText: ingredient.quantityText ?? ingredient.quantity_text ?? null,
       unit: ingredient.unit ?? null,
       preparation: ingredient.preparation ?? null,
+      parserVersion: ingredient.parserVersion ?? ingredient.parser_version,
     })),
     steps: version.source_snapshot.steps ?? [],
   }

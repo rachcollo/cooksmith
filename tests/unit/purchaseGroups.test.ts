@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { groupShoppingPurchases } from '../../src/domain/shopping/purchaseGroups'
 import { buildPlanAdditions } from '../../src/domain/shopping/planGeneration'
+import { structureIngredient } from '../../src/domain/recipes/ingredientStructure'
 import { deriveRecipeContent } from '../../src/domain/recipes/contentDerivation'
 import type { ShoppingItem } from '../../src/domain/shopping/types'
 import type { Recipe } from '../../src/domain/recipes/types'
@@ -45,11 +46,16 @@ describe('one purchasing row per product', () => {
       row('c', 'olive oil', 20, 'ml'),
     ]
     expect(groupShoppingPurchases(source).map((item) => item.name)).toEqual([
-      'oil for frying',
-      'roughly chopped sun dried tomato in oil',
+      'oil',
+      'sun dried tomato in oil',
       'olive oil',
     ])
     expect(source[0]?.name).toBe('oil for frying see note 7')
+    expect(structureIngredient(source[0]!.name)).toMatchObject({
+      purpose: 'for frying',
+      noteReferences: ['see note 7'],
+    })
+    expect(structureIngredient(source[1]!.name).preparation).toBe('roughly chopped')
   })
   it.each(['see notes', 'see note', '(see notes 4 and 5)', ', see note 6'])(
     'removes a trailing reference %s while retaining its source text',
@@ -74,7 +80,7 @@ describe('one purchasing row per product', () => {
       ),
     ).toEqual([
       'tomato',
-      'avocado',
+      'avocados',
       'canned diced tomato',
       'diced tomato',
       'handfuls fresh baby spinach',
@@ -95,8 +101,8 @@ describe('one purchasing row per product', () => {
       [recipe],
       [],
     )
-    // Keep storage keys stable so older source-linked overrides still match regeneration.
-    expect(additions).toHaveLength(2)
+    // Shared structure now consolidates stored contributions; legacy override matching has SQL/API coverage.
+    expect(additions).toHaveLength(1)
     expect(
       groupShoppingPurchases(
         additions.map((input, index) =>
@@ -106,9 +112,12 @@ describe('one purchasing row per product', () => {
         ),
       )[0],
     ).toMatchObject({ name: 'caster sugar', amountLabel: '50 g' })
-    expect(additions[1]?.sourceQuantities?.[0]?.name).toBe(
+    expect(additions[0]?.sourceQuantities?.[1]?.name).toBe(
       'caster sugar can be replaced with maple syrup',
     )
+    expect(additions[0]?.sourceQuantities?.[1]?.ingredientStructure?.substitutions).toEqual([
+      'can be replaced with maple syrup',
+    ])
   })
   it('combines existing metric teaspoon and mL records without needing new shopping IDs', () => {
     const source = [

@@ -2,7 +2,7 @@ import type {
   WeeklyPreparationCandidate,
   WeeklyPreparationPlan,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
-import type { RecipeIntelligence } from '../../../src/domain/recipes/intelligence.ts'
+import { ingredientPreparationEvidence, type RecipeIntelligence } from '../../../src/domain/recipes/intelligence.ts'
 import { fetchWeeklyPreparationHouseholdData } from '../../../src/infrastructure/get-ahead/weeklyPreparationHouseholdData.ts'
 import { verifyActiveHouseholdMember } from '../../../src/infrastructure/get-ahead/weeklyPreparationMembership.ts'
 
@@ -35,7 +35,7 @@ const serviceHeaders = () => ({
 })
 
 const ACTIVE_RECIPE_SCHEMA = 'recipe-intelligence-v3'
-const ACTIVE_RECIPE_RULES = 'cooksmith-rules-v3'
+const ACTIVE_RECIPE_RULES = 'cooksmith-rules-v4'
 
 async function continueRecipeEnrichment() {
   const workerToken = Deno.env.get('RECIPE_INTELLIGENCE_WORKER_TOKEN')
@@ -106,6 +106,8 @@ type ImportedRecipeRow = {
 }
 
 type EnrichmentRow = {
+  id: string
+  activated_at: string
   source_kind: 'household' | 'shared_platform'
   recipe_id: string | null
   imported_recipe_id: string | null
@@ -157,9 +159,7 @@ function candidatesFrom(
       )
       if (daysUntilMeal < 0 || opportunity.maximumLeadTimeHours < Math.max(1, daysUntilMeal * 24))
         return []
-      const ingredient = enrichment.result.ingredients.find((item) =>
-        opportunity.sourceIngredientIds.includes(item.sourceIngredientId),
-      )
+      const evidence = ingredientPreparationEvidence(enrichment.result, opportunity)
       return [
         {
           id: `${meal.id}:${enrichment.recipe_version_id}:${opportunity.opportunityId}`,
@@ -168,14 +168,14 @@ function candidatesFrom(
           plannedMealId: meal.id,
           recipeId,
           recipeVersionId: enrichment.recipe_version_id,
-          enrichmentVersion: `${enrichment.schema_version}:${enrichment.rules_version}`,
+          enrichmentVersion: `${enrichment.schema_version}:${enrichment.rules_version}:${enrichment.id}:${enrichment.activated_at}`,
           servings,
           sourceIngredientId: opportunity.sourceIngredientIds.join('+'),
           sourceStepIds: opportunity.sourceStepIds,
           originalText: sourceInstructions(opportunity, snapshot) || opportunity.title,
-          canonicalIngredient: opportunity.canonicalIngredient,
+          canonicalIngredient: evidence.canonicalIngredient,
           canonicalAction: opportunity.action,
-          preparationDetail: opportunity.preparationDetail,
+          preparationDetail: evidence.preparationDetail,
           opportunityKind: opportunity.kind,
           ingredientLines: opportunity.ingredientLines ?? [],
           instructionSteps: opportunity.instructionSteps ?? [],
@@ -183,9 +183,9 @@ function candidatesFrom(
           finishingGuidance: opportunity.finishingGuidance ?? '',
           providerStorageGuidance: opportunity.storageGuidance ?? '',
           quantity: {
-            state: ingredient?.quantity.state ?? 'unknown',
-            value: ingredient?.quantity.normalisedValue ?? null,
-            unit: ingredient?.quantity.unit ?? null,
+            state: evidence.quantity?.state ?? 'unknown',
+            value: evidence.quantity?.normalisedValue ?? null,
+            unit: evidence.quantity?.unit ?? null,
           },
           maximumLeadTimeHours: opportunity.maximumLeadTimeHours,
           storageGuidanceReference: storageGuidanceReferenceFor(opportunity),
@@ -397,7 +397,7 @@ Deno.serve(async (request) => {
         : null,
     ].filter(Boolean)
     const enrichments = await rest<EnrichmentRow[]>(
-      `recipe_enrichments?is_active=eq.true&schema_version=eq.${ACTIVE_RECIPE_SCHEMA}&rules_version=eq.${ACTIVE_RECIPE_RULES}&or=(${filters.join(',')})&select=source_kind,recipe_id,imported_recipe_id,recipe_version_id,schema_version,rules_version,result&limit=100`,
+      `recipe_enrichments?is_active=eq.true&schema_version=eq.${ACTIVE_RECIPE_SCHEMA}&rules_version=eq.${ACTIVE_RECIPE_RULES}&or=(${filters.join(',')})&select=id,activated_at,source_kind,recipe_id,imported_recipe_id,recipe_version_id,schema_version,rules_version,result&limit=100`,
     )
     const coveredRecipes = new Set(
       enrichments.map((item) => `${item.source_kind}:${item.recipe_id ?? item.imported_recipe_id}`),

@@ -1,5 +1,11 @@
+import {
+  normaliseMeasure,
+  recipeMeasures,
+  type MeasurementSystem,
+} from '../measurements/purchaseMeasures.ts'
+import { structureExistingIngredient, type IngredientStructure } from './ingredientStructure.ts'
 export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v3'
-export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v3'
+export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v4'
 
 export type RecipePreparationOpportunityKind =
   'ingredient_prep' | 'component_prep' | 'component_cook' | 'meal_cook' | 'assembly'
@@ -9,6 +15,7 @@ export type EnrichmentConfidence = 'high' | 'medium' | 'low' | 'unknown'
 export type QuantityState = 'known' | 'range' | 'approximate' | 'unknown' | 'not_applicable'
 
 export type RecipeIntelligenceIngredient = {
+  structure?: IngredientStructure
   sourceIngredientId: string
   originalText: string
   canonicalName: string | null
@@ -53,6 +60,12 @@ export type RecipePreparationOpportunity = {
 }
 
 export type RecipeIntelligence = {
+  sourceContext?: {
+    kind: string
+    versionId: string
+    measurementSystem: MeasurementSystem
+    measureSource: string | null
+  }
   schemaVersion: typeof recipeIntelligenceSchemaVersion
   rulesVersion: typeof recipeIntelligenceRulesVersion
   recipeId: string
@@ -79,6 +92,10 @@ export type ProviderIngredientSuggestion = Pick<
 export type ProviderPreparationOpportunity = RecipePreparationOpportunity
 
 export type RecipeIntelligenceSource = {
+  sourceKind?: 'household' | 'shared_platform'
+  versionId?: string
+  measurementSystem?: MeasurementSystem
+  sourceUrl?: string | null
   recipeId: string
   recipeFingerprint: string
   ingredients: Array<{
@@ -88,6 +105,7 @@ export type RecipeIntelligenceSource = {
     quantityText: string | null
     unit: string | null
     preparation: string | null
+    parserVersion?: string | null
   }>
   steps: Array<{ id: string; instruction: string }>
 }
@@ -159,53 +177,48 @@ function normaliseText(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
-function parseNumber(value: string): number | null {
-  const trimmed = value.trim()
-  if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed)
-  const fraction = trimmed.match(/^(\d+)\/(\d+)$/)
-  if (fraction) return Number(fraction[1]) / Number(fraction[2])
-  const mixed = trimmed.match(/^(\d+)\s+(\d+)\/(\d+)$/)
-  if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3])
-  return null
+function structureQuantity(
+  structure: IngredientStructure,
+  system: MeasurementSystem = 'unknown',
+): RecipeIntelligenceIngredient['quantity'] {
+  const quantity = structure.quantity
+  const sourceUnit = quantity.unit ? units[normaliseText(quantity.unit)] : undefined
+  const unit =
+    sourceUnit && system !== 'unknown' && ['tsp', 'tbsp', 'cup'].includes(sourceUnit.unit)
+      ? { ...normaliseMeasure(sourceUnit.unit, system), dimension: 'volume' as const }
+      : sourceUnit
+  return {
+    state: quantity.state,
+    original: quantity.text,
+    normalisedValue: quantity.value === null ? null : quantity.value * (unit?.multiplier ?? 1),
+    normalisedMaximum:
+      quantity.maximum === null ? null : quantity.maximum * (unit?.multiplier ?? 1),
+    unit: unit?.unit ?? quantity.unit,
+    dimension:
+      quantity.value === null
+        ? 'unknown'
+        : (unit?.dimension ?? (quantity.unit ? 'unknown' : 'count')),
+  }
 }
 
-function parseQuantity(quantityText: string | null, unitText: string | null) {
-  if (!quantityText) {
-    return {
-      state: 'unknown' as const,
-      original: null,
-      normalisedValue: null,
-      normalisedMaximum: null,
-      unit: unitText ? normaliseText(unitText) : null,
-      dimension: 'unknown' as const,
-    }
-  }
-
-  const approximate = /^(about|approx(?:imately)?|~)\s*/i.test(quantityText)
-  const cleaned = quantityText.replace(/^(about|approx(?:imately)?|~)\s*/i, '')
-  const range = cleaned.match(/^(.+?)\s*(?:-|–|to)\s*(.+)$/)
-  const minimum = parseNumber(range?.[1] ?? cleaned)
-  const maximum = range ? parseNumber(range[2] ?? '') : minimum
-  const unit = unitText ? units[normaliseText(unitText)] : undefined
-
-  if (minimum === null || maximum === null) {
-    return {
-      state: 'unknown' as const,
-      original: quantityText,
-      normalisedValue: null,
-      normalisedMaximum: null,
-      unit: unitText ? normaliseText(unitText) : null,
-      dimension: 'unknown' as const,
-    }
-  }
-
+/** Only source-bound single-ingredient preparation can reuse the purchase identity. */
+export function ingredientPreparationEvidence(
+  intelligence: RecipeIntelligence,
+  opportunity: RecipePreparationOpportunity,
+) {
+  const ingredient = intelligence.ingredients.find((item) =>
+    opportunity.sourceIngredientIds.includes(item.sourceIngredientId),
+  )
+  const structure =
+    opportunity.kind === 'ingredient_prep' && opportunity.sourceIngredientIds.length === 1
+      ? ingredient?.structure
+      : undefined
   return {
-    state: range ? ('range' as const) : approximate ? ('approximate' as const) : ('known' as const),
-    original: quantityText,
-    normalisedValue: minimum * (unit?.multiplier ?? 1),
-    normalisedMaximum: maximum * (unit?.multiplier ?? 1),
-    unit: unit?.unit ?? (unitText ? normaliseText(unitText) : null),
-    dimension: unit?.dimension ?? ('count' as const),
+    canonicalIngredient: structure?.canonicalName ?? opportunity.canonicalIngredient,
+    preparationDetail: structure?.preparation ?? opportunity.preparationDetail,
+    quantity: ingredient?.structure
+      ? structureQuantity(ingredient.structure, intelligence.sourceContext?.measurementSystem)
+      : ingredient?.quantity,
   }
 }
 
@@ -233,18 +246,28 @@ export function buildDeterministicRecipeIntelligence(
   source: RecipeIntelligenceSource,
 ): RecipeIntelligence {
   const ingredients = source.ingredients.map((ingredient) => {
-    const normalisedName = normaliseText(ingredient.name)
+    const structure = structureExistingIngredient({
+      name: ingredient.name,
+      quantity: ingredient.quantityText,
+      unit: ingredient.unit,
+      preparation: ingredient.preparation,
+      originalLineText: ingredient.originalText,
+      parserVersion:
+        ingredient.parserVersion ?? (ingredient.preparation ? 'manual' : 'recipe-content-v1'),
+    })
+    const normalisedName = normaliseText(structure.name)
     const canonicalName = aliases[normalisedName] ?? normalisedName
-    const detail = preparationDetail(ingredient.preparation)
+    const detail = preparationDetail(structure.preparation) ?? structure.preparation
     const sourceStepIds = linkedStepIds(canonicalName, source.steps)
 
     return {
+      structure,
       sourceIngredientId: ingredient.id,
       originalText: ingredient.originalText,
       canonicalName,
       aliases: canonicalName === normalisedName ? [] : [normalisedName],
       modifiers: [],
-      quantity: parseQuantity(ingredient.quantityText, ingredient.unit),
+      quantity: structureQuantity(structure, recipeMeasures(source).system),
       action: detail?.split(' ').at(-1) ?? null,
       preparationDetail: detail,
       sourceStepIds,
@@ -254,6 +277,16 @@ export function buildDeterministicRecipeIntelligence(
   })
 
   return {
+    ...(source.sourceKind && source.versionId
+      ? {
+          sourceContext: {
+            kind: source.sourceKind,
+            versionId: source.versionId,
+            measurementSystem: recipeMeasures(source).system,
+            measureSource: recipeMeasures(source).source,
+          },
+        }
+      : {}),
     schemaVersion: recipeIntelligenceSchemaVersion,
     rulesVersion: recipeIntelligenceRulesVersion,
     recipeId: source.recipeId,
@@ -381,6 +414,7 @@ export function validateProviderEnrichment(
     candidate.recipeId !== source.recipeId ||
     candidate.recipeFingerprint !== source.recipeFingerprint ||
     candidate.schemaVersion !== recipeIntelligenceSchemaVersion ||
+    candidate.rulesVersion !== recipeIntelligenceRulesVersion ||
     !Array.isArray(candidate.ingredients) ||
     !Array.isArray(candidate.preparationOpportunities)
   )
@@ -421,5 +455,20 @@ export function validateProviderEnrichment(
   )
     return { ok: false, reason: 'unsupported_reference' }
 
+  const expected = buildDeterministicRecipeIntelligence(source)
+  if (JSON.stringify(candidate.sourceContext) !== JSON.stringify(expected.sourceContext))
+    return { ok: false, reason: 'source_mismatch' }
+  if (
+    candidate.ingredients.some(
+      (ingredient) =>
+        JSON.stringify(ingredient.structure) !==
+        JSON.stringify(
+          expected.ingredients.find(
+            (item) => item.sourceIngredientId === ingredient.sourceIngredientId,
+          )?.structure,
+        ),
+    )
+  )
+    return { ok: false, reason: 'ingredient_structure_mismatch' }
   return { ok: true, value: candidate as RecipeIntelligence }
 }

@@ -1,0 +1,8 @@
+begin;
+select plan(4);
+select ok(cooksmith.shopping_sources_overlap('[{"sourceIngredientId":"old-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic","name":"garlic crushed","unit":null}]','[{"sourceIngredientId":"new-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic","name":"garlic sliced","unit":null}]'),'Material edit with replaced ingredient IDs retains equivalent purchase override');
+select ok(not cooksmith.shopping_sources_overlap('[{"sourceIngredientId":"same-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic","name":"garlic","unit":null}]','[{"sourceIngredientId":"same-row","sourceRecipeId":"recipe","sourceRecipeKind":"public","purchaseName":"garlic","name":"garlic","unit":null}]'),'Identical IDs in different source kinds do not match');
+select ok(not cooksmith.shopping_sources_overlap('[{"sourceIngredientId":"old-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic","name":"garlic","unit":null}]','[{"sourceIngredientId":"new-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic powder","name":"garlic powder","unit":null}]'),'Material product change does not steal a different product override');
+select ok(not cooksmith.shopping_sources_overlap('[{"sourceIngredientId":"same-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic","name":"garlic","unit":null}]','[{"sourceIngredientId":"same-row","sourceRecipeId":"recipe","sourceRecipeKind":"household","purchaseName":"garlic powder","name":"garlic powder","unit":null}]'),'Even a retained row ID cannot erase a material product distinction');
+select * from finish();
+rollback;
