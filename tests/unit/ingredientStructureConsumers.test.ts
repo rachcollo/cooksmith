@@ -188,3 +188,36 @@ it('recognises JSONB-equivalent evidence and refuses duplicate legacy source cla
   const source = { name: 'garlic sliced', quantity: '2', unit: null }
   expect(refreshedIngredientInputs(r, [source, source])).toBeNull()
 })
+
+it('Get Ahead honours known spoon conventions and leaves unknown spoons explicit', () => {
+  const source = {
+    recipeId: 'r',
+    recipeFingerprint: 'v',
+    sourceKind: 'household' as const,
+    versionId: 'snapshot',
+    ingredients: [
+      {
+        id: 'oil',
+        name: 'olive oil',
+        originalText: '2 tbsp olive oil',
+        quantityText: '2',
+        unit: 'tbsp',
+        preparation: null,
+        parserVersion: 'recipe-content-v2',
+      },
+    ],
+    steps: [],
+  }
+  expect(
+    buildDeterministicRecipeIntelligence({ ...source, measurementSystem: 'au' }).ingredients[0]
+      ?.quantity,
+  ).toMatchObject({ normalisedValue: 40, unit: 'ml' })
+  expect(
+    buildDeterministicRecipeIntelligence({ ...source, measurementSystem: 'us' }).ingredients[0]
+      ?.quantity,
+  ).toMatchObject({ normalisedValue: 30, unit: 'ml' })
+  expect(buildDeterministicRecipeIntelligence(source).ingredients[0]?.quantity).toMatchObject({
+    normalisedValue: 2,
+    unit: 'tbsp',
+  })
+})

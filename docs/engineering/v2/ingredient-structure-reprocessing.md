@@ -8,7 +8,7 @@ All saved household, public-import and owner-only private-import rows use the sh
 
 ## Release sequence (requires separate approval)
 
-This PR does not deploy Production. Production deployment occurs only after merge through the protected **Production database release** workflow, for an explicitly approved exact `main` SHA. Verify backup, migration history and dry-run before applying `20261005015715_shared_ingredient_structure.sql`; released migrations are immutable.
+This PR does not deploy Production. Production deployment occurs only after merge through the protected **Production database release** workflow, for an explicitly approved exact `main` SHA. Verify backup, migration history and dry-run before applying `20261005015715_shared_ingredient_structure.sql` followed by `20261005025707_preserve_structure_refresh_overrides.sql`; released migrations are immutable.
 
 Before a mixed-version rollout, pause the existing enrichment worker through approved administration. Apply the migration, release `enrich-recipe` and `get-weekly-preparation-plan` from the same approved SHA, then the compatible app. Verify function/version contracts before resuming. Older workers cannot label v3 output as a v4 result or replace an already active v4 result. No migration enables AI, starts a backfill, changes provider settings or deletes prior results.
 

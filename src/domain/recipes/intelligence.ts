@@ -1,4 +1,8 @@
-import { recipeMeasures, type MeasurementSystem } from '../measurements/purchaseMeasures.ts'
+import {
+  normaliseMeasure,
+  recipeMeasures,
+  type MeasurementSystem,
+} from '../measurements/purchaseMeasures.ts'
 import { structureExistingIngredient, type IngredientStructure } from './ingredientStructure.ts'
 export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v3'
 export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v4'
@@ -175,9 +179,14 @@ function normaliseText(value: string) {
 
 function structureQuantity(
   structure: IngredientStructure,
+  system: MeasurementSystem = 'unknown',
 ): RecipeIntelligenceIngredient['quantity'] {
   const quantity = structure.quantity
-  const unit = quantity.unit ? units[normaliseText(quantity.unit)] : undefined
+  const sourceUnit = quantity.unit ? units[normaliseText(quantity.unit)] : undefined
+  const unit =
+    sourceUnit && system !== 'unknown' && ['tsp', 'tbsp', 'cup'].includes(sourceUnit.unit)
+      ? { ...normaliseMeasure(sourceUnit.unit, system), dimension: 'volume' as const }
+      : sourceUnit
   return {
     state: quantity.state,
     original: quantity.text,
@@ -208,7 +217,7 @@ export function ingredientPreparationEvidence(
     canonicalIngredient: structure?.canonicalName ?? opportunity.canonicalIngredient,
     preparationDetail: structure?.preparation ?? opportunity.preparationDetail,
     quantity: ingredient?.structure
-      ? structureQuantity(ingredient.structure)
+      ? structureQuantity(ingredient.structure, intelligence.sourceContext?.measurementSystem)
       : ingredient?.quantity,
   }
 }
@@ -258,7 +267,7 @@ export function buildDeterministicRecipeIntelligence(
       canonicalName,
       aliases: canonicalName === normalisedName ? [] : [normalisedName],
       modifiers: [],
-      quantity: structureQuantity(structure),
+      quantity: structureQuantity(structure, recipeMeasures(source).system),
       action: detail?.split(' ').at(-1) ?? null,
       preparationDetail: detail,
       sourceStepIds,

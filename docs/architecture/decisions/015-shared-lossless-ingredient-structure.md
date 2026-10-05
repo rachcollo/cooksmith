@@ -33,7 +33,7 @@ The grammar is bounded, not universal natural-language understanding. Unknown wo
 
 ## Security, migration and cost
 
-One additive migration; no new RLS bypass or provider. The refresh RPC is invoker-only with explicit household checks, safe search path and anonymous execution revoked. The admin queue retains existing protected authority. Source collisions and stale snapshots have regression tests. No production mutation or provider execution is part of implementation validation. Fixed cost: A$0/month and A$0/year; any later AI reprocessing uses separately approved existing limits.
+Two additive forward migrations; no new RLS bypass or provider. The refresh RPC is invoker-only with explicit household checks, safe search path and anonymous execution revoked. The admin queue retains existing protected authority. Source collisions and stale snapshots have regression tests. No production mutation or provider execution is part of implementation validation. Fixed cost: A$0/month and A$0/year; any later AI reprocessing uses separately approved existing limits.
 
 ## Product Principles supported
 
