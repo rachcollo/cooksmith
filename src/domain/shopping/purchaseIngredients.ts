@@ -65,6 +65,18 @@ export function parsePurchaseLine(line: string): PurchaseIngredient {
   }
 }
 
+// Display-only cleanup: storage identity and source provenance must remain stable for overrides.
+export function purchaseDisplayName(name: string): string {
+  name = name
+    // Keep the requested product, not its optional replacement. Original text stays on the source.
+    .replace(/(?:\s*[,;(]\s*|\s+)can be (?:substituted|replaced) (?:with|by)\s+.+$/iu, '')
+    .replace(/(?:\s*[,;(]\s*|\s+)see notes?(?:\s+\d+(?:\s*(?:,|and|&)\s*\d+)*)?[.)\]]*$/iu, '')
+    .trim()
+  return purchaseProductName(name)
+    .replace(/^tomato(?:es)?[, ]+finely diced$/iu, 'tomato')
+    .replace(/^avocados?[, ]+mashed with a fork$/iu, 'avocado')
+}
+
 // Preparation is not part of the product to purchase. Keep packaged forms and mixtures intact.
 export function purchaseProductName(name: string): string {
   name = name
