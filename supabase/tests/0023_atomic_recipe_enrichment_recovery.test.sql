@@ -36,7 +36,7 @@ select 'shared_platform', versions.imported_recipe_id, versions.id,
        case when versions.imported_recipe_id = '96000000-0000-4000-8000-000000000011'
          then 'recipe-intelligence-v3' else 'recipe-intelligence-v1' end,
        case when versions.imported_recipe_id = '96000000-0000-4000-8000-000000000011'
-         then 'cooksmith-rules-v3' else 'cooksmith-rules-v1' end,
+         then 'cooksmith-rules-v4' else 'cooksmith-rules-v1' end,
        'provider-assisted-v1',
        case when versions.imported_recipe_id = '96000000-0000-4000-8000-000000000010'
          then 'processing'::cooksmith.recipe_enrichment_job_state

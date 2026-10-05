@@ -53,6 +53,7 @@ Every ADR must contain:
 | [012](../architecture/decisions/012-recipe-level-preparation-intelligence.md)      | Accepted   | Use recipe-level preparation intelligence for Get Ahead         |
 | [013](../architecture/decisions/013-fail-closed-get-ahead-planning.md)             | Accepted   | Fail closed when Get Ahead intelligence is unavailable          |
 | [014](../architecture/decisions/014-purchasing-ingredient-identity.md)             | Proposed   | Share purchasing ingredient identity across Shopping and Pantry |
+| [015](../architecture/decisions/015-shared-lossless-ingredient-structure.md)       | Proposed   | Share lossless ingredient structure across recipe consumers     |
 
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 

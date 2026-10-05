@@ -189,17 +189,20 @@ function RecipeEnrichmentOperations() {
       | 'pause'
       | 'resume'
       | 'retry_failed'
+      | 'reprocess_structure'
       | 'reprocess_ai'
       | 'recover_exhausted_ai_failures',
   ) {
     const confirmation =
-      action === 'reprocess_ai'
-        ? `Re-enrich eligible recipes with Recipe Intelligence AI? Provider usage is capped at A${status?.monthlyCostLimitAud.toFixed(2) ?? '0.00'} per month.`
-        : action === 'start'
-          ? 'Enrich eligible existing household and shared recipes?'
-          : action === 'recover_exhausted_ai_failures'
-            ? `Recover exactly ${status?.recoverableCount ?? 0} exhausted AI failures? Only failed provider-assisted jobs for each recipe’s latest version without an active successful enrichment will be reset.`
-            : null
+      action === 'reprocess_structure'
+        ? 'Refresh up to 100 eligible household/public recipes using the shared ingredient rules? Original recipes stay unchanged. Enabled AI enrichment uses the existing provider budget.'
+        : action === 'reprocess_ai'
+          ? `Re-enrich eligible recipes with Recipe Intelligence AI? Provider usage is capped at A${status?.monthlyCostLimitAud.toFixed(2) ?? '0.00'} per month.`
+          : action === 'start'
+            ? 'Enrich eligible existing household and shared recipes?'
+            : action === 'recover_exhausted_ai_failures'
+              ? `Recover exactly ${status?.recoverableCount ?? 0} exhausted AI failures? Only failed provider-assisted jobs for each recipe’s latest version without an active successful enrichment will be reset.`
+              : null
     if (confirmation && !window.confirm(confirmation)) return
     setBusy(true)
     try {
@@ -416,6 +419,20 @@ function RecipeEnrichmentOperations() {
                 onClick={() => void command('reprocess_ai')}
               >
                 Re-enrich with AI
+              </Button>
+              {status.structurePreview ? (
+                <p>
+                  Ingredient refresh remaining: {status.structurePreview.household} household
+                  recipes and {status.structurePreview.sharedPlatform} shared recipes. Each batch
+                  queues up to 100.
+                </p>
+              ) : null}
+              <Button
+                variant="secondary"
+                disabled={busy || status.paused}
+                onClick={() => void command('reprocess_structure')}
+              >
+                Refresh ingredient structure
               </Button>
               <Button disabled={busy || status.paused} onClick={() => void command('start')}>
                 Enrich existing recipes

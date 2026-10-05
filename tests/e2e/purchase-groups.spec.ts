@@ -10,7 +10,7 @@ test('synthetic authenticated shopping purchases remain concise and usable', asy
   await expect(page.getByText('about 200 g', { exact: true })).toBeVisible()
   await expect(page.getByText('fine sea salt', { exact: true })).toBeVisible()
   await expect(page.getByText('extra virgin olive oil', { exact: true })).toHaveCount(1)
-  await expect(page.getByText('Recipe amounts')).toHaveCount(0)
+  await expect(page.getByText('Recipe amounts', { exact: true })).toHaveCount(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
   await page.screenshot({ path: testInfo.outputPath('shopping-purchases.png'), fullPage: true })
@@ -44,4 +44,35 @@ test('manual cup settings produce a single approximate weight', async ({ page })
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
   await page.getByRole('button', { name: 'Save changes to caster sugar', exact: true }).click()
   await expect(page.getByText('about 220 g', { exact: true })).toBeVisible()
+})
+
+test('explicit ingredient refresh preserves bought state on a small phone', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 })
+  await page.goto('/tests/e2e/fixtures/purchases.html')
+  await expect(
+    page.getByRole('button', { name: 'Mark as needed: brown sugar', exact: true }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Refresh recipe amounts', exact: true }).click()
+  await expect(
+    page.getByRole('button', { name: 'Mark as needed: brown sugar', exact: true }),
+  ).toBeVisible()
+  await expect(
+    page.getByText('Recipe amounts are up to date. Your edits and bought items are preserved.'),
+  ).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+})
+
+test('a combined purchase can confirm unresolved spoon sizes on a small phone', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 })
+  await page.goto('/tests/e2e/fixtures/purchases.html')
+  await page.getByRole('button', { name: 'Edit extra virgin olive oil', exact: true }).click()
+  await page.getByLabel('Cup and spoon measures').selectOption('au')
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+  await expect(page.getByText('130 ml', { exact: true })).toBeVisible()
+  await expect(page.getByText('70 ml + 3 tbsp', { exact: true })).toHaveCount(0)
 })

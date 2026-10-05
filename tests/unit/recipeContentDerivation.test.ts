@@ -6,7 +6,7 @@ import {
 } from '../../src/domain/recipes/contentDerivation'
 
 describe('lossless recipe content derivation', () => {
-  it('splits trimmed non-empty lines and preserves original ingredient text', () => {
+  it('splits non-empty lines and preserves original ingredient text', () => {
     const result = deriveRecipeContent(
       '  1 cup lentils\r\n\n½ tsp salt\nripe tomatoes, chopped  ',
       null,
@@ -15,7 +15,7 @@ describe('lossless recipe content derivation', () => {
     expect(result.parserVersion).toBe(recipeContentParserVersion)
     expect(result.ingredients).toEqual([
       expect.objectContaining({
-        originalLineText: '1 cup lentils',
+        originalLineText: '  1 cup lentils',
         quantity: '1',
         unit: 'cup',
         name: 'lentils',
@@ -29,10 +29,11 @@ describe('lossless recipe content derivation', () => {
         derivationStatus: 'derived',
       }),
       expect.objectContaining({
-        originalLineText: 'ripe tomatoes, chopped',
+        originalLineText: 'ripe tomatoes, chopped  ',
         quantity: null,
         unit: null,
-        name: 'ripe tomatoes, chopped',
+        name: 'ripe tomatoes',
+        preparation: 'chopped',
         derivationStatus: 'display_only',
       }),
     ])

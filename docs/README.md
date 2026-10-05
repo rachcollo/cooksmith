@@ -57,6 +57,7 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 - Milestone 9B completion report: [Recipe Authoring & Ingredients](engineering/reports/m09b-recipe-authoring-ingredients.md)
 - CS-30 completion report: [URL Recipe Import](engineering/reports/cs30-url-recipe-import.md)
 - CS-90 completion report: [Recipe Intelligence foundation](engineering/reports/cs90-recipe-intelligence.md)
+- Ingredient structure operations: [Bounded reprocessing and Shopping refresh](engineering/v2/ingredient-structure-reprocessing.md)
 - Recipe Intelligence operations: [Processing, enablement and rollback](engineering/v2/recipe-intelligence.md)
 - Milestone 6C completion report: [Household invitations and member management](engineering/reports/m06c-household-invitations.md)
 - Milestone 5B completion report: [Authorisation helpers and row level security](engineering/reports/m05b-rls-authorisation.md)

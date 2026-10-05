@@ -149,11 +149,16 @@ export function categoriseIngredient(name: string): ShoppingCategory {
 }
 
 export function buildPlanAdditions(
-  meals: Pick<PlannedMeal, 'recipeState'>[],
+  meals: (Pick<PlannedMeal, 'recipeState'> & Partial<Pick<PlannedMeal, 'recipeSource'>>)[],
   recipes: Recipe[],
   existingItems: ShoppingItem[],
 ): PlanAdditions {
-  const recipesById = new Map(recipes.map((recipe) => [recipe.id, recipe]))
+  const recipesById = new Map(
+    recipes.map((recipe) => [
+      `${recipe.scope === 'household' || !recipe.scope ? 'household' : 'imported'}:${recipe.id}`,
+      recipe,
+    ]),
+  )
   const existingKeys = new Set(
     existingItems
       .filter((item) => item.manual === false)
@@ -165,8 +170,15 @@ export function buildPlanAdditions(
   let unlinkedMealCount = 0
 
   for (const meal of meals) {
-    const recipe =
-      meal.recipeState.kind === 'active' ? recipesById.get(meal.recipeState.recipe.id) : undefined
+    const recipeId = meal.recipeState.kind === 'active' ? meal.recipeState.recipe.id : null
+    const matching = recipes.filter((candidate) => candidate.id === recipeId)
+    const recipe = recipeId
+      ? meal.recipeSource
+        ? recipesById.get(`${meal.recipeSource}:${recipeId}`)
+        : matching.length === 1
+          ? matching[0]
+          : undefined
+      : undefined
     if (!recipe) {
       unlinkedMealCount += 1
       continue
@@ -180,7 +192,9 @@ export function buildPlanAdditions(
       const convention = recipeMeasures(recipe)
       const converted = convertPurchaseAmount(
         row.conversionName ?? displayName,
-        parseIngredientQuantity(row.quantity),
+        row.structure && ['known', 'approximate'].includes(row.structure.quantity.state)
+          ? row.structure.quantity.value
+          : parseIngredientQuantity(row.quantity),
         row.unit,
         convention.system,
       )
@@ -189,13 +203,24 @@ export function buildPlanAdditions(
       if (displayName === '') continue
       const quantity = converted.quantity
       const source = {
+        ingredientStructure: row.structure,
+        sourceIngredientId: row.sourceIngredientId,
+        sourceRecipeId: recipe.id,
+        sourceRecipeKind: recipe.scope ?? 'household',
+        sourceRecipeVersion: recipe.updatedAt,
+        originalText: row.originalText,
+        legacyPurchaseNames: [
+          ...new Set(
+            [row.sourceName ?? row.name, ...(row.legacyNames ?? [])].map(canonicalIngredientName),
+          ),
+        ],
         purchaseName: displayName,
         measurementSystem: convention.system,
         measureSource: convention.source,
         purchaseUnit: converted.unit,
-        approximate: converted.approximate,
+        approximate: converted.approximate || row.structure?.quantity.state === 'approximate',
         conversionId: converted.conversionId,
-        name: row.name,
+        name: row.sourceName ?? row.name,
         quantity: row.quantity,
         unit: row.unit,
       }

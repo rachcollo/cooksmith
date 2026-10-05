@@ -1107,6 +1107,7 @@ export type Database = {
           derived_at: string
           id: string
           ingredient_name: string
+          ingredient_structure: Json | null
           original_line_text: string
           parser_version: string
           position: number
@@ -1122,6 +1123,7 @@ export type Database = {
           derived_at?: string
           id?: string
           ingredient_name: string
+          ingredient_structure?: Json | null
           original_line_text: string
           parser_version?: string
           position: number
@@ -1137,6 +1139,7 @@ export type Database = {
           derived_at?: string
           id?: string
           ingredient_name?: string
+          ingredient_structure?: Json | null
           original_line_text?: string
           parser_version?: string
           position?: number
@@ -1911,6 +1914,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      refresh_shopping_ingredient_structure: {
+        Args: { batches: Json; target_household_id: string }
+        Returns: undefined
+      }
       remove_household_member: {
         Args: { p_member_id: string }
         Returns: undefined
@@ -1935,6 +1942,10 @@ export type Database = {
           target_household_id: string
         }
         Returns: undefined
+      }
+      shopping_sources_overlap: {
+        Args: { left_sources: Json; right_sources: Json }
+        Returns: boolean
       }
       update_shopping_purchase: {
         Args: { item_inputs: Json; target_household_id: string }

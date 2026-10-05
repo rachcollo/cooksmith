@@ -2,6 +2,7 @@ import type { Recipe } from '../../domain/recipes/types'
 import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/types'
 
 export interface ShoppingRepository {
+  refreshStructure?(householdId: string): Promise<{ refreshed: number; skipped: number }>
   list(householdId: string): Promise<ShoppingItem[]>
   create(householdId: string, input: ShoppingItemInput): Promise<ShoppingItem>
   createFromPlan?(

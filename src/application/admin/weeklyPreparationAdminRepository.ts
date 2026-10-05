@@ -56,6 +56,7 @@ export type RecipeEnrichmentBackfillStatus = {
   terminalUnsupportedCount: number
   evaluationReady: boolean
   recipesReady: boolean
+  structurePreview?: { household: number; sharedPlatform: number }
   sources: {
     household: { eligible: number; current: number }
     sharedPlatform: { eligible: number; current: number }
@@ -99,6 +100,7 @@ export interface WeeklyPreparationAdminRepository {
       | 'pause'
       | 'resume'
       | 'retry_failed'
+      | 'reprocess_structure'
       | 'reprocess_ai'
       | 'recover_exhausted_ai_failures',
   ): Promise<RecipeEnrichmentBackfillStatus>

@@ -546,3 +546,26 @@ describe('weekly preparation plan', () => {
     expect(buildDeterministicWeeklyPreparationPlan([onion, cucumber]).tasks).toHaveLength(2)
   })
 })
+
+describe('ingredient enrichment revision cache identity', () => {
+  it('invalidates a saved plan when ingredient rules or activation revision changes', () => {
+    const original = candidate('same', {
+      enrichmentVersion: 'recipe-intelligence-v3:cooksmith-rules-v3:result:old',
+    })
+    const refreshed = {
+      ...original,
+      enrichmentVersion: 'recipe-intelligence-v3:cooksmith-rules-v4:result:new',
+    }
+    expect(createWeeklyPreparationCacheKey([original])).not.toBe(
+      createWeeklyPreparationCacheKey([refreshed]),
+    )
+    expect(createWeeklyPreparationCacheKey([refreshed])).not.toBe(
+      createWeeklyPreparationCacheKey([
+        {
+          ...refreshed,
+          enrichmentVersion: 'recipe-intelligence-v3:cooksmith-rules-v4:result:reprocessed',
+        },
+      ]),
+    )
+  })
+})

@@ -1,4 +1,4 @@
-import { canonicalIngredientName, canonicalIngredientUnit } from '../shopping/ingredientIdentity'
+import { canonicalIngredientName, canonicalIngredientUnit } from '../shopping/ingredientIdentity.ts'
 
 export const measurementSystems = ['unknown', 'au', 'metric', 'us'] as const
 export type MeasurementSystem = (typeof measurementSystems)[number]

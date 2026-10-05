@@ -30,11 +30,28 @@ let rows: ShoppingItem[] = [
   position: index,
   updatedAt: '2026-10-04T00:00:00Z',
 }))
+rows.push({
+  id: 'legacy-sugar',
+  householdId,
+  name: 'brown sugar see note 3',
+  quantity: 55,
+  unit: 'g',
+  category: 'pantry',
+  completed: true,
+  manual: false,
+  position: 99,
+  updatedAt: '2026-10-04T00:00:00Z',
+  sourceQuantities: [{ name: 'brown sugar see note 3', quantity: '55', unit: 'g' }],
+})
 const unused = async (): Promise<never> => {
   throw new Error('Unexpected fixture action')
 }
 const shopping: ShoppingRepository = {
   list: async () => rows,
+  refreshStructure: async () => {
+    rows = rows.map((row) => (row.id === 'legacy-sugar' ? { ...row, name: 'brown sugar' } : row))
+    return { refreshed: 1, skipped: 0 }
+  },
   create: unused,
   update: async (id, input) => {
     const updated = { ...rows.find((row) => row.id === id)!, ...input }

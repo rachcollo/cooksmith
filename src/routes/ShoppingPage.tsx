@@ -58,6 +58,7 @@ export function ShoppingPage() {
   const [purchaseEdit, setPurchaseEdit] = useState<{
     purchase: ShoppingPurchase
     combineWithPlan?: boolean
+    measurementSystem?: ShoppingItem['measurementSystem']
     name: string
     amounts: PurchaseAmount[]
   } | null>(null)
@@ -65,6 +66,7 @@ export function ShoppingPage() {
   const [editDraft, setEditDraft] = useState<ShoppingItemInput>(emptyInput)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [editErrors, setEditErrors] = useState<FieldErrors>({})
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -391,6 +393,7 @@ export function ShoppingPage() {
         quantity,
         unit,
         category: member.category,
+        measurementSystem: purchaseEdit.measurementSystem ?? 'unknown',
         ...(purchaseEdit.purchase.members.length === 1 && member.manual !== false
           ? { combineWithPlan: purchaseEdit.combineWithPlan ?? false }
           : {}),
@@ -541,6 +544,27 @@ export function ShoppingPage() {
     }
   }
 
+  async function refreshRecipeAmounts() {
+    if (!householdId || !repository.refreshStructure) return
+    setSaving(true)
+    setError(null)
+    try {
+      const result = await repository.refreshStructure(householdId)
+      setItems(await repository.list(householdId))
+      setRefreshMessage(
+        result.skipped
+          ? `Refreshed ${result.refreshed} meals. ${result.skipped} could not be matched safely; check those recipe amounts before changing them.`
+          : 'Recipe amounts are up to date. Your edits and bought items are preserved.',
+      )
+    } catch {
+      setError(
+        'Cooksmith could not finish refreshing the list. Reload and try again; your edits will be preserved.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) return <LoadingState label="Loading your shopping list" />
 
   return (
@@ -562,7 +586,13 @@ export function ShoppingPage() {
           </p>
         </div>
         <p>Add what your household needs, then tick items off as you shop.</p>
+        {repository.refreshStructure && items.some((item) => item.sourceQuantities?.length) ? (
+          <Button variant="secondary" disabled={saving} onClick={() => void refreshRecipeAmounts()}>
+            Refresh recipe amounts
+          </Button>
+        ) : null}
       </header>
+      {refreshMessage ? <p role="status">{refreshMessage}</p> : null}
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
 
@@ -698,6 +728,22 @@ export function ShoppingPage() {
                 }
               />
             ))}
+            {purchaseEdit.amounts.some((amount) =>
+              ['tsp', 'tbsp', 'cup'].includes(amount.unit ?? ''),
+            ) ? (
+              <>
+                <p>
+                  These cup or spoon sizes are not specified. Confirm them only if they apply to all
+                  the amounts above.
+                </p>
+                <MeasurementSelect
+                  value={purchaseEdit.measurementSystem}
+                  onChange={(measurementSystem) =>
+                    setPurchaseEdit({ ...purchaseEdit, measurementSystem })
+                  }
+                />
+              </>
+            ) : null}
             {editErrors.form ? (
               <p className="form-error" role="alert">
                 {editErrors.form}
@@ -1024,8 +1070,10 @@ function ShoppingItemRow({
       ) : (
         <>
           <div className="shopping-item-copy">
-            {amount ? <span>{amount}</span> : null}
-            <strong>{item.name}</strong>
+            <div className="shopping-item-description">
+              {amount ? <span>{amount} </span> : null}
+              <strong>{item.name}</strong>
+            </div>
             <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
               {pantryMatch ? (
                 <>

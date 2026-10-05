@@ -1,3 +1,4 @@
+import type { IngredientStructure } from '../recipes/ingredientStructure'
 import type { MeasurementSystem } from '../measurements/purchaseMeasures'
 export type ShoppingCategory =
   | 'produce'
@@ -26,6 +27,13 @@ export interface ShoppingItem {
 }
 
 export interface ShoppingSourceQuantity {
+  ingredientStructure?: IngredientStructure
+  sourceIngredientId?: string
+  sourceRecipeId?: string
+  sourceRecipeKind?: 'household' | 'public' | 'private'
+  sourceRecipeVersion?: string
+  originalText?: string
+  legacyPurchaseNames?: string[]
   measurementSystem?: MeasurementSystem
   measureSource?: string | null
   purchaseUnit?: string | null

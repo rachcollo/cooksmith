@@ -1862,13 +1862,9 @@ button.card:hover {
   column-gap: 0;
   align-items: center;
 }
-.shopping-item-pantry-match .shopping-item-copy strong {
+.shopping-item-pantry-match .shopping-item-description {
   grid-column: 1;
   grid-row: 1;
-}
-.shopping-item-pantry-match .shopping-item-copy > span {
-  grid-column: 1 / -1;
-  grid-row: 2;
 }
 .shopping-item-pantry-match .shopping-pantry-info {
   grid-column: 2;
@@ -1970,17 +1966,14 @@ button.card:hover {
   min-width: 0;
 }
 
-.shopping-item-copy strong {
-  order: -1;
-}
-
-.shopping-item-copy strong,
-.shopping-item-copy span {
+.shopping-item-description {
+  font-size: 0.9375rem;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
 .shopping-item-copy strong {
-  font-size: 1.05rem;
+  font-size: inherit;
   font-weight: var(--font-weight-medium);
 }
 

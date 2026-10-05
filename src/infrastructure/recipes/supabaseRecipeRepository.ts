@@ -2,6 +2,7 @@ import type { MeasurementSystem } from '../../domain/measurements/purchaseMeasur
 import type { PostgrestError } from '@supabase/supabase-js'
 
 import type { RecipeRepository } from '../../application/recipes/recipeRepository'
+import { structureExistingIngredient } from '../../domain/recipes/ingredientStructure'
 import { deriveRecipeContent } from '../../domain/recipes/contentDerivation'
 import type {
   Recipe,
@@ -67,16 +68,27 @@ type ImportedRecipeRow = Omit<RecipeRow, 'household_id' | 'source_note'> & {
 }
 
 function mapIngredient(row: RecipeIngredientRow): RecipeIngredient {
-  return {
-    id: row.id,
+  const originalLineText = row.original_line_text ?? row.ingredient_name
+  const structure = structureExistingIngredient({
     name: row.ingredient_name,
     quantity: row.quantity_text,
     unit: row.unit,
     preparation: row.preparation,
-    originalLineText: row.original_line_text ?? row.ingredient_name,
+    originalLineText,
+    parserVersion: row.parser_version,
+  })
+  return {
+    id: row.id,
+    legacyName: row.ingredient_name,
+    name: structure.name,
+    quantity: structure.quantity.text,
+    unit: structure.quantity.unit,
+    preparation: structure.preparation,
+    originalLineText,
     parserVersion: row.parser_version ?? 'legacy',
     derivationStatus: row.derivation_status ?? 'derived',
     position: row.position,
+    structure,
   }
 }
 
@@ -169,6 +181,7 @@ async function replaceStructuredRows(
           unit: ingredient.unit,
           preparation: ingredient.preparation,
           original_line_text: ingredient.originalLineText,
+          ingredient_structure: ingredient.structure,
           parser_version: ingredient.parserVersion,
           derivation_status: ingredient.derivationStatus,
           position: index + 1,
@@ -227,7 +240,7 @@ function wakeRecipeEnrichment(client: CooksmithSupabaseClient) {
 export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient): RecipeRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'measurement_system, id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_name, quantity_text, unit, preparation, original_line_text, parser_version, derivation_status, position), recipe_steps(id, instruction, original_line_text, parser_version, derivation_status, position)'
+    'measurement_system, id, household_id, name, ingredients, description, source_note, source_url, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at, recipe_ingredients(id, ingredient_structure, ingredient_name, quantity_text, unit, preparation, original_line_text, parser_version, derivation_status, position), recipe_steps(id, instruction, original_line_text, parser_version, derivation_status, position)'
   const importedSelection =
     'measurement_system, id, visibility, owner_id, name, ingredients, description, ingredient_rows, instruction_steps, source_url, author_name, publisher_name, servings, prep_time_minutes, cook_time_minutes, image_url, notes, category, tags, favourite, archived_at, created_at, updated_at'
 
@@ -282,6 +295,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
             unit: ingredient.unit,
             preparation: ingredient.preparation,
             original_line_text: ingredient.originalLineText,
+            ingredient_structure: ingredient.structure,
             parser_version: ingredient.parserVersion,
             derivation_status: ingredient.derivationStatus,
             position: index + 1,
