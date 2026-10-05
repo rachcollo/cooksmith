@@ -23,12 +23,12 @@ Let a household keep a shared, quickly accessible list of recipes it knows and e
 
 ## Acceptance Criteria
 
-- [ ] Active members see the same favourite state.
-- [ ] Toggle feedback is immediate, idempotent and recoverable.
-- [ ] Search and Favourites filtering work together on mobile and desktop.
-- [ ] Deleted, unpublished or inaccessible recipes cannot remain actionable.
-- [ ] Household switching clears stale state and forged identifiers fail.
-- [ ] Auto planning preserves dietary, lock and variety rules.
+- [x] Active members see the same favourite state.
+- [x] Toggle feedback is immediate, idempotent and recoverable.
+- [x] Search and Favourites filtering work together on mobile and desktop.
+- [x] Deleted, unpublished or inaccessible recipes cannot remain actionable.
+- [x] Household switching clears stale state and forged identifiers fail.
+- [x] Auto planning preserves dietary, lock and variety rules.
 - [ ] Keyboard, screen-reader, concurrency and RLS tests pass.
 
 ## Technical Direction
@@ -49,3 +49,7 @@ Cover both recipe sources, concurrent toggles, household isolation, unpublished 
 ## Pull Request
 
 Title: `CS-80: Save household favourite recipes`
+
+## Implementation evidence
+
+See [CS-80 handover](../../docs/engineering/handovers/cs80-household-favourite-recipes.md). Automated keyboard, semantic accessibility, concurrency and RLS coverage is provided; physical screen-reader and hosted member checks remain unverified. Automatic planning keeps its existing ranking; the optional bounded favourite preference is not introduced.

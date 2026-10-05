@@ -435,6 +435,52 @@ export type Database = {
           },
         ]
       }
+      household_recipe_favourites: {
+        Row: {
+          created_at: string
+          household_id: string
+          household_recipe_id: string | null
+          id: string
+          imported_recipe_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          household_recipe_id?: string | null
+          id?: string
+          imported_recipe_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          household_recipe_id?: string | null
+          id?: string
+          imported_recipe_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_recipe_favourites_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'household_recipe_favourites_household_recipe_id_fkey'
+            columns: ['household_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'household_recipe_favourites_imported_recipe_id_fkey'
+            columns: ['imported_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'imported_recipes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_recipes: {
         Row: {
           archived_at: string | null
@@ -1934,6 +1980,15 @@ export type Database = {
           invitation_token: string
           invited_email: string
         }[]
+      }
+      set_household_recipe_favourite: {
+        Args: {
+          desired: boolean
+          target_household_id: string
+          target_recipe_id: string
+          target_source: string
+        }
+        Returns: boolean
       }
       set_shopping_purchase_completed: {
         Args: {
