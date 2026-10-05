@@ -73,6 +73,27 @@ function mount(initial: ShoppingItem[]) {
   return repository
 }
 describe('clean combined purchases', () => {
+  it('lets a shopper confirm the sizes of unresolved spoons in a combined purchase', async () => {
+    const repository = mount([
+      item('oil-volume', 'olive oil', 30, 'ml'),
+      item('oil-spoon', 'olive oil', 2, 'tbsp', { measurementSystem: 'unknown' }),
+    ])
+    expect(await screen.findByText('30 ml + 2 tbsp')).toBeVisible()
+    await userEvent.click(screen.getByRole('button', { name: 'Edit olive oil' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit olive oil' })
+    await userEvent.selectOptions(within(dialog).getByLabelText('Cup and spoon measures'), 'au')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }))
+    expect(await screen.findByText('70 ml')).toBeVisible()
+    expect(repository.updatePurchase).toHaveBeenCalledWith(householdId, [
+      expect.objectContaining({ id: 'oil-volume', quantity: 30, unit: 'ml' }),
+      expect.objectContaining({
+        id: 'oil-spoon',
+        quantity: 2,
+        unit: 'tbsp',
+        measurementSystem: 'au',
+      }),
+    ])
+  })
   it('shows one row without recipe disclosures and completes/restores all source members', async () => {
     const repository = mount([
       item('s1', 'sea salt', 1, 'tsp'),

@@ -4,7 +4,7 @@ import {
   type MeasurementSystem,
 } from '../measurements/purchaseMeasures'
 import { canonicalIngredientName, parseIngredientQuantity } from './ingredientIdentity'
-import { parsePurchaseLine, purchaseProductName } from './purchaseIngredients'
+import { parsePurchaseLine, purchaseDisplayName } from './purchaseIngredients'
 import type { ShoppingItem } from './types'
 
 export interface PurchaseAmount {
@@ -23,7 +23,7 @@ export function purchaseMeasure(unit: string | null, system: MeasurementSystem =
   return normaliseMeasure(unit, system)
 }
 export function purchasingName(name: string) {
-  return canonicalIngredientName(purchaseProductName(name))
+  return canonicalIngredientName(purchaseDisplayName(name))
 }
 export function purchaseAmount(
   item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'measurementSystem'>,

@@ -58,6 +58,7 @@ export function ShoppingPage() {
   const [purchaseEdit, setPurchaseEdit] = useState<{
     purchase: ShoppingPurchase
     combineWithPlan?: boolean
+    measurementSystem?: ShoppingItem['measurementSystem']
     name: string
     amounts: PurchaseAmount[]
   } | null>(null)
@@ -391,6 +392,7 @@ export function ShoppingPage() {
         quantity,
         unit,
         category: member.category,
+        measurementSystem: purchaseEdit.measurementSystem ?? 'unknown',
         ...(purchaseEdit.purchase.members.length === 1 && member.manual !== false
           ? { combineWithPlan: purchaseEdit.combineWithPlan ?? false }
           : {}),
@@ -698,6 +700,22 @@ export function ShoppingPage() {
                 }
               />
             ))}
+            {purchaseEdit.amounts.some((amount) =>
+              ['tsp', 'tbsp', 'cup'].includes(amount.unit ?? ''),
+            ) ? (
+              <>
+                <p>
+                  These cup or spoon sizes are not specified. Confirm them only if they apply to all
+                  the amounts above.
+                </p>
+                <MeasurementSelect
+                  value={purchaseEdit.measurementSystem}
+                  onChange={(measurementSystem) =>
+                    setPurchaseEdit({ ...purchaseEdit, measurementSystem })
+                  }
+                />
+              </>
+            ) : null}
             {editErrors.form ? (
               <p className="form-error" role="alert">
                 {editErrors.form}
@@ -1024,8 +1042,10 @@ function ShoppingItemRow({
       ) : (
         <>
           <div className="shopping-item-copy">
-            {amount ? <span>{amount}</span> : null}
-            <strong>{item.name}</strong>
+            <div className="shopping-item-description">
+              {amount ? <span>{amount} </span> : null}
+              <strong>{item.name}</strong>
+            </div>
             <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
               {pantryMatch ? (
                 <>

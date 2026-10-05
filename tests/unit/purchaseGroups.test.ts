@@ -26,6 +26,90 @@ const row = (
   ...extra,
 })
 describe('one purchasing row per product', () => {
+  it('groups optional-replacement wording with the requested product without purchasing the alternative', () => {
+    const source = [
+      row('a', 'caster sugar', 40, 'g'),
+      row('b', 'caster sugar can be substituted with maple syrup', 1, 'tbsp', {
+        measurementSystem: 'unknown',
+      }),
+    ]
+    const result = groupShoppingPurchases(source)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ name: 'caster sugar', amountLabel: '40 g + 1 tbsp' })
+    expect(result[0]?.members[1]?.name).toBe('caster sugar can be substituted with maple syrup')
+  })
+  it('removes a numbered reference without confusing food packed in oil with frying oil', () => {
+    const source = [
+      row('a', 'oil for frying see note 7', null, null),
+      row('b', 'roughly chopped sun dried tomatoes in oil see note 8', 30, 'g'),
+      row('c', 'olive oil', 20, 'ml'),
+    ]
+    expect(groupShoppingPurchases(source).map((item) => item.name)).toEqual([
+      'oil for frying',
+      'roughly chopped sun dried tomato in oil',
+      'olive oil',
+    ])
+    expect(source[0]?.name).toBe('oil for frying see note 7')
+  })
+  it.each(['see notes', 'see note', '(see notes 4 and 5)', ', see note 6'])(
+    'removes a trailing reference %s while retaining its source text',
+    (reference) => {
+      const original = `sunflower oil ${reference}`
+      const [purchase] = groupShoppingPurchases([row('reference', original, 20, 'ml')])
+      expect(purchase?.name).toBe('sunflower oil')
+      expect(purchase?.members[0]?.name).toBe(original)
+    },
+  )
+  it('cleans explicit fresh preparation but preserves packaged tomato forms and handful measures', () => {
+    const names = [
+      'tomato finely diced',
+      'avocados mashed with a fork',
+      'canned diced tomatoes',
+      'diced tomatoes',
+      'handfuls fresh baby spinach',
+    ]
+    expect(
+      groupShoppingPurchases(names.map((name, i) => row(String(i), name, 1, null))).map(
+        (item) => item.name,
+      ),
+    ).toEqual([
+      'tomato',
+      'avocado',
+      'canned diced tomato',
+      'diced tomato',
+      'handfuls fresh baby spinach',
+    ])
+  })
+  it('cleans fresh generated identities while retaining substitution wording in provenance', () => {
+    const recipe = {
+      id: 'r',
+      ingredientRows: [],
+      ingredients: '40 g caster sugar\n10 g caster sugar can be replaced with maple syrup',
+    } as unknown as Recipe
+    const { additions } = buildPlanAdditions(
+      [
+        {
+          recipeState: { kind: 'active', recipe: { id: 'r', name: 'Synthetic', archivedAt: null } },
+        },
+      ],
+      [recipe],
+      [],
+    )
+    // Keep storage keys stable so older source-linked overrides still match regeneration.
+    expect(additions).toHaveLength(2)
+    expect(
+      groupShoppingPurchases(
+        additions.map((input, index) =>
+          row(String(index), input.name, input.quantity, input.unit, {
+            sourceQuantities: input.sourceQuantities,
+          }),
+        ),
+      )[0],
+    ).toMatchObject({ name: 'caster sugar', amountLabel: '50 g' })
+    expect(additions[1]?.sourceQuantities?.[0]?.name).toBe(
+      'caster sugar can be replaced with maple syrup',
+    )
+  })
   it('combines existing metric teaspoon and mL records without needing new shopping IDs', () => {
     const source = [
       row('old-ml', 'extra virgin olive oil', 60, 'mL'),

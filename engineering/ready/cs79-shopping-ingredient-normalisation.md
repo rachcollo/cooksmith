@@ -85,3 +85,15 @@ The owner explicitly requested broader conversion before MVP. This extends the s
 - Product review must accept the catalogue, source interpretation, rounding, manual opt-in and unsupported fallback before MVP. In particular, generic sea salt flakes are still unsupported for mass/volume conversion. This is a review gap, not completed coverage.
 
 Additional migration: `20261004205943_recipe_purchase_measures.sql`. No released migration is changed. See the current handover and ADR 014 for sources, boundaries and evidence.
+
+## Post-PR186 correction — 2026-10-05
+
+PR186 is now merged; its migrations are released history and must not be edited. The separate branch `fix/cs-79-oil-purchase-display` starts from main `8592a4ff454aa3ced94106c7aabce48607d24a88`. The owner requested smaller text and amount-before-product layout. This presentation correction is described in the [amount-first handover](../../docs/engineering/handovers/cs79-shopping-amount-first.md).
+
+The remaining oil-split report is **not yet diagnosed**: all three supplied Library image transfers failed, including one bounded retry, so exact labels and manual origin remain unverified. Actual-domain synthetic probes distinguish product identity, manual opt-in and measurement compatibility. Do not treat these probes or a passing public smoke check as proof that the reported live case is fixed. No oil-grade merging or automatic manual opt-in is introduced by this correction.
+
+### Confirmed evidence extension
+
+The parent subsequently visually verified the supplied images. PR187 now includes bounded display cleanup for explicit optional-replacement wording, numbered note references and two unambiguous fresh-preparation phrases; original source text, storage identity and contributions remain intact. The combined-purchase editor permits explicit confirmation of unresolved spoon/cup sizes. It does not infer recipe origin, select a substitute or merge oil grades. See the handover's current evidence and upstream investigation; its earlier attachment-blocker account is superseded by the parent's observations.
+
+The owner's request to investigate upstream import cleaning is documented as a proposed shared ingredient-structuring follow-up spanning CS-90/CS-93 and Get Ahead consumers. Schema/parser/worker/backfill changes exceed this bounded correction and have not been implemented or deployed.
