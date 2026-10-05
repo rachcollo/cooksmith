@@ -33,7 +33,9 @@ function deriveIngredient(line: string, parserVersion: string): DerivedRecipeIng
   const structure = structureIngredient(line)
   return {
     name: structure.name,
-    quantity: structure.quantity.text,
+    quantity: structure.quantity.package
+      ? String(structure.quantity.value)
+      : structure.quantity.text,
     unit: structure.quantity.unit,
     preparation: structure.preparation,
     originalLineText: line,

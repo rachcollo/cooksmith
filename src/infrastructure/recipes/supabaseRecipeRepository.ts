@@ -81,7 +81,9 @@ function mapIngredient(row: RecipeIngredientRow): RecipeIngredient {
     id: row.id,
     legacyName: row.ingredient_name,
     name: structure.name,
-    quantity: structure.quantity.text,
+    quantity: structure.quantity.package
+      ? String(structure.quantity.value)
+      : structure.quantity.text,
     unit: structure.quantity.unit,
     preparation: structure.preparation,
     originalLineText,

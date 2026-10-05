@@ -7,7 +7,7 @@
 - **Branch:** `feat/cs-101-shared-ingredient-structure`
 - **Verified baseline:** main `8592a4ff454aa3ced94106c7aabce48607d24a88`
 - **Builds on:** CS-28/CS-30, CS-90, CS-93, CS-79 and CS-81/CS-91
-- **Related open work:** PR187 is not a dependency or accepted baseline.
+- **Integrated main:** `eb498acd57cef00f5ce9da3821238ba69a945471` (PR187 already merged remotely).
 
 ## Approved outcome
 
@@ -59,4 +59,14 @@ No merge, production deployment, production backfill, paid provider evaluation, 
 - [Operator runbook](../../docs/engineering/v2/ingredient-structure-reprocessing.md)
 - [Handover](../../docs/engineering/handovers/cs101-shared-ingredient-structure.md)
 
-PR187 remains independently open; this branch explicitly includes its ShoppingPage/styles presentation/edit changes required by AC4. The central parser supersedes its bounded text cleanup. No unmerged branch is a baseline dependency, and no PR187 commit history is rewritten. Check overlapping files together when either PR merges.
+PR187 was merged remotely at 2026-10-05 03:10 UTC as `eb498acd57cef00f5ce9da3821238ba69a945471`. This accepted main was merged into the CS-101 branch without rewriting history. Its ShoppingPage amount-first/combined-measure Edit and styles remain intact; only the CS-101 refresh action/status is added to that UI. All PR187 browser/component assertions remain, with the recipe-amount text check made exact to distinguish the new button. The central parser replaces its bounded display cleanup. PR188 targets main independently; no open-PR merge ordering remains. This executor did not merge or close PR187.
+
+## Final integration and release decision
+
+Only package/build work is authorised. Worker pause/resume, migrations, Edge Function/app deployment, feature enablement, production reprocessing and paid generation require later approval. Do not treat the proposed sequence as approval.
+
+Jira AC2 literally promises usable deterministic fallback for both consumers. That is **not met for Get Ahead** under accepted ADR013: preserve honest preparing/unavailable rather than invent a checklist. Owner acceptance of this discrepancy is outstanding. Owner-only private imports also remain outside existing Get Ahead enrichment authority.
+
+A read-only aggregate Production check on 2026-10-05 found 2 household and 45 shared/public active v3 results, no active v4 results, and 47 eligible sources requiring a v4 queue entry (2 household/45 shared). These are source/result counts, not proof of 47 working household checklists. Deploying the strict v4 consumer would exclude all those v3 results; presently working Get Ahead could become unavailable until validated provider-assisted v4 replacements exist. Retaining old database rows does not provide display continuity. Reprocessing and subsequent uncached weekly generation may incur existing provider usage; no paid calls were made. **Hold deployment** pending owner acceptance, a separately authorised transition/coverage plan and authenticated hosted acceptance.
+
+Explicit metric package multiplication now supports positive integer counts with positive decimal g/kg/ml/l sizes, such as `2 x 400 g cans tomatoes` and `3×250ml cartons coconut milk`. Structured evidence retains count, size, original unit spelling/expression, package-form wording and exact source. Arithmetic does not infer drained weight or density; ranges, non-metric/unknown sizes, parenthetical package syntax, approximate quantities and drained/net/gross qualifiers remain unresolved. Package form synonyms are not automatically equated. Consumer tests verify matching packaged forms combine while fresh products remain distinct.

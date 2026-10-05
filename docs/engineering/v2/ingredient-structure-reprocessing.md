@@ -6,11 +6,11 @@
 
 All saved household, public-import and owner-only private-import rows use the shared read projection and Shopping generation. Current CS-93 Get Ahead enrichment covers household recipes and public imports. Private imports are not silently published or processed through a service-role shortcut. ADR013 still requires preparing/unavailable states until validated model-assisted preparation exists. “Deterministic fallback” means ingredient interpretation for Shopping and intelligence construction, not a fallback household checklist.
 
-## Release sequence (requires separate approval)
+## Proposed release sequence (not authorised)
 
 This PR does not deploy Production. Production deployment occurs only after merge through the protected **Production database release** workflow, for an explicitly approved exact `main` SHA. Verify backup, migration history and dry-run before applying `20261005015715_shared_ingredient_structure.sql` followed by `20261005025707_preserve_structure_refresh_overrides.sql`; released migrations are immutable.
 
-Before a mixed-version rollout, pause the existing enrichment worker through approved administration. Apply the migration, release `enrich-recipe` and `get-weekly-preparation-plan` from the same approved SHA, then the compatible app. Verify function/version contracts before resuming. Older workers cannot label v3 output as a v4 result or replace an already active v4 result. No migration enables AI, starts a backfill, changes provider settings or deletes prior results.
+Only package/build work is currently authorised. Every production step below, including worker pause/resume and paid reprocessing, requires later approval. If separately authorised, pause the existing enrichment worker before a mixed-version rollout. Apply the migration, release `enrich-recipe` and `get-weekly-preparation-plan` from the same approved SHA, then the compatible app. Verify function/version contracts before resuming. Older workers cannot label v3 output as a v4 result or replace an already active v4 result. No migration enables AI, starts a backfill, changes provider settings or deletes prior results.
 
 ## Preview and bounded processing
 
@@ -40,3 +40,9 @@ No Pantry records are merged or deleted. No shopping-period feature is introduce
 Use synthetic local/approved staging recipes: garlic sliced/crushed/diced, unseen product names with supported prep, distinct oil grades, sugar substitution, handfuls and mixed fractions. Verify import/manual save/edit, legacy reads, known AU 120 mL EVOO total, unknown convention components, retained source notes and preparation. Exercise repeat refresh, manual override, bought state, removed purchases, stale version, unrelated/inactive household denial and source-ID collision. Check current Get Ahead preparation and cache replacement; missing/failed intelligence must not show a stale checklist.
 
 Pause reprocessing on unexpected output. Preserve original recipes and previous enrichment rows, inspect versioned evidence, and use a forward correction. An app rollback can read the additive schema, but worker/rules compatibility must be coordinated; do not relabel old intelligence as current or delete user purchases. No automatic data rollback is supplied because approved recipes are not rewritten.
+
+## Rules-v4 transition gate
+
+Do not deploy solely because CI passes. Strict v4 consumption excludes existing v3 results even though their rows are retained. Read-only Production aggregates on 2026-10-05 found 2 household plus 45 public/shared active v3 results, zero active v4 results, and all 47 eligible sources needing a v4 queue entry. These counts do not establish which households currently have useful tasks. An owner-approved coverage/transition plan and separately authorised provider-assisted re-enrichment are needed before a release that is expected to preserve Get Ahead availability. Uncached weekly-plan generation may also use the existing paid provider. No such work has been executed.
+
+Jira AC2's usable deterministic Get Ahead fallback conflicts with accepted ADR013 and remains an explicit owner-acceptance discrepancy. The implementation retains fail-closed behaviour. Hosted authenticated acceptance and owner-only private-import enrichment coverage are not claimed.

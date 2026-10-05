@@ -33,6 +33,11 @@ function fromStructure(structure: IngredientStructure): PurchaseIngredient {
   }
 }
 
+/** Legacy saved purchase labels use the same grammar without rewriting their storage identity. */
+export function purchaseDisplayName(name: string): string {
+  return structureIngredient(name).name
+}
+
 export function purchaseProductName(name: string): string {
   return structureIngredient(name).name
 }

@@ -221,3 +221,36 @@ it('Get Ahead honours known spoon conventions and leaves unknown spoons explicit
     unit: 'tbsp',
   })
 })
+
+it('shares explicit package totals across ingestion, Shopping and intelligence without merging fresh forms', () => {
+  const r = recipe('2 x 400 g cans tomatoes\n1 x 200 g cans tomatoes\n200 g fresh tomatoes')
+  expect(r.ingredientRows[0]?.quantity).toBe('800')
+  expect(r.ingredientRows[0]?.structure?.quantity.text).toBe('2 x 400 g')
+  const purchases = additions(r)
+  expect(purchases).toHaveLength(2)
+  expect(purchases.find((row) => row.name === 'cans tomato')).toMatchObject({
+    quantity: 1000,
+    unit: 'g',
+  })
+  const intelligence = buildDeterministicRecipeIntelligence({
+    recipeId: r.id,
+    recipeFingerprint: 'v',
+    ingredients: r.ingredientRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      quantityText: row.quantity,
+      unit: row.unit,
+      preparation: row.preparation,
+      originalText: row.originalLineText,
+      parserVersion: row.parserVersion,
+    })),
+    steps: [],
+  })
+  expect(intelligence.ingredients[0]?.quantity).toMatchObject({ normalisedValue: 800, unit: 'g' })
+  expect(intelligence.ingredients[0]?.structure?.quantity.package).toMatchObject({
+    count: 2,
+    size: 400,
+    unit: 'g',
+  })
+  expect(purchases[0]?.sourceQuantities?.[0]?.originalText).toBe('2 x 400 g cans tomatoes')
+})

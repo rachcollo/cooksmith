@@ -17,6 +17,7 @@ export interface IngredientStructure {
     maximum: number | null
     state: 'known' | 'range' | 'approximate' | 'unknown'
     unit: string | null
+    package?: { count: number; size: number; unit: string; originalText: string }
   }
   preparation: string | null
   purpose: string | null
@@ -81,6 +82,10 @@ const suffixPreparation = new RegExp(
   'iu',
 )
 
+const metricPackage =
+  /^(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*(g|grams?|kg|kilograms?|ml|millilitres?|milliliters?|l|litres?|liters?)\b\s+(.+)$/iu
+const packageExpression = /^(?:\d[^a-z]*[x×]|\d+\s*\()/iu
+
 /** Lossless derived semantics. Never infer an oil grade, substitute, package amount or density. */
 export function structureIngredient(originalText: string): IngredientStructure {
   let name = originalText.trim()
@@ -91,8 +96,36 @@ export function structureIngredient(originalText: string): IngredientStructure {
   let state: IngredientStructure['quantity']['state'] = 'unknown'
   const unresolved: string[] = []
   const approximation = name.match(/^(?:about|approximately|approx\.?|~)\s*/iu)?.[0] ?? ''
+  const packageMatch = name.match(metricPackage)
+  let packageAmount: IngredientStructure['quantity']['package']
+  const isPackage = packageExpression.test(name.slice(approximation.length))
   const leading = name.slice(approximation.length).match(leadingQuantity)
-  if (leading && !/^x\b/iu.test(leading[3] ?? '')) {
+  if (
+    packageMatch &&
+    !approximation &&
+    Number.isSafeInteger(Number(packageMatch[1])) &&
+    Number(packageMatch[1]) > 0 &&
+    Number(packageMatch[2]) > 0 &&
+    Number.isFinite(Number(packageMatch[1]) * Number(packageMatch[2])) &&
+    !/\b(?:drained|net|gross|each|approximately|about)\b|[\d]\s*(?:g|kg|ml|l)\b/iu.test(
+      packageMatch[4]!,
+    )
+  ) {
+    quantityText = name.slice(0, name.length - packageMatch[4]!.length).trim()
+    unit = unitAliases[packageMatch[3]!.toLowerCase()]!
+    packageAmount = {
+      count: Number(packageMatch[1]),
+      size: Number(packageMatch[2]),
+      unit: packageMatch[3]!,
+      originalText: quantityText,
+    }
+    value = Number((packageAmount.count * packageAmount.size).toPrecision(15))
+    maximum = value
+    state = 'known'
+    name = packageMatch[4]!
+  } else if (isPackage) {
+    unresolved.push('package_quantity')
+  } else if (leading && !/^x\b/iu.test(leading[3] ?? '')) {
     quantityText = approximation + (leading[2] ? `${leading[1]}-${leading[2]}` : leading[1]!)
     value = parseIngredientQuantity(leading[1]!)
     maximum = leading[2] ? parseIngredientQuantity(leading[2]) : value
@@ -186,7 +219,14 @@ export function structureIngredient(originalText: string): IngredientStructure {
     name,
     sourceName,
     canonicalName: canonicalIngredientName(name),
-    quantity: { text: quantityText, value, maximum, state, unit },
+    quantity: {
+      text: quantityText,
+      value,
+      maximum,
+      state,
+      unit,
+      ...(packageAmount ? { package: packageAmount } : {}),
+    },
     preparation: preparations.join(', ') || null,
     purpose,
     substitutions,
@@ -211,7 +251,10 @@ export function structureExistingIngredient(input: {
     input.parserVersion === 'recipe-content-v1' ||
     input.parserVersion === ingredientStructureParserVersion
   const structure = structureIngredient(generated ? originalLineText : input.name)
-  if (!generated || structure.quantity.text === null) {
+  if (
+    !generated ||
+    (structure.quantity.text === null && !structure.unresolved.includes('package_quantity'))
+  ) {
     const value = parseIngredientQuantity(input.quantity)
     structure.quantity = {
       text: input.quantity,

@@ -62,7 +62,7 @@ describe('shared lossless ingredient structure', () => {
       value: 1,
       maximum: 2,
     })
-    expect(structureIngredient('2 x 400 g cans tomatoes').quantity.state).toBe('unknown')
+    expect(structureIngredient('2 x 400 g cans tomatoes').quantity.value).toBe(800)
   })
   it('repairs a known v1 mixed fraction without changing its source', () => {
     const input = {
@@ -142,5 +142,53 @@ it('recognises parenthesised preparation without losing it', () => {
   expect(structureIngredient('2 kohlrabi (thinly sliced)')).toMatchObject({
     name: 'kohlrabi',
     preparation: 'thinly sliced',
+  })
+})
+
+describe('explicit metric package quantities', () => {
+  it.each([
+    ['2 x 400 g cans tomatoes', 800, 'g', 'cans tomatoes'],
+    ['3×250ml cartons coconut milk', 750, 'ml', 'cartons coconut milk'],
+    ['2 x 0.5 kilograms bags lentils', 1, 'kg', 'bags lentils'],
+    ['3 x 0.1 l bottles kefir', 0.3, 'l', 'bottles kefir'],
+    ['2 x 125 grams tubs unfamiliar cultured food', 250, 'g', 'tubs unfamiliar cultured food'],
+  ])('parses %s without losing package evidence', (line, value, unit, name) => {
+    const result = structureIngredient(line)
+    expect(result).toMatchObject({
+      originalText: line,
+      name,
+      quantity: { value, maximum: value, unit, state: 'known' },
+    })
+    expect(result.quantity.package?.count).toBe(Number(line[0]))
+    expect(result.quantity.package?.originalText).toBe(result.quantity.text)
+  })
+  it.each([
+    '2 x 400 g cans tomatoes, drained',
+    '2 x 400-500 g cans tomatoes',
+    '2 x large cans tomatoes',
+    '2 (400 g) cans tomatoes',
+    'about 2 x 400 g cans tomatoes',
+    '0 x 400 g cans tomatoes',
+    '2 x 0 g cans tomatoes',
+    '2 x 400 g cans tomatoes (240 g drained)',
+  ])('leaves ambiguous %s unresolved', (line) => {
+    expect(structureIngredient(line)).toMatchObject({
+      originalText: line,
+      name: line,
+      quantity: { state: 'unknown', value: null },
+      unresolved: ['package_quantity'],
+    })
+  })
+  it('does not reuse a legacy partial count for unresolved packages', () => {
+    expect(
+      structureExistingIngredient({
+        name: 'x large cans tomatoes',
+        quantity: '2',
+        unit: null,
+        preparation: null,
+        originalLineText: '2 x large cans tomatoes',
+        parserVersion: 'recipe-content-v1',
+      }).quantity.value,
+    ).toBeNull()
   })
 })
