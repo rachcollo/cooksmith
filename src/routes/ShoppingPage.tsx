@@ -1024,8 +1024,10 @@ function ShoppingItemRow({
       ) : (
         <>
           <div className="shopping-item-copy">
-            {amount ? <span>{amount}</span> : null}
-            <strong>{item.name}</strong>
+            <div className="shopping-item-description">
+              {amount ? <span>{amount} </span> : null}
+              <strong>{item.name}</strong>
+            </div>
             <div className="shopping-pantry-info" aria-hidden={pantryMatch ? undefined : true}>
               {pantryMatch ? (
                 <>

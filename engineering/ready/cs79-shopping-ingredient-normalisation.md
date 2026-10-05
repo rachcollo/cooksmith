@@ -85,3 +85,9 @@ The owner explicitly requested broader conversion before MVP. This extends the s
 - Product review must accept the catalogue, source interpretation, rounding, manual opt-in and unsupported fallback before MVP. In particular, generic sea salt flakes are still unsupported for mass/volume conversion. This is a review gap, not completed coverage.
 
 Additional migration: `20261004205943_recipe_purchase_measures.sql`. No released migration is changed. See the current handover and ADR 014 for sources, boundaries and evidence.
+
+## Post-PR186 correction — 2026-10-05
+
+PR186 is now merged; its migrations are released history and must not be edited. The separate branch `fix/cs-79-oil-purchase-display` starts from main `8592a4ff454aa3ced94106c7aabce48607d24a88`. The owner requested smaller text and amount-before-product layout. This presentation correction is described in the [amount-first handover](../../docs/engineering/handovers/cs79-shopping-amount-first.md).
+
+The remaining oil-split report is **not yet diagnosed**: all three supplied Library image transfers failed, including one bounded retry, so exact labels and manual origin remain unverified. Actual-domain synthetic probes distinguish product identity, manual opt-in and measurement compatibility. Do not treat these probes or a passing public smoke check as proof that the reported live case is fixed. No oil-grade merging or automatic manual opt-in is introduced by this correction.
