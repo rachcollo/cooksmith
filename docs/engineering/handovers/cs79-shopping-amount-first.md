@@ -2,7 +2,7 @@
 
 ## Status and baseline
 
-Implemented, hosted/manual acceptance pending; oil-grade policy and upstream implementation remain undecided. Draft PR187, branch `fix/cs-79-oil-purchase-display`, starts from main `8592a4ff454aa3ced94106c7aabce48607d24a88` (merged PR186). No merge or production release is authorised.
+Implemented, hosted/manual acceptance pending; oil-grade policy and upstream implementation remain undecided. PR187 (opened draft; owner marked it ready for review at 2026-10-05 01:23 UTC), branch `fix/cs-79-oil-purchase-display`, starts from main `8592a4ff454aa3ced94106c7aabce48607d24a88` (merged PR186). No merge or production release is authorised.
 
 ## Outcome and bounded changes
 
