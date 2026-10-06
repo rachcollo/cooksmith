@@ -62,3 +62,7 @@ The branch is explicitly stacked on CS-96 / PR189 (`e67d5711833a103c21b62dcb9230
 ## Stale-edit HTTP correction
 
 The original stale-edit guard used SQLSTATE `40001`. Local PostgREST 14.5 retried indefinitely; SQL tests alone missed the HTTP timeout. Forward migration `20261006023152_freezer_stale_edit_http_conflict.sql` changes only that deliberate guard to `PT409`, preserving revision checks and all mutation protections. The adapter gives actionable close/refresh/review guidance. A real HTTP regression now runs in database CI, and a component regression verifies recovery with the latest stock revision. The original shared migration remains unchanged. See the updated handover for combined verification and release ordering.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve PR196 Pantry/Home/Shopping changes and WebKit CI. Resolve shared local HTTP client to accepted main's raw-client plus schema-scoped wrapper, retaining localhost-only endpoints; run all Shopping and freezer HTTP tests serially. PR189 remains a dependency. Exact-head integration checks are reported in PR192. Migrations `20261006012145` and `20261006023152` predate released PR195: use the separately approved protected Production database release on approved main with `allow_out_of_order_migrations: true` (`--include-all`) only after reviewing remote history and the complete pending set/dry-run. No Edge release or production actions performed.

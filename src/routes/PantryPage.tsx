@@ -638,7 +638,7 @@ export function PantryPage() {
       )}
 
       <Dialog
-        description="One compact line per suggestion. Add it to Shopping, mark you have it, or ignore it for this generated list."
+        description="Add what you need, mark what you have, or ignore a suggestion."
         onOpenChange={setPantrySuggestionsOpen}
         open={pantrySuggestionsOpen}
         title="Pantry suggestions"
@@ -660,7 +660,7 @@ export function PantryPage() {
                       onClick={() => void addInsightToShopping(insight)}
                       busy={addingInsightId === insight.id}
                     >
-                      Add
+                      Add to Shopping
                     </Button>
                     <Button
                       variant="secondary"
