@@ -47,7 +47,7 @@ export function createSupabaseFreezerRepository(
         const messages: Record<string, string> = {
           '23514':
             'Check the details and available portions. Another member may have reserved this stock.',
-          '40001':
+          PT409:
             'Stock changed. Close this form, refresh and check the latest portions before editing.',
           '42501': 'This freezer meal or plan is no longer available to your household.',
         }

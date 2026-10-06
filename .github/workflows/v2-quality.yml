@@ -68,6 +68,8 @@ jobs:
         run: npm run db:lint
       - name: Run database tests
         run: npm run db:test
+      - name: Check authenticated HTTP conflict responses
+        run: node --test scripts/http/*.test.mjs
       - name: Enforce security contracts
         run: npm run db:test:security
       - name: Generate local database types

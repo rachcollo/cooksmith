@@ -37,7 +37,7 @@ Track already-cooked freezer meals separately from ingredient Pantry. Members ca
 
 **Migrations in this PR: yes.** Additive `20261006012145_prepared_freezer_meals.sql`: three tables, SELECT-only member policies, scoped mutation RPC, provenance guards and nullable Planner column. **Edge Functions changed in this PR: no.** No new environment variables or dependencies.
 
-Migration must precede the new client. CS-96/PR189 is a required code dependency. The combined review queue is PR189 → PR190 → PR191 → CS-99; preserve that order and migration timestamps. No remote migration, deployment or production configuration was performed. The standard local Supabase runtime in CI remains the release check; executor evidence below used an isolated synthetic PostgreSQL 17/Auth/PostgREST stack because of saved-environment runtime constraints.
+Migration must precede the new client. CS-96/PR189 is a required code dependency. The updated review/release sequence below supersedes the earlier four-PR queue. No remote migration, deployment or production configuration was performed. The standard local Supabase runtime in CI remains the release check; executor evidence below used an isolated synthetic PostgreSQL 17/Auth/PostgREST stack because of saved-environment runtime constraints.
 
 ## Tests run
 
@@ -74,7 +74,7 @@ Labels, combobox keyboard navigation, modal focus, responsive reflow and serious
 
 ## Known limitations and deferred work
 
-Stock updates refresh on interaction or explicit Refresh; there is no realtime subscription. Portion/container meaning is user-defined. Changing an existing freezer dinner to a different food requires removing it first; an ordinary dinner can be replaced directly with freezer stock. Removing a consumed dinner removes its undo UI after an explicit warning. Weight, automatic expiry, barcode scanning and a full stock ledger are outside scope. The existing build-size warning remains. CS-98 bought-items-to-Pantry has not begun and requires separate acceptance to proceed.
+Stock updates refresh on interaction or explicit Refresh; there is no realtime subscription. Portion/container meaning is user-defined. Changing an existing freezer dinner to a different food requires removing it first; an ordinary dinner can be replaced directly with freezer stock. Removing a consumed dinner removes its undo UI after an explicit warning. Weight, automatic expiry, barcode scanning and a full stock ledger are outside scope. The existing build-size warning remains. CS-98 is implemented in draft [PR193](https://github.com/rachcollo/cooksmith/pull/193); review readiness does not mean beta acceptance.
 
 ## Rollback approach
 
@@ -82,4 +82,20 @@ Keep additive tables, provenance and receipts. Disable new freezer creation/rese
 
 ## Recommended next milestone
 
-Review and accept this draft and its CS-96 dependency first. CS-98 remains unstarted; it needs an explicit reviewed stock-consumption contract and coordination with shopping periods and bought state.
+Resolve the stale-update correction and review the combined drafts before further MVP features. Hosted authenticated, physical-device and assistive-technology acceptance remains pending.
+
+## Follow-up: stale HTTP conflict blocker
+
+PostgREST 14.5 treats deliberate SQLSTATE `40001` as a retryable serialization failure. The original freezer stale-edit RPC timed out after the local harness aborted at 3,005 ms. The same defect affects all three released CS-101 refresh guards. This is a transport/runtime defect, not permission to overwrite concurrent edits. [Supabase documents the cause and PT409 correction](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b).
+
+Forward migration `20261006023152_freezer_stale_edit_http_conflict.sql` changes only the stale revision exception to `PT409` (HTTP 409), retaining function attributes, grants, locking, compare-and-swap, receipts and transaction boundaries. The original shared migration is immutable. The repository maps PT409 to close/refresh/review guidance. New `scripts/http/freezer-conflict.test.mjs` runs against seeded local Supabase in database CI: another member edits first, the stale request promptly returns 409, stock is byte-for-byte unchanged, no success receipt is written, and reviewing the current revision permits a fresh edit. The component regression verifies that recovery path through the real adapter's error mapping.
+
+Verified locally after correction: **595 Vitest checks / 80 files; 32 browser checks; 571 SQL assertions / 33 files; 14 existing authenticated API checks; one additional real HTTP regression**. Database lint/security advisors pass and freshly generated types match. Static, preflight, docs, secrets, dependency audit and database-config checks pass. API runtime is isolated PostgREST 14.5 with synthetic fixtures. Final exact-head CI is linked from PR192; a pending or failed gate must not be described as passed.
+
+The combined PR189–193 tree plus the separate CS-101 correction replays **638 SQL assertions / 36 files**, passes **45 existing API checks** and **both HTTP conflict regressions**. Full combined static passes **612 tests / 84 files** and **38 browser checks**; generated types match. The CS-101 lifecycle harness passes a further **18/18** on a clean combined database. Exact heads are recorded in the correction PR evidence. Local evidence: `/tmp/cooksmith-review/conflict-cs99-*` and `conflict-combined-*`.
+
+### Explicit review and release order
+
+Review the standalone CS-101 correction first because it fixes released code; review feature code in order **PR189 → PR190 → PR191 → PR192 → PR193**, with PR192 explicitly dependent on PR189. Approval to review is not approval to merge or deploy. If the full set is approved later, merge the selected code before **one separately approved protected database release**. Replay pending migrations in timestamp order: favourites → Shopping period → freezer tables → put-away → freezer HTTP correction → Shopping HTTP correction; then release compatible client code. Later correction timestamps must not cause earlier pending feature migrations to be skipped. Verify remote migration history and dry-run output before that release; do not edit timestamps or released migrations to force ordering. A separate early release of the Shopping correction requires a new explicit history/order plan for the older pending migrations.
+
+Existing looping requests are not stopped by replacing the function. Any hosted incident response must separately identify affected backends and obtain approval; no production session was inspected or terminated here. Only the synthetic local PostgREST container was restarted while reproducing the bug.

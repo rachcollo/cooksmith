@@ -1,3 +1,5 @@
+import { createSupabaseFreezerRepository } from '../../src/infrastructure/freezer/supabaseFreezerRepository'
+import type { CooksmithSupabaseClient } from '../../src/infrastructure/auth/supabaseAuthClient'
 import { FreezerPanel } from '../../src/routes/freezer/FreezerPanel'
 import { FreezerRepositoryContext } from '../../src/app/freezer/freezerContext'
 import { RecipeRepositoryContext } from '../../src/app/recipes/recipeContext'
@@ -99,4 +101,43 @@ it('discards the old freezer form and late stock response when the household cha
   await act(async () => finish([stock]))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Freezer curry' })).not.toBeInTheDocument()
+})
+
+it('shows a stale HTTP conflict and saves only after reviewing refreshed stock', async () => {
+  const fixture = freezerFixture([stock])
+  const rpc = vi
+    .fn()
+    .mockResolvedValueOnce({ error: { code: 'PT409' } })
+    .mockResolvedValue({ error: null })
+  const adapter = createSupabaseFreezerRepository({
+    schema: () => ({ rpc }),
+  } as unknown as CooksmithSupabaseClient)
+  const list = vi
+    .fn()
+    .mockResolvedValueOnce([stock])
+    .mockResolvedValue([{ ...stock, portions: 1, available: 1, revision: 1 }])
+  const repository = { ...fixture.repository, command: adapter.command, list }
+  render(
+    <FreezerRepositoryContext.Provider value={repository}>
+      <RecipeRepositoryContext.Provider value={defaultRecipeRepository}>
+        <FreezerPanel householdId={stock.householdId} />
+      </RecipeRepositoryContext.Provider>
+    </FreezerRepositoryContext.Provider>,
+  )
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Edit freezer meal Freezer curry' }),
+  )
+  await userEvent.click(screen.getByRole('button', { name: 'Save freezer meal' }))
+  await screen.findByText(
+    'Stock changed. Close this form, refresh and check the latest portions before editing.',
+  )
+  expect(rpc).toHaveBeenCalledOnce()
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Refresh stock' }))
+  await screen.findByText('Stock refreshed.')
+  await userEvent.click(screen.getByRole('button', { name: 'Edit freezer meal Freezer curry' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Save freezer meal' }))
+  await screen.findByText('Freezer stock saved.')
+  expect(rpc.mock.calls[0]?.[1].p_payload.revision).toBe(0)
+  expect(rpc.mock.calls[1]?.[1].p_payload).toMatchObject({ revision: 1, portions: 1 })
 })

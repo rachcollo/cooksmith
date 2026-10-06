@@ -56,4 +56,9 @@ Title: `CS-99: Track and plan prepared freezer meals`
 
 See [handover](../../docs/engineering/handovers/cs99-prepared-freezer-meals.md) and [proposed ADR 016](../../docs/architecture/decisions/016-prepared-freezer-reservations.md). Local acceptance checks passed; authenticated hosted Preview, physical-device and assistive-technology checks remain pending. Checked boxes describe local evidence, not a release or Done decision.
 
-The branch is explicitly stacked on CS-96 / PR189 (`e67d5711833a103c21b62dcb92306066bfac7cec`), whose accepted-main base is `b2fb576ebce250e325df297670d62df18c523339`. Review CS-99's delta from that stack base. Do not merge before PR189 is accepted. CS-98 has not begun.
+The branch is explicitly stacked on CS-96 / PR189 (`e67d5711833a103c21b62dcb92306066bfac7cec`), whose accepted-main base is `b2fb576ebce250e325df297670d62df18c523339`. Review CS-99's delta from that stack base. Do not merge before PR189 is accepted. CS-98 is implemented in draft [PR193](https://github.com/rachcollo/cooksmith/pull/193). Neither draft is beta acceptance.
+
+
+## Stale-edit HTTP correction
+
+The original stale-edit guard used SQLSTATE `40001`. Local PostgREST 14.5 retried indefinitely; SQL tests alone missed the HTTP timeout. Forward migration `20261006023152_freezer_stale_edit_http_conflict.sql` changes only that deliberate guard to `PT409`, preserving revision checks and all mutation protections. The adapter gives actionable close/refresh/review guidance. A real HTTP regression now runs in database CI, and a component regression verifies recovery with the latest stock revision. The original shared migration remains unchanged. See the updated handover for combined verification and release ordering.

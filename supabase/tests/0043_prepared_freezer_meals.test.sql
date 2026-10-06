@@ -25,7 +25,7 @@ select is((select portions from cooksmith.freezer_meals),0,'Retry cannot decreme
 select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'undo','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020','{}')$$,'Undo returns physical stock and reservation');
 select is((select portions from cooksmith.freezer_meals),2,'Undo restores stock');
 select is((select state from cooksmith.freezer_meal_reservations),'reserved','Undo re-establishes reservation');
-select throws_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'edit','99000000-0000-4000-8000-000000000010',null,'{"name":"Stale","portions":9,"frozenOn":"2026-10-06","revision":0}')$$,'40001',null,'Stale edit cannot overwrite consumed/reserved changes');
+select throws_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'edit','99000000-0000-4000-8000-000000000010',null,'{"name":"Stale","portions":9,"frozenOn":"2026-10-06","revision":0}')$$,'PT409',null,'Stale edit cannot overwrite consumed/reserved changes');
 select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'archive','99000000-0000-4000-8000-000000000010',null,'{}')$$,'Archive keeps existing reservation');
 select is((select count(*) from cooksmith.freezer_meal_reservations),1::bigint,'Archive preserved reservation');
 select throws_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'reserve','99000000-0000-4000-8000-000000000010',gen_random_uuid(),'{"portions":1,"mealDate":"2026-10-08"}')$$,'23514',null,'Archived stock cannot be newly reserved');
