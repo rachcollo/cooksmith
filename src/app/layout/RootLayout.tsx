@@ -1,3 +1,4 @@
+import { useApplicationAdmin } from '../admin/useApplicationAdmin'
 import { Settings } from 'lucide-react'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
@@ -10,6 +11,7 @@ import { useAuth } from '../auth/authContext'
 
 export function RootLayout() {
   const { signOut } = useAuth()
+  const admin = useApplicationAdmin() === 'allowed'
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement>(null)
 
@@ -51,7 +53,7 @@ export function RootLayout() {
           </span>
           <strong>Cooksmith</strong>
         </Link>
-        <PrimaryNavigation variant="desktop" />
+        <PrimaryNavigation variant="desktop" admin={admin} />
       </aside>
 
       <header className="site-header">
@@ -76,6 +78,11 @@ export function RootLayout() {
             </button>
             {accountMenuOpen ? (
               <div className="account-menu-popover" role="menu" aria-label="Account">
+                {admin ? (
+                  <Link role="menuitem" to="/admin" onClick={() => setAccountMenuOpen(false)}>
+                    Admin
+                  </Link>
+                ) : null}
                 <Link role="menuitem" to="/settings" onClick={() => setAccountMenuOpen(false)}>
                   Settings
                 </Link>
@@ -98,7 +105,7 @@ export function RootLayout() {
 
       <footer className="site-footer">
         <PageContainer>
-          <p>Cooksmith MVP foundation. Your household preferences stay private.</p>
+          <p>Your household preferences stay private.</p>
         </PageContainer>
       </footer>
 

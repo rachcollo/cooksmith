@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation, useSearchParams } from 'react-router-dom'
 
 import { LoadingState } from '../../components/ui/LoadingState'
 import { safeReturnPath } from '../../application/auth/redirects'
 import { useAuth } from './authContext'
-import { useFeatureFlagRepository } from '../admin/featureFlagContext'
+import { useApplicationAdmin } from '../admin/useApplicationAdmin'
 import { ErrorState } from '../../components/ui/ErrorState'
 
 export function RequireAuth() {
@@ -30,23 +29,7 @@ export function PublicOnlyRoute() {
 }
 
 export function RequireApplicationAdmin() {
-  const repository = useFeatureFlagRepository()
-  const [state, setState] = useState<'loading' | 'allowed' | 'denied' | 'error'>('loading')
-
-  useEffect(() => {
-    let active = true
-    void repository
-      .isAdmin()
-      .then((allowed) => {
-        if (active) setState(allowed ? 'allowed' : 'denied')
-      })
-      .catch(() => {
-        if (active) setState('error')
-      })
-    return () => {
-      active = false
-    }
-  }, [repository])
+  const state = useApplicationAdmin()
 
   if (state === 'loading') return <LoadingState label="Checking administrator access" />
   if (state === 'error')

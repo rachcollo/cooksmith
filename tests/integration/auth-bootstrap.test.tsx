@@ -1,3 +1,8 @@
+import {
+  defaultPlannedMealRepository,
+  defaultShoppingRepository,
+  defaultFeatureFlagRepository,
+} from '../renderApp'
 import { render, screen, waitFor } from '@testing-library/react'
 import type { Session, User } from '@supabase/supabase-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -50,6 +55,9 @@ function BootstrapHarness({ client }: { client: CooksmithSupabaseClient | null }
       config={config}
       initialAuthState={state}
       onboardingRepository={completedOnboardingRepository}
+      plannedMealRepository={defaultPlannedMealRepository}
+      shoppingRepository={defaultShoppingRepository}
+      featureFlagRepository={defaultFeatureFlagRepository}
       householdPeopleRepository={ownerHouseholdPeopleRepository}
     >
       <RouterProvider router={createTestRouter(['/'])} />
@@ -350,6 +358,9 @@ describe('deterministic authentication bootstrap', () => {
         config={config}
         initialAuthState={{ session: null, user: null }}
         onboardingRepository={completedOnboardingRepository}
+        plannedMealRepository={defaultPlannedMealRepository}
+        shoppingRepository={defaultShoppingRepository}
+        featureFlagRepository={defaultFeatureFlagRepository}
         householdPeopleRepository={ownerHouseholdPeopleRepository}
       >
         <RouterProvider router={createTestRouter(['/'])} />

@@ -175,8 +175,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - name: Install Chromium for smoke tests
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium and WebKit for smoke tests
+        run: npx playwright install --with-deps chromium webkit
       - name: Run end-to-end smoke tests
         run: npm run test:e2e
       - name: Upload smoke-test diagnostics
