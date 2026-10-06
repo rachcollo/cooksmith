@@ -49,6 +49,7 @@ import {
 import { recipeToMultilineInput, splitMeaningfulLines } from '../domain/recipes/multilineContent'
 import type { Recipe } from '../domain/recipes/types'
 import { buildPlanAdditions } from '../domain/shopping/planGeneration'
+import { MealSearchField } from './meal-plans/MealSearchField'
 import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
 import '../styles/mealPlannerLinkedCards.css'
 
@@ -97,6 +98,11 @@ function plannedMealWithRecipe(saved: PlannedMeal, recipe: Recipe): PlannedMeal 
 
 export function PlanPage() {
   const { state } = useOnboarding()
+  return <HouseholdPlanPage key={state.householdId ?? 'no-household'} />
+}
+
+function HouseholdPlanPage() {
+  const { state } = useOnboarding()
   const repository = usePlannedMealRepository()
   const recipeRepository = useRecipeRepository()
   const shoppingRepository = useShoppingRepository()
@@ -113,6 +119,10 @@ export function PlanPage() {
   const [saving, setSaving] = useState(false)
   const [replacingMealId, setReplacingMealId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [recipesLoading, setRecipesLoading] = useState(true)
+  const [choiceConfirmed, setChoiceConfirmed] = useState(false)
+  const submitLock = useRef(false)
+  const retryMeal = useRef<PlannedMeal | null>(null)
   const [recipeError, setRecipeError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [draggingMealId, setDraggingMealId] = useState<string | null>(null)
@@ -162,8 +172,10 @@ export function PlanPage() {
         }
       })
       .catch(() => {
-        if (active)
-          setRecipeError('Recipe selection is unavailable right now. Free-text dinners still work.')
+        if (active) setRecipeError('Recipe search is unavailable. You can still add a manual meal.')
+      })
+      .finally(() => {
+        if (active) setRecipesLoading(false)
       })
     return () => {
       active = false
@@ -191,12 +203,16 @@ export function PlanPage() {
   }
 
   function openAdd(mealDate: string) {
+    retryMeal.current = null
+    setChoiceConfirmed(false)
     setDialog({ mode: 'add', input: inputFor(mealDate) })
     setFieldErrors({})
     setFormError(null)
   }
 
   function openEdit(meal: PlannedMeal) {
+    retryMeal.current = null
+    setChoiceConfirmed(true)
     setDialog({
       mode: 'edit',
       meal,
@@ -213,18 +229,15 @@ export function PlanPage() {
     setFormError(null)
   }
 
-  function selectRecipe(recipeId: string) {
-    if (!dialog) return
-    const recipe = activeRecipes.find((candidate) => candidate.id === recipeId) ?? null
-    const nextInput: PlannedMealInput = recipe
-      ? {
-          ...dialog.input,
-          recipeId: recipe.id,
-          recipeSource: recipeSourceForPlan(recipe),
-          title: snapshotTitleForRecipe(recipe),
-        }
-      : { ...dialog.input, recipeId: null, recipeSource: null }
-    updateDialog(nextInput)
+  function selectRecipe(recipe: Recipe) {
+    if (!dialog || !activeRecipes.includes(recipe)) return
+    setChoiceConfirmed(true)
+    updateDialog({
+      ...dialog.input,
+      recipeId: recipe.id,
+      recipeSource: recipeSourceForPlan(recipe),
+      title: snapshotTitleForRecipe(recipe),
+    })
   }
 
   function updateDialog(input: PlannedMealInput) {
@@ -248,22 +261,29 @@ export function PlanPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!dialog || !householdId) return
+    if (!dialog || !householdId || submitLock.current || !choiceConfirmed) return
     const input = validate(dialog.input)
     if (!input) {
       setFormError('Check the highlighted dinner details.')
       return
     }
+    submitLock.current = true
     setSaving(true)
     setFormError(null)
     try {
       const saved =
         dialog.mode === 'add'
-          ? await repository.create(householdId, input)
+          ? retryMeal.current
+            ? await repository.update(retryMeal.current.id, input)
+            : await repository.create(householdId, input)
           : await repository.update(dialog.meal.id, input)
 
+      if (dialog.mode === 'add') retryMeal.current = saved
       if (input.recipeId) {
-        const linkedRecipe = recipes.find((recipe) => recipe.id === input.recipeId)
+        const linkedRecipe = recipes.find(
+          (recipe) =>
+            recipe.id === input.recipeId && recipeSourceForPlan(recipe) === input.recipeSource,
+        )
         if (linkedRecipe) {
           const generationMeal: PlannedMeal = {
             ...saved,
@@ -301,6 +321,7 @@ export function PlanPage() {
         saveError instanceof Error ? saveError.message : 'Cooksmith could not save that dinner.',
       )
     } finally {
+      submitLock.current = false
       setSaving(false)
     }
   }
@@ -540,8 +561,13 @@ export function PlanPage() {
                     </span>
                     <button
                       className="planned-meal-title"
+                      aria-label={displayTitleForPlannedMeal(meal)}
                       type="button"
-                      aria-describedby="meal-drag-instructions"
+                      aria-describedby={
+                        meal.recipeState.kind === 'free-text'
+                          ? `meal-drag-instructions manual-${meal.id}`
+                          : 'meal-drag-instructions'
+                      }
                       onKeyDown={(event) => moveWithKeyboard(meal, event)}
                       onClick={() => openPlannedMeal(meal)}
                     >
@@ -555,7 +581,14 @@ export function PlanPage() {
                               ? `Recipe unavailable — ${meal.title}`
                               : 'Recipe'}
                         </span>
-                      ) : null}
+                      ) : (
+                        <span
+                          id={`manual-${meal.id}`}
+                          className="meal-recipe-status manual-meal-status"
+                        >
+                          Manual meal
+                        </span>
+                      )}
                       {meal.notes ? <span>{meal.notes}</span> : null}
                     </button>
                     <div className="planned-meal-actions">
@@ -718,27 +751,29 @@ export function PlanPage() {
           }}
         >
           <form className="pantry-form pantry-edit-form" onSubmit={(event) => void submit(event)}>
-            <label className="field">
-              <span>Start with</span>
-              <select
-                value={dialog.input.recipeId ?? ''}
-                onChange={(event) => selectRecipe(event.target.value)}
-                disabled={saving || activeRecipes.length === 0}
-              >
-                <option value="">Free-text dinner</option>
-                {activeRecipes.map((recipe) => (
-                  <option key={recipe.id} value={recipe.id}>
-                    {recipe.name}
-                    {recipe.prepTimeMinutes || recipe.cookTimeMinutes
-                      ? ` — ${[recipe.prepTimeMinutes, recipe.cookTimeMinutes]
-                          .filter((value) => value !== null)
-                          .reduce((total, value) => total + (value ?? 0), 0)} min`
-                      : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {recipeError ? <p className="form-hint">{recipeError}</p> : null}
+            <MealSearchField
+              value={dialog.input.title}
+              recipes={activeRecipes}
+              loading={recipesLoading}
+              error={recipeError}
+              disabled={saving}
+              onQuery={(title) => {
+                setChoiceConfirmed(false)
+                updateDialog({ ...dialog.input, title, recipeId: null, recipeSource: null })
+              }}
+              onRecipe={selectRecipe}
+              onManual={(title) => {
+                setChoiceConfirmed(true)
+                updateDialog({ ...dialog.input, title, recipeId: null, recipeSource: null })
+              }}
+            />
+            {choiceConfirmed ? (
+              <p className="form-hint">
+                {dialog.input.recipeId
+                  ? 'Recipe selected. Ingredients will be added to Shopping.'
+                  : 'Manual meal — no recipe ingredients will be added.'}
+              </p>
+            ) : null}
             <TextField
               error={fieldErrors.mealDate}
               label="Date"
@@ -747,14 +782,6 @@ export function PlanPage() {
               value={dialog.input.mealDate}
               onChange={(event) => updateDialog({ ...dialog.input, mealDate: event.target.value })}
             />
-            <TextField
-              data-autofocus
-              error={fieldErrors.title}
-              label="Dinner"
-              required
-              value={dialog.input.title}
-              onChange={(event) => updateDialog({ ...dialog.input, title: event.target.value })}
-            />
             <TextArea
               error={fieldErrors.notes}
               label="Notes"
@@ -762,6 +789,11 @@ export function PlanPage() {
               value={dialog.input.notes ?? ''}
               onChange={(event) => updateDialog({ ...dialog.input, notes: event.target.value })}
             />
+            {fieldErrors.title ? (
+              <p role="alert" className="form-error">
+                {fieldErrors.title}
+              </p>
+            ) : null}
             {formError ? <p className="form-error">{formError}</p> : null}
             <div className="dialog-actions">
               <Button
@@ -772,7 +804,11 @@ export function PlanPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" busy={saving} disabled={dialog.input.title.trim() === ''}>
+              <Button
+                type="submit"
+                busy={saving}
+                disabled={!choiceConfirmed || dialog.input.title.trim() === ''}
+              >
                 Save dinner
               </Button>
             </div>
