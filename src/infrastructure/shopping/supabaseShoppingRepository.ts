@@ -1,4 +1,10 @@
 import {
+  shoppingPeriodView,
+  validShoppingPeriod,
+  type ShoppingPeriod,
+  type PeriodShoppingItem,
+} from '../../domain/shopping/period'
+import {
   refreshedIngredientInputs,
   sameIngredientSources,
 } from '../../domain/shopping/structureRefresh'
@@ -24,7 +30,13 @@ type ShoppingRow = {
   position: number
   updated_at: string
   manual: boolean
-  shopping_item_contributions?: { source_quantities: ShoppingSourceQuantity[] }[]
+  plan_override?: boolean
+  shopping_item_contributions?: {
+    planned_meal_id: string
+    quantity: number | string | null
+    unit: string | null
+    source_quantities: ShoppingSourceQuantity[]
+  }[]
 }
 
 function mapRow(row: ShoppingRow): ShoppingItem {
@@ -64,19 +76,81 @@ export function createSupabaseShoppingRepository(
 ): ShoppingRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'combine_with_plan, measurement_system, id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(source_quantities)'
+    'plan_override, combine_with_plan, measurement_system, id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(planned_meal_id, quantity, unit, source_quantities)'
 
-  return {
-    async list(householdId) {
-      const result = await database
+  async function loadPeriod(householdId: string) {
+    const [result, settings, meals] = await Promise.all([
+      database
         .from('shopping_list_items')
         .select(selection)
         .eq('household_id', householdId)
         .order('completed')
         .order('position')
-        .order('display_name')
+        .order('display_name'),
+      database
+        .from('household_shopping_periods')
+        .select(
+          'shopping_period_kind, shopping_period_week, shopping_period_from, shopping_period_to',
+        )
+        .eq('household_id', householdId)
+        .maybeSingle(),
+      database
+        .from('planned_meals')
+        .select('id, meal_date, meal_type')
+        .eq('household_id', householdId),
+    ])
+    shoppingError(result.error)
+    shoppingError(settings.error)
+    shoppingError(meals.error)
+    const data = settings.data
+    const saved: ShoppingPeriod | null = data?.shopping_period_week
+      ? {
+          kind: data.shopping_period_kind as ShoppingPeriod['kind'],
+          weekStart: data.shopping_period_week,
+          from: data.shopping_period_from ?? '',
+          to: data.shopping_period_to ?? '',
+        }
+      : null
+    const rows: PeriodShoppingItem[] = ((result.data ?? []) as unknown as ShoppingRow[]).map(
+      (row) => ({
+        ...mapRow(row),
+        planOverride: row.plan_override,
+        contributions: (row.shopping_item_contributions ?? []).map((c) => ({
+          plannedMealId: c.planned_meal_id,
+          quantity: c.quantity === null ? null : Number(c.quantity),
+          unit: c.unit,
+          sourceQuantities: c.source_quantities,
+        })),
+      }),
+    )
+    return shoppingPeriodView(
+      rows,
+      saved,
+      (meals.data ?? []).map((m) => ({ id: m.id, mealDate: m.meal_date, mealType: m.meal_type })),
+    )
+  }
+
+  return {
+    loadPeriod,
+    async savePeriod(householdId, period) {
+      if (!validShoppingPeriod(period))
+        throw new Error('Choose a valid range within the active week.')
+      const result = await database
+        .from('household_shopping_periods')
+        .upsert({
+          household_id: householdId,
+          shopping_period_kind: period.kind,
+          shopping_period_week: period.weekStart,
+          shopping_period_from: period.from,
+          shopping_period_to: period.to,
+        })
+        .eq('household_id', householdId)
+        .select('household_id')
+        .single()
       shoppingError(result.error)
-      return ((result.data ?? []) as unknown as ShoppingRow[]).map(mapRow)
+    },
+    async list(householdId) {
+      return (await loadPeriod(householdId)).items
     },
 
     async refreshStructure(householdId) {
