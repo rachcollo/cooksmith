@@ -7,6 +7,8 @@
 }
 
 .header-inner {
+  flex-wrap: wrap;
+  padding-block: var(--space-2);
   align-items: center;
   display: flex;
   gap: var(--space-3);
@@ -15,6 +17,8 @@
 }
 
 .account-menu {
+  flex-shrink: 0;
+  margin-left: auto;
   position: relative;
 }
 
@@ -46,7 +50,7 @@
   border: 1px solid var(--colour-border);
   border-radius: var(--radius-medium);
   box-shadow: var(--shadow-soft);
-  min-width: 10rem;
+  width: min(10rem, calc(100vw - 2rem));
   padding: var(--space-2);
   position: absolute;
   right: 0;
@@ -76,6 +80,8 @@
 }
 
 .brand {
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   color: var(--colour-brand);
   display: inline-flex;
@@ -91,6 +97,7 @@
 }
 
 .brand-mark {
+  flex-shrink: 0;
   background: var(--colour-accent-lilac);
   border-radius: var(--shape-blob);
   color: var(--colour-brand);
@@ -104,6 +111,8 @@
 }
 
 .brand strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: var(--font-display-weight);
@@ -339,6 +348,17 @@
   line-height: 1.1;
   min-width: 0;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   width: 100%;
+}
+
+@media (max-width: 24rem) {
+  .header-inner .brand-mark {
+    display: none;
+  }
+
+  .header-inner .brand strong {
+    letter-spacing: 0.07em;
+  }
 }

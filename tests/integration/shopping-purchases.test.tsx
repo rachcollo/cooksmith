@@ -189,23 +189,29 @@ describe('clean combined purchases', () => {
   })
 })
 
-describe('explicit recipe amount refresh', () => {
-  it('reports a failed refresh without losing the visible saved list', async () => {
-    const refresh = vi.fn(async () => {
-      throw new Error('stale snapshot')
-    })
-    mount(
-      [
-        item('legacy', 'brown sugar', 55, 'g', {
-          completed: true,
-          sourceQuantities: [{ name: 'brown sugar', quantity: '55', unit: 'g' }],
-        }),
-      ],
-      refresh,
-    )
-    await userEvent.click(await screen.findByRole('button', { name: 'Refresh recipe amounts' }))
-    expect(await screen.findByText(/Cooksmith could not finish refreshing/)).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Mark as needed: brown sugar' })).toBeVisible()
-    expect(refresh).toHaveBeenCalledWith(householdId)
-  })
+describe('Shopping has no release maintenance burden', () => {
+  it.each(['brown sugar', 'brown sugar see note 3', 'brown sugar can be substituted with honey'])(
+    'keeps %s visible without offering or running repair',
+    async (sourceName) => {
+      const refresh = vi.fn(async () => {
+        throw new Error('stale snapshot')
+      })
+      mount(
+        [
+          item('legacy', sourceName, 55, 'g', {
+            completed: true,
+            sourceQuantities: [{ name: sourceName, quantity: '55', unit: 'g' }],
+          }),
+        ],
+        refresh,
+      )
+      expect(
+        await screen.findByRole('button', { name: 'Mark as needed: brown sugar' }),
+      ).toBeVisible()
+      expect(
+        screen.queryByRole('button', { name: 'Refresh recipe amounts' }),
+      ).not.toBeInTheDocument()
+      expect(refresh).not.toHaveBeenCalled()
+    },
+  )
 })

@@ -83,3 +83,7 @@ Native dialogs, labelled controls, keyboard operation, 320px reflow and automate
 Pantry remains availability-based. Existing quantities are not updated. Put-away does not clear bought history or undo another member's later stock changes. Corrections to the same already-applied purchase do not reopen it; a genuinely new plan/manual purchase has a new identity. Refresh is interaction-driven rather than realtime.
 
 Rollback by hiding put-away and retaining receipts for a forward fix. Do not restore the legacy quantity-increment/delete flow or delete receipt history. Return this draft and its dependency/integration evidence for review before starting any further MVP item.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Retain both CS98 receipt authorisation and CS101 public-recipe locking documentation; public source permissions stay closed. Preserve PR196's smaller aligned Shopping marks, absent shopper refresh control, explicit Admin maintenance and HTTP/WebKit tests. No Home redesign. Exact-head integration checks are reported in PR193. Migration `20261006015319` predates released PR195: separately approved protected Production database release on approved main requires reviewed remote history/pending-set dry-run and `allow_out_of_order_migrations: true` (`--include-all`). No Edge release or production actions performed.

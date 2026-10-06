@@ -55,3 +55,7 @@ Title: `CS-98: Put completed shopping away`
 See [handover](../../docs/engineering/handovers/cs98-shopping-put-away.md) and [proposed ADR 017](../../docs/architecture/decisions/017-shopping-put-away-receipts.md). Checked acceptance criteria describe local evidence; hosted Preview, cross-browser/device and assistive-technology checks remain pending.
 
 The branch starts at accepted main `b2fb576ebce250e325df297670d62df18c523339`, which includes CS-79 and CS-101. It is not stacked on unmerged drafts. CS-97/PR191 integration retains global purchase bought state and period projection. Keep migration/release order PR189 → PR190 → PR191 → PR192 → this draft; record and retest Shopping conflict resolutions before merging. No further MVP item starts until this review is accepted.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Retain both CS98 receipt authorisation and CS101 public-recipe locking documentation; public source permissions stay closed. Preserve PR196's smaller aligned Shopping marks, absent shopper refresh control, explicit Admin maintenance and HTTP/WebKit tests. No Home redesign. Exact-head integration checks are reported in PR193. Migration `20261006015319` predates released PR195: separately approved protected Production database release on approved main requires reviewed remote history/pending-set dry-run and `allow_out_of_order_migrations: true` (`--include-all`). No Edge release or production actions performed.
