@@ -53,3 +53,7 @@ Title: `CS-80: Save household favourite recipes`
 ## Implementation evidence
 
 See [CS-80 handover](../../docs/engineering/handovers/cs80-household-favourite-recipes.md). Automated keyboard, semantic accessibility, concurrency and RLS coverage is provided; physical screen-reader and hosted member checks remain unverified. Automatic planning keeps its existing ranking; the optional bounded favourite preference is not introduced.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Recipe detail keeps PR196's original-source link and concise metadata alongside the favourite action/status. No Home redesign. Existing Shopping repair, public-recipe protections and HTTP/WebKit regression contracts are retained. Exact-head integration checks are reported in PR190. Migration `20261005111000` predates released PR195: release requires reviewed remote history and the protected Production database release workflow on approved main with `allow_out_of_order_migrations: true` (`--include-all`), after confirming the complete pending set. No Edge Function release. No production release was run here.

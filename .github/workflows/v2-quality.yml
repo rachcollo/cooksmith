@@ -68,6 +68,8 @@ jobs:
         run: npm run db:lint
       - name: Run database tests
         run: npm run db:test
+      - name: Check authenticated HTTP conflict responses
+        run: node --test --test-concurrency=1 scripts/http/*.test.mjs
       - name: Enforce security contracts
         run: npm run db:test:security
       - name: Generate local database types
@@ -173,8 +175,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - name: Install Chromium for smoke tests
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium and WebKit for smoke tests
+        run: npx playwright install --with-deps chromium webkit
       - name: Run end-to-end smoke tests
         run: npm run test:e2e
       - name: Upload smoke-test diagnostics

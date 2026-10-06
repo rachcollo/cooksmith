@@ -33,3 +33,7 @@ Edge Functions changed in this PR: no.
 Hosted migration required after merge: yes. Apply the migration before using the new library code; the new reads require the relation and mutations require its RPC. After release, verify two active household members can save/remove both source types and see shared results, and an unrelated household remains separate. A public page smoke alone is insufficient.
 
 Rollback the UI if required and retain the additive relation. Forward-fix released schema; do not rewrite applied migration history. Legacy columns remain for compatibility but do not represent the new household preference.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Recipe detail keeps PR196's original-source link and concise metadata alongside the favourite action/status. No Home redesign. Existing Shopping repair, public-recipe protections and HTTP/WebKit regression contracts are retained. Exact-head integration checks are reported in PR190. Migration `20261005111000` predates released PR195: release requires reviewed remote history and the protected Production database release workflow on approved main with `allow_out_of_order_migrations: true` (`--include-all`), after confirming the complete pending set. No Edge Function release. No production release was run here.

@@ -66,7 +66,6 @@ export function ShoppingPage() {
   const [editDraft, setEditDraft] = useState<ShoppingItemInput>(emptyInput)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [editErrors, setEditErrors] = useState<FieldErrors>({})
-  const [refreshMessage, setRefreshMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -544,27 +543,6 @@ export function ShoppingPage() {
     }
   }
 
-  async function refreshRecipeAmounts() {
-    if (!householdId || !repository.refreshStructure) return
-    setSaving(true)
-    setError(null)
-    try {
-      const result = await repository.refreshStructure(householdId)
-      setItems(await repository.list(householdId))
-      setRefreshMessage(
-        result.skipped
-          ? `Refreshed ${result.refreshed} meals. ${result.skipped} could not be matched safely; check those recipe amounts before changing them.`
-          : 'Recipe amounts are up to date. Your edits and bought items are preserved.',
-      )
-    } catch {
-      setError(
-        'Cooksmith could not finish refreshing the list. Reload and try again; your edits will be preserved.',
-      )
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (loading) return <LoadingState label="Loading your shopping list" />
 
   return (
@@ -586,13 +564,7 @@ export function ShoppingPage() {
           </p>
         </div>
         <p>Add what your household needs, then tick items off as you shop.</p>
-        {repository.refreshStructure && items.some((item) => item.sourceQuantities?.length) ? (
-          <Button variant="secondary" disabled={saving} onClick={() => void refreshRecipeAmounts()}>
-            Refresh recipe amounts
-          </Button>
-        ) : null}
       </header>
-      {refreshMessage ? <p role="status">{refreshMessage}</p> : null}
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
 
@@ -975,7 +947,9 @@ function ShoppingItemRow({
         type="button"
         onClick={() => onToggle(item)}
       >
-        {item.completed ? <Check aria-hidden="true" /> : null}
+        <span className="shopping-check-mark" aria-hidden="true">
+          {item.completed ? <Check /> : null}
+        </span>
       </button>
       {editing ? (
         <form className="shopping-inline-edit" onSubmit={onSaveEdit}>
