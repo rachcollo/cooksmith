@@ -1,3 +1,5 @@
+import { useFreezerRepository } from '../app/freezer/freezerContext'
+import type { FreezerMeal } from '../domain/freezer/types'
 import {
   useEffect,
   useMemo,
@@ -111,6 +113,15 @@ function HouseholdPlanPage() {
   const thisWeek = currentWeek(new Date())
   const [weekStart, setWeekStart] = useState(thisWeek)
   const [meals, setMeals] = useState<PlannedMeal[]>([])
+  const freezerRepository = useFreezerRepository()
+  const [freezerMeals, setFreezerMeals] = useState<FreezerMeal[]>([])
+  const [freezerError, setFreezerError] = useState<string | null>(null)
+  const [selectedFreezer, setSelectedFreezer] = useState<FreezerMeal | null>(null)
+  const [freezerPortions, setFreezerPortions] = useState(1)
+  const freezerAttempt = useRef<{ operationId: string; planId: string; key: string } | null>(null)
+  const freezerActions = useRef(new Set<string>())
+  const freezerOperations = useRef(new Map<string, string>())
+  const [freezerBusy, setFreezerBusy] = useState<string | null>(null)
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [dialog, setDialog] = useState<MealDialog | null>(null)
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null)
@@ -182,6 +193,78 @@ function HouseholdPlanPage() {
     }
   }, [householdId, recipeRepository])
 
+  useEffect(() => {
+    let active = true
+    if (!householdId || !freezerRepository) return
+    void freezerRepository
+      .list(householdId)
+      .then((next) => {
+        if (active) {
+          setFreezerMeals(next)
+          setFreezerError(null)
+        }
+      })
+      .catch(() => {
+        if (active)
+          setFreezerError('Freezer stock is unavailable. Refresh stock in Pantry before reserving.')
+      })
+    return () => {
+      active = false
+    }
+  }, [householdId, freezerRepository])
+
+  async function refreshFreezer() {
+    if (householdId && freezerRepository) {
+      setFreezerMeals(await freezerRepository.list(householdId))
+      setFreezerError(null)
+    }
+  }
+  async function changeFreezerUsage(meal: PlannedMeal) {
+    if (
+      !householdId ||
+      !freezerRepository ||
+      !meal.freezerMealId ||
+      freezerActions.current.has(meal.id)
+    )
+      return
+    const consumed = meal.freezerState === 'consumed'
+    if (
+      !window.confirm(
+        consumed
+          ? `Return ${meal.freezerPortions} portions to the freezer and reserve them for this dinner?`
+          : `Mark ${meal.freezerPortions} portions of ${meal.title} as used?`,
+      )
+    )
+      return
+    const operationKey = `${meal.id}:${consumed ? 'undo' : 'consume'}`
+    const operationId = freezerOperations.current.get(operationKey) ?? crypto.randomUUID()
+    freezerOperations.current.set(operationKey, operationId)
+    freezerActions.current.add(meal.id)
+    setFreezerBusy(meal.id)
+    try {
+      await freezerRepository.command(householdId, {
+        operationId,
+        action: consumed ? 'undo' : 'consume',
+        freezerId: meal.freezerMealId,
+        planId: meal.id,
+        payload: {},
+      })
+      setMeals(await repository.listWeek(householdId, weekStart, weekEnd))
+      await refreshFreezer()
+      freezerOperations.current.delete(operationKey)
+      setError(null)
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Could not update freezer stock. Refresh to check before retrying.',
+      )
+    } finally {
+      freezerActions.current.delete(meal.id)
+      setFreezerBusy(null)
+    }
+  }
+
   function validate(input: PlannedMealInput): PlannedMealInput | null {
     const result = plannedMealInputSchema.safeParse(input)
     if (result.success) {
@@ -203,6 +286,12 @@ function HouseholdPlanPage() {
   }
 
   function openAdd(mealDate: string) {
+    setSelectedFreezer(null)
+    setFreezerPortions(1)
+    freezerAttempt.current = null
+    void refreshFreezer().catch(() =>
+      setFreezerError('Could not refresh freezer stock. Reservations will be checked when saved.'),
+    )
     retryMeal.current = null
     setChoiceConfirmed(false)
     setDialog({ mode: 'add', input: inputFor(mealDate) })
@@ -211,6 +300,8 @@ function HouseholdPlanPage() {
   }
 
   function openEdit(meal: PlannedMeal) {
+    setSelectedFreezer(null)
+    freezerAttempt.current = null
     retryMeal.current = null
     setChoiceConfirmed(true)
     setDialog({
@@ -230,6 +321,8 @@ function HouseholdPlanPage() {
   }
 
   function selectRecipe(recipe: Recipe) {
+    setSelectedFreezer(null)
+    freezerAttempt.current = null
     if (!dialog || !activeRecipes.includes(recipe)) return
     setChoiceConfirmed(true)
     updateDialog({
@@ -271,15 +364,50 @@ function HouseholdPlanPage() {
     setSaving(true)
     setFormError(null)
     try {
-      const saved =
-        dialog.mode === 'add'
-          ? retryMeal.current
-            ? await repository.update(retryMeal.current.id, input)
-            : await repository.create(householdId, input)
-          : await repository.update(dialog.meal.id, input)
+      let saved: PlannedMeal
+      if (selectedFreezer && freezerRepository) {
+        if (
+          !Number.isInteger(freezerPortions) ||
+          freezerPortions < 1 ||
+          freezerPortions > selectedFreezer.available
+        )
+          throw new Error('Choose whole portions within the available stock.')
+        const key = JSON.stringify({ id: selectedFreezer.id, portions: freezerPortions, input })
+        if (freezerAttempt.current?.key !== key)
+          freezerAttempt.current = {
+            key,
+            operationId: crypto.randomUUID(),
+            planId:
+              freezerAttempt.current?.planId ??
+              (dialog.mode === 'edit' ? dialog.meal.id : crypto.randomUUID()),
+          }
+        const attempt = freezerAttempt.current
+        await freezerRepository.command(householdId, {
+          operationId: attempt.operationId,
+          action: 'reserve',
+          freezerId: selectedFreezer.id,
+          planId: attempt.planId,
+          payload: { portions: freezerPortions, mealDate: input.mealDate, notes: input.notes },
+        })
+        const persisted = (
+          await repository.listWeek(householdId, input.mealDate, input.mealDate)
+        ).find((meal) => meal.id === attempt.planId)
+        if (!persisted)
+          throw new Error('Reservation may have saved. Retry unchanged or refresh Plan to recover.')
+        saved = persisted
+      } else {
+        saved =
+          dialog.mode === 'add'
+            ? retryMeal.current
+              ? await repository.update(retryMeal.current.id, input)
+              : await repository.create(householdId, input)
+            : await repository.update(dialog.meal.id, input)
+      }
 
       if (dialog.mode === 'add') retryMeal.current = saved
-      if (input.recipeId) {
+      if (saved.freezerMealId) {
+        await refreshFreezer()
+      } else if (input.recipeId) {
         const linkedRecipe = recipes.find(
           (recipe) =>
             recipe.id === input.recipeId && recipeSourceForPlan(recipe) === input.recipeSource,
@@ -327,9 +455,16 @@ function HouseholdPlanPage() {
   }
 
   async function remove(meal: PlannedMeal) {
-    if (!window.confirm(`Remove ${displayTitleForPlannedMeal(meal)} from the plan?`)) return
+    const explanation = meal.freezerMealId
+      ? meal.freezerState === 'consumed'
+        ? ' Already-used portions will not be returned. Undo use first if needed.'
+        : ' Reserved portions will become available again.'
+      : ''
+    if (!window.confirm(`Remove ${displayTitleForPlannedMeal(meal)} from the plan?${explanation}`))
+      return
     try {
       await repository.remove(meal.id)
+      if (meal.freezerMealId) await refreshFreezer()
       setMeals((current) => current.filter((candidate) => candidate.id !== meal.id))
     } catch (removeError) {
       setError(
@@ -341,6 +476,7 @@ function HouseholdPlanPage() {
   }
 
   async function replaceMeal(meal: PlannedMeal) {
+    if (meal.freezerMealId) return
     if (!householdId || replacingMealId) return
     const recipe = randomReplacementRecipe(activeRecipes, meal.recipeId)
     if (!recipe) {
@@ -459,7 +595,7 @@ function HouseholdPlanPage() {
   }
 
   return (
-    <main className="page-stack meal-planner-page">
+    <div className="page-stack meal-planner-page">
       <DocumentTitle title="Meal Planner" />
       <header className="page-header meal-planner-header">
         <h1>Seven days. Let’s not overthink it.</h1>
@@ -586,18 +722,31 @@ function HouseholdPlanPage() {
                           id={`manual-${meal.id}`}
                           className="meal-recipe-status manual-meal-status"
                         >
-                          Manual meal
+                          {meal.freezerMealId
+                            ? `Freezer · ${meal.freezerPortions} portions ${meal.freezerState === 'consumed' ? 'used' : 'reserved'}`
+                            : 'Manual meal'}
                         </span>
                       )}
                       {meal.notes ? <span>{meal.notes}</span> : null}
                     </button>
                     <div className="planned-meal-actions">
+                      {meal.freezerMealId && freezerRepository ? (
+                        <Button
+                          variant="quiet"
+                          disabled={freezerBusy !== null}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={() => void changeFreezerUsage(meal)}
+                          aria-label={`${meal.freezerState === 'consumed' ? 'Undo use' : 'Mark used'} ${meal.title}`}
+                        >
+                          {meal.freezerState === 'consumed' ? 'Undo use' : 'Mark used'}
+                        </Button>
+                      ) : null}
                       <button
                         className="meal-remove"
                         type="button"
                         aria-label={`Replace ${displayTitleForPlannedMeal(meal)} with a random recipe`}
                         aria-busy={replacingMealId === meal.id}
-                        disabled={replacingMealId !== null}
+                        disabled={replacingMealId !== null || Boolean(meal.freezerMealId)}
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => void replaceMeal(meal)}
                       >
@@ -747,35 +896,85 @@ function HouseholdPlanPage() {
           title={dialog.mode === 'add' ? 'Add dinner' : `Edit ${dialog.meal.title}`}
           description={compactDate(dialog.input.mealDate)}
           onOpenChange={(open) => {
-            if (!open && !saving) setDialog(null)
+            if (!open && !saving) {
+              setDialog(null)
+              if (freezerAttempt.current && householdId)
+                void repository
+                  .listWeek(householdId, weekStart, weekEnd)
+                  .then(setMeals)
+                  .catch(() => setError('Refresh Plan to check whether the reservation was saved.'))
+            }
           }}
         >
           <form className="pantry-form pantry-edit-form" onSubmit={(event) => void submit(event)}>
             <MealSearchField
               value={dialog.input.title}
               recipes={activeRecipes}
+              freezerMeals={dialog.mode === 'add' || !dialog.meal.freezerMealId ? freezerMeals : []}
+              onFreezer={(meal) => {
+                setSelectedFreezer(meal)
+                setFreezerPortions(1)
+                setChoiceConfirmed(true)
+                updateDialog({
+                  ...dialog.input,
+                  title: meal.name,
+                  recipeId: null,
+                  recipeSource: null,
+                })
+              }}
               loading={recipesLoading}
               error={recipeError}
-              disabled={saving}
+              disabled={
+                saving ||
+                Boolean(freezerAttempt.current) ||
+                (dialog.mode === 'edit' && Boolean(dialog.meal.freezerMealId))
+              }
               onQuery={(title) => {
+                setSelectedFreezer(null)
+                freezerAttempt.current = null
                 setChoiceConfirmed(false)
                 updateDialog({ ...dialog.input, title, recipeId: null, recipeSource: null })
               }}
               onRecipe={selectRecipe}
               onManual={(title) => {
+                setSelectedFreezer(null)
+                freezerAttempt.current = null
                 setChoiceConfirmed(true)
                 updateDialog({ ...dialog.input, title, recipeId: null, recipeSource: null })
               }}
             />
+            {freezerError ? <p role="status">{freezerError}</p> : null}
+            {selectedFreezer ? (
+              <TextField
+                disabled={saving || Boolean(freezerAttempt.current)}
+                label="Freezer portions"
+                type="number"
+                min={1}
+                max={selectedFreezer.available}
+                step={1}
+                value={freezerPortions}
+                onChange={(event) => setFreezerPortions(Number(event.target.value))}
+                hint={`${selectedFreezer.available} available. Saving reserves these portions.`}
+              />
+            ) : null}
+            {dialog.mode === 'edit' && dialog.meal.freezerMealId ? (
+              <p>
+                Move this reservation by changing the date. To choose another dinner, remove this
+                entry first.
+              </p>
+            ) : null}
             {choiceConfirmed ? (
               <p className="form-hint">
-                {dialog.input.recipeId
-                  ? 'Recipe selected. Ingredients will be added to Shopping.'
-                  : 'Manual meal — no recipe ingredients will be added.'}
+                {selectedFreezer || (dialog.mode === 'edit' && dialog.meal.freezerMealId)
+                  ? 'Prepared freezer meal. No ingredients will be added to Shopping.'
+                  : dialog.input.recipeId
+                    ? 'Recipe selected. Ingredients will be added to Shopping.'
+                    : 'Manual meal — no recipe ingredients will be added.'}
               </p>
             ) : null}
             <TextField
               error={fieldErrors.mealDate}
+              disabled={saving || Boolean(freezerAttempt.current)}
               label="Date"
               required
               type="date"
@@ -784,6 +983,7 @@ function HouseholdPlanPage() {
             />
             <TextArea
               error={fieldErrors.notes}
+              disabled={saving || Boolean(freezerAttempt.current)}
               label="Notes"
               optional
               value={dialog.input.notes ?? ''}
@@ -799,7 +999,16 @@ function HouseholdPlanPage() {
               <Button
                 variant="secondary"
                 type="button"
-                onClick={() => setDialog(null)}
+                onClick={() => {
+                  setDialog(null)
+                  if (freezerAttempt.current && householdId)
+                    void repository
+                      .listWeek(householdId, weekStart, weekEnd)
+                      .then(setMeals)
+                      .catch(() =>
+                        setError('Refresh Plan to check whether the reservation was saved.'),
+                      )
+                }}
                 disabled={saving}
               >
                 Cancel
@@ -815,6 +1024,6 @@ function HouseholdPlanPage() {
           </form>
         </Dialog>
       ) : null}
-    </main>
+    </div>
   )
 }

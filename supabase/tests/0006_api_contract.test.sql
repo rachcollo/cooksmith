@@ -16,6 +16,7 @@ select results_eq(
   (array[
     'feature_flag_audit:SELECT',
     'feature_flags:SELECT', 'feature_flags:UPDATE',
+    'freezer_meal_events:SELECT', 'freezer_meal_reservations:SELECT', 'freezer_meals:SELECT',
     'household_allergies:DELETE', 'household_allergies:INSERT', 'household_allergies:SELECT', 'household_allergies:UPDATE',
     'household_dietary_requirements:DELETE', 'household_dietary_requirements:INSERT', 'household_dietary_requirements:SELECT', 'household_dietary_requirements:UPDATE',
     'household_invitations:SELECT',
@@ -71,7 +72,7 @@ select results_eq(
   $$select table_name::text collate "C" from information_schema.tables
     where table_schema = 'cooksmith' and table_type = 'BASE TABLE' order by table_name$$,
   (array[
-    'app_user_roles', 'feature_flag_audit', 'feature_flags', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
+    'app_user_roles', 'feature_flag_audit', 'feature_flags', 'freezer_meal_events', 'freezer_meal_reservations', 'freezer_meals', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
     'household_members', 'household_pantry_items', 'household_preference_profiles', 'household_recipes', 'household_settings', 'households',
     'imported_recipes', 'infrastructure_health', 'planned_meals', 'profiles',
     'recipe_content_versions', 'recipe_enrichment_backfill_audit', 'recipe_enrichment_jobs', 'recipe_enrichments', 'recipe_ingredients',

@@ -1,3 +1,4 @@
+import type { FreezerMeal } from '../../domain/freezer/types'
 import { useId, useState, type KeyboardEvent } from 'react'
 import type { Recipe } from '../../domain/recipes/types'
 
@@ -5,6 +6,8 @@ import type { Recipe } from '../../domain/recipes/types'
 export function MealSearchField({
   value,
   recipes,
+  freezerMeals = [],
+  onFreezer,
   loading,
   error,
   disabled,
@@ -14,6 +17,8 @@ export function MealSearchField({
 }: {
   value: string
   recipes: Recipe[]
+  freezerMeals?: FreezerMeal[]
+  onFreezer?: (meal: FreezerMeal) => void
   loading: boolean
   error: string | null
   disabled: boolean
@@ -35,12 +40,23 @@ export function MealSearchField({
               recipe.name.toLocaleLowerCase('en-AU').includes(query.toLocaleLowerCase('en-AU')),
           )
           .slice(0, 8)
-  const count = matches.length + (query ? 1 : 0)
+  const freezerMatches = freezerMeals
+    .filter(
+      (meal) =>
+        !meal.archivedAt &&
+        meal.available > 0 &&
+        meal.name.toLocaleLowerCase('en-AU').includes(query.toLocaleLowerCase('en-AU')),
+    )
+    .slice(0, 8)
+  const matchedCount = matches.length + freezerMatches.length
+  const count = matchedCount + (query ? 1 : 0)
   const index = Math.min(active, Math.max(0, count - 1))
   function choose(position: number) {
     if (disabled) return
-    const recipe = matches[position]
-    if (recipe) onRecipe(recipe)
+    const freezer = freezerMatches[position]
+    const recipe = matches[position - freezerMatches.length]
+    if (freezer) onFreezer?.(freezer)
+    else if (recipe) onRecipe(recipe)
     else if (query) onManual(query)
     setOpen(false)
   }
@@ -98,7 +114,7 @@ export function MealSearchField({
         {loading
           ? 'Loading recipes. You can still add a manual meal.'
           : error ||
-            (open && query && !matches.length
+            (open && query && !matchedCount
               ? 'No matching recipes. Add this as a manual meal.'
               : 'Search recipes or type a meal name, then choose an option.')}
       </p>
@@ -109,40 +125,59 @@ export function MealSearchField({
           role="listbox"
           aria-label="Dinner choices"
         >
-          {matches.map((recipe, position) => (
+          {freezerMatches.map((meal, position) => (
             <button
               type="button"
               role="option"
               aria-selected={index === position}
               id={`${id}-option-${position}`}
-              key={`${recipe.scope ?? 'household'}:${recipe.id}`}
+              key={`freezer:${meal.id}`}
               tabIndex={-1}
               className={index === position ? 'active' : ''}
               onPointerDown={(event) => event.preventDefault()}
               onClick={() => choose(position)}
             >
-              {recipe.name}
-              <small>
-                {' '}
-                ·{' '}
-                {recipe.scope === 'public'
-                  ? 'Shared recipe'
-                  : recipe.scope === 'private'
-                    ? 'Private recipe'
-                    : 'Household recipe'}
-              </small>
+              {meal.name}
+              <small> · Freezer · {meal.available} portions available</small>
             </button>
           ))}
+          {matches.map((recipe, recipePosition) => {
+            const position = recipePosition + freezerMatches.length
+            return (
+              <button
+                type="button"
+                role="option"
+                aria-selected={index === position}
+                id={`${id}-option-${position}`}
+                key={`${recipe.scope ?? 'household'}:${recipe.id}`}
+                tabIndex={-1}
+                className={index === position ? 'active' : ''}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => choose(position)}
+              >
+                {recipe.name}
+                <small>
+                  {' '}
+                  ·{' '}
+                  {recipe.scope === 'public'
+                    ? 'Shared recipe'
+                    : recipe.scope === 'private'
+                      ? 'Private recipe'
+                      : 'Household recipe'}
+                </small>
+              </button>
+            )
+          })}
           {query ? (
             <button
               type="button"
               role="option"
-              aria-selected={index === matches.length}
-              id={`${id}-option-${matches.length}`}
+              aria-selected={index === matchedCount}
+              id={`${id}-option-${matchedCount}`}
               tabIndex={-1}
-              className={index === matches.length ? 'active' : ''}
+              className={index === matchedCount ? 'active' : ''}
               onPointerDown={(event) => event.preventDefault()}
-              onClick={() => choose(matches.length)}
+              onClick={() => choose(matchedCount)}
             >
               Add “{query}” — manual meal
             </button>

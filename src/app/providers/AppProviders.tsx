@@ -1,3 +1,6 @@
+import { FreezerProvider } from '../freezer/FreezerProvider'
+import { FreezerRepositoryContext } from '../freezer/freezerContext'
+import type { FreezerRepository } from '../../application/freezer/freezerRepository'
 import type { ReactNode } from 'react'
 
 import { AppConfigContext } from './appConfigContext'
@@ -44,6 +47,7 @@ interface AppProvidersProps {
   onboardingRepository?: OnboardingRepository
   householdPeopleRepository?: HouseholdPeopleRepository
   householdPreferencesRepository?: HouseholdPreferencesRepository
+  freezerRepository?: FreezerRepository
   pantryRepository?: PantryRepository
   recipeRepository?: RecipeRepository
   plannedMealRepository?: PlannedMealRepository
@@ -62,6 +66,7 @@ export function AppProviders({
   householdPeopleRepository,
   householdPreferencesRepository,
   pantryRepository,
+  freezerRepository,
   recipeRepository,
   plannedMealRepository,
   shoppingRepository,
@@ -94,33 +99,37 @@ export function AppProviders({
                 <OnboardingRepositoryContext.Provider value={onboardingRepository}>
                   <PantryRepositoryContext.Provider value={pantryRepository}>
                     <PantryProvider>
-                      <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
-                        <PlannedMealProvider>
-                          <RecipeRepositoryContext.Provider value={recipeRepository}>
-                            <RecipeProvider>
-                              <FeatureFlagRepositoryContext.Provider
-                                value={resolvedFeatureFlagRepository}
-                              >
-                                <FeatureFlagProvider>
-                                  <WeeklyPreparationAdminRepositoryContext.Provider
-                                    value={resolvedWeeklyPreparationAdminRepository}
+                      <FreezerRepositoryContext.Provider value={freezerRepository}>
+                        <FreezerProvider>
+                          <PlannedMealRepositoryContext.Provider value={plannedMealRepository}>
+                            <PlannedMealProvider>
+                              <RecipeRepositoryContext.Provider value={recipeRepository}>
+                                <RecipeProvider>
+                                  <FeatureFlagRepositoryContext.Provider
+                                    value={resolvedFeatureFlagRepository}
                                   >
-                                    <WeeklyPreparationRepositoryContext.Provider
-                                      value={resolvedWeeklyPreparationRepository}
-                                    >
-                                      <ShoppingRepositoryContext.Provider
-                                        value={shoppingRepository}
+                                    <FeatureFlagProvider>
+                                      <WeeklyPreparationAdminRepositoryContext.Provider
+                                        value={resolvedWeeklyPreparationAdminRepository}
                                       >
-                                        <ShoppingProvider>{children}</ShoppingProvider>
-                                      </ShoppingRepositoryContext.Provider>
-                                    </WeeklyPreparationRepositoryContext.Provider>
-                                  </WeeklyPreparationAdminRepositoryContext.Provider>
-                                </FeatureFlagProvider>
-                              </FeatureFlagRepositoryContext.Provider>
-                            </RecipeProvider>
-                          </RecipeRepositoryContext.Provider>
-                        </PlannedMealProvider>
-                      </PlannedMealRepositoryContext.Provider>
+                                        <WeeklyPreparationRepositoryContext.Provider
+                                          value={resolvedWeeklyPreparationRepository}
+                                        >
+                                          <ShoppingRepositoryContext.Provider
+                                            value={shoppingRepository}
+                                          >
+                                            <ShoppingProvider>{children}</ShoppingProvider>
+                                          </ShoppingRepositoryContext.Provider>
+                                        </WeeklyPreparationRepositoryContext.Provider>
+                                      </WeeklyPreparationAdminRepositoryContext.Provider>
+                                    </FeatureFlagProvider>
+                                  </FeatureFlagRepositoryContext.Provider>
+                                </RecipeProvider>
+                              </RecipeRepositoryContext.Provider>
+                            </PlannedMealProvider>
+                          </PlannedMealRepositoryContext.Provider>
+                        </FreezerProvider>
+                      </FreezerRepositoryContext.Provider>
                     </PantryProvider>
                   </PantryRepositoryContext.Provider>
                 </OnboardingRepositoryContext.Provider>

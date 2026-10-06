@@ -4,7 +4,7 @@
 
 - **Jira issue:** [CS-99](https://smillins.atlassian.net/browse/CS-99)
 - **Epic:** Pantry (CS-3)
-- **Status:** Ready
+- **Status:** Implemented, manual validation pending
 - **Branch:** `feat/cs-99-prepared-freezer-meals`
 - **Depends on:** CS-96 and current Planner/Shopping reconciliation
 - **Blocks:** CS-78 freezer-meal patterns
@@ -24,14 +24,14 @@ Track prepared freezer meals and plan them as already-owned food that contribute
 
 ## Acceptance Criteria
 
-- [ ] Members can add, edit, archive and restore valid freezer meals.
-- [ ] Planner search shows available freezer meals with clear stock context.
-- [ ] A freezer-sourced plan entry contributes zero recipe ingredients.
-- [ ] Reservation and consumption are explicit, idempotent and concurrency safe.
-- [ ] Moving/deleting reconciles reservations without silent stock loss.
-- [ ] Migration preserves existing Pantry, recipe and plan data.
-- [ ] RLS and forged-identifier negative tests pass.
-- [ ] Mobile, keyboard, reflow and axe checks pass.
+- [x] Members can add, edit, archive and restore valid freezer meals.
+- [x] Planner search shows available freezer meals with clear stock context.
+- [x] A freezer-sourced plan entry contributes zero recipe ingredients.
+- [x] Reservation and consumption are explicit, idempotent and concurrency safe.
+- [x] Moving/deleting reconciles reservations without silent stock loss.
+- [x] Migration preserves existing Pantry, recipe and plan data.
+- [x] RLS and forged-identifier negative tests pass.
+- [x] Mobile, keyboard, reflow and axe checks pass.
 
 ## Technical Direction
 
@@ -51,3 +51,9 @@ Test concurrent reservation, release, consume, undo/recovery, optional recipe de
 ## Pull Request
 
 Title: `CS-99: Track and plan prepared freezer meals`
+
+## Implementation evidence
+
+See [handover](../../docs/engineering/handovers/cs99-prepared-freezer-meals.md) and [proposed ADR 016](../../docs/architecture/decisions/016-prepared-freezer-reservations.md). Local acceptance checks passed; authenticated hosted Preview, physical-device and assistive-technology checks remain pending. Checked boxes describe local evidence, not a release or Done decision.
+
+The branch is explicitly stacked on CS-96 / PR189 (`e67d5711833a103c21b62dcb92306066bfac7cec`), whose accepted-main base is `b2fb576ebce250e325df297670d62df18c523339`. Review CS-99's delta from that stack base. Do not merge before PR189 is accepted. CS-98 has not begun.
