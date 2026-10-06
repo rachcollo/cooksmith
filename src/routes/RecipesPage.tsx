@@ -1,5 +1,5 @@
 import { MeasurementSelect } from '../components/ui/MeasurementSelect'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
@@ -135,7 +135,16 @@ function RecipeMultilineEditor({
   )
 }
 
+function recipeKey(recipe: Recipe) {
+  return `${recipe.scope === 'public' || recipe.scope === 'private' ? 'imported' : 'household'}:${recipe.id}`
+}
+
 export function RecipesPage() {
+  const { state } = useOnboarding()
+  return <HouseholdRecipesPage key={state.householdId ?? 'no-household'} />
+}
+
+function HouseholdRecipesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { state } = useOnboarding()
   const repository = useRecipeRepository()
@@ -145,6 +154,11 @@ export function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [favouritesOnly, setFavouritesOnly] = useState(false)
+  const [favouriteMessage, setFavouriteMessage] = useState<string | null>(null)
+  const [pendingFavourites, setPendingFavourites] = useState<string[]>([])
+  const favouriteLocks = useRef(new Set<string>())
+  const favouriteRevision = useRef(0)
   const [draft, setDraft] = useState<RecipeInput>(emptyInput)
   const [fieldErrors, setFieldErrors] = useState<RecipeFieldErrors>({})
   const [editDraft, setEditDraft] = useState<RecipeInput>(emptyInput)
@@ -166,28 +180,108 @@ export function RecipesPage() {
   useEffect(() => {
     let active = true
     if (!householdId) return
-    repository
-      .list(householdId)
-      .then((next) => {
-        if (!active) return
-        setRecipes(next)
-      })
-      .catch(() => {
-        if (active) setError('We could not load your recipe library. Try refreshing Cooksmith.')
-      })
-      .finally(() => {
+    let sequence = 0
+    async function refresh() {
+      if (favouriteLocks.current.size || document.visibilityState === 'hidden') return
+      const request = ++sequence
+      const revision = favouriteRevision.current
+      try {
+        const next = await repository.list(householdId!)
+        if (
+          active &&
+          request === sequence &&
+          revision === favouriteRevision.current &&
+          !favouriteLocks.current.size
+        ) {
+          setRecipes(next)
+          setError(null)
+        }
+      } catch {
+        if (active) setError('We could not refresh your recipe library. Try again.')
+      } finally {
         if (active) setLoading(false)
-      })
+      }
+    }
+    void refresh()
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    const timer = window.setInterval(() => void refresh(), 30_000)
     return () => {
       active = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
     }
   }, [householdId, repository])
 
+  async function toggleFavourite(recipe: Recipe) {
+    if (!householdId || !repository.setFavourite || recipe.scope === 'private') return
+    const key = recipeKey(recipe)
+    if (favouriteLocks.current.has(key)) return
+    favouriteRevision.current++
+    favouriteLocks.current.add(key)
+    setPendingFavourites([...favouriteLocks.current])
+    const desired = !recipe.favourite
+    setRecipes((current) =>
+      current.map((row) => (recipeKey(row) === key ? { ...row, favourite: desired } : row)),
+    )
+    setFavouriteMessage('Saving household favourite…')
+    try {
+      const saved = await repository.setFavourite(
+        householdId,
+        recipe.id,
+        recipe.scope === 'public' ? 'imported' : 'household',
+        desired,
+      )
+      setRecipes((current) =>
+        current.map((row) => (recipeKey(row) === key ? { ...row, favourite: saved } : row)),
+      )
+      setFavouriteMessage(
+        saved
+          ? `${recipe.name} saved to household favourites.`
+          : `${recipe.name} removed from household favourites.`,
+      )
+    } catch {
+      setRecipes((current) =>
+        current.map((row) =>
+          recipeKey(row) === key ? { ...row, favourite: recipe.favourite } : row,
+        ),
+      )
+      setFavouriteMessage(
+        'Could not save that favourite. Your previous choice is restored; try again.',
+      )
+    } finally {
+      favouriteRevision.current++
+      favouriteLocks.current.delete(key)
+      setPendingFavourites([...favouriteLocks.current])
+    }
+  }
+
+  function favouriteControl(recipe: Recipe) {
+    if (!repository.setFavourite || recipe.scope === 'private') return null
+    return (
+      <Button
+        variant="quiet"
+        type="button"
+        aria-pressed={recipe.favourite}
+        aria-label={`${recipe.favourite ? 'Unfavourite' : 'Favourite'} ${recipe.name}`}
+        disabled={pendingFavourites.includes(recipeKey(recipe))}
+        onClick={() => void toggleFavourite(recipe)}
+      >
+        {recipe.favourite ? '★ Favourite' : '☆ Favourite'}
+      </Button>
+    )
+  }
+
   const filteredRecipes = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase()
-    return recipes.filter((recipe) => recipe.name.toLocaleLowerCase().includes(normalisedQuery))
-  }, [query, recipes])
-  const selectedRecipe = recipes.find((recipe) => recipe.id === selectedId) ?? null
+    return recipes.filter(
+      (recipe) =>
+        (!favouritesOnly || recipe.favourite) &&
+        recipe.name.toLocaleLowerCase().includes(normalisedQuery),
+    )
+  }, [query, recipes, favouritesOnly])
+  const selectedRecipe = recipes.find((recipe) => recipeKey(recipe) === selectedId) ?? null
 
   useEffect(() => {
     const recipeId = searchParams.get('recipe')
@@ -195,7 +289,7 @@ export function RecipesPage() {
     const recipe = recipes.find((candidate) => candidate.id === recipeId)
     if (!recipe) return
     const timer = window.setTimeout(() => {
-      setSelectedId(recipe.id)
+      setSelectedId(recipeKey(recipe))
       if (searchParams.get('edit') === '1' && recipe.scope === 'household') {
         setEditDraft(recipeToMultilineInput(recipe))
         setEditErrors({})
@@ -217,7 +311,7 @@ export function RecipesPage() {
     try {
       const saved = await repository.create(householdId, parsed)
       setRecipes((current) => [...current, saved].sort((a, b) => a.name.localeCompare(b.name)))
-      setSelectedId(saved.id)
+      setSelectedId(recipeKey(saved))
       setDraft(emptyInput)
       setFieldErrors({})
       setCreating(false)
@@ -282,7 +376,7 @@ export function RecipesPage() {
       if (!repository.createImported) throw new Error('Recipe importing is not configured yet.')
       const saved = await repository.createImported(parsed, importVisibility)
       setRecipes((current) => [...current, saved].sort((a, b) => a.name.localeCompare(b.name)))
-      setSelectedId(saved.id)
+      setSelectedId(recipeKey(saved))
       setImporting(false)
       setImportDraft(null)
       setImportUrl('')
@@ -311,7 +405,13 @@ export function RecipesPage() {
     setSaving(true)
     try {
       const saved = await repository.update(householdId, selectedRecipe.id, parsed)
-      setRecipes((current) => current.map((recipe) => (recipe.id === saved.id ? saved : recipe)))
+      setRecipes((current) =>
+        current.map((recipe) =>
+          recipeKey(recipe) === recipeKey(saved)
+            ? { ...saved, favourite: recipe.favourite }
+            : recipe,
+        ),
+      )
       try {
         await shopping.refreshRecipe?.(householdId, saved)
       } catch {
@@ -336,7 +436,9 @@ export function RecipesPage() {
     try {
       if (!householdId) return
       await repository.archive(householdId, recipe.id)
-      setRecipes((current) => current.filter((candidate) => candidate.id !== recipe.id))
+      setRecipes((current) =>
+        current.filter((candidate) => recipeKey(candidate) !== recipeKey(recipe)),
+      )
       setSelectedId(null)
     } catch (archiveError) {
       setError(
@@ -472,14 +574,6 @@ export function RecipesPage() {
               }
             />
           </div>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={draft.favourite}
-              onChange={(event) => setDraft({ ...draft, favourite: event.target.checked })}
-            />
-            Favourite recipe
-          </label>
           {fieldErrors.form ? <p className="form-error">{fieldErrors.form}</p> : null}
           <div className="dialog-actions">
             <Button
@@ -632,6 +726,17 @@ export function RecipesPage() {
         </Button>
         <WeekPlanGenerator householdId={householdId} targetWeek={currentWeek(new Date())} />
       </div>
+      {repository.setFavourite ? (
+        <Button
+          variant="secondary"
+          type="button"
+          aria-pressed={favouritesOnly}
+          onClick={() => setFavouritesOnly((value) => !value)}
+        >
+          Favourites
+        </Button>
+      ) : null}
+      <p role="status">{selectedRecipe ? null : favouriteMessage}</p>
       {filteredRecipes.length === 0 ? (
         <Panel>
           <div className="empty-state">
@@ -639,7 +744,9 @@ export function RecipesPage() {
             <p>
               {recipes.length === 0
                 ? 'Add a household favourite so it is easy to find again.'
-                : 'Try a different recipe name or clear search.'}
+                : favouritesOnly
+                  ? 'No favourites match. Change your search or turn off Favourites.'
+                  : 'Try a different recipe name or clear search.'}
             </p>
             {recipes.length > 0 && query.trim() !== '' ? (
               <Button type="button" variant="secondary" onClick={() => setQuery('')}>
@@ -651,12 +758,12 @@ export function RecipesPage() {
       ) : (
         <div className="pantry-grid recipe-library-grid">
           {filteredRecipes.map((recipe) => (
-            <article className="pantry-card recipe-card" key={recipe.id}>
+            <article className="pantry-card recipe-card" key={recipeKey(recipe)}>
               <button
                 aria-label={`Open ${recipe.name} recipe`}
                 className="recipe-card-detail-action"
                 type="button"
-                onClick={() => setSelectedId(recipe.id)}
+                onClick={() => setSelectedId(recipeKey(recipe))}
               >
                 <span className="photo-frame recipe-card-photo" aria-hidden="true">
                   <span className="photo-frame-backdrop" />
@@ -694,6 +801,7 @@ export function RecipesPage() {
               >
                 {quickAddRecipeId === recipe.id ? 'Adding…' : '+'}
               </button>
+              {favouriteControl(recipe)}
             </article>
           ))}
         </div>
@@ -762,6 +870,9 @@ export function RecipesPage() {
                 <span className="visually-hidden"> (opens in a new tab)</span>
               </a>
             ) : null}
+            {favouriteControl(selectedRecipe)}
+            <p role="status">{favouriteMessage}</p>
+
             {selectedRecipe.authorName ? <p>By {selectedRecipe.authorName}</p> : null}
             {selectedRecipe.scope === 'public' ? <p>Shared Cooksmith recipe</p> : null}
             {selectedRecipe.scope === 'private' ? <p>Private recipe</p> : null}
@@ -803,19 +914,6 @@ export function RecipesPage() {
               onChange={(event) => setEditDraft({ ...editDraft, name: event.target.value })}
             />
             <RecipeMultilineEditor draft={editDraft} errors={editErrors} setDraft={setEditDraft} />
-            <label className="checkbox-row">
-              <input
-                type="checkbox"
-                checked={editDraft.favourite}
-                onChange={(event) =>
-                  setEditDraft({
-                    ...editDraft,
-                    favourite: event.target.checked,
-                  })
-                }
-              />
-              Favourite recipe
-            </label>
             <TextField
               label="Servings"
               inputMode="numeric"

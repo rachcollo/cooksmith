@@ -58,3 +58,7 @@ See [CS-97 handover](../../docs/engineering/handovers/cs97-shopping-period.md). 
 ## Integration after PR196
 
 Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve period selection alongside PR196's 20px Shopping marks/44px targets; do not restore the shopper refresh action. Admin maintenance and Home remain unchanged. Exact-head checks are reported in PR191. Migration `20261006010046` predates released PR195; separately approved database release requires reviewed remote history and pending-set dry-run using protected Production database release on approved main with `allow_out_of_order_migrations: true` (`--include-all`). No Edge deployment or production changes performed.
+
+## Integration after owner merges PR189 and PR190
+
+Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. The API table-contract conflict retains both `household_recipe_favourites` and `household_shopping_periods`; no schema or policy change is introduced by this resolution. Preserve accepted planner anchoring, favourites and PR196 polish/security contracts. Exact-head results are recorded in PR191. Database release still requires separately reviewed history/pending migrations and the protected `allow_out_of_order_migrations` option; no deployment performed.

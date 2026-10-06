@@ -87,3 +87,13 @@
     padding: var(--space-1);
   }
 }
+
+.planned-meal-title span.manual-meal-status {
+  display: block;
+  font-size: var(--font-size-small);
+}
+
+.meal-search-anchor {
+  position: relative;
+  min-width: 0;
+}
