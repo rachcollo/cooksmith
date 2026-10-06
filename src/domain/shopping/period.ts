@@ -97,7 +97,7 @@ export function shoppingPeriodView(
   const selected = selectedPeriodMeals(period, meals)
   const included = new Set(selected.map((m) => m.id))
   const items = rows.flatMap((row) => {
-    if (row.manual !== false && !row.planOverride) return [row]
+    if (row.manual !== false && (!row.planOverride || row.contributions.length === 0)) return [row]
     const contributions = row.contributions.filter((c) => included.has(c.plannedMealId))
     if (!contributions.length) return []
     const sources = contributions.flatMap((c) => c.sourceQuantities)

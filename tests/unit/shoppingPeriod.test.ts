@@ -106,6 +106,10 @@ describe('shopping period', () => {
       )?.quantity,
     ).toBe(8)
   })
+  it('keeps an adjusted purchase as a manual item after its last linked meal is removed', () => {
+    const adjusted = { ...row, manual: true, planOverride: true, contributions: [], quantity: 8 }
+    expect(shoppingPeriodView([adjusted], week, [], today).items).toEqual([adjusted])
+  })
   it('explains empty plans and leaves unknown quantities unknown', () => {
     expect(shoppingPeriodView([], week, [], today).description).toContain('add meals in Plan')
     const unknown = { ...row, contributions: [{ ...row.contributions[0]!, quantity: null }] }
