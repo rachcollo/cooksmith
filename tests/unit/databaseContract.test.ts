@@ -23,6 +23,7 @@ describe('generated database API contract', () => {
       | 'household_preference_profiles'
       | 'household_recipes'
       | 'household_settings'
+      | 'household_shopping_periods'
       | 'households'
       | 'imported_recipes'
       | 'infrastructure_health'

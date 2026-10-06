@@ -24,13 +24,13 @@ Generate Shopping from only the planned meals the household is currently buying 
 
 ## Acceptance Criteria
 
-- [ ] The active range is always visible and understandable.
-- [ ] Only in-range recipe contributions appear.
-- [ ] Changing range is reversible and does not delete plans or manual items.
-- [ ] Completion state is preserved for contributions that remain in range.
-- [ ] Invalid/stale ranges fall back safely with an explanation.
-- [ ] All members share the household selection and isolation passes.
-- [ ] Mobile combobox/range interaction, keyboard and axe checks pass.
+- [x] The active range is always visible and understandable.
+- [x] Only in-range recipe contributions appear.
+- [x] Changing range is reversible and does not delete plans or manual items.
+- [x] Completion state is preserved for contributions that remain in range.
+- [x] Invalid/stale ranges fall back safely with an explanation.
+- [x] All members share the household selection and isolation passes.
+- [x] Automated mobile select/range interaction, keyboard and axe checks pass; physical screen reader remains unverified.
 
 ## Technical Direction
 
@@ -50,3 +50,7 @@ Test boundary dates, daylight saving, sparse plans, range changes, manual/comple
 ## Pull Request
 
 Title: `CS-97: Choose the Shopping plan period`
+
+## Implementation evidence
+
+See [CS-97 handover](../../docs/engineering/handovers/cs97-shopping-period.md). Range changes project retained contribution snapshots; they do not destructively reconcile snapshots out of existence. Bought state and explicit overrides retain the current purchase-level contract. Active-member preference access uses its own table, preserving owner-only settings permissions.
