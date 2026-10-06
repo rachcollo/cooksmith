@@ -399,13 +399,10 @@ export function RecipesPage() {
   if (loading) return <LoadingState label="Loading your recipe library" />
 
   return (
-    <main className="page-stack">
+    <div className="page-stack">
       <DocumentTitle title="Recipe Library" />
       <header className="page-header recipe-library-header">
         <h1>Recipe Library</h1>
-        <p>
-          Save the recipes your household returns to, with ingredients and instructions together.
-        </p>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
       {quickAddStatus ? (
@@ -674,7 +671,7 @@ export function RecipesPage() {
                   <span className="recipe-card-summary">
                     {[minutesLabel(recipe), recipe.servings ? `${recipe.servings} servings` : null]
                       .filter(Boolean)
-                      .join(' · ') || 'Summary details not set'}
+                      .join(' · ')}
                   </span>
                   {recipe.tags.length > 0 ? (
                     <span className="recipe-tags" aria-label="Recipe tags">
@@ -757,23 +754,14 @@ export function RecipesPage() {
             ) : (
               <p>No instructions added yet.</p>
             )}
-            <dl>
-              <dt>Servings</dt>
-              <dd>{selectedRecipe.servings ?? 'Not set'}</dd>
-              <dt>Preparation time</dt>
-              <dd>
-                {selectedRecipe.prepTimeMinutes !== null
-                  ? `${selectedRecipe.prepTimeMinutes} minutes`
-                  : 'Not set'}
-              </dd>
-              <dt>Cooking time</dt>
-              <dd>
-                {selectedRecipe.cookTimeMinutes !== null
-                  ? `${selectedRecipe.cookTimeMinutes} minutes`
-                  : 'Not set'}
-              </dd>
-            </dl>
-            {selectedRecipe.favourite ? <p>Favourite recipe</p> : null}
+            {selectedRecipe.sourceUrl && /^https?:\/\//i.test(selectedRecipe.sourceUrl) ? (
+              <a href={selectedRecipe.sourceUrl} target="_blank" rel="noreferrer">
+                {selectedRecipe.publisherName
+                  ? `Original recipe · ${selectedRecipe.publisherName}`
+                  : 'Original recipe'}
+                <span className="visually-hidden"> (opens in a new tab)</span>
+              </a>
+            ) : null}
             {selectedRecipe.authorName ? <p>By {selectedRecipe.authorName}</p> : null}
             {selectedRecipe.scope === 'public' ? <p>Shared Cooksmith recipe</p> : null}
             {selectedRecipe.scope === 'private' ? <p>Private recipe</p> : null}
@@ -891,6 +879,6 @@ export function RecipesPage() {
           </form>
         </Dialog>
       ) : null}
-    </main>
+    </div>
   )
 }

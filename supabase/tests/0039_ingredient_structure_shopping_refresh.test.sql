@@ -25,9 +25,9 @@ select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-
 select is((select quantity from cooksmith.shopping_list_items where display_name='My chosen sugar'),90::numeric,'Deliberate purchase adjustment survives refresh');
 select is((select count(*)::integer from cooksmith.shopping_list_items where display_name='brown sugar'),0,'Refreshing an override does not reintroduce its planned purchase');
 select ok((select completed from cooksmith.shopping_list_items where display_name='My chosen sugar'),'Override bought state survives');
-select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.refresh_batch(),'{0,expected}','[]'))$$,'40001','Shopping contributions changed.','Stale/deleted contribution snapshot is rejected atomically');
-select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.refresh_batch(),'{0,recipeVersion}','"2000-01-01T00:00:00Z"'))$$,'40001','Recipe changed.','Stale recipe version is rejected');
-select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.refresh_batch(),'{0,recipeSource}','"imported"'))$$,'40001','Meal changed.','Source-kind substitution is rejected');
+select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.refresh_batch(),'{0,expected}','[]'))$$,'PT409','Shopping contributions changed.','Stale/deleted contribution snapshot is rejected atomically');
+select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.refresh_batch(),'{0,recipeVersion}','"2000-01-01T00:00:00Z"'))$$,'PT409','Recipe changed.','Stale recipe version is rejected');
+select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.refresh_batch(),'{0,recipeSource}','"imported"'))$$,'PT409','Meal changed.','Source-kind substitution is rejected');
 select is((select quantity from cooksmith.shopping_list_items where display_name='My chosen sugar'),90::numeric,'Rejected refreshes leave the override unchanged');
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000003',true);
 select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001','[]')$$,'42501',null,'Unrelated household cannot refresh');

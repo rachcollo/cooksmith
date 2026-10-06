@@ -39,3 +39,7 @@ CS-99 explicitly depends on CS-96's planner search. Accept/rebase against that c
 Status: implemented; hosted/manual validation pending. This draft does not release Production. After approval/merge, use the protected Production database release workflow for the exact approved main SHA, with dry-run and migration-history verification. Apply the new relation before using the new Shopping code. Released migrations are immutable; forward-fix them. Roll back UI if needed and retain the additive preference data.
 
 Hosted preview was not exercised against the production-backed environment. Release checks: two synthetic members share a saved range and reload it; an unrelated household sees neither preference nor items; narrow/widen around bought and adjusted purchases; check manual/restock retention and recipe refresh. Physical Safari/VoiceOver is unverified. Public deployment smoke is not proof of these authenticated flows.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve period selection alongside PR196's 20px Shopping marks/44px targets; do not restore the shopper refresh action. Admin maintenance and Home remain unchanged. Exact-head checks are reported in PR191. Migration `20261006010046` predates released PR195; separately approved database release requires reviewed remote history and pending-set dry-run using protected Production database release on approved main with `allow_out_of_order_migrations: true` (`--include-all`). No Edge deployment or production changes performed.

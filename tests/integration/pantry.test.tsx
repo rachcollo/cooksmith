@@ -400,7 +400,7 @@ describe('household staples experience', () => {
     expect(within(dialog).getByRole('button', { name: 'Got it' })).toBeVisible()
     expect(within(dialog).getByRole('button', { name: 'Ignore' })).toBeVisible()
 
-    await user.click(within(dialog).getByRole('button', { name: 'Add' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Add to Shopping' }))
 
     expect(confirm).not.toHaveBeenCalled()
     expect(createShopping).toHaveBeenCalledWith(householdId, {
