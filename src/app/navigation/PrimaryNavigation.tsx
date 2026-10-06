@@ -1,3 +1,4 @@
+import { ShieldCheck } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
@@ -5,9 +6,10 @@ import { mobileNavigationItems, navigationItems } from './navigationItems'
 
 interface PrimaryNavigationProps {
   variant: 'mobile' | 'desktop'
+  admin?: boolean
 }
 
-export function PrimaryNavigation({ variant }: PrimaryNavigationProps) {
+export function PrimaryNavigation({ variant, admin = false }: PrimaryNavigationProps) {
   const items = variant === 'mobile' ? mobileNavigationItems : navigationItems
   const location = useLocation()
   const navigate = useNavigate()
@@ -111,6 +113,12 @@ export function PrimaryNavigation({ variant }: PrimaryNavigationProps) {
           </NavLink>
         ),
       )}
+      {variant === 'desktop' && admin ? (
+        <NavLink to="/admin">
+          <ShieldCheck aria-hidden="true" />
+          <span>Admin</span>
+        </NavLink>
+      ) : null}
     </nav>
   )
 }

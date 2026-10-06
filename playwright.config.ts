@@ -18,6 +18,11 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'shopping-webkit',
+      testMatch: 'purchase-groups.spec.ts',
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },

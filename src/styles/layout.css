@@ -61,6 +61,7 @@
 }
 
 .page-header h1 {
+  overflow-wrap: anywhere;
   margin-bottom: var(--space-4);
   max-width: 13ch;
 }
@@ -115,5 +116,11 @@
 
   .site-footer {
     grid-column: 2;
+  }
+}
+
+@media (max-width: 24rem) {
+  .page-container {
+    width: calc(100% - 32px);
   }
 }

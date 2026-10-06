@@ -1,3 +1,4 @@
+import { ShoppingMaintenance } from '../app/admin/ShoppingMaintenance'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -114,6 +115,7 @@ export function AdminPage() {
           ))}
         </div>
       </Panel>
+      <ShoppingMaintenance />
       <WeeklyPreparationOperations />
       <RecipeEnrichmentOperations />
       <Panel>
