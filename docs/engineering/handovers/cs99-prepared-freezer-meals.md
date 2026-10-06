@@ -103,3 +103,5 @@ Existing looping requests are not stopped by replacing the function. Any hosted 
 ## Integration after PR196
 
 Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve PR196 Pantry/Home/Shopping changes and WebKit CI. Resolve shared local HTTP client to accepted main's raw-client plus schema-scoped wrapper, retaining localhost-only endpoints; run all Shopping and freezer HTTP tests serially. PR189 remains a dependency. Exact-head integration checks are reported in PR192. Migrations `20261006012145` and `20261006023152` predate released PR195: use the separately approved protected Production database release on approved main with `allow_out_of_order_migrations: true` (`--include-all`) only after reviewing remote history and the complete pending set/dry-run. No Edge release or production actions performed.
+
+The PR189 input-anchoring correction is also integrated, preserving freezer-first choices, combined option indexes, manual selection and keyboard behaviour.
