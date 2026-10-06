@@ -24,13 +24,13 @@ Generate Shopping from only the planned meals the household is currently buying 
 
 ## Acceptance Criteria
 
-- [ ] The active range is always visible and understandable.
-- [ ] Only in-range recipe contributions appear.
-- [ ] Changing range is reversible and does not delete plans or manual items.
-- [ ] Completion state is preserved for contributions that remain in range.
-- [ ] Invalid/stale ranges fall back safely with an explanation.
-- [ ] All members share the household selection and isolation passes.
-- [ ] Mobile combobox/range interaction, keyboard and axe checks pass.
+- [x] The active range is always visible and understandable.
+- [x] Only in-range recipe contributions appear.
+- [x] Changing range is reversible and does not delete plans or manual items.
+- [x] Completion state is preserved for contributions that remain in range.
+- [x] Invalid/stale ranges fall back safely with an explanation.
+- [x] All members share the household selection and isolation passes.
+- [x] Automated mobile select/range interaction, keyboard and axe checks pass; physical screen reader remains unverified.
 
 ## Technical Direction
 
@@ -50,3 +50,15 @@ Test boundary dates, daylight saving, sparse plans, range changes, manual/comple
 ## Pull Request
 
 Title: `CS-97: Choose the Shopping plan period`
+
+## Implementation evidence
+
+See [CS-97 handover](../../docs/engineering/handovers/cs97-shopping-period.md). Range changes project retained contribution snapshots; they do not destructively reconcile snapshots out of existence. Bought state and explicit overrides retain the current purchase-level contract. Active-member preference access uses its own table, preserving owner-only settings permissions.
+
+## Integration after PR196
+
+Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve period selection alongside PR196's 20px Shopping marks/44px targets; do not restore the shopper refresh action. Admin maintenance and Home remain unchanged. Exact-head checks are reported in PR191. Migration `20261006010046` predates released PR195; separately approved database release requires reviewed remote history and pending-set dry-run using protected Production database release on approved main with `allow_out_of_order_migrations: true` (`--include-all`). No Edge deployment or production changes performed.
+
+## Integration after owner merges PR189 and PR190
+
+Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. The API table-contract conflict retains both `household_recipe_favourites` and `household_shopping_periods`; no schema or policy change is introduced by this resolution. Preserve accepted planner anchoring, favourites and PR196 polish/security contracts. Exact-head results are recorded in PR191. Database release still requires separately reviewed history/pending migrations and the protected `allow_out_of_order_migrations` option; no deployment performed.

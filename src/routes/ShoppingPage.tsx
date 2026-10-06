@@ -1,6 +1,8 @@
 import { ShoppingPutAway } from './shopping/ShoppingPutAway'
+import { ShoppingPeriodControl } from './shopping/ShoppingPeriodControl'
+import type { ShoppingPeriod, ShoppingPeriodView } from '../domain/shopping/period'
 import { MeasurementSelect } from '../components/ui/MeasurementSelect'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 
 import { useOnboarding } from '../app/onboarding/onboardingContext'
@@ -42,9 +44,18 @@ type FieldErrors = Partial<Record<keyof ShoppingItemInput | 'form', string>>
 
 export function ShoppingPage() {
   const { state } = useOnboarding()
+  return <HouseholdShoppingPage key={state.householdId ?? 'none'} />
+}
+
+function HouseholdShoppingPage() {
+  const { state } = useOnboarding()
   const householdId = state.householdId
   const repository = useShoppingRepository()
   const pantryRepository = usePantryRepository()
+  const [periodView, setPeriodView] = useState<ShoppingPeriodView | null>(null)
+  const periodLock = useRef(false)
+  const periodRevision = useRef(0)
+  const [periodBusy, setPeriodBusy] = useState(false)
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [pantryItems, setPantryItems] = useState<PantryItem[]>([])
   const [draft, setDraft] = useState<ShoppingItemInput>(emptyInput)
@@ -67,7 +78,15 @@ export function ShoppingPage() {
   useEffect(() => {
     let active = true
     if (!householdId) return
-    Promise.allSettled([repository.list(householdId), pantryRepository.list(householdId)])
+    Promise.allSettled([
+      repository.loadPeriod
+        ? repository.loadPeriod(householdId).then((view) => {
+            if (active) setPeriodView(view)
+            return view.items
+          })
+        : repository.list(householdId),
+      pantryRepository.list(householdId),
+    ])
       .then(([shoppingResult, pantryResult]) => {
         if (!active) return
         if (shoppingResult.status === 'rejected') throw shoppingResult.reason
@@ -90,6 +109,65 @@ export function ShoppingPage() {
       active = false
     }
   }, [householdId, pantryRepository, repository])
+
+  useEffect(() => {
+    if (!householdId || !repository.loadPeriod) return
+    let active = true
+    let sequence = 0
+    async function refresh() {
+      if (
+        periodLock.current ||
+        saving ||
+        editing ||
+        purchaseEdit ||
+        document.visibilityState === 'hidden' ||
+        document.activeElement?.closest('form, dialog')
+      )
+        return
+      const revision = periodRevision.current
+      const request = ++sequence
+      try {
+        const view = await repository.loadPeriod!(householdId!)
+        if (
+          active &&
+          request === sequence &&
+          revision === periodRevision.current &&
+          !periodLock.current
+        ) {
+          setPeriodView(view)
+          setItems(view.items)
+        }
+      } catch {
+        if (active)
+          setError('Could not refresh the shared shopping period. Try refreshing Cooksmith.')
+      }
+    }
+    window.addEventListener('focus', refresh)
+    const timer = window.setInterval(() => void refresh(), 30_000)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [householdId, repository, saving, editing, purchaseEdit])
+
+  async function changePeriod(period: ShoppingPeriod) {
+    if (!householdId || !repository.savePeriod || !repository.loadPeriod || periodLock.current)
+      return
+    periodLock.current = true
+    periodRevision.current++
+    setPeriodBusy(true)
+    try {
+      await repository.savePeriod(householdId, period)
+      const view = await repository.loadPeriod(householdId)
+      setPeriodView(view)
+      setItems(view.items)
+    } finally {
+      periodRevision.current++
+      periodLock.current = false
+      setPeriodBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!openPantryInfoId) return
@@ -374,6 +452,14 @@ export function ShoppingPage() {
         </div>
         <p>Add what your household needs, then tick items off as you shop.</p>
       </header>
+      {periodView && repository.savePeriod ? (
+        <ShoppingPeriodControl
+          key={JSON.stringify(periodView.period)}
+          view={periodView}
+          busy={periodBusy || saving}
+          onSave={changePeriod}
+        />
+      ) : null}
 
       {error ? <ErrorState title="Shopping needs a quick check" message={error} /> : null}
 

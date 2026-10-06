@@ -91,3 +91,7 @@ Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Retain both
 ## Integration after owner merges PR189 and PR190
 
 Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d` without content conflicts. Retain both accepted favourites and put-away table/type contracts plus PR189 input anchoring, PR196 polish, public-recipe locks and HTTP/WebKit checks. Exact-head validation is recorded in PR193. No new migration, Edge Function or production action is introduced by this integration.
+
+## Integration after PR191
+
+Integrated accepted main `3f6ecebf8dd922be990cd6f022218ea7adde0e4b`. Combine Shopping-period and put-away repository contracts/methods, retaining period-aware listing and global idempotent put-away review. Both page controls remain; accepted mark alignment, absent shopper refresh, security and HTTP/WebKit checks are preserved. Exact-head tests are recorded in PR193. PR191 database release was waiting at read-only inspection; no approval/deploy performed. Existing put-away migration release requirements remain; no new migration or Edge change.
