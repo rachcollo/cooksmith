@@ -109,3 +109,7 @@ The PR189 input-anchoring correction is also integrated, preserving freezer-firs
 ## Integration after owner merges PR189 and PR190
 
 Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. API-contract expectations retain both freezer tables and household favourites. Generated types and unit contracts incorporate accepted favourites. Planner input anchoring, freezer choices, PR196 polish and HTTP/WebKit security checks remain. Exact-head checks are recorded in PR192. No new migration, Edge Function or production action is introduced by this integration.
+
+## Integration after PR191
+
+Integrated accepted main `3f6ecebf8dd922be990cd6f022218ea7adde0e4b`. Table-contract expectations retain freezer, favourites and Shopping-period tables. Accepted planner anchoring, Shopping period/mark behaviour and security/HTTP/WebKit contracts remain. Exact-head checks are recorded in PR192. PR191 database release37538439556 was waiting at read-only inspection; no approval or deployment performed. Existing freezer migration release requirements remain; no new migration or Edge change.

@@ -799,6 +799,44 @@ export type Database = {
           },
         ]
       }
+      household_shopping_periods: {
+        Row: {
+          created_at: string
+          household_id: string
+          shopping_period_from: string
+          shopping_period_kind: string
+          shopping_period_to: string
+          shopping_period_week: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          shopping_period_from: string
+          shopping_period_kind?: string
+          shopping_period_to: string
+          shopping_period_week: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          shopping_period_from?: string
+          shopping_period_kind?: string
+          shopping_period_to?: string
+          shopping_period_week?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_shopping_periods_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: true
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       households: {
         Row: {
           archived_at: string | null
