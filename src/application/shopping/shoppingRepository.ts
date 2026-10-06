@@ -1,7 +1,14 @@
+import type { PutAwaySource, PutAwayChoice, PutAwayResult } from '../../domain/shopping/putAway'
 import type { Recipe } from '../../domain/recipes/types'
 import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/types'
 
 export interface ShoppingRepository {
+  listPutAway?(householdId: string): Promise<PutAwaySource[]>
+  putAway?(
+    householdId: string,
+    operationId: string,
+    choices: PutAwayChoice[],
+  ): Promise<PutAwayResult>
   refreshStructure?(householdId: string): Promise<{ refreshed: number; skipped: number }>
   list(householdId: string): Promise<ShoppingItem[]>
   create(householdId: string, input: ShoppingItemInput): Promise<ShoppingItem>

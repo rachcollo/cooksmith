@@ -55,6 +55,8 @@ Every ADR must contain:
 | [014](../architecture/decisions/014-purchasing-ingredient-identity.md)             | Proposed   | Share purchasing ingredient identity across Shopping and Pantry |
 | [015](../architecture/decisions/015-shared-lossless-ingredient-structure.md)       | Proposed   | Share lossless ingredient structure across recipe consumers     |
 
+| [017](../architecture/decisions/017-shopping-put-away-receipts.md) | Proposed | Apply shopping to Pantry once using availability receipts |
+
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 
 ## When Codex must create an ADR

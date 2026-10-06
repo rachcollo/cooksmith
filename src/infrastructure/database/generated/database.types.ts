@@ -1419,6 +1419,105 @@ export type Database = {
           },
         ]
       }
+      shopping_put_away_batches: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          household_id: string
+          id: string
+          request: Json
+          result: Json
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          household_id: string
+          id: string
+          request: Json
+          result: Json
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          request?: Json
+          result?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_put_away_batches_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      shopping_put_away_receipts: {
+        Row: {
+          batch_id: string
+          contribution_id: string | null
+          created_at: string
+          household_id: string
+          id: string
+          pantry_item_id: string | null
+          pantry_name: string
+          planned_meal_id: string | null
+          shopping_item_id: string
+          source_key: string
+          source_quantities: Json
+        }
+        Insert: {
+          batch_id: string
+          contribution_id?: string | null
+          created_at?: string
+          household_id: string
+          id?: string
+          pantry_item_id?: string | null
+          pantry_name: string
+          planned_meal_id?: string | null
+          shopping_item_id: string
+          source_key: string
+          source_quantities: Json
+        }
+        Update: {
+          batch_id?: string
+          contribution_id?: string | null
+          created_at?: string
+          household_id?: string
+          id?: string
+          pantry_item_id?: string | null
+          pantry_name?: string
+          planned_meal_id?: string | null
+          shopping_item_id?: string
+          source_key?: string
+          source_quantities?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_put_away_receipts_batch_id_fkey'
+            columns: ['batch_id']
+            isOneToOne: false
+            referencedRelation: 'shopping_put_away_batches'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'shopping_put_away_receipts_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'shopping_put_away_receipts_pantry_item_id_fkey'
+            columns: ['pantry_item_id']
+            isOneToOne: false
+            referencedRelation: 'household_pantry_items'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       weekly_preparation_evaluation_acceptances: {
         Row: {
           accepted_at: string
@@ -1893,6 +1992,14 @@ export type Database = {
       purchase_unit_multiplier_v3: { Args: { value: string }; Returns: number }
       purchase_unit_v2: { Args: { value: string }; Returns: string }
       purchase_unit_v3: { Args: { value: string }; Returns: string }
+      put_shopping_away: {
+        Args: {
+          operation_id: string
+          reviewed_items: Json
+          target_household_id: string
+        }
+        Returns: Json
+      }
       recipe_enrichment_backfill_command: {
         Args: { batch_limit?: number; command: string }
         Returns: Json
@@ -1942,6 +2049,18 @@ export type Database = {
           target_household_id: string
         }
         Returns: undefined
+      }
+      shopping_put_away_sources: {
+        Args: { target_household_id: string }
+        Returns: {
+          contribution_id: string
+          name: string
+          planned_meal_id: string
+          shopping_item_id: string
+          snapshot_token: string
+          source_key: string
+          source_quantities: Json
+        }[]
       }
       shopping_sources_overlap: {
         Args: { left_sources: Json; right_sources: Json }

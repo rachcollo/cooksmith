@@ -1,8 +1,7 @@
-import { classifyPantryItem } from './classification'
 import type { PantryItem, PantryItemInput } from './types'
 import { matchShoppingItemToPantry, normalisePantryMatchName } from '../shopping/pantryMatching'
 
-export type PantryReconciliationSource = 'shopping-put-away' | 'meal-cooked'
+export type PantryReconciliationSource = 'meal-cooked'
 
 export type PantryReconciliationProposal =
   | {
@@ -59,80 +58,6 @@ export function numericQuantity(value: number | string | null): number | null {
   if (value === null || value === '') return null
   const parsed = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
-}
-
-export function buildPutAwayProposal(
-  item: ReconciliationLineSource,
-  pantryItems: readonly PantryItem[],
-  reviewedKeys: ReadonlySet<string> = new Set(),
-): PantryReconciliationProposal {
-  const key = reconciliationKey('shopping-put-away', item.id)
-  if (reviewedKeys.has(key)) {
-    return {
-      kind: 'skip',
-      source: 'shopping-put-away',
-      sourceId: item.id,
-      sourceText: item.name,
-      reason: 'already-reviewed',
-      idempotencyKey: key,
-    }
-  }
-  const match = matchShoppingItemToPantry(item.name, pantryItems)
-  if (match.state === 'ambiguous') {
-    return {
-      kind: 'skip',
-      source: 'shopping-put-away',
-      sourceId: item.id,
-      sourceText: item.name,
-      reason: 'ambiguous-match',
-      idempotencyKey: key,
-    }
-  }
-  const quantity = numericQuantity(item.quantity)
-  const unit = item.unit?.trim() || null
-  if (match.state === 'match') {
-    const pantryItem = pantryItems.find((candidate) => candidate.id === match.pantryItemId)
-    if (!pantryItem || !quantitiesAreCompatible(unit, pantryItem.unit)) {
-      return {
-        kind: 'skip',
-        source: 'shopping-put-away',
-        sourceId: item.id,
-        sourceText: item.name,
-        reason: 'incompatible-quantity',
-        idempotencyKey: key,
-      }
-    }
-    return {
-      kind: 'increment',
-      source: 'shopping-put-away',
-      sourceId: item.id,
-      sourceText: item.name,
-      pantryItemId: pantryItem.id,
-      pantryItemName: pantryItem.name,
-      quantity,
-      unit,
-      idempotencyKey: key,
-    }
-  }
-  const classification = classifyPantryItem(item.name)
-  return {
-    kind: 'create',
-    source: 'shopping-put-away',
-    sourceId: item.id,
-    sourceText: item.name,
-    input: {
-      name: item.name.trim(),
-      category: classification.category,
-      categorySource: 'automatic',
-      storageLocation: classification.storageLocation,
-      storageLocationSource: 'automatic',
-      classificationVersion: classification.version,
-      quantity,
-      unit,
-      available: true,
-    },
-    idempotencyKey: key,
-  }
 }
 
 export function buildCookedMealProposals(
