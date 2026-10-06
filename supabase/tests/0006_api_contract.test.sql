@@ -23,6 +23,7 @@ select results_eq(
     'household_members:DELETE', 'household_members:INSERT', 'household_members:SELECT', 'household_members:UPDATE',
     'household_pantry_items:DELETE', 'household_pantry_items:INSERT', 'household_pantry_items:SELECT', 'household_pantry_items:UPDATE',
     'household_preference_profiles:DELETE', 'household_preference_profiles:INSERT', 'household_preference_profiles:SELECT', 'household_preference_profiles:UPDATE',
+    'household_recipe_favourites:DELETE', 'household_recipe_favourites:INSERT', 'household_recipe_favourites:SELECT',
     'household_recipes:INSERT', 'household_recipes:SELECT', 'household_recipes:UPDATE',
     'household_settings:DELETE', 'household_settings:INSERT', 'household_settings:SELECT', 'household_settings:UPDATE',
     'households:SELECT', 'households:UPDATE',
@@ -73,7 +74,8 @@ select results_eq(
     where table_schema = 'cooksmith' and table_type = 'BASE TABLE' order by table_name$$,
   (array[
     'app_user_roles', 'feature_flag_audit', 'feature_flags', 'freezer_meal_events', 'freezer_meal_reservations', 'freezer_meals', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
-    'household_members', 'household_pantry_items', 'household_preference_profiles', 'household_recipes', 'household_settings', 'households',
+    'household_members', 'household_pantry_items', 'household_preference_profiles', 'household_recipe_favourites', 'household_recipes', 'household_settings', 'households',
+
     'imported_recipes', 'infrastructure_health', 'planned_meals', 'profiles',
     'recipe_content_versions', 'recipe_enrichment_backfill_audit', 'recipe_enrichment_jobs', 'recipe_enrichments', 'recipe_ingredients',
     'recipe_intelligence_settings', 'recipe_steps',

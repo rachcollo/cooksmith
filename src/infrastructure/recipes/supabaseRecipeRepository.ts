@@ -253,6 +253,16 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         throw new Error('Cooksmith could not import that page. Check the URL and try again.')
       return result.data as RecipeImportDraft
     },
+    async setFavourite(householdId, recipeId, source, desired) {
+      const result = await database.rpc('set_household_recipe_favourite', {
+        target_household_id: householdId,
+        target_recipe_id: recipeId,
+        target_source: source,
+        desired,
+      })
+      recipeError(result.error)
+      return result.data === true
+    },
     async list(householdId) {
       const result = await database
         .from('household_recipes')
@@ -271,10 +281,29 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
         .is('archived_at', null)
         .order('name')
       recipeError(importedResult.error)
+      const favourites = await database
+        .from('household_recipe_favourites')
+        .select('household_recipe_id,imported_recipe_id')
+        .eq('household_id', householdId)
+      recipeError(favourites.error)
+      const saved = new Set(
+        (favourites.data ?? []).map((row) =>
+          row.household_recipe_id
+            ? `household:${row.household_recipe_id}`
+            : `imported:${row.imported_recipe_id}`,
+        ),
+      )
       return [
         ...((result.data ?? []) as unknown as RecipeRow[]).map(mapRow),
         ...((importedResult.data ?? []) as unknown as ImportedRecipeRow[]).map(mapImportedRow),
-      ].sort((a, b) => a.name.localeCompare(b.name))
+      ]
+        .map((recipe) => ({
+          ...recipe,
+          favourite: saved.has(
+            `${recipe.scope === 'household' ? 'household' : 'imported'}:${recipe.id}`,
+          ),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name))
     },
     async createImported(input, visibility) {
       const derivedContent = deriveRecipeContent(input.ingredients, input.description)

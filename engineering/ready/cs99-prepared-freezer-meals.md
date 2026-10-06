@@ -66,3 +66,7 @@ The original stale-edit guard used SQLSTATE `40001`. Local PostgREST 14.5 retrie
 ## Integration after PR196
 
 Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve PR196 Pantry/Home/Shopping changes and WebKit CI. Resolve shared local HTTP client to accepted main's raw-client plus schema-scoped wrapper, retaining localhost-only endpoints; run all Shopping and freezer HTTP tests serially. PR189 remains a dependency. Exact-head integration checks are reported in PR192. Migrations `20261006012145` and `20261006023152` predate released PR195: use the separately approved protected Production database release on approved main with `allow_out_of_order_migrations: true` (`--include-all`) only after reviewing remote history and the complete pending set/dry-run. No Edge release or production actions performed.
+
+## Integration after owner merges PR189 and PR190
+
+Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. API-contract expectations retain both freezer tables and household favourites. Generated types and unit contracts incorporate accepted favourites. Planner input anchoring, freezer choices, PR196 polish and HTTP/WebKit security checks remain. Exact-head checks are recorded in PR192. No new migration, Edge Function or production action is introduced by this integration.
