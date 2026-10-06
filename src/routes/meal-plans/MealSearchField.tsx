@@ -73,27 +73,76 @@ export function MealSearchField({
       <label className="field" htmlFor={id}>
         Dinner
       </label>
-      <input
-        id={id}
-        data-autofocus
-        role="combobox"
-        aria-autocomplete="list"
-        aria-expanded={open}
-        aria-controls={`${id}-results`}
-        aria-activedescendant={open && count ? `${id}-option-${index}` : undefined}
-        aria-describedby={`${id}-help`}
-        autoComplete="off"
-        maxLength={120}
-        disabled={disabled}
-        value={value}
-        onFocus={() => setOpen(true)}
-        onChange={(event) => {
-          onQuery(event.target.value)
-          setActive(0)
-          setOpen(true)
-        }}
-        onKeyDown={keyDown}
-      />
+      <div className="meal-search-anchor">
+        <input
+          id={id}
+          data-autofocus
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={open}
+          aria-controls={`${id}-results`}
+          aria-activedescendant={open && count ? `${id}-option-${index}` : undefined}
+          aria-describedby={`${id}-help`}
+          autoComplete="off"
+          maxLength={120}
+          disabled={disabled}
+          value={value}
+          onFocus={() => setOpen(true)}
+          onChange={(event) => {
+            onQuery(event.target.value)
+            setActive(0)
+            setOpen(true)
+          }}
+          onKeyDown={keyDown}
+        />
+        {open ? (
+          <div
+            className="recipe-search-results"
+            id={`${id}-results`}
+            role="listbox"
+            aria-label="Dinner choices"
+          >
+            {matches.map((recipe, position) => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={index === position}
+                id={`${id}-option-${position}`}
+                key={`${recipe.scope ?? 'household'}:${recipe.id}`}
+                tabIndex={-1}
+                className={index === position ? 'active' : ''}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => choose(position)}
+              >
+                {recipe.name}
+                <small>
+                  {' '}
+                  ·{' '}
+                  {recipe.scope === 'public'
+                    ? 'Shared recipe'
+                    : recipe.scope === 'private'
+                      ? 'Private recipe'
+                      : 'Household recipe'}
+                </small>
+              </button>
+            ))}
+            {query ? (
+              <button
+                type="button"
+                role="option"
+                aria-selected={index === matches.length}
+                id={`${id}-option-${matches.length}`}
+                tabIndex={-1}
+                className={index === matches.length ? 'active' : ''}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => choose(matches.length)}
+              >
+                Add “{query}” — manual meal
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       <p id={`${id}-help`} className="form-hint" role="status">
         {loading
           ? 'Loading recipes. You can still add a manual meal.'
@@ -102,53 +151,6 @@ export function MealSearchField({
               ? 'No matching recipes. Add this as a manual meal.'
               : 'Search recipes or type a meal name, then choose an option.')}
       </p>
-      {open ? (
-        <div
-          className="recipe-search-results"
-          id={`${id}-results`}
-          role="listbox"
-          aria-label="Dinner choices"
-        >
-          {matches.map((recipe, position) => (
-            <button
-              type="button"
-              role="option"
-              aria-selected={index === position}
-              id={`${id}-option-${position}`}
-              key={`${recipe.scope ?? 'household'}:${recipe.id}`}
-              tabIndex={-1}
-              className={index === position ? 'active' : ''}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={() => choose(position)}
-            >
-              {recipe.name}
-              <small>
-                {' '}
-                ·{' '}
-                {recipe.scope === 'public'
-                  ? 'Shared recipe'
-                  : recipe.scope === 'private'
-                    ? 'Private recipe'
-                    : 'Household recipe'}
-              </small>
-            </button>
-          ))}
-          {query ? (
-            <button
-              type="button"
-              role="option"
-              aria-selected={index === matches.length}
-              id={`${id}-option-${matches.length}`}
-              tabIndex={-1}
-              className={index === matches.length ? 'active' : ''}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={() => choose(matches.length)}
-            >
-              Add “{query}” — manual meal
-            </button>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   )
 }
