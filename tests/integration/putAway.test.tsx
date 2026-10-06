@@ -4,7 +4,7 @@ import { expect, it, vi } from 'vitest'
 import { ShoppingPutAway } from '../../src/routes/shopping/ShoppingPutAway'
 import { ShoppingRepositoryContext } from '../../src/app/shopping/shoppingContext'
 import { putAwayFixture } from '../fixtures/putAway'
-import type { PutAwaySource } from '../../src/domain/shopping/putAway'
+import { PutAwayReviewError, type PutAwaySource } from '../../src/domain/shopping/putAway'
 
 it('groups equivalent purchases, honours cancel, exclusions and corrected names', async () => {
   const f = putAwayFixture(),
@@ -86,4 +86,21 @@ it('discards an old household draft and late eligibility response', async () => 
   await waitFor(() =>
     expect(within(screen.getByRole('dialog')).getByRole('textbox')).toHaveValue('new food'),
   )
+})
+
+it('unlocks corrections after a definite rejected review without treating it as an uncertain commit', async () => {
+  const f = putAwayFixture()
+  f.repository.putAway = vi.fn(async () => {
+    throw new PutAwayReviewError('Use the exact Pantry name. Nothing was put away.')
+  })
+  render(
+    <ShoppingRepositoryContext.Provider value={f.repository}>
+      <ShoppingPutAway householdId="household" refreshKey="one" onApplied={() => undefined} />
+    </ShoppingRepositoryContext.Provider>,
+  )
+  await userEvent.click(await screen.findByRole('button', { name: 'Put shopping away' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Put selected items away' }))
+  await screen.findByText('Use the exact Pantry name. Nothing was put away.')
+  expect(screen.getByRole('textbox', { name: 'Pantry name for milk' })).toBeEnabled()
+  expect(f.applied.size).toBe(0)
 })

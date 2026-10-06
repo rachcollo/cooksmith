@@ -33,3 +33,6 @@ export function groupPutAwaySources(sources: readonly PutAwaySource[]): PutAwayR
   }
   return [...groups.values()]
 }
+
+/** A definite rejected review, so its inputs may safely be corrected. */
+export class PutAwayReviewError extends Error {}

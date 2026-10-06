@@ -1,3 +1,4 @@
+import { PutAwayReviewError } from '../../domain/shopping/putAway'
 import { z } from 'zod'
 import {
   refreshedIngredientInputs,
@@ -87,6 +88,14 @@ export function createSupabaseShoppingRepository(
         operation_id: operationId,
         reviewed_items: choices.map((choice) => ({ ...choice })),
       })
+      if (result.error?.code === 'PT409')
+        throw new PutAwayReviewError(
+          'Shopping changed. Close and reopen the review to check the latest purchases. Nothing was put away.',
+        )
+      if (result.error?.code === '23514')
+        throw new PutAwayReviewError(
+          'Check item names. If several Pantry items match, use the exact Pantry name or untick that item. Nothing was put away.',
+        )
       shoppingError(result.error)
       return z
         .object({

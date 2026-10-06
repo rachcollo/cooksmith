@@ -5,6 +5,7 @@ import { Dialog } from '../../components/ui/Dialog'
 import { TextField } from '../../components/ui/TextField'
 import { classifyPantryItem } from '../../domain/pantry/classification'
 import {
+  PutAwayReviewError,
   groupPutAwaySources,
   type PutAwayReview,
   type PutAwaySource,
@@ -45,7 +46,8 @@ export function ShoppingPutAway({
         if (current && version === readVersion.current) setSources(rows)
       })
       .catch(() => {
-        if (current) setMessage('Could not check bought items for Pantry. Refresh to retry.')
+        if (current && version === readVersion.current)
+          setMessage('Could not check bought items for Pantry. Refresh to retry.')
       })
     return () => {
       current = false
@@ -123,11 +125,18 @@ export function ShoppingPutAway({
           : 'These purchases had already been put away. Pantry was not changed again.',
       )
       onApplied()
-    } catch {
-      if (active.current)
-        setMessage(
-          'Could not confirm put-away. Retry unchanged safely, or close and reopen to check the latest purchases. Your selection is applied together.',
-        )
+    } catch (error) {
+      if (active.current) {
+        if (error instanceof PutAwayReviewError) {
+          attempt.current = null
+          setAttemptLocked(false)
+          setMessage(error.message)
+        } else {
+          setMessage(
+            'Could not confirm put-away. Retry unchanged safely, or close and reopen to check the latest purchases. Your selection is applied together.',
+          )
+        }
+      }
     } finally {
       lock.current = false
       if (active.current) setBusy(false)
