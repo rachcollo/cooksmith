@@ -449,33 +449,28 @@ button.card:hover {
   width: 1.25rem;
 }
 
-.home-foundation .page-header {
-  padding-block: clamp(var(--space-4), 4vw, var(--space-8));
+.home-overview-grid .card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
 }
-
-.home-foundation .page-header-copy {
-  max-width: 48rem;
+.home-overview-grid .card p {
+  margin: 0;
 }
-
-.home-foundation-grid .card {
-  min-height: 15rem;
-  padding: clamp(var(--space-5), 4vw, var(--space-7));
+.home-overview-grid .card .button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
 }
-
-.home-foundation-grid .card:nth-child(2) {
-  background: var(--colour-accent-lime-soft);
+.home-next-meal {
+  display: grid;
+  gap: var(--space-1);
 }
-
-.home-foundation-grid .card:nth-child(3) {
-  background: var(--colour-accent-lilac);
-}
-
-.home-foundation-grid .card > svg {
-  background: var(--colour-brand);
-  border-radius: var(--radius-pill);
-  box-sizing: content-box;
-  color: var(--colour-accent-lime);
-  padding: var(--space-2);
+.home-next-meal strong {
+  font-size: var(--font-size-lead);
+  overflow-wrap: anywhere;
 }
 
 @media (min-width: 42rem) {
@@ -785,6 +780,12 @@ button.card:hover {
   }
 }
 
+.pantry-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
 .pantry-header {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -868,11 +869,15 @@ button.card:hover {
 }
 
 .pantry-suggestion-name {
+  font-size: var(--font-size-lead);
+  text-align: center;
+  align-self: center;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
 .pantry-suggestion-actions {
+  justify-content: center;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
@@ -1925,23 +1930,26 @@ button.card:hover {
   min-width: var(--touch-target);
 }
 
+/* Keep the visible mark in normal flow: editing/reflow must not leave an
+   absolutely positioned decoration painted against an adjacent row. */
 .shopping-check {
-  border: 0;
-  height: 1.75rem;
-  margin: auto;
-  min-height: var(--touch-target);
-  min-width: var(--touch-target);
-  position: relative;
-  width: 1.75rem;
+  height: var(--touch-target);
+  margin: 0;
+  align-self: center;
+  justify-self: center;
+  padding: 0;
+  width: var(--touch-target);
 }
 
-.shopping-check::before {
+.shopping-check-mark {
+  align-items: center;
   border: 2px solid var(--colour-border-strong);
-  border-radius: var(--radius-medium);
-  content: '';
-  height: 2.25rem;
-  position: absolute;
-  width: 2.25rem;
+  border-radius: 0.35rem;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 1.25rem;
+  justify-content: center;
+  width: 1.25rem;
 }
 
 .shopping-check svg,
@@ -1953,9 +1961,9 @@ button.card:hover {
 }
 
 .shopping-check svg {
-  height: 1.35rem;
+  height: 1rem;
   stroke-width: 3;
-  width: 1.35rem;
+  width: 1rem;
 }
 
 .shopping-item-copy {
@@ -1992,7 +2000,7 @@ button.card:hover {
   color: var(--colour-accent-lime);
 }
 
-.shopping-item-completed .shopping-check::before {
+.shopping-item-completed .shopping-check-mark {
   background: var(--colour-brand);
   border-color: var(--colour-brand);
 }
@@ -2002,6 +2010,7 @@ button.card:hover {
 }
 
 .shopping-inline-edit {
+  min-width: 0;
   align-items: center;
   display: grid;
   gap: var(--space-1);
@@ -2030,6 +2039,8 @@ button.card:hover {
   grid-row: 2;
 }
 .shopping-inline-edit > .field {
+  overflow: clip;
+  overflow-clip-margin: 6px;
   grid-column: 1 / -1;
   grid-row: 3;
   min-width: 0;
@@ -2824,4 +2835,14 @@ button.card:hover {
 .shopping-inline-edit .shopping-combine-choice input {
   width: 1.25rem;
   flex: 0 0 1.25rem;
+}
+
+@media (max-width: 24rem) {
+  .home-overview .page-header h1 {
+    font-size: 2.25rem;
+  }
+
+  .home-overview-grid .card {
+    padding-inline: 20px;
+  }
 }
