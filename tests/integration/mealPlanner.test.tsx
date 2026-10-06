@@ -340,6 +340,7 @@ describe('weekly dinner planner', () => {
       }),
     )
     await user.type(screen.getByLabelText('Dinner'), 'Tacos')
+    await user.click(screen.getByRole('option', { name: 'Add “Tacos” — manual meal' }))
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
     expect(create).toHaveBeenCalledWith(
       householdId,
@@ -354,6 +355,7 @@ describe('weekly dinner planner', () => {
     await user.click(screen.getByRole('button', { name: 'Pasta' }))
     await user.clear(screen.getByLabelText('Dinner'))
     await user.type(screen.getByLabelText('Dinner'), 'Updated pasta')
+    await user.keyboard('{Enter}')
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
     expect(await screen.findByText('Updated pasta')).toBeVisible()
 
@@ -414,7 +416,8 @@ describe('weekly dinner planner', () => {
         name: 'Add dinner',
       }),
     )
-    await user.selectOptions(screen.getByLabelText('Start with'), importedRecipe.id)
+    await user.type(screen.getByRole('combobox', { name: 'Dinner' }), importedRecipe.name)
+    await user.keyboard('{Enter}')
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
 
     expect(create).toHaveBeenCalledWith(householdId, {
@@ -555,7 +558,8 @@ describe('weekly dinner planner', () => {
     await user.click(
       within(monday.closest('article') as HTMLElement).getByRole('button', { name: 'Add dinner' }),
     )
-    await user.selectOptions(screen.getByLabelText('Start with'), recipe.id)
+    await user.type(screen.getByRole('combobox', { name: 'Dinner' }), recipe.name)
+    await user.keyboard('{Enter}')
     await user.click(screen.getByRole('button', { name: 'Save dinner' }))
 
     await waitFor(() =>

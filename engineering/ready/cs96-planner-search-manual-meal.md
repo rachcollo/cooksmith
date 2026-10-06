@@ -4,7 +4,7 @@
 
 - **Jira issue:** [CS-96](https://smillins.atlassian.net/browse/CS-96)
 - **Epic:** Meal Planning (CS-4)
-- **Status:** Ready
+- **Status:** Implemented; review and hosted/manual acceptance pending
 - **Branch:** `feat/cs-96-planner-search-manual-meal`
 - **Depends on:** CS-20 and CS-22
 - **Blocks:** CS-99 planner integration
@@ -23,12 +23,12 @@ Replace the long meal dropdown with type-to-search and a safe manual-meal fallba
 
 ## Acceptance Criteria
 
-- [ ] Search responds to typing and handles empty, loading, no-result and failure states.
-- [ ] Keyboard and screen-reader users can inspect and choose results.
-- [ ] Recipe selection preserves normal recipe and Shopping links.
-- [ ] Manual entry is visibly distinguished and contributes no ingredients.
-- [ ] Stale searches, repeat submits and household changes cannot create wrong entries.
-- [ ] Drag, reorder, replace, delete and shopping reconciliation regressions pass.
+- [x] Search responds to typing and handles empty, loading, no-result and failure states.
+- [x] Keyboard and screen-reader users can inspect and choose results.
+- [x] Recipe selection preserves normal recipe and Shopping links.
+- [x] Manual entry is visibly distinguished and contributes no ingredients.
+- [x] Stale searches, repeat submits and household changes cannot create wrong entries.
+- [x] Drag, reorder, replace, delete and shopping reconciliation regressions pass.
 
 ## Technical Direction
 
@@ -40,7 +40,7 @@ Unit/component tests for combobox behaviour, integration tests for both entry ty
 
 ## Release, Rollback and Cost
 
-- **Expected migration:** Possible additive meal-source/manual-name fields, confirm from baseline.
+- **Expected migration:** None. Existing nullable recipe identity represents manual meals and current RLS authorises household writes.
 - **Expected Edge Function:** None.
 - **Rollback:** Revert UI/domain changes; forward-fix released schema.
 - **Recurring cost:** A$0/month and A$0/year.
@@ -48,3 +48,11 @@ Unit/component tests for combobox behaviour, integration tests for both entry ty
 ## Pull Request
 
 Title: `CS-96: Search or add meals in the planner`
+
+## Implementation evidence
+
+Baseline main `b2fb576ebce250e325df297670d62df18c523339` includes merged CS-101. The new MealSearchField bounds visible choices to eight and keeps recipe source identity. Household-keyed route state discards stale searches/editors; an in-flight lock prevents double saves and retry reuses a saved meal after Shopping failure. Existing planner regression coverage remains. Browser fixture uses synthetic UUIDs and no hosted credentials. Hosted/physical assistive-technology acceptance is not claimed; exact counts and CI are recorded in the PR and handover.
+
+## Owner review and integration after PR196
+
+Owner confirmed the planner flow works well but reported detached Dinner results. The absolute results panel was anchored to the whole field including the multiline helper, leaving a vertical gap. A dedicated relative input/results wrapper anchors the panel immediately below the input, preserving helper association, keyboard selection and manual-meal behaviour. Mobile browser regression checks the measured gap and matching horizontal bounds. Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`; no Home redesign, migrations, Edge Functions or production changes. Full hosted/device acceptance remains separate.
