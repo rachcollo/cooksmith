@@ -1,3 +1,4 @@
+import { PutAwayReviewError } from '../../domain/shopping/putAway'
 import { z } from 'zod'
 import {
   shoppingPeriodView,
@@ -65,6 +66,7 @@ function shoppingError(error: PostgrestError | null): void {
   const messages: Record<string, string> = {
     '23505': 'That item is already on your shopping list.',
     '23514': 'Check the item name, quantity and unit.',
+    PT409: 'Shopping changed. Close and reopen the review to check the latest purchases.',
     '42501': 'You do not have permission to change this shopping list.',
   }
   throw new Error(
@@ -154,6 +156,41 @@ export function createSupabaseShoppingRepository(
         .select('household_id')
         .single()
       shoppingError(result.error)
+    },
+    async listPutAway(householdId) {
+      const result = await database.rpc('shopping_put_away_sources', {
+        target_household_id: householdId,
+      })
+      shoppingError(result.error)
+      return (result.data ?? []).map((row) => ({
+        key: row.source_key,
+        token: row.snapshot_token,
+        shoppingItemId: row.shopping_item_id,
+        name: row.name,
+      }))
+    },
+    async putAway(householdId, operationId, choices) {
+      const result = await database.rpc('put_shopping_away', {
+        target_household_id: householdId,
+        operation_id: operationId,
+        reviewed_items: choices.map((choice) => ({ ...choice })),
+      })
+      if (result.error?.code === 'PT409')
+        throw new PutAwayReviewError(
+          'Shopping changed. Close and reopen the review to check the latest purchases. Nothing was put away.',
+        )
+      if (result.error?.code === '23514')
+        throw new PutAwayReviewError(
+          'Check item names. If several Pantry items match, use the exact Pantry name or untick that item. Nothing was put away.',
+        )
+      shoppingError(result.error)
+      return z
+        .object({
+          appliedSources: z.number().int().nonnegative(),
+          alreadyAppliedSources: z.number().int().nonnegative(),
+          pantryItems: z.number().int().nonnegative(),
+        })
+        .parse(result.data)
     },
     loadPeriod,
     async savePeriod(householdId, period) {

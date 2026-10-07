@@ -3,7 +3,7 @@
 - **Date:** 2026-10-07
 - **Branch:** `feat/cs-97-shopping-default-dropdown`
 - **Target:** `main`
-- **Baseline:** started from accepted `3f6ecebf8dd922be990cd6f022218ea7adde0e4b` (PR191), then integrated accepted `19bb8c573c5f7dc75c595285a967fcd876d8974f` (PR192).
+- **Baseline:** started from accepted `3f6ecebf8dd922be990cd6f022218ea7adde0e4b` (PR191), then integrated accepted `19bb8c573c5f7dc75c595285a967fcd876d8974f` (PR192), and now reconciled with current main `3e3c53b496912d27b746098b5600db60aad701a4` (including PR193/198).
 - **Status:** Implemented, hosted/manual validation pending. Draft review; no merge or release performed.
 - **Pull request:** [PR197](https://github.com/rachcollo/cooksmith/pull/197); its description records the exact head and CI results.
 
@@ -43,12 +43,12 @@ This PR does not deploy Production. After a separately approved merge, release t
 | Check                                                                                         | Result                                                                                                                           |
 | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | Clean `npm ci` using writable `/tmp` npm cache                                                | Passed; default home cache was unavailable                                                                                       |
-| `npm run validate:static`                                                                     | Passed: 631 tests in 86 files, format, lint, TypeScript and production build                                                     |
-| Local PostgreSQL 17 migration replay, seed and pgTAP                                          | Passed: 624 assertions in 37 files, including 12 new Settings/override permissions and constraints checks                        |
+| `npm run validate:static`                                                                     | Passed: 639 tests in 87 files, format, lint, TypeScript and production build                                                     |
+| Local PostgreSQL 17 migration replay, seed and pgTAP                                          | Passed: 664 assertions in 38 files, including 12 new Settings/override permissions and constraints checks                        |
 | Local database lint                                                                           | Passed: no schema errors (loopback connection with `PGSSLMODE=disable`)                                                          |
 | Fresh generated types from migrated local schema                                              | Exact match                                                                                                                      |
 | Real local PostgREST 14.5 HTTP suite, serial                                                  | Passed: 5 checks, including real-adapter owner/member/isolation, separate override/default and unchanged purchases/contributions |
-| Full Playwright with Chromium/mobile and Shopping WebKit                                      | Passed: 52 checks; desktop/mobile Chromium and eight real WebKit Shopping checks                                                 |
+| Full Playwright with Chromium/mobile and Shopping WebKit                                      | Passed: 58 checks; desktop/mobile Chromium and ten real WebKit Shopping/freezer checks                                           |
 | Preflight, documented command audit, database config, secrets and production dependency audit | Passed; existing reviewed browser-only React Router RSC advisory exception                                                       |
 
 All database/API data was synthetic and local. The local CLI launcher tried writing to a read-only home directory; preflight used the installed pinned 2.109.1 Go binary via `SUPABASE_CLI_BINARY_OVERRIDE`. Local API tests used explicit loopback configuration. A repeated HTTP run initially collided with the existing suite's retained recipe fixture; a clean synthetic reset passed all five tests. No production retry/reset was performed.
@@ -74,3 +74,9 @@ Native labelled selects, keyboard interaction/focus, status/error feedback, mobi
 Prefer a forward fix. Retain the additive Settings column and existing shopping records. The old client does not understand current-period kind `default` and would fall back to its old week behaviour; a UI rollback therefore does not preserve the new preference semantics without a reviewed compatibility fix. Never delete purchases, history or retained overrides to roll back presentation.
 
 Home redesign, other MVP scope, production release, paid enrichment and broader beta acceptance are deferred. This follow-up needs owner visual acceptance and authorised hosted verification before completion; it does not start another milestone.
+
+## Current-main reconciliation
+
+The merge preserves both repository put-away methods and the independent household-default methods. Playwright includes the union of Shopping-period and freezer WebKit journeys; CSS retains both the compact Shopping control and accepted freezer layout. No CS-102 code or migrations are included in this branch. All639 unit/integration tests,664 SQL assertions,5 real HTTP tests and58 browser checks passed against this reconciled tree. Schema lint and freshly generated types match; preflight uses the installed pinned Go binary override. No assertion or quality gate was weakened.
+
+CS-102 remains a separate draft and is not a prerequisite for this default selector. If both are accepted, reconcile the second PR against the resulting main and retest their shared Shopping adapter/period paths. This branch alone does not prove their combined behaviour. Review the complete pending migration history at release, particularly if this earlier-timestamped default migration is accepted after CS-102's later migrations. Keep the owner's maintenance → approved merge → protected exact-SHA database release → refresh clients → reopen flow; Edge Functions are unchanged. No merge or manual deployment occurred; pushing invokes existing preview automation.
