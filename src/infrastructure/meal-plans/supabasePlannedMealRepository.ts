@@ -1,3 +1,5 @@
+import type { MealStockReview } from '../../domain/meal-plans/completion'
+import { z } from 'zod'
 import type { PostgrestError } from '@supabase/supabase-js'
 import type { PlannedMealRepository } from '../../application/meal-plans/plannedMealRepository'
 import { recipeStateForLink } from '../../domain/meal-plans/recipeLinks'
@@ -5,6 +7,8 @@ import type { LinkedRecipeSummary, MealType, PlannedMeal } from '../../domain/me
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
 type PlannedMealRow = {
+  completed_at?: string | null
+  completion_revision?: number
   freezer_meal_id?: string | null
   freezer_meal_reservations?: { portions: number; state: string }[]
   id: string
@@ -28,7 +32,7 @@ type LegacyPlannedMealRow = Omit<
 type HouseholdPlannedMealRow = Omit<PlannedMealRow, 'imported_recipe_id' | 'imported_recipes'>
 
 const selection =
-  'freezer_meal_id, freezer_meal_reservations(portions,state), id, household_id, meal_date, meal_type, title, notes, recipe_id, imported_recipe_id, created_at, updated_at, household_recipes(id, name, archived_at), imported_recipes(id, name, archived_at)'
+  'completed_at, completion_revision, freezer_meal_id, freezer_meal_reservations(portions,state), id, household_id, meal_date, meal_type, title, notes, recipe_id, imported_recipe_id, created_at, updated_at, household_recipes(id, name, archived_at), imported_recipes(id, name, archived_at)'
 const householdSelection =
   'id, household_id, meal_date, meal_type, title, notes, recipe_id, created_at, updated_at, household_recipes(id, name, archived_at)'
 const legacySelection =
@@ -48,6 +52,8 @@ function mapRow(row: PlannedMealRow): PlannedMeal {
   const linkedRecipe = mapRecipe(row)
   const recipeId = row.recipe_id ?? row.imported_recipe_id
   return {
+    completedAt: row.completed_at ?? null,
+    completionRevision: row.completion_revision ?? 0,
     freezerMealId: row.freezer_meal_id ?? null,
     freezerPortions: row.freezer_meal_reservations?.[0]?.portions,
     freezerState:
@@ -98,13 +104,17 @@ function isMissingRecipeLinkSchema(error: PostgrestError | null): boolean {
 function mealPlanError(error: PostgrestError | null): void {
   if (!error) return
   const messages: Record<string, string> = {
+    PT409: 'Dinner or Pantry changed. Refresh and check before trying again.',
     '23503': 'Choose a household you belong to before saving a meal.',
     '23514': 'Check the meal title, date, meal type and recipe link.',
     '42501': 'You do not have permission to change this meal plan.',
     '42703': 'Recipe-bank planning needs its database update before this meal can be saved.',
     PGRST204: 'Recipe-bank planning needs its database update before this meal can be saved.',
   }
-  throw new Error(messages[error.code] ?? 'Cooksmith could not update the meal plan. Try again.')
+  throw Object.assign(
+    new Error(messages[error.code] ?? 'Cooksmith could not update the meal plan. Try again.'),
+    { rejected: Boolean(error.code) },
+  )
 }
 
 export function createSupabasePlannedMealRepository(
@@ -112,6 +122,64 @@ export function createSupabasePlannedMealRepository(
 ): PlannedMealRepository {
   const database = client.schema('cooksmith')
   return {
+    async undoReview(householdId, mealId, revision) {
+      const result = await database.rpc('meal_stock_undo_review', {
+        p_household_id: householdId,
+        p_plan_id: mealId,
+        p_revision: revision,
+      })
+      mealPlanError(result.error)
+      return result.data as unknown as MealStockReview
+    },
+    async pendingStock(householdId) {
+      const result = await database
+        .from('shopping_stock_purchases')
+        .select('id,name,revision,amounts,consumed_amounts')
+        .eq('household_id', householdId)
+        .is('received_at', null)
+        .is('voided_at', null)
+        .order('created_at')
+        .order('id')
+      mealPlanError(result.error)
+      return (result.data ?? []).map((p) => {
+        const consumed = z.record(z.string(), z.number()).parse(p.consumed_amounts)
+        return {
+          id: p.id,
+          name: p.name,
+          revision: p.revision,
+          amounts: z
+            .array(z.object({ quantity: z.number().nullable(), unit: z.string().nullable() }))
+            .parse(p.amounts)
+            .map((a, i) => ({
+              ...a,
+              quantity: a.quantity === null ? null : a.quantity - (consumed[String(i)] ?? 0),
+            })),
+        }
+      })
+    },
+    async freezerStock(householdId, freezerId) {
+      const result = await database
+        .from('freezer_meals')
+        .select('id,name,revision')
+        .eq('household_id', householdId)
+        .eq('id', freezerId)
+        .single()
+      mealPlanError(result.error)
+      if (!result.data) throw new Error('Freezer meal is unavailable.')
+      return result.data
+    },
+    async complete(householdId, operationId, meal, action, lines) {
+      const result = await database.rpc('meal_stock_command', {
+        p_household_id: householdId,
+        p_operation_id: operationId,
+        p_plan_id: meal.id,
+        p_action: action,
+        p_expected_revision: meal.completionRevision ?? 0,
+        p_expected_updated_at: meal.updatedAt,
+        p_lines: lines.map((line) => ({ ...line })),
+      })
+      mealPlanError(result.error)
+    },
     async listWeek(householdId, weekStart, weekEnd) {
       const result = await database
         .from('planned_meals')

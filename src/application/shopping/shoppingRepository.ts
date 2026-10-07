@@ -4,6 +4,13 @@ import type { Recipe } from '../../domain/recipes/types'
 import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/types'
 
 export interface ShoppingRepository {
+  buy?(
+    householdId: string,
+    operationId: string,
+    name: string,
+    items: ShoppingItem[],
+    amounts: { quantity: number | null; unit: string | null }[],
+  ): Promise<void>
   listPutAway?(householdId: string): Promise<PutAwaySource[]>
   putAway?(
     householdId: string,

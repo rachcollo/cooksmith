@@ -26,17 +26,28 @@ test('planner search and deliberate manual meals work at 320px by keyboard', asy
   expect(Math.abs(resultsBox.x - inputBox.x)).toBeLessThanOrEqual(1)
   expect(Math.abs(resultsBox.width - inputBox.width)).toBeLessThanOrEqual(1)
   await expect(page.getByRole('button', { name: 'Save dinner', exact: true })).toBeDisabled()
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    )
+  })
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await search.press('Enter')
   await page.getByRole('button', { name: 'Save dinner', exact: true }).click()
   await expect(page.getByText('Manual meal', { exact: true })).toBeVisible()
+  await page.getByLabel('More actions for Dinner with friends').click()
   await page.getByRole('button', { name: 'Edit planned dinner Dinner with friends' }).click()
   await search.fill('Takeaway')
   await search.press('Enter')
   await page.getByRole('button', { name: 'Save dinner', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Takeaway', exact: true })).toBeVisible()
   page.once('dialog', (d) => d.accept())
+  await page.getByLabel('More actions for Takeaway').click()
   await page.getByRole('button', { name: 'Remove Takeaway', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Takeaway', exact: true })).toHaveCount(0)
 })
