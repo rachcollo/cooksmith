@@ -36,3 +36,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [013](013-fail-closed-get-ahead-planning.md) | Accepted | Fail closed when Get Ahead intelligence is unavailable |
 | [014](014-purchasing-ingredient-identity.md) | Proposed | Share purchasing ingredient identity across Shopping and Pantry |
 | [015](015-shared-lossless-ingredient-structure.md) | Proposed | Share lossless ingredient structure across recipe consumers |
+| [016](016-prepared-freezer-reservations.md) | Proposed | Reserve prepared freezer meals without shopping ingredients |

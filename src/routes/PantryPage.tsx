@@ -1,3 +1,4 @@
+import { FreezerPanel } from './freezer/FreezerPanel'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ListFilter, Plus, Sparkles } from 'lucide-react'
 
@@ -427,6 +428,7 @@ export function PantryPage() {
       <header className="page-header pantry-header">
         <h1>Pantry</h1>
       </header>
+      {householdId ? <FreezerPanel key={householdId} householdId={householdId} /> : null}
 
       <div className="pantry-summary" aria-label="Household staples summary">
         <span>{items.length} total</span>
