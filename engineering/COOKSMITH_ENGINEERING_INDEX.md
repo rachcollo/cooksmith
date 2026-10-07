@@ -72,7 +72,7 @@ for how selection connects to actually starting a build.
 
 ## Owner-approved beta follow-up
 
-CS-102 owns the remaining quantity-aware household loop. [Ready package](ready/cs102-quantity-loop.md); implementation branch `feat/cs-102-quantity-loop`, baseline `3e3c53b496912d27b746098b5600db60aad701a4`. Preserve the historical CS-22/CS-23 Done records. CS-97 PR197 is independent.
+CS-102 owns the remaining quantity-aware household loop. [Review package](review/cs102-quantity-loop.md); implementation branch `feat/cs-102-quantity-loop`, baseline `3e3c53b496912d27b746098b5600db60aad701a4`. Preserve the historical CS-22/CS-23 Done records. CS-97 PR197 is independent.
 
 ## Completed Milestones
 

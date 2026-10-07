@@ -2,9 +2,9 @@
 
 ## Assessment
 
-The measured quantity loop is implemented locally. The release is **not yet signed off**: draft publication/exact-head CI, owner visual acceptance and the existing hosted/manual authentication and Get Ahead gates remain. No production configuration/data changes, merge, deployment or paid evaluation occurred.
+The measured quantity loop is implemented locally. The release is **not yet signed off**: exact-head CI, owner visual acceptance and the existing hosted/manual authentication and Get Ahead gates remain. No production configuration/data changes, merge, deployment or paid evaluation occurred.
 
-The source baseline is `main` at `3e3c53b496912d27b746098b5600db60aad701a4`. The package/ADR/audit commit is `92164ab`; its docs branch was pushed before automatic approval review rejected opening the draft PR. No PR was created. Implementation remains local. See the [handover](../handovers/cs102-quantity-loop.md) for behaviour, migrations and the release sequence.
+The source baseline is `main` at `3e3c53b496912d27b746098b5600db60aad701a4`. Package draft [PR199](https://github.com/rachcollo/cooksmith/pull/199) contains the package/ADR/audit commit `92164ab`. Implementation branch `feat/cs-102-quantity-loop` targets main; its draft PR records the exact head and CI results. See the [handover](../handovers/cs102-quantity-loop.md) for behaviour, migrations and the release sequence.
 
 ## Final local evidence
 
@@ -25,8 +25,8 @@ Logs are in `/workspace/cooksmith-review/cs102`.
 | Documentation commands                                      | Passed                                                               | `docs-commands.log`                                           |
 | Tracked secret/environment scan                             | Passed                                                               | `secrets.log`                                                 |
 | Production dependency audit                                 | Passed with repository-reviewed non-RSC React Router exception       | `dependency-audit.log`                                        |
-| Engineering package readiness                               | Passed;9 acceptance criteria                                         | `engineering/ready/cs102-quantity-loop.md`                    |
-| Exact-head hosted CI/preview                                | Blocked pending authorised draft publication                         | No result claimed                                             |
+| Engineering package readiness                               | Passed;9 acceptance criteria                                         | `engineering/review/cs102-quantity-loop.md`                   |
+| Exact-head hosted CI/preview                                | Recorded separately on the implementation draft PR                   | No result claimed                                             |
 | Hosted auth/email, authenticated Get Ahead, physical device | Not run in this local change                                         | Separate release evidence required                            |
 
 The full56-check browser run preceded the final narrow-layout adjustment. All affected Plan/freezer/quantity journeys were rerun on that final layout:8 desktop/WebKit plus4 mobile checks. A title-width assertion now accompanies the overflow check at200% text.
@@ -59,7 +59,7 @@ Earlier failures are retained in logs rather than hidden:
 
 ## Minimal remaining finish plan
 
-1. **Publication blocker:** obtain explicit authority for branch pushes, the two draft PRs and Jira updates. Automatic approval review rejected PR creation because the original user instruction prohibited PRs and later authority was not available. Do not bypass the review or mark Jira Done.
+1. **Review gate:** keep the package and implementation PRs draft until exact-head CI and owner review are complete. CS-102 remains In Review; do not mark Done from a deployment smoke.
 2. **Release blockers:** exact-head CI; owner approval of the quantity loop and three migrations; hosted/manual email/reset/recovery and household-invitation checks; authenticated Get Ahead rendering/cache/fallback evidence. A deployment smoke or historical evaluation score is insufficient.
 3. **Small finish checks:** physical-phone Plan/Shopping pass; review action counts and uncertain-quantity copy; confirm the independent CS-97 period-default change integrates without replacing its behaviour.
 4. **After those gates:** the already agreed private-MVP maintenance/release sequence. Home polish stays last. Defer predictive stock, serving scaling, inferred pack sizes/densities, exhaustive snack/waste logging and provider expansion.

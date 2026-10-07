@@ -3,12 +3,12 @@
 ## Metadata
 
 - **Jira issue:** CS-102
-- **Status:** Ready
+- **Status:** In Review
 - **Branch:** feat/cs-102-quantity-loop
 - **Epic:** Pantry (CS-3)
 - **Baseline:** main `3e3c53b496912d27b746098b5600db60aad701a4`
 - **Depends on:** accepted CS-22, CS-79, CS-98, CS-99 implementation
-- **Package path:** engineering/ready/cs102-quantity-loop.md
+- **Package path:** engineering/review/cs102-quantity-loop.md
 
 ## Product Outcome
 

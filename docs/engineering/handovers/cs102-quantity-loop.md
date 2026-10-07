@@ -3,9 +3,9 @@
 - **Date:** 2026-10-07
 - **Branch:** `feat/cs-102-quantity-loop`
 - **Target/baseline:** `main`, `3e3c53b496912d27b746098b5600db60aad701a4`
-- **Package:** `engineering/ready/cs102-quantity-loop.md`
-- **Status:** Local implementation and verification; external publication awaiting explicit approval. No merge, deployment, production write or paid evaluation.
-- **Package commit:** `92164ab`, pushed to `docs/cs-102-quantity-loop-package`. Draft PR creation was rejected by automatic approval review: the available user instruction prohibits PRs and later authority could not be verified. No PR was created; no workaround attempted. Implementation has not been pushed.
+- **Package:** `engineering/review/cs102-quantity-loop.md`
+- **Status:** Draft review; local implementation and verification complete. Exact-head CI is recorded on the implementation PR. No merge, deployment, production write or paid evaluation.
+- **Package draft:** [PR199](https://github.com/rachcollo/cooksmith/pull/199), commit `92164ab`. Implementation branch `feat/cs-102-quantity-loop` targets `main`; its draft PR carries the final head and CI evidence.
 
 ## Objective and product impact
 
@@ -62,7 +62,7 @@ The browser journey checks actual database quantities and completion state, not 
 
 ## Limitations and smallest remaining release scope
 
-1. Obtain explicit authority to publish the package/implementation draft PRs and update Jira; then run exact-head CI. Automatic approval review blocked PR creation. Keep the story out of Done.
+1. Keep both PRs draft while exact-head CI and owner acceptance are reviewed. CS-102 remains In Review; do not mark Done from public smoke.
 2. Review the draft implementation and the required three-migration release as one quantity-loop change. Do not deploy partial UI/RPC combinations.
 3. Retain hosted/manual release checks for email delivery and reset templates, cross-browser auth recovery, household invitation/onboarding, and authenticated Get Ahead rendering/cache/fallback. Public deployment smoke and historical acceptance scores are not functional proof. These were not newly established by this local change.
 4. Obtain owner visual acceptance and a physical-phone check of the compact Plan flow. Browser emulation is evidence, not a physical-device claim.
