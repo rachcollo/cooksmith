@@ -41,11 +41,11 @@ test('household default lives in Settings while the compact dropdown overrides t
   await expect(page.getByText('Shopping default saved.')).toBeVisible()
   await page
     .getByRole('navigation', { name: 'Primary mobile navigation', exact: true })
-    .getByRole('link', { name: 'Shopping', exact: true })
+    .getByRole('button', { name: 'Shopping', exact: true })
     .click()
   const selector = page.getByRole('combobox', { name: 'Buy for' })
   await expect(selector).toHaveValue('default')
-  await expect(selector).toContainText('Household default (Next 3 planned meals)')
+  await expect(selector).toContainText('Household default')
   await selector.selectOption('week')
   await expect(page.getByRole('region', { name: 'Shopping period' })).toContainText(
     '5 planned meals',

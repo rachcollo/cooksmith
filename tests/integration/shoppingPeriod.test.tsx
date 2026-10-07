@@ -59,6 +59,7 @@ it('auto-applies a preset, suppresses rapid duplicate changes and recovers from 
   }
   resolve()
   await screen.findByText('Next 3 planned meals selected.')
+  expect(screen.getByRole('combobox', { name: 'Buy for' })).toHaveFocus()
   save.mockRejectedValueOnce(new Error('offline'))
   await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Buy for' }), 'next5')
   expect(await screen.findByText(/previous list is still available/)).toBeVisible()

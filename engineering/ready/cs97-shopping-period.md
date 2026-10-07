@@ -4,8 +4,8 @@
 
 - **Jira issue:** [CS-97](https://smillins.atlassian.net/browse/CS-97)
 - **Epic:** Shopping Lists (CS-6)
-- **Status:** Ready
-- **Branch:** `feat/cs-97-shopping-period`
+- **Status:** PR191 owner functional pass; compact-default follow-up in draft review
+- **Branch:** `feat/cs-97-shopping-default-dropdown` (follow-up; original PR191 merged)
 - **Depends on:** CS-22
 - **Blocks:** CS-25
 
@@ -62,3 +62,9 @@ Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve pe
 ## Integration after owner merges PR189 and PR190
 
 Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. The API table-contract conflict retains both `household_recipe_favourites` and `household_shopping_periods`; no schema or policy change is introduced by this resolution. Preserve accepted planner anchoring, favourites and PR196 polish/security contracts. Exact-head results are recorded in PR191. Database release still requires separately reviewed history/pending migrations and the protected `allow_out_of_order_migrations` option; no deployment performed.
+
+## Owner-requested compact default follow-up (7 October)
+
+Rach reports PR191 functions correctly but its period panel is too cluttered. See [follow-up handover](../../docs/engineering/handovers/cs97-shopping-default-dropdown.md). The owner-managed household Settings default is separate from the shared current-week Shopping override. The compact dropdown auto-applies presets; custom dates alone need Save dates. Existing purchases, manual items, overrides, bought state and history remain intact. Next 3/5 means planned meals, not days.
+
+Migration: `20261007020500_household_shopping_default.sql`; no Edge Function or added cost. New migration must precede the new client through a separately approved protected release. Owner visual acceptance, hosted authenticated verification and physical-device checks remain pending. No automatic Jira Done or public-smoke acceptance.

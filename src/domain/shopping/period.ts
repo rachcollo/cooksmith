@@ -1,10 +1,4 @@
-import {
-  addDays,
-  currentWeek,
-  formatDisplayDate,
-  startOfWeek,
-  toLocalIsoDate,
-} from '../meal-plans/week'
+import { addDays, currentWeek, startOfWeek, toLocalIsoDate } from '../meal-plans/week'
 import type { ShoppingItem, ShoppingSourceQuantity } from './types'
 
 export type ShoppingPeriodKind = 'week' | 'next3' | 'next5' | 'custom' | 'default'
@@ -129,7 +123,12 @@ export function shoppingPeriodView(
       },
     ]
   })
-  const range = `${formatDisplayDate(period.from)} to ${formatDisplayDate(period.to)}`
+  const shortDate = new Intl.DateTimeFormat('en-AU', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  })
+  const range = `${shortDate.format(new Date(period.from))}–${shortDate.format(new Date(period.to))}`
   return {
     period,
     choice,

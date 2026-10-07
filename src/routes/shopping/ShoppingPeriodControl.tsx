@@ -6,7 +6,6 @@ import { addDays } from '../../domain/meal-plans/week'
 import {
   chooseShoppingPeriod,
   validShoppingPeriod,
-  shoppingPresetLabels,
   type ShoppingPeriod,
   type ShoppingPeriodKind,
   type ShoppingPeriodView,
@@ -52,7 +51,7 @@ export function ShoppingPeriodControl({
       if (active.current) {
         if (period.kind !== 'custom')
           setDraft({ ...view.period, kind: view.choice ?? view.period.kind })
-        setError('Could not change the period. Your previous list is still available. Try again.')
+        setError('Could not update the list. Your previous list is still available. Try again.')
       }
     } finally {
       locked.current = false
@@ -82,9 +81,7 @@ export function ShoppingPeriodControl({
             if (next.kind !== 'custom') void save(next)
           }}
         >
-          <option value="default">
-            Household default ({shoppingPresetLabels[view.defaultKind ?? 'week']})
-          </option>
+          <option value="default">Household default</option>
           <option value="week">Full active week</option>
           <option value="next3">Next 3 planned meals</option>
           <option value="next5">Next 5 planned meals</option>

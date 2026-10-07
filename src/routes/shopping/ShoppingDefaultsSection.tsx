@@ -52,7 +52,7 @@ export function ShoppingDefaultsSection({
       }
     } catch {
       if (active.current)
-        setError('Could not save the default. Your previous setting is unchanged. Try again.')
+        setError('Could not confirm the default. Reload Settings to check before trying again.')
     } finally {
       lock.current = false
       if (active.current) setBusy(false)

@@ -35,7 +35,7 @@ it('loads the owner default, saves immediately once and keeps the previous value
   expect(repository.savePeriod).not.toHaveBeenCalled()
   save.mockRejectedValueOnce(new Error('offline'))
   await userEvent.selectOptions(select, 'next5')
-  expect(await screen.findByRole('alert')).toHaveTextContent('previous setting is unchanged')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Reload Settings to check')
   expect(select).toHaveValue('next3')
 })
 
