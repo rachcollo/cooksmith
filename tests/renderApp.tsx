@@ -1,3 +1,4 @@
+import type { FreezerRepository } from '../src/application/freezer/freezerRepository'
 import { render } from '@testing-library/react'
 import { RouterProvider } from 'react-router-dom'
 
@@ -292,6 +293,7 @@ export function renderApp(
   featureFlagRepository?: FeatureFlagRepository,
   weeklyPreparationRepository?: WeeklyPreparationRepository,
   weeklyPreparationAdminRepository?: WeeklyPreparationAdminRepository,
+  freezerRepository?: FreezerRepository,
 ) {
   const router = createTestRouter([path])
 
@@ -306,6 +308,7 @@ export function renderApp(
           onboardingRepository={onboardingRepository}
           householdPeopleRepository={householdPeopleRepository}
           pantryRepository={pantryRepository}
+          freezerRepository={freezerRepository}
           recipeRepository={recipeRepository}
           plannedMealRepository={plannedMealRepository}
           shoppingRepository={shoppingRepository}

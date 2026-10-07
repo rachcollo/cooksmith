@@ -347,6 +347,9 @@ export function WeekPlanGenerator({
             if (!open && !applying) setState(null)
           }}
         >
+          {state.meals.some((meal) => meal.freezerMealId) ? (
+            <p>Prepared freezer reservations will be kept.</p>
+          ) : null}
           {state.phase === 'loading' ? <p role="status">Preparing your week…</p> : null}
 
           {state.phase === 'success' ? (

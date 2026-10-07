@@ -95,3 +95,7 @@ Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d` without content confl
 ## Integration after PR191
 
 Integrated accepted main `3f6ecebf8dd922be990cd6f022218ea7adde0e4b`. Combine Shopping-period and put-away repository contracts/methods, retaining period-aware listing and global idempotent put-away review. Both page controls remain; accepted mark alignment, absent shopper refresh, security and HTTP/WebKit checks are preserved. Exact-head tests are recorded in PR193. PR191 database release was waiting at read-only inspection; no approval/deploy performed. Existing put-away migration release requirements remain; no new migration or Edge change.
+
+## Integration after PR192
+
+Integrated accepted freezer main `19bb8c573c5f7dc75c595285a967fcd876d8974f`. Resolve ADR index conflicts by retaining both freezer reservation and put-away receipt entries. Preserve generated types, table contracts and all accepted features. Exact-head CI is recorded in PR193. No new migration, Edge Function, Home redesign or production action. The new CS97 default/dropdown work stays on a separate branch.

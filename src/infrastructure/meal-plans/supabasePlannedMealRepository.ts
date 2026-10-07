@@ -5,6 +5,8 @@ import type { LinkedRecipeSummary, MealType, PlannedMeal } from '../../domain/me
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
 type PlannedMealRow = {
+  freezer_meal_id?: string | null
+  freezer_meal_reservations?: { portions: number; state: string }[]
   id: string
   household_id: string
   meal_date: string
@@ -26,7 +28,7 @@ type LegacyPlannedMealRow = Omit<
 type HouseholdPlannedMealRow = Omit<PlannedMealRow, 'imported_recipe_id' | 'imported_recipes'>
 
 const selection =
-  'id, household_id, meal_date, meal_type, title, notes, recipe_id, imported_recipe_id, created_at, updated_at, household_recipes(id, name, archived_at), imported_recipes(id, name, archived_at)'
+  'freezer_meal_id, freezer_meal_reservations(portions,state), id, household_id, meal_date, meal_type, title, notes, recipe_id, imported_recipe_id, created_at, updated_at, household_recipes(id, name, archived_at), imported_recipes(id, name, archived_at)'
 const householdSelection =
   'id, household_id, meal_date, meal_type, title, notes, recipe_id, created_at, updated_at, household_recipes(id, name, archived_at)'
 const legacySelection =
@@ -46,6 +48,10 @@ function mapRow(row: PlannedMealRow): PlannedMeal {
   const linkedRecipe = mapRecipe(row)
   const recipeId = row.recipe_id ?? row.imported_recipe_id
   return {
+    freezerMealId: row.freezer_meal_id ?? null,
+    freezerPortions: row.freezer_meal_reservations?.[0]?.portions,
+    freezerState:
+      row.freezer_meal_reservations?.[0]?.state === 'consumed' ? 'consumed' : 'reserved',
     id: row.id,
     householdId: row.household_id,
     mealDate: row.meal_date,
@@ -77,6 +83,7 @@ function mapHouseholdRow(row: HouseholdPlannedMealRow): PlannedMeal {
 
 function isMissingRecipeLinkSchema(error: PostgrestError | null): boolean {
   if (!error) return false
+  if (`${error.message} ${error.details ?? ''}`.includes('freezer')) return false
   const haystack = `${error.message} ${error.details ?? ''} ${error.hint ?? ''}`.toLowerCase()
   return (
     error.code === '42703' ||
