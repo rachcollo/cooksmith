@@ -222,6 +222,12 @@ export function ShoppingPutAway({
                 >
                   Change
                 </Button>
+                {row.sources.some((source) => source.hasConsumedStock) ? (
+                  <p className="form-hint">
+                    Some of this purchase has already been used in a meal. Check only what is left
+                    to put away, excluding what you have already used.
+                  </p>
+                ) : null}
                 {row.editing ? (
                   <div className="put-away-fields">
                     <TextField
@@ -249,7 +255,7 @@ export function ShoppingPutAway({
                     {row.sources.every((source) => source.key.startsWith('p:')) ? (
                       <>
                         <TextField
-                          label={`Amount bought for ${row.id}`}
+                          label={`Amount remaining to put away for ${row.id}`}
                           type="number"
                           min="0"
                           max="99999"
@@ -273,7 +279,7 @@ export function ShoppingPutAway({
                           }
                         />
                         <TextField
-                          label={`Unit bought for ${row.id}`}
+                          label={`Unit remaining to put away for ${row.id}`}
                           value={row.unit ?? ''}
                           disabled={busy || attemptLocked}
                           onChange={(event) =>
@@ -292,7 +298,7 @@ export function ShoppingPutAway({
             ))}
             <p className="form-hint">
               {review.some((row) => row.sources.some((source) => source.key.startsWith('p:')))
-                ? 'Known bought amounts update Pantry. Extra unmeasured stock stays untracked.'
+                ? 'Only the remaining amounts shown are added to Pantry. Extra unmeasured stock stays untracked.'
                 : 'These older purchases mark Pantry items available without inventing quantities.'}{' '}
               Unticked items can be put away later.
             </p>

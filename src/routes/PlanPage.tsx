@@ -553,6 +553,8 @@ function HouseholdPlanPage() {
 
   function startDrag(meal: PlannedMeal, event: ReactPointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return
+    // A stock review is rendered inside the card; its controls must not capture a drag.
+    if (event.target instanceof Element && event.target.closest('dialog')) return
     dragDetails.current = {
       meal,
       startX: event.clientX,

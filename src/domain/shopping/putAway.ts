@@ -8,6 +8,7 @@ export interface PutAwaySource {
   token: string
   shoppingItemId: string
   name: string
+  hasConsumedStock?: boolean
   pantryItems?: PantryItem[]
   amounts?: { quantity: number | null; unit: string | null }[]
 }

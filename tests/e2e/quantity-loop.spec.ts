@@ -97,6 +97,7 @@ test('known groceries need one batch confirmation, dinner one Done and one Undo,
   await expect(dialog.getByRole('textbox')).toHaveCount(0)
   await expect(dialog.getByRole('checkbox', { name: `Include ${name}` })).toBeChecked()
   await expect(dialog).toContainText('400 g')
+  await expect(dialog.getByText(/Some of this purchase has already been used/)).toHaveCount(0)
   await dialog.getByRole('button', { name: 'Put selected items away' }).click()
   await expect(dialog).toBeHidden()
   expect(
@@ -192,4 +193,89 @@ test('known groceries need one batch confirmation, dinner one Done and one Undo,
     }),
     contentType: 'application/json',
   })
+  // Correct what remains after cooking, not the original purchase total.
+  await must(
+    client
+      .from('household_recipes')
+      .update({ ingredients: `600 g ${name}` })
+      .eq('id', recipe.id),
+  )
+  await must(
+    client
+      .from('household_pantry_items')
+      .update({ quantity: 200, available: true })
+      .eq('id', stock.id),
+  )
+  await must(
+    client
+      .from('shopping_list_items')
+      .delete()
+      .eq('household_id', household)
+      .eq('display_name', name),
+  )
+  await must(
+    client.from('shopping_list_items').insert({
+      household_id: household,
+      display_name: name,
+      quantity: 500,
+      unit: 'g',
+      category: 'pantry',
+    }),
+  )
+  await page.getByRole('button', { name: 'Shopping', exact: true }).first().click()
+  await page.getByRole('button', { name: `Mark as done: ${name}` }).click()
+  await page.getByRole('link', { name: 'Plan', exact: true }).first().click()
+  await done.click()
+  await expect(page.getByRole('button', { name: `Undo done ${title}` })).toBeVisible()
+  expect(
+    (
+      await must(
+        client.from('household_pantry_items').select('quantity').eq('id', stock.id).single(),
+      )
+    ).quantity,
+  ).toBe(0)
+  await page.getByRole('button', { name: 'Shopping', exact: true }).first().click()
+  await page.getByRole('button', { name: 'Put shopping away' }).click()
+  await expect(dialog).toContainText('100 g')
+  await expect(dialog.getByText(/Some of this purchase has already been used/)).toBeVisible()
+  await dialog.getByRole('button', { name: `Change ${name}` }).click()
+  const remaining = dialog.getByRole('spinbutton', {
+    name: `Amount remaining to put away for ${name}`,
+  })
+  await expect(remaining).toHaveValue('100')
+  await expect(dialog.getByLabel(/Amount bought/)).toHaveCount(0)
+  // The household counts 80g still in the bag; only that correction is transferred.
+  await remaining.fill('80')
+  await expect(dialog).toContainText('Only the remaining amounts shown are added to Pantry.')
+  await dialog.getByRole('button', { name: 'Put selected items away' }).click()
+  await expect(dialog).toBeHidden()
+  expect(
+    (
+      await must(
+        client.from('household_pantry_items').select('quantity').eq('id', stock.id).single(),
+      )
+    ).quantity,
+  ).toBe(80)
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Put shopping away', exact: true })).toHaveCount(0)
+  expect(
+    (
+      await must(
+        client.from('household_pantry_items').select('quantity').eq('id', stock.id).single(),
+      )
+    ).quantity,
+  ).toBe(80)
+  await page.getByRole('link', { name: 'Plan', exact: true }).first().click()
+  await page.getByRole('button', { name: `Undo done ${title}` }).click()
+  const undoReview = page.getByRole('dialog')
+  await expect(undoReview).toBeVisible()
+  await undoReview.getByRole('button', { name: /Undo/ }).click()
+  await expect(done).toBeVisible()
+  expect(
+    (
+      await must(
+        client.from('household_pantry_items').select('quantity').eq('id', stock.id).single(),
+      )
+    ).quantity,
+  ).toBe(680)
 })

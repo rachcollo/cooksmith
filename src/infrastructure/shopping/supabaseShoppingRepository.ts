@@ -194,16 +194,28 @@ export function createSupabaseShoppingRepository(
           p_household_id: householdId,
         })
         shoppingError(tokens.error)
-        return (tokens.data ?? []).map((purchase) => ({
-          key: `p:${purchase.id}`,
-          token: purchase.snapshot_token,
-          name: purchase.name,
-          shoppingItemId: purchase.item_ids[0]!,
-          pantryItems,
-          amounts: z
+        return (tokens.data ?? []).map((purchase) => {
+          const amounts = z
             .array(z.object({ quantity: z.number().nullable(), unit: z.string().nullable() }))
-            .parse(purchase.amounts),
-        }))
+            .parse(purchase.amounts)
+          // Original amounts are immutable; compare with the RPC's current remainder,
+          // not the earlier read's mutable consumption, to explain this review snapshot.
+          const original = z
+            .array(z.object({ quantity: z.number().nullable() }))
+            .parse(pending.find((item) => item.id === purchase.id)?.amounts ?? [])
+          return {
+            key: `p:${purchase.id}`,
+            token: purchase.snapshot_token,
+            name: purchase.name,
+            shoppingItemId: purchase.item_ids[0]!,
+            pantryItems,
+            amounts,
+            hasConsumedStock: amounts.some((amount, index) => {
+              const bought = original[index]?.quantity
+              return amount.quantity !== null && bought != null && amount.quantity < bought
+            }),
+          }
+        })
       }
       const captured = new Set((purchases.data ?? []).flatMap((purchase) => purchase.source_keys))
       return (result.data ?? [])
