@@ -1,8 +1,15 @@
+import type { PutAwaySource, PutAwayChoice, PutAwayResult } from '../../domain/shopping/putAway'
 import type { ShoppingPeriod, ShoppingPeriodView } from '../../domain/shopping/period'
 import type { Recipe } from '../../domain/recipes/types'
 import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/types'
 
 export interface ShoppingRepository {
+  listPutAway?(householdId: string): Promise<PutAwaySource[]>
+  putAway?(
+    householdId: string,
+    operationId: string,
+    choices: PutAwayChoice[],
+  ): Promise<PutAwayResult>
   loadPeriod?(householdId: string): Promise<ShoppingPeriodView>
   savePeriod?(householdId: string, period: ShoppingPeriod): Promise<void>
   refreshStructure?(householdId: string): Promise<{ refreshed: number; skipped: number }>

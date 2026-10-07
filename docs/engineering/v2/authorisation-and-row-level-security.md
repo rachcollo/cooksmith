@@ -75,6 +75,10 @@ Shopping contribution rows now have composite foreign keys binding both shopping
 
 CS-79 measurement settings reuse the existing household-recipe, private-import ownership and shopping membership policies. No new exposed table or definer function is introduced. Conventions are constrained to the declared enum, manual combination defaults false, and grouped RPCs validate household membership/all item IDs before writing either setting. `0037_purchase_measure_conventions.test.sql` verifies persisted provenance, invalid settings, explicit overrides and cross-household denial.
 
+## CS-98 put-away receipts
+
+`shopping_put_away_batches` and `shopping_put_away_receipts` expose SELECT only to active household members. Anonymous access and direct client insert/update/delete are denied. `shopping_put_away_sources` is a security-invoker read; `put_shopping_away` delegates to a private privileged transaction that derives the actor from `auth.uid()`, rechecks current membership, validates household source identifiers and snapshot tokens, and records Pantry availability plus receipts atomically. The household Shopping lock coordinates purchase-level completion, overrides and source refresh. Historical receipts are retained after Shopping deletion. See [ADR 017](../../architecture/decisions/017-shopping-put-away-receipts.md) and pgTAP `0044`.
+
 ## CS-101 public recipe refresh lock
 
 Public imported recipes remain readable but cannot be updated or deleted by ordinary clients, including their importing owner. Private imports remain editable only by their owner. Shopping overrides change household purchases, never the public source recipe; existing household-recipe collaboration rules are unchanged.

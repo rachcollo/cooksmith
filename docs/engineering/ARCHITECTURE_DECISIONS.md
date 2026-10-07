@@ -56,6 +56,7 @@ Every ADR must contain:
 | [015](../architecture/decisions/015-shared-lossless-ingredient-structure.md)       | Proposed   | Share lossless ingredient structure across recipe consumers     |
 
 | [016](../architecture/decisions/016-prepared-freezer-reservations.md) | Proposed | Reserve prepared freezer meals without shopping ingredients |
+| [017](../architecture/decisions/017-shopping-put-away-receipts.md) | Proposed | Apply shopping to Pantry once using availability receipts |
 
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 
