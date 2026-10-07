@@ -1,7 +1,11 @@
+import { allocateHouseholdStock } from '../../domain/shopping/stockAllocation'
+import { mapPantryRow, type PantryRow } from '../pantry/supabasePantryRepository'
+import { createSupabasePantryRepository } from '../pantry/supabasePantryRepository'
 import { PutAwayReviewError } from '../../domain/shopping/putAway'
 import { z } from 'zod'
 import {
   shoppingPeriodView,
+  resolveShoppingPeriod,
   validShoppingPeriod,
   type ShoppingPeriod,
   type PeriodShoppingItem,
@@ -91,31 +95,30 @@ export function createSupabaseShoppingRepository(
     return z.enum(['week', 'next3', 'next5']).parse(result.data?.shopping_default_period)
   }
   async function loadPeriod(householdId: string) {
-    const [result, settings, meals, defaultKind] = await Promise.all([
-      database
-        .from('shopping_list_items')
-        .select(selection)
-        .eq('household_id', householdId)
-        .order('completed')
-        .order('position')
-        .order('display_name'),
-      database
-        .from('household_shopping_periods')
-        .select(
-          'shopping_period_kind, shopping_period_week, shopping_period_from, shopping_period_to',
-        )
-        .eq('household_id', householdId)
-        .maybeSingle(),
-      database
-        .from('planned_meals')
-        .select('id, meal_date, meal_type')
-        .eq('household_id', householdId),
+    const [snapshot, defaultKind] = await Promise.all([
+      database.rpc('shopping_stock_snapshot', { p_household_id: householdId }),
       loadDefault(householdId),
     ])
-    shoppingError(result.error)
-    shoppingError(settings.error)
-    shoppingError(meals.error)
-    const data = settings.data
+    shoppingError(snapshot.error)
+    const state = snapshot.data as unknown as {
+      items: ShoppingRow[]
+      settings: {
+        shopping_period_kind: string
+        shopping_period_week: string
+        shopping_period_from: string
+        shopping_period_to: string
+      } | null
+      meals: { id: string; meal_date: string; meal_type: string; completed_at: string | null }[]
+      pantry: PantryRow[]
+      purchases: {
+        name: string
+        item_ids: string[]
+        received_at: string | null
+        amounts: { quantity: number | null; unit: string | null }[]
+        consumed_amounts: Record<string, number>
+      }[]
+    }
+    const data = state.settings
     const saved: ShoppingPeriod | null = data?.shopping_period_week
       ? {
           kind: data.shopping_period_kind as ShoppingPeriod['kind'],
@@ -124,22 +127,53 @@ export function createSupabaseShoppingRepository(
           to: data.shopping_period_to ?? '',
         }
       : null
-    const rows: PeriodShoppingItem[] = ((result.data ?? []) as unknown as ShoppingRow[]).map(
-      (row) => ({
-        ...mapRow(row),
-        planOverride: row.plan_override,
-        contributions: (row.shopping_item_contributions ?? []).map((c) => ({
-          plannedMealId: c.planned_meal_id,
-          quantity: c.quantity === null ? null : Number(c.quantity),
-          unit: c.unit,
-          sourceQuantities: c.source_quantities,
-        })),
-      }),
+    const rows: PeriodShoppingItem[] = state.items.map((row) => ({
+      ...mapRow(row),
+      planOverride: row.plan_override,
+      contributions: (row.shopping_item_contributions ?? []).map((c) => ({
+        plannedMealId: c.planned_meal_id,
+        quantity: c.quantity === null ? null : Number(c.quantity),
+        unit: c.unit,
+        sourceQuantities: c.source_quantities,
+      })),
+    }))
+    for (const row of rows) {
+      if (!row.completed) continue
+      const purchases = state.purchases.filter((p) => p.item_ids.includes(row.id))
+      const amounts = purchases.filter((p) => p.item_ids[0] === row.id).flatMap((p) => p.amounts)
+      if (purchases.length && amounts.length && new Set(amounts.map((a) => a.unit)).size === 1) {
+        row.boughtQuantity = amounts.every((a) => a.quantity !== null)
+          ? amounts.reduce((sum, a) => sum + a.quantity!, 0)
+          : null
+        row.boughtUnit = amounts[0]!.unit
+      } else if (purchases.length && !amounts.length) {
+        row.boughtQuantity = 0
+        row.boughtUnit = purchases[0]!.amounts[0]?.unit ?? null
+      }
+    }
+    const meals = state.meals.map((m) => ({
+      id: m.id,
+      mealDate: m.meal_date,
+      mealType: m.meal_type,
+      completed: Boolean(m.completed_at),
+    }))
+    const pending = state.purchases.flatMap((p) =>
+      p.amounts.map((a, i) => ({
+        name: p.name,
+        quantity: a.quantity === null ? null : a.quantity - (p.consumed_amounts[String(i)] ?? 0),
+        unit: a.unit,
+        putAway: Boolean(p.received_at),
+      })),
     )
     return shoppingPeriodView(
-      rows,
+      allocateHouseholdStock(
+        rows,
+        meals.filter((m) => m.mealDate >= resolveShoppingPeriod(saved).period.weekStart),
+        state.pantry.map(mapPantryRow),
+        pending,
+      ),
       saved,
-      (meals.data ?? []).map((m) => ({ id: m.id, mealDate: m.meal_date, mealType: m.meal_type })),
+      meals,
       new Date(),
       defaultKind,
     )
@@ -157,24 +191,83 @@ export function createSupabaseShoppingRepository(
         .single()
       shoppingError(result.error)
     },
-    async listPutAway(householdId) {
-      const result = await database.rpc('shopping_put_away_sources', {
-        target_household_id: householdId,
+    async buy(householdId, operationId, name, items, amounts) {
+      const result = await database.rpc('record_shopping_stock_purchase', {
+        p_household_id: householdId,
+        p_operation_id: operationId,
+        p_name: name,
+        p_items: items.map((item) => ({ id: item.id, updatedAt: item.updatedAt })),
+        p_amounts: amounts.map((amount) => ({ ...amount })),
       })
       shoppingError(result.error)
-      return (result.data ?? []).map((row) => ({
-        key: row.source_key,
-        token: row.snapshot_token,
-        shoppingItemId: row.shopping_item_id,
-        name: row.name,
-      }))
+    },
+    async listPutAway(householdId) {
+      const [result, pantryItems, purchases] = await Promise.all([
+        database.rpc('shopping_put_away_sources', { target_household_id: householdId }),
+        createSupabasePantryRepository(client).list(householdId),
+        database
+          .from('shopping_stock_purchases')
+          .select('*')
+          .eq('household_id', householdId)
+          .is('voided_at', null),
+      ])
+      shoppingError(result.error)
+      shoppingError(purchases.error)
+      const pending = (purchases.data ?? []).filter((purchase) => !purchase.received_at)
+      if (pending.length) {
+        const tokens = await database.rpc('measured_shopping_sources', {
+          p_household_id: householdId,
+        })
+        shoppingError(tokens.error)
+        return (tokens.data ?? []).map((purchase) => {
+          const amounts = z
+            .array(z.object({ quantity: z.number().nullable(), unit: z.string().nullable() }))
+            .parse(purchase.amounts)
+          // Original amounts are immutable; compare with the RPC's current remainder,
+          // not the earlier read's mutable consumption, to explain this review snapshot.
+          const original = z
+            .array(z.object({ quantity: z.number().nullable() }))
+            .parse(pending.find((item) => item.id === purchase.id)?.amounts ?? [])
+          return {
+            key: `p:${purchase.id}`,
+            token: purchase.snapshot_token,
+            name: purchase.name,
+            shoppingItemId: purchase.item_ids[0]!,
+            pantryItems,
+            amounts,
+            hasConsumedStock: amounts.some((amount, index) => {
+              const bought = original[index]?.quantity
+              return amount.quantity !== null && bought != null && amount.quantity < bought
+            }),
+          }
+        })
+      }
+      const captured = new Set((purchases.data ?? []).flatMap((purchase) => purchase.source_keys))
+      return (result.data ?? [])
+        .filter((row) => !captured.has(row.source_key))
+        .map((row) => ({
+          pantryItems,
+          key: row.source_key,
+          token: row.snapshot_token,
+          shoppingItemId: row.shopping_item_id,
+          name: row.name,
+        }))
     },
     async putAway(householdId, operationId, choices) {
-      const result = await database.rpc('put_shopping_away', {
-        target_household_id: householdId,
-        operation_id: operationId,
-        reviewed_items: choices.map((choice) => ({ ...choice })),
-      })
+      const measured = choices.every((choice) =>
+        choice.sources.every((source) => source.key.startsWith('p:')),
+      )
+      const result = measured
+        ? await database.rpc('receive_measured_shopping', {
+            p_household_id: householdId,
+            p_operation_id: operationId,
+            p_choices: choices.map((choice) => ({ ...choice })),
+          })
+        : await database.rpc('put_shopping_away', {
+            target_household_id: householdId,
+            operation_id: operationId,
+            reviewed_items: choices.map((choice) => ({ ...choice })),
+          })
       if (result.error?.code === 'PT409')
         throw new PutAwayReviewError(
           'Shopping changed. Close and reopen the review to check the latest purchases. Nothing was put away.',
@@ -316,6 +409,14 @@ export function createSupabaseShoppingRepository(
     },
 
     async setCompletedMany(householdId, itemIds, completed) {
+      if (!completed) {
+        const result = await database.rpc('unbuy_shopping_stock', {
+          p_household_id: householdId,
+          p_item_ids: itemIds,
+        })
+        shoppingError(result.error)
+        return
+      }
       const result = await database.rpc(
         'set_shopping_purchase_completed' as never,
         {

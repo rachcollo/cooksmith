@@ -3,8 +3,8 @@
 - **Date:** 2026-10-07
 - **Branch:** `feat/cs-97-shopping-default-dropdown`
 - **Target:** `main`
-- **Baseline:** started from accepted `3f6ecebf8dd922be990cd6f022218ea7adde0e4b` (PR191), then integrated accepted `19bb8c573c5f7dc75c595285a967fcd876d8974f` (PR192), and now reconciled with current main `3e3c53b496912d27b746098b5600db60aad701a4` (including PR193/198).
-- **Status:** Implemented, hosted/manual validation pending. Draft review; no merge or release performed.
+- **Baseline:** reconciled against accepted main `ad8e7491cfee160d012e8058daf0d235c37583dc`, including merged PR199/200 (CS-102).
+- **Status:** Implemented, hosted/manual validation pending. Open review; no merge or release performed by this reconciliation.
 - **Pull request:** [PR197](https://github.com/rachcollo/cooksmith/pull/197); its description records the exact head and CI results.
 
 ## Objective and product impact
@@ -36,20 +36,20 @@ Rach reports PR191 functions correctly but its Shopping period UI is too clutter
 
 Migration: `20261007020500_household_shopping_default.sql`. It adds constrained non-null `household_settings.shopping_default_period` with `week` for existing households and permits `default` in the current-period kind constraint. Existing dates and permissions remain unchanged. No Edge Function or dependency changes.
 
-This PR does not deploy Production. After a separately approved merge, release the exact approved main SHA through protected **Production database release**, with backup/compatibility review, pending-set dry-run and migration-history verification. Apply the migration before serving this client; loading Shopping requires the new column. The new migration is later than the accepted baseline migrations. If an older pending feature such as CS-98 joins the release, review the complete pending set and history before choosing any out-of-order option; do not assume this new migration itself requires it. Released migrations remain immutable; fixes use new forward migrations.
+This PR does not deploy Production. After a separately approved merge, release the exact approved main SHA through protected **Production database release**, with backup/compatibility review, pending-set dry-run and migration-history verification. Apply the migration before serving this client; loading Shopping requires the new column. The retained migration `20261007020500_household_shopping_default.sql` predates the now-released CS-102 migrations. Review actual remote history and the complete pending set; the protected workflow supports `allow_out_of_order_migrations: true` for a separately approved release of an earlier pending migration. Do not rename shared migration history or release this branch now. Released migrations remain immutable; fixes use new forward migrations.
 
 ## Local tests
 
-| Check                                                                                         | Result                                                                                                                           |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Clean `npm ci` using writable `/tmp` npm cache                                                | Passed; default home cache was unavailable                                                                                       |
-| `npm run validate:static`                                                                     | Passed: 639 tests in 87 files, format, lint, TypeScript and production build                                                     |
-| Local PostgreSQL 17 migration replay, seed and pgTAP                                          | Passed: 664 assertions in 38 files, including 12 new Settings/override permissions and constraints checks                        |
-| Local database lint                                                                           | Passed: no schema errors (loopback connection with `PGSSLMODE=disable`)                                                          |
-| Fresh generated types from migrated local schema                                              | Exact match                                                                                                                      |
-| Real local PostgREST 14.5 HTTP suite, serial                                                  | Passed: 5 checks, including real-adapter owner/member/isolation, separate override/default and unchanged purchases/contributions |
-| Full Playwright with Chromium/mobile and Shopping WebKit                                      | Passed: 58 checks; desktop/mobile Chromium and ten real WebKit Shopping/freezer checks                                           |
-| Preflight, documented command audit, database config, secrets and production dependency audit | Passed; existing reviewed browser-only React Router RSC advisory exception                                                       |
+| Check                                                                                         | Result                                                                                                          |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Clean `npm ci` using writable `/tmp` npm cache                                                | Passed; default home cache was unavailable                                                                      |
+| `npm run validate:static`                                                                     | Passed: 664 tests in 91 files, format, lint, TypeScript and production build                                    |
+| Local PostgreSQL 17 migration replay, seed and pgTAP                                          | Passed: 681 assertions in 39 files, including 12 new Settings/override permissions and constraints checks       |
+| Local database lint                                                                           | Passed: no schema errors (loopback connection with `PGSSLMODE=disable`)                                         |
+| Fresh generated types from migrated local schema                                              | Exact match                                                                                                     |
+| Real local PostgREST 14.5 HTTP suite, serial                                                  | Passed: 12 checks, including integrated allocation, default/override isolation, purchase transfer and Done/Undo |
+| Full Playwright with Chromium/mobile and Shopping WebKit                                      | Passed: 60 checks; desktop/mobile Chromium and ten real WebKit Shopping/freezer checks                          |
+| Preflight, documented command audit, database config, secrets and production dependency audit | Passed; existing reviewed browser-only React Router RSC advisory exception                                      |
 
 All database/API data was synthetic and local. The local CLI launcher tried writing to a read-only home directory; preflight used the installed pinned 2.109.1 Go binary via `SUPABASE_CLI_BINARY_OVERRIDE`. Local API tests used explicit loopback configuration. A repeated HTTP run initially collided with the existing suite's retained recipe fixture; a clean synthetic reset passed all five tests. No production retry/reset was performed.
 
@@ -75,8 +75,14 @@ Prefer a forward fix. Retain the additive Settings column and existing shopping 
 
 Home redesign, other MVP scope, production release, paid enrichment and broader beta acceptance are deferred. This follow-up needs owner visual acceptance and authorised hosted verification before completion; it does not start another milestone.
 
-## Current-main reconciliation
+## Integration with accepted CS-102
 
-The merge preserves both repository put-away methods and the independent household-default methods. Playwright includes the union of Shopping-period and freezer WebKit journeys; CSS retains both the compact Shopping control and accepted freezer layout. No CS-102 code or migrations are included in this branch. All639 unit/integration tests,664 SQL assertions,5 real HTTP tests and58 browser checks passed against this reconciled tree. Schema lint and freshly generated types match; preflight uses the installed pinned Go binary override. No assertion or quality gate was weakened.
+The current baseline is `ad8e7491cfee160d012e8058daf0d235c37583dc`. CS-102 is now accepted main, not another pending feature branch. Conflict resolution retains its single stock snapshot, once-only stock allocation, measured buying, consumed-purchase remainder, put-away correction labels, revisioned Done/Undo and pointer-safe Undo review. Household default is read alongside the stock snapshot and passed to period projection; the compact selector and owner-only default updates remain intact. No CS-102 migration or stock command is rewritten.
 
-CS-102 remains a separate draft and is not a prerequisite for this default selector. If both are accepted, reconcile the second PR against the resulting main and retest their shared Shopping adapter/period paths. This branch alone does not prove their combined behaviour. Review the complete pending migration history at release, particularly if this earlier-timestamped default migration is accepted after CS-102's later migrations. Keep the owner's maintenance → approved merge → protected exact-SHA database release → refresh clients → reopen flow; Edge Functions are unchanged. No merge or manual deployment occurred; pushing invokes existing preview automation.
+The integrated HTTP regression changes a household default while keeping an explicit later-date override: stock500g is allocated across600g+400g demand once, the later meal projects400g, and returning to the household full-week default restores500g shortfall. It then buys, puts away and performs Done/Undo. The real-DB browser journey now auto-applies week/default choices and verifies persisted shared state before the existing buy/put-away/Done/Undo and remaining100g→correct80g→reviewed Undo680g journey.
+
+The already-running protected database release [37685976973](https://github.com/rachcollo/cooksmith/actions/runs/37685976973) finished successfully at this main SHA. Read-only workflow logs confirm migration-history verification, including all three CS-102 versions. No release was approved, dispatched or retried here, and no production data/configuration was accessed or written. This operational result is not authenticated beta acceptance.
+
+Only the existing CS-97 default migration remains in this PR; Edge Functions are unchanged. Keep maintenance → approved merge → protected exact-SHA database release/history/pending-set/dry-run → refresh clients → reopen. Physical-phone, hosted authenticated and assistive-technology acceptance remain pending. Get Ahead and hosted auth/reset/invitation evidence remain separate beta gates. Existing PR automation may create previews; no manual deployment is performed.
+
+Latest local integration evidence is in `/workspace/cooksmith-review/cs97-refinement/integrated-*.log`:664 unit/integration tests,681 SQL assertions,12 real HTTP tests,60 full browser checks and one supplementary WebKit quantity-loop journey. Format/lint/types/build, database lint/type freshness, preflight, docs/configuration, secrets and dependency audit passed. The package remains In Review; the Ready-only pickup validator is not a delivery sign-off check for an issue already under review. CI runs the real HTTP suite; its two opt-in local-database browser instances still require local REST/JWT configuration and are verified locally instead. Physical/hosted acceptance is not implied by these counts.

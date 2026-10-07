@@ -5,7 +5,8 @@ import { applyQuantityDelta } from '../../domain/pantry/reconciliation'
 import type { PantryItem } from '../../domain/pantry/types'
 import type { CooksmithSupabaseClient } from '../auth/supabaseAuthClient'
 
-type PantryRow = {
+export type PantryRow = {
+  quantity_untracked?: boolean
   id: string
   household_id: string
   name: string
@@ -21,8 +22,9 @@ type PantryRow = {
   updated_at: string
 }
 
-function mapRow(row: PantryRow): PantryItem {
+export function mapPantryRow(row: PantryRow): PantryItem {
   return {
+    quantityUntracked: row.quantity_untracked ?? false,
     id: row.id,
     householdId: row.household_id,
     name: row.name,
@@ -52,7 +54,7 @@ function pantryError(error: PostgrestError | null): void {
 export function createSupabasePantryRepository(client: CooksmithSupabaseClient): PantryRepository {
   const database = client.schema('cooksmith')
   const selection =
-    'id, household_id, name, category, category_source, storage_location, storage_location_source, classification_version, quantity, unit, available, is_default, updated_at'
+    'quantity_untracked, id, household_id, name, category, category_source, storage_location, storage_location_source, classification_version, quantity, unit, available, is_default, updated_at'
 
   return {
     async list(householdId) {
@@ -63,7 +65,7 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
         .order('storage_location')
         .order('name')
       pantryError(result.error)
-      return ((result.data ?? []) as unknown as PantryRow[]).map(mapRow)
+      return ((result.data ?? []) as unknown as PantryRow[]).map(mapPantryRow)
     },
 
     async create(householdId, input) {
@@ -85,13 +87,16 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
         .single()
       pantryError(result.error)
       if (!result.data) throw new Error('Cooksmith could not save the pantry item.')
-      return mapRow(result.data as unknown as PantryRow)
+      return mapPantryRow(result.data as unknown as PantryRow)
     },
 
     async update(itemId, input) {
       const result = await database
         .from('household_pantry_items')
         .update({
+          ...(input.quantityUntracked === undefined
+            ? {}
+            : { quantity_untracked: input.quantityUntracked }),
           name: input.name,
           category: input.category,
           category_source: input.categorySource,
@@ -107,7 +112,7 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
         .single()
       pantryError(result.error)
       if (!result.data) throw new Error('Cooksmith could not update the pantry item.')
-      return mapRow(result.data as unknown as PantryRow)
+      return mapPantryRow(result.data as unknown as PantryRow)
     },
 
     async reconcile(householdId, proposal) {
@@ -121,7 +126,7 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
         .single()
       pantryError(existing.error)
       if (!existing.data) throw new Error('Cooksmith could not find that pantry item.')
-      const pantryItem = mapRow(existing.data as unknown as PantryRow)
+      const pantryItem = mapPantryRow(existing.data as unknown as PantryRow)
       return this.update(proposal.pantryItemId, applyQuantityDelta(pantryItem, proposal.quantity))
     },
 

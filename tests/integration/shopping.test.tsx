@@ -155,6 +155,9 @@ describe('shopping list foundation', () => {
     expect(putAway).toHaveBeenCalledWith(householdId, expect.any(String), [
       {
         name: 'milk',
+        quantity: null,
+        unit: null,
+        pantryUpdatedAt: null,
         sources: [{ key: 'm:shopping-milk', token: 'snapshot' }],
         category: 'dairy',
         storageLocation: 'fridge',

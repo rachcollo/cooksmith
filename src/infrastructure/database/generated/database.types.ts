@@ -501,6 +501,7 @@ export type Database = {
           name: string
           normalised_name: string | null
           quantity: number | null
+          quantity_untracked: boolean
           storage_location: Database['cooksmith']['Enums']['pantry_storage_location']
           storage_location_source: Database['cooksmith']['Enums']['pantry_classification_source']
           unit: string | null
@@ -520,6 +521,7 @@ export type Database = {
           name: string
           normalised_name?: string | null
           quantity?: number | null
+          quantity_untracked?: boolean
           storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
           storage_location_source?: Database['cooksmith']['Enums']['pantry_classification_source']
           unit?: string | null
@@ -539,6 +541,7 @@ export type Database = {
           name?: string
           normalised_name?: string | null
           quantity?: number | null
+          quantity_untracked?: boolean
           storage_location?: Database['cooksmith']['Enums']['pantry_storage_location']
           storage_location_source?: Database['cooksmith']['Enums']['pantry_classification_source']
           unit?: string | null
@@ -975,8 +978,54 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_stock_operations: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          effects: Json
+          household_id: string
+          id: string
+          planned_meal_id: string
+          request: Json
+          revision: number
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          effects: Json
+          household_id: string
+          id: string
+          planned_meal_id: string
+          request: Json
+          revision: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          effects?: Json
+          household_id?: string
+          id?: string
+          planned_meal_id?: string
+          request?: Json
+          revision?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'meal_stock_operations_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       planned_meals: {
         Row: {
+          completed_at: string | null
+          completion_revision: number
           created_at: string
           created_by: string | null
           freezer_meal_id: string | null
@@ -992,6 +1041,8 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          completed_at?: string | null
+          completion_revision?: number
           created_at?: string
           created_by?: string | null
           freezer_meal_id?: string | null
@@ -1007,6 +1058,8 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          completed_at?: string | null
+          completion_revision?: number
           created_at?: string
           created_by?: string | null
           freezer_meal_id?: string | null
@@ -1791,6 +1844,65 @@ export type Database = {
           },
         ]
       }
+      shopping_stock_purchases: {
+        Row: {
+          actor_id: string | null
+          amounts: Json
+          consumed_amounts: Json
+          created_at: string
+          household_id: string
+          id: string
+          item_ids: string[]
+          name: string
+          received_at: string | null
+          request: Json
+          revision: number
+          source_keys: string[]
+          source_quantities: Json
+          voided_at: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          amounts: Json
+          consumed_amounts?: Json
+          created_at?: string
+          household_id: string
+          id: string
+          item_ids: string[]
+          name: string
+          received_at?: string | null
+          request: Json
+          revision?: number
+          source_keys: string[]
+          source_quantities: Json
+          voided_at?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          amounts?: Json
+          consumed_amounts?: Json
+          created_at?: string
+          household_id?: string
+          id?: string
+          item_ids?: string[]
+          name?: string
+          received_at?: string | null
+          request?: Json
+          revision?: number
+          source_keys?: string[]
+          source_quantities?: Json
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_stock_purchases_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       weekly_preparation_evaluation_acceptances: {
         Row: {
           accepted_at: string
@@ -2272,6 +2384,32 @@ export type Database = {
           user_id: string
         }[]
       }
+      meal_stock_command: {
+        Args: {
+          p_action: string
+          p_expected_revision: number
+          p_expected_updated_at: string
+          p_household_id: string
+          p_lines: Json
+          p_operation_id: string
+          p_plan_id: string
+        }
+        Returns: Json
+      }
+      meal_stock_undo_review: {
+        Args: { p_household_id: string; p_plan_id: string; p_revision: number }
+        Returns: Json
+      }
+      measured_shopping_sources: {
+        Args: { p_household_id: string }
+        Returns: {
+          amounts: Json
+          id: string
+          item_ids: string[]
+          name: string
+          snapshot_token: string
+        }[]
+      }
       purchase_unit_multiplier_v2: { Args: { value: string }; Returns: number }
       purchase_unit_multiplier_v3: { Args: { value: string }; Returns: number }
       purchase_unit_v2: { Args: { value: string }; Returns: string }
@@ -2281,6 +2419,14 @@ export type Database = {
           operation_id: string
           reviewed_items: Json
           target_household_id: string
+        }
+        Returns: Json
+      }
+      receive_measured_shopping: {
+        Args: {
+          p_choices: Json
+          p_household_id: string
+          p_operation_id: string
         }
         Returns: Json
       }
@@ -2302,6 +2448,16 @@ export type Database = {
           ingredient_inputs: Json
           target_household_id: string
           target_planned_meal_id: string
+        }
+        Returns: undefined
+      }
+      record_shopping_stock_purchase: {
+        Args: {
+          p_amounts: Json
+          p_household_id: string
+          p_items: Json
+          p_name: string
+          p_operation_id: string
         }
         Returns: undefined
       }
@@ -2358,6 +2514,14 @@ export type Database = {
       shopping_sources_overlap: {
         Args: { left_sources: Json; right_sources: Json }
         Returns: boolean
+      }
+      shopping_stock_snapshot: {
+        Args: { p_household_id: string }
+        Returns: Json
+      }
+      unbuy_shopping_stock: {
+        Args: { p_household_id: string; p_item_ids: string[] }
+        Returns: undefined
       }
       update_shopping_purchase: {
         Args: { item_inputs: Json; target_household_id: string }

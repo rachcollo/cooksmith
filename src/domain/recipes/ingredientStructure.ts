@@ -75,7 +75,7 @@ const unitAliases: Readonly<Record<string, string>> = {
   whole: 'whole',
   count: 'count',
 }
-const preparationWords = String.raw`(?:(?:finely|roughly|thinly|thickly)\s+)?(?:diced|chopped|sliced|minced|grated|shredded|peeled|trimmed|crushed|mashed|smashed|julienned|torn|halved|quartered|cubed|pounded|zested|juiced|washed|deseeded|cut into [^,;()]+)(?:\s+with\s+a\s+fork)?`
+const preparationWords = String.raw`(?:(?:finely|roughly|thinly|thickly|freshly)\s+)?(?:diced|chopped|sliced|minced|grated|shredded|peeled|trimmed|crushed|mashed|smashed|julienned|torn|halved|quartered|cubed|pounded|zested|juiced|washed|deseeded|cut into [^,;()]+)(?:\s+with\s+a\s+fork)?`
 const prefixPreparation = new RegExp(String.raw`^(${preparationWords})\s+(.+)$`, 'iu')
 const suffixPreparation = new RegExp(
   String.raw`^(.+?)(?:\s*[,;(]\s*|\s+)(${preparationWords}(?:\s*(?:,|and)\s*${preparationWords})*)[)\]]*$`,
@@ -146,6 +146,15 @@ export function structureIngredient(originalText: string): IngredientStructure {
     }
   } else if (leading) unresolved.push('package_quantity')
 
+  // A legacy saved label can retain a measure after losing its numeric amount.
+  // Keep that amount unknown while separating the measure from product identity.
+  if (quantityText === null) {
+    const looseMeasure = name.match(/^(handfuls?|bunch(?:es)?)\s+(?:of\s+)?(.+)$/iu)
+    if (looseMeasure) {
+      unit = unitAliases[looseMeasure[1]!.toLowerCase()]!
+      name = looseMeasure[2]!
+    }
+  }
   const sourceName = name
   const noteReferences: string[] = []
   name = name.replace(
@@ -203,6 +212,7 @@ export function structureIngredient(originalText: string): IngredientStructure {
     name = suffix[1]!
   }
   name = name
+    .replace(/\b([\p{L}]+)(?:\s+\1\b)+/giu, '$1')
     .trim()
     .replace(/[,;]\s*$/u, '')
     .trim()

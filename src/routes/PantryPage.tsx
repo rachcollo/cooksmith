@@ -355,7 +355,10 @@ export function PantryPage() {
     setEditingSaving(true)
     setItemError(null)
     try {
-      const saved = await repository.update(editingItem.id, result)
+      const saved = await repository.update(editingItem.id, {
+        ...result,
+        quantityUntracked: editDraft.quantityUntracked,
+      })
       setItems((current) => current.map((item) => (item.id === saved.id ? saved : item)))
       setEditingItem(null)
       setEditDraft(emptyInput)
@@ -601,7 +604,9 @@ export function PantryPage() {
                             <h4>{item.name}</h4>
                             {item.quantity !== null ? (
                               <p className="pantry-quantity">
-                                {`${item.quantity} ${item.unit ?? ''}`.trim()}
+                                {item.quantityUntracked && item.quantity === 0
+                                  ? 'Amount untracked'
+                                  : `${item.quantityUntracked ? 'At least ' : ''}${item.quantity} ${item.unit ?? ''}`.trim()}
                               </p>
                             ) : null}
                           </button>
@@ -812,6 +817,7 @@ export function PantryPage() {
                 onChange={(event) =>
                   setEditDraft({
                     ...editDraft,
+                    quantityUntracked: false,
                     quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
                   })
                 }
@@ -821,7 +827,9 @@ export function PantryPage() {
                 label="Unit"
                 optional
                 value={editDraft.unit ?? ''}
-                onChange={(event) => setEditDraft({ ...editDraft, unit: event.target.value })}
+                onChange={(event) =>
+                  setEditDraft({ ...editDraft, quantityUntracked: false, unit: event.target.value })
+                }
               />
             </div>
             <label className="checkbox-field">

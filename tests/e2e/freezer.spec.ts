@@ -26,6 +26,7 @@ test('prepared freezer lifecycle works at 320px with explicit consumption and un
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   await page.getByRole('button', { name: 'Mark used Freezer curry' }).click()
   await page.getByRole('button', { name: 'Undo use Freezer curry' }).click()
+  await page.getByLabel('More actions for Freezer curry').click()
   await page.getByRole('button', { name: 'Remove Freezer curry', exact: true }).click()
   await page.getByRole('link', { name: 'Pantry', exact: true }).click()
   await page.getByRole('button', { name: /Freezer meals/ }).click()

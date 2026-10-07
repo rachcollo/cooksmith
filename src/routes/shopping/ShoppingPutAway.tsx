@@ -94,8 +94,16 @@ export function ShoppingPutAway({
     }
     const choices = selected.map((row) => {
       const classification = classifyPantryItem(row.name)
+      const targetName = row.pantryName ?? row.name.trim()
+      const target = row.sources[0]?.pantryItems?.find(
+        (item) => item.name.trim().toLowerCase() === targetName.toLowerCase(),
+      )
       return {
-        name: row.name.trim(),
+        name: row.pantryName ?? row.name.trim(),
+        quantity: row.quantity,
+        ...(row.quantityUntracked ? { quantityUntracked: true } : {}),
+        unit: row.unit,
+        pantryUpdatedAt: target?.updatedAt ?? null,
         sources: row.sources.map(({ key, token }) => ({ key, token })),
         category: classification.category,
         storageLocation: classification.storageLocation,
@@ -155,7 +163,7 @@ export function ShoppingPutAway({
         <Dialog
           open
           title="Put shopping away"
-          description="Review bought items from all shopping periods. Marks matching Pantry items available without changing quantities. Your Shopping history is kept."
+          description="We’ve recognised your bought items. Put them away together, or change anything that needs a second look."
           onOpenChange={(open) => {
             if (!open && !busy) setReview(null)
           }}
@@ -168,12 +176,13 @@ export function ShoppingPutAway({
             }}
           >
             {review.map((row, index) => (
-              <div key={row.id} className="reconciliation-item">
-                <label>
+              <div key={row.id} className="put-away-row">
+                <label className="put-away-choice">
                   <input
                     type="checkbox"
+                    aria-label={`Include ${row.name}`}
                     checked={row.included}
-                    disabled={busy || attemptLocked}
+                    disabled={busy || attemptLocked || row.ambiguous}
                     onChange={(event) =>
                       setReview((rows) =>
                         rows!.map((r, i) =>
@@ -182,25 +191,116 @@ export function ShoppingPutAway({
                       )
                     }
                   />
-                  Include {row.name}
+                  <span>
+                    <strong>{row.name}</strong>
+                    {row.quantity !== null ? (
+                      <small>
+                        {row.quantity} {row.unit}
+                        {row.quantityUntracked ? ' · extra stock stays untracked' : ''}
+                      </small>
+                    ) : null}
+                    <small>
+                      {row.ambiguous
+                        ? 'Several Pantry matches. Choose a name or leave for later.'
+                        : row.pantryName
+                          ? 'Recognised in Pantry'
+                          : 'Add to Pantry'}
+                    </small>
+                  </span>
                 </label>
-                <TextField
-                  label={`Pantry name for ${row.id}`}
-                  value={row.name}
-                  maxLength={100}
-                  required={row.included}
-                  disabled={busy || attemptLocked || !row.included}
-                  onChange={(event) =>
+                <Button
+                  type="button"
+                  variant="quiet"
+                  disabled={busy || attemptLocked}
+                  aria-label={`Change ${row.name}`}
+                  aria-expanded={row.editing}
+                  onClick={() =>
                     setReview((rows) =>
-                      rows!.map((r, i) => (i === index ? { ...r, name: event.target.value } : r)),
+                      rows!.map((r, i) => (i === index ? { ...r, editing: !r.editing } : r)),
                     )
                   }
-                />
+                >
+                  Change
+                </Button>
+                {row.sources.some((source) => source.hasConsumedStock) ? (
+                  <p className="form-hint">
+                    Some of this purchase has already been used in a meal. Check only what is left
+                    to put away, excluding what you have already used.
+                  </p>
+                ) : null}
+                {row.editing ? (
+                  <div className="put-away-fields">
+                    <TextField
+                      label={`Pantry name for ${row.id}`}
+                      value={row.pantryName ?? row.name}
+                      maxLength={100}
+                      required={row.included}
+                      disabled={busy || attemptLocked}
+                      onChange={(event) =>
+                        setReview((rows) =>
+                          rows!.map((r, i) =>
+                            i === index
+                              ? {
+                                  ...r,
+                                  name: event.target.value,
+                                  pantryName: null,
+                                  ambiguous: false,
+                                  included: true,
+                                }
+                              : r,
+                          ),
+                        )
+                      }
+                    />
+                    {row.sources.every((source) => source.key.startsWith('p:')) ? (
+                      <>
+                        <TextField
+                          label={`Amount remaining to put away for ${row.id}`}
+                          type="number"
+                          min="0"
+                          max="99999"
+                          step="0.01"
+                          value={row.quantity ?? ''}
+                          disabled={busy || attemptLocked}
+                          onChange={(event) =>
+                            setReview((rows) =>
+                              rows!.map((r, i) =>
+                                i === index
+                                  ? {
+                                      ...r,
+                                      quantity:
+                                        event.target.value === ''
+                                          ? null
+                                          : Number(event.target.value),
+                                    }
+                                  : r,
+                              ),
+                            )
+                          }
+                        />
+                        <TextField
+                          label={`Unit remaining to put away for ${row.id}`}
+                          value={row.unit ?? ''}
+                          disabled={busy || attemptLocked}
+                          onChange={(event) =>
+                            setReview((rows) =>
+                              rows!.map((r, i) =>
+                                i === index ? { ...r, unit: event.target.value || null } : r,
+                              ),
+                            )
+                          }
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ))}
             <p className="form-hint">
-              Unticked items stay available to review later. Cancel leaves Pantry and Shopping
-              unchanged.
+              {review.some((row) => row.sources.some((source) => source.key.startsWith('p:')))
+                ? 'Only the remaining amounts shown are added to Pantry. Extra unmeasured stock stays untracked.'
+                : 'These older purchases mark Pantry items available without inventing quantities.'}{' '}
+              Unticked items can be put away later.
             </p>
             {message ? <p role="status">{message}</p> : null}
             <div className="dialog-actions">

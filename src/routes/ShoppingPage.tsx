@@ -51,6 +51,8 @@ function HouseholdShoppingPage() {
   const { state } = useOnboarding()
   const householdId = state.householdId
   const repository = useShoppingRepository()
+  const purchaseAttempts = useRef(new Map<string, string>())
+  const purchaseLocks = useRef(new Set<string>())
   const pantryRepository = usePantryRepository()
   const [periodView, setPeriodView] = useState<ShoppingPeriodView | null>(null)
   const periodActive = useRef(true)
@@ -340,6 +342,8 @@ function HouseholdShoppingPage() {
   }
 
   async function toggleCompleted(item: ShoppingItem) {
+    if (purchaseLocks.current.has(item.id)) return
+    purchaseLocks.current.add(item.id)
     const purchase = purchases.find((row) => row.id === item.id)
     const ids = purchase?.members.map((member) => member.id) ?? [item.id]
     const previous = items
@@ -348,7 +352,35 @@ function HouseholdShoppingPage() {
       current.map((row) => (ids.includes(row.id) ? { ...row, completed: !item.completed } : row)),
     )
     try {
-      if (householdId && repository.setCompletedMany) {
+      if (householdId && repository.buy && purchase && !item.completed) {
+        const attemptKey = JSON.stringify(
+          purchase.members.map((member) => [member.id, member.updatedAt]),
+        )
+        const operationId = purchaseAttempts.current.get(attemptKey) ?? crypto.randomUUID()
+        purchaseAttempts.current.set(attemptKey, operationId)
+        const explicitCount = purchase.members.every(
+          (member) =>
+            member.manual === false &&
+            member.sourceQuantities?.length &&
+            member.sourceQuantities.every(
+              (source) =>
+                source.ingredientStructure?.quantity.state === 'known' &&
+                source.ingredientStructure.quantity.unit === null,
+            ),
+        )
+        await repository.buy(
+          householdId,
+          operationId,
+          purchase.name,
+          purchase.members,
+          purchase.amounts.map((amount) => ({
+            quantity: amount.approximate ? null : amount.quantity,
+            unit: amount.unit ?? (explicitCount ? 'each' : null),
+          })),
+        )
+        purchaseAttempts.current.delete(attemptKey)
+        setItems(await repository.list(householdId))
+      } else if (householdId && repository.setCompletedMany) {
         await repository.setCompletedMany(householdId, ids, !item.completed)
         setItems(await repository.list(householdId))
       } else {
@@ -367,6 +399,7 @@ function HouseholdShoppingPage() {
           : 'Cooksmith could not update that item.',
       )
     } finally {
+      purchaseLocks.current.delete(item.id)
       setSaving(false)
     }
   }

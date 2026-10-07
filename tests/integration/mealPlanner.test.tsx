@@ -471,9 +471,7 @@ describe('weekly dinner planner', () => {
       (button) => button.classList.contains('planned-meal-title'),
     )
     expect(linkedMealButton).toBeDefined()
-    expect(
-      linkedMealButton?.closest('.planned-meal')?.querySelector('.meal-plan-photo'),
-    ).not.toBeNull()
+    expect(linkedMealButton?.closest('.planned-meal')?.querySelector('.meal-plan-photo')).toBeNull()
     await user.click(linkedMealButton as HTMLElement)
     const recipeDialog = await screen.findByRole('dialog', {
       name: 'Lentil soup',

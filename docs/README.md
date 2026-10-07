@@ -71,6 +71,8 @@ This index defines the source-of-truth order for Cooksmith v2. Contributors must
 
 The [Current State Assessment](reference/Cooksmith_Current_State_Assessment.md) describes the prototype baseline. It is evidence and context, not an authority over the documents above.
 
+CS-102 quantity loop: [handover](engineering/handovers/cs102-quantity-loop.md), [local verification and finish scope](engineering/reports/cs102-quantity-loop-verification.md).
+
 ## Recording future decisions
 
 Record durable architecture decisions as sequential ADRs. Record delivery results as milestone handovers. Product changes require an update to the appropriate authoritative product document and explicit approval, not an ADR alone.

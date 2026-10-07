@@ -1,5 +1,17 @@
 begin;
 select no_plan();
+create temporary table freezer_completion_requests(id uuid primary key,meal_id uuid,action text,revision integer,updated_at timestamptz,lines jsonb);
+grant all on freezer_completion_requests to authenticated;
+create function pg_temp.complete_freezer(op uuid,action text,fid uuid,pid uuid) returns jsonb language plpgsql as $body$
+declare request freezer_completion_requests;
+begin
+ select * into request from freezer_completion_requests where id=op;
+ if not found then
+  insert into freezer_completion_requests select op,p.id,action,p.completion_revision,p.updated_at,jsonb_build_array(jsonb_build_object('kind','freezer','freezerId',f.id,'revision',f.revision,'name',f.name,'unit','portion','amount',r.portions)) from cooksmith.planned_meals p join cooksmith.freezer_meals f on f.id=p.freezer_meal_id join cooksmith.freezer_meal_reservations r on r.planned_meal_id=p.id where p.id=pid and f.id=fid returning * into request;
+ end if;
+ return cooksmith.meal_stock_command('20000000-0000-4000-8000-000000000001',op,pid,action,request.revision,request.updated_at,request.lines);
+end; $body$;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
 select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001','99000000-0000-4000-8000-000000000001','create','99000000-0000-4000-8000-000000000010',null,'{"name":"Freezer curry","portions":2,"frozenOn":"2026-10-06"}')$$,'Owner creates stock through atomic boundary');
@@ -18,11 +30,11 @@ select throws_ok($$select cooksmith.reconcile_planned_meal_shopping('20000000-00
 select is((select count(*) from cooksmith.shopping_item_contributions where planned_meal_id='99000000-0000-4000-8000-000000000020'),0::bigint,'Rejected shopping request leaves no partial contributions');
 select lives_ok($$update cooksmith.planned_meals set meal_date='2026-10-09' where id='99000000-0000-4000-8000-000000000020'$$,'Moving plan retains reservation');
 select is((select portions from cooksmith.freezer_meal_reservations),2,'Move preserved portions');
-select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001','99000000-0000-4000-8000-000000000003','consume','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020','{}')$$,'Explicit consume succeeds');
+select lives_ok($$select pg_temp.complete_freezer('99000000-0000-4000-8000-000000000003','done','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020')$$,'Explicit consume succeeds');
 select is((select portions from cooksmith.freezer_meals),0,'Consume decrements physical stock exactly');
-select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001','99000000-0000-4000-8000-000000000003','consume','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020','{}')$$,'Consume network retry is idempotent');
+select lives_ok($$select pg_temp.complete_freezer('99000000-0000-4000-8000-000000000003','done','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020')$$,'Consume network retry is idempotent');
 select is((select portions from cooksmith.freezer_meals),0,'Retry cannot decrement again');
-select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'undo','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020','{}')$$,'Undo returns physical stock and reservation');
+select lives_ok($$select pg_temp.complete_freezer(gen_random_uuid(),'undo','99000000-0000-4000-8000-000000000010','99000000-0000-4000-8000-000000000020')$$,'Undo returns physical stock and reservation');
 select is((select portions from cooksmith.freezer_meals),2,'Undo restores stock');
 select is((select state from cooksmith.freezer_meal_reservations),'reserved','Undo re-establishes reservation');
 select throws_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'edit','99000000-0000-4000-8000-000000000010',null,'{"name":"Stale","portions":9,"frozenOn":"2026-10-06","revision":0}')$$,'PT409',null,'Stale edit cannot overwrite consumed/reserved changes');
@@ -40,7 +52,7 @@ select lives_ok($$update cooksmith.household_recipes set archived_at=now() where
 select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'edit','99000000-0000-4000-8000-000000000011',null,'{"name":"Linked soup","portions":1,"frozenOn":"2026-10-06","householdRecipeId":"99000000-0000-4000-8000-000000000030","notes":"Use this week","revision":0}')$$,'Editing stock preserves an existing unavailable recipe link');
 select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'reserve','99000000-0000-4000-8000-000000000011','99000000-0000-4000-8000-000000000021','{"portions":1,"mealDate":"2026-10-08"}')$$,'Archived optional recipe does not prevent using prepared stock');
 select throws_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'edit','99000000-0000-4000-8000-000000000011',null,jsonb_build_object('name','Soup','portions',0,'frozenOn','2026-10-06','revision',(select revision from cooksmith.freezer_meals where id='99000000-0000-4000-8000-000000000011')))$$,'23514',null,'Current edit cannot reduce physical stock below reserved portions');
-select lives_ok($$select cooksmith.freezer_command('20000000-0000-4000-8000-000000000001',gen_random_uuid(),'consume','99000000-0000-4000-8000-000000000011','99000000-0000-4000-8000-000000000021','{}')$$,'Consume stock with archived recipe');
+select lives_ok($$select pg_temp.complete_freezer(gen_random_uuid(),'done','99000000-0000-4000-8000-000000000011','99000000-0000-4000-8000-000000000021')$$,'Consume stock with archived recipe');
 select lives_ok($$delete from cooksmith.planned_meals where id='99000000-0000-4000-8000-000000000021'$$,'Consumed plan can be removed explicitly');
 select is((select portions from cooksmith.freezer_meals where id='99000000-0000-4000-8000-000000000011'),0,'Deleting consumed plan does not silently return eaten food');
 -- Replacing an existing dinner must reconcile its generated shopping atomically.

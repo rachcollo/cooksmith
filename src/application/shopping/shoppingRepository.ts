@@ -10,6 +10,13 @@ import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/type
 export interface ShoppingRepository {
   loadDefault?(householdId: string): Promise<ShoppingPreset>
   saveDefault?(householdId: string, preset: ShoppingPreset): Promise<void>
+  buy?(
+    householdId: string,
+    operationId: string,
+    name: string,
+    items: ShoppingItem[],
+    amounts: { quantity: number | null; unit: string | null }[],
+  ): Promise<void>
   listPutAway?(householdId: string): Promise<PutAwaySource[]>
   putAway?(
     householdId: string,

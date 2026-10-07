@@ -15,6 +15,7 @@ test('put-away review groups purchases and supports cancel, correction and parti
   await expect(action).toBeVisible()
   await action.click()
   await dialog.getByRole('checkbox', { name: 'Include milk' }).uncheck()
+  await dialog.getByRole('button', { name: 'Change apple' }).click()
   await dialog.getByRole('textbox', { name: 'Pantry name for apple' }).fill('Green apples')
   expect(
     (await new AxeBuilder({ page }).include('dialog').analyze()).violations.filter((v) =>

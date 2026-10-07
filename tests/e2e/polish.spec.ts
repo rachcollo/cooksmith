@@ -3,14 +3,11 @@ import { expect, test, type Page } from '@playwright/test'
 async function accessible(page: Page) {
   await page.evaluate(async () => {
     await document.fonts.ready
+    // Measure settled colours, not the dialog's intermediate entrance opacity.
     await Promise.all(
       document
         .getAnimations()
-        .filter(
-          (animation) =>
-            animation.playState === 'running' &&
-            animation.effect?.getComputedTiming().endTime !== Infinity,
-        )
+        .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
         .map((animation) => animation.finished.catch(() => undefined)),
     )
   })
