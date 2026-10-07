@@ -20,6 +20,7 @@ import {
   type HouseholdMember,
   type HouseholdPeopleState,
 } from '../domain/households/invitations'
+import { ShoppingDefaultsSection } from './shopping/ShoppingDefaultsSection'
 import { HouseholdPreferencesSection } from './HouseholdPreferencesSection'
 
 function friendlyDate(value: string) {
@@ -231,6 +232,13 @@ export function SettingsPage() {
         </section>
       ) : null}
 
+      {onboarding.householdId === state.householdId ? (
+        <ShoppingDefaultsSection
+          key={`${user?.id}:${state.householdId}`}
+          householdId={state.householdId}
+          owner={owner}
+        />
+      ) : null}
       <HouseholdPreferencesSection householdId={state.householdId} />
 
       <Dialog

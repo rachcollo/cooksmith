@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import {
   shoppingPeriodView,
   validShoppingPeriod,
@@ -78,8 +79,17 @@ export function createSupabaseShoppingRepository(
   const selection =
     'plan_override, combine_with_plan, measurement_system, id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(planned_meal_id, quantity, unit, source_quantities)'
 
+  async function loadDefault(householdId: string) {
+    const result = await database
+      .from('household_settings')
+      .select('shopping_default_period')
+      .eq('household_id', householdId)
+      .single()
+    shoppingError(result.error)
+    return z.enum(['week', 'next3', 'next5']).parse(result.data?.shopping_default_period)
+  }
   async function loadPeriod(householdId: string) {
-    const [result, settings, meals] = await Promise.all([
+    const [result, settings, meals, defaultKind] = await Promise.all([
       database
         .from('shopping_list_items')
         .select(selection)
@@ -98,6 +108,7 @@ export function createSupabaseShoppingRepository(
         .from('planned_meals')
         .select('id, meal_date, meal_type')
         .eq('household_id', householdId),
+      loadDefault(householdId),
     ])
     shoppingError(result.error)
     shoppingError(settings.error)
@@ -127,10 +138,23 @@ export function createSupabaseShoppingRepository(
       rows,
       saved,
       (meals.data ?? []).map((m) => ({ id: m.id, mealDate: m.meal_date, mealType: m.meal_type })),
+      new Date(),
+      defaultKind,
     )
   }
 
   return {
+    loadDefault,
+    async saveDefault(householdId, preset) {
+      const value = z.enum(['week', 'next3', 'next5']).parse(preset)
+      const result = await database
+        .from('household_settings')
+        .update({ shopping_default_period: value })
+        .eq('household_id', householdId)
+        .select('household_id')
+        .single()
+      shoppingError(result.error)
+    },
     loadPeriod,
     async savePeriod(householdId, period) {
       if (!validShoppingPeriod(period))

@@ -60,6 +60,13 @@ function HouseholdShoppingPage() {
   const repository = useShoppingRepository()
   const pantryRepository = usePantryRepository()
   const [periodView, setPeriodView] = useState<ShoppingPeriodView | null>(null)
+  const periodActive = useRef(true)
+  useEffect(() => {
+    periodActive.current = true
+    return () => {
+      periodActive.current = false
+    }
+  }, [])
   const periodLock = useRef(false)
   const periodRevision = useRef(0)
   const [periodBusy, setPeriodBusy] = useState(false)
@@ -151,7 +158,12 @@ function HouseholdShoppingPage() {
           setItems(view.items)
         }
       } catch {
-        if (active)
+        if (
+          active &&
+          request === sequence &&
+          revision === periodRevision.current &&
+          !periodLock.current
+        )
           setError('Could not refresh the shared shopping period. Try refreshing Cooksmith.')
       }
     }
@@ -172,7 +184,9 @@ function HouseholdShoppingPage() {
     setPeriodBusy(true)
     try {
       await repository.savePeriod(householdId, period)
+      if (!periodActive.current) return
       const view = await repository.loadPeriod(householdId)
+      if (!periodActive.current) return
       setPeriodView(view)
       setItems(view.items)
     } finally {
@@ -645,7 +659,6 @@ function HouseholdShoppingPage() {
       </header>
       {periodView && repository.savePeriod ? (
         <ShoppingPeriodControl
-          key={JSON.stringify(periodView.period)}
           view={periodView}
           busy={periodBusy || saving}
           onSave={changePeriod}

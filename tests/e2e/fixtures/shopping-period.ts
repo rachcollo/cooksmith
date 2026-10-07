@@ -3,6 +3,7 @@ import {
   defaultShoppingPeriod,
   shoppingPeriodView,
   type ShoppingPeriod,
+  type ShoppingPreset,
   type PeriodShoppingItem,
 } from '../../../src/domain/shopping/period'
 import { addDays } from '../../../src/domain/meal-plans/week'
@@ -11,8 +12,9 @@ import '@fontsource/space-grotesk/latin-400.css'
 import '@fontsource/space-grotesk/latin-500.css'
 import '@fontsource/space-grotesk/latin-700.css'
 import '../../../src/styles/global.css'
-let saved = defaultShoppingPeriod()
-const week = saved.weekStart
+let saved: ShoppingPeriod | null = null
+let defaultKind: ShoppingPreset = 'week'
+const week = defaultShoppingPeriod().weekStart
 const meals = [0, 1, 2, 3, 4].map((day) => ({
   id: `meal-${day}`,
   mealDate: addDays(week, day),
@@ -52,9 +54,13 @@ const rows: PeriodShoppingItem[] = [
   },
 ]
 let fail = new URLSearchParams(location.search).has('fail')
-const load = async () => shoppingPeriodView(rows, saved, meals)
+const load = async () => shoppingPeriodView(rows, saved, meals, new Date(), defaultKind)
 const repository = {
   ...defaultShoppingRepository,
+  loadDefault: async () => defaultKind,
+  saveDefault: async (_h: string, preset: ShoppingPreset) => {
+    defaultKind = preset
+  },
   loadPeriod: load,
   list: async () => (await load()).items,
   savePeriod: async (_h: string, period: ShoppingPeriod) => {
@@ -66,7 +72,7 @@ const repository = {
   },
 }
 renderApp(
-  '/shopping',
+  new URLSearchParams(location.search).has('settings') ? '/settings' : '/shopping',
   undefined,
   undefined,
   undefined,

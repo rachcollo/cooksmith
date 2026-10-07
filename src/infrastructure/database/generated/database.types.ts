@@ -576,6 +576,7 @@ export type Database = {
           household_id: string
           preferred_prep_day: number | null
           prep_mode: Database['cooksmith']['Enums']['prep_mode']
+          shopping_default_period: string
           updated_at: string
           updated_by: string | null
           weekend_max_minutes: number
@@ -592,6 +593,7 @@ export type Database = {
           household_id: string
           preferred_prep_day?: number | null
           prep_mode?: Database['cooksmith']['Enums']['prep_mode']
+          shopping_default_period?: string
           updated_at?: string
           updated_by?: string | null
           weekend_max_minutes?: number
@@ -608,6 +610,7 @@ export type Database = {
           household_id?: string
           preferred_prep_day?: number | null
           prep_mode?: Database['cooksmith']['Enums']['prep_mode']
+          shopping_default_period?: string
           updated_at?: string
           updated_by?: string | null
           weekend_max_minutes?: number

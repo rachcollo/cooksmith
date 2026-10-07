@@ -2846,3 +2846,28 @@ button.card:hover {
     padding-inline: 20px;
   }
 }
+
+.shopping-period-control {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.shopping-period-control form {
+  margin: 0;
+}
+.shopping-period-control .field {
+  min-width: 0;
+}
+.shopping-period-control select {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.shopping-period-control > p {
+  margin: 0;
+}
+.shopping-custom-dates {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

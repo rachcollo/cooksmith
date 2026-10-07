@@ -111,8 +111,30 @@ describe('shopping period', () => {
     expect(shoppingPeriodView([adjusted], week, [], today).items).toEqual([adjusted])
   })
   it('explains empty plans and leaves unknown quantities unknown', () => {
-    expect(shoppingPeriodView([], week, [], today).description).toContain('add meals in Plan')
+    expect(shoppingPeriodView([], week, [], today).description).toContain('0 planned meals')
     const unknown = { ...row, contributions: [{ ...row.contributions[0]!, quantity: null }] }
     expect(shoppingPeriodView([unknown], week, meals, today).items[0]?.quantity).toBeNull()
   })
+})
+
+it('uses the household default without replacing a valid shared override', () => {
+  const defaultView = shoppingPeriodView([row], null, meals, today, 'next3')
+  expect(defaultView).toMatchObject({
+    choice: 'default',
+    defaultKind: 'next3',
+    period: { kind: 'next3' },
+  })
+  expect(defaultView.items[0]).toMatchObject({ quantity: 3, completed: true })
+  expect(shoppingPeriodView([row], week, meals, today, 'next3').items[0]?.quantity).toBe(5)
+  expect(
+    shoppingPeriodView([row], { ...week, kind: 'default' }, meals, today, 'next5').items[0]
+      ?.quantity,
+  ).toBe(5)
+  expect(resolveShoppingPeriod({ ...week, weekStart: '2026-09-28' }, today, 'next3')).toMatchObject(
+    { choice: 'default', period: { kind: 'next3' } },
+  )
+  expect(
+    shoppingPeriodView([row], { ...week, kind: 'default' }, meals, new Date(2026, 9, 7), 'next3')
+      .period.from,
+  ).toBe('2026-10-07')
 })

@@ -1,8 +1,14 @@
-import type { ShoppingPeriod, ShoppingPeriodView } from '../../domain/shopping/period'
+import type {
+  ShoppingPeriod,
+  ShoppingPeriodView,
+  ShoppingPreset,
+} from '../../domain/shopping/period'
 import type { Recipe } from '../../domain/recipes/types'
 import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/types'
 
 export interface ShoppingRepository {
+  loadDefault?(householdId: string): Promise<ShoppingPreset>
+  saveDefault?(householdId: string, preset: ShoppingPreset): Promise<void>
   loadPeriod?(householdId: string): Promise<ShoppingPeriodView>
   savePeriod?(householdId: string, period: ShoppingPeriod): Promise<void>
   refreshStructure?(householdId: string): Promise<{ refreshed: number; skipped: number }>

@@ -7,7 +7,13 @@ import {
 } from '../meal-plans/week'
 import type { ShoppingItem, ShoppingSourceQuantity } from './types'
 
-export type ShoppingPeriodKind = 'week' | 'next3' | 'next5' | 'custom'
+export type ShoppingPeriodKind = 'week' | 'next3' | 'next5' | 'custom' | 'default'
+export type ShoppingPreset = 'week' | 'next3' | 'next5'
+export const shoppingPresetLabels: Record<ShoppingPreset, string> = {
+  week: 'Full active week',
+  next3: 'Next 3 planned meals',
+  next5: 'Next 5 planned meals',
+}
 export interface ShoppingPeriod {
   kind: ShoppingPeriodKind
   weekStart: string
@@ -31,6 +37,8 @@ export interface PeriodShoppingItem extends ShoppingItem {
 }
 export interface ShoppingPeriodView {
   period: ShoppingPeriod
+  choice?: ShoppingPeriodKind
+  defaultKind?: ShoppingPreset
   items: ShoppingItem[]
   description: string
   notice: string | null
@@ -56,7 +64,7 @@ function calendarDate(value: string) {
 }
 export function validShoppingPeriod(period: ShoppingPeriod) {
   return (
-    ['week', 'next3', 'next5', 'custom'].includes(period.kind) &&
+    ['week', 'next3', 'next5', 'custom', 'default'].includes(period.kind) &&
     [period.weekStart, period.from, period.to].every(calendarDate) &&
     startOfWeek(period.weekStart) === period.weekStart &&
     period.from >= period.weekStart &&
@@ -64,16 +72,21 @@ export function validShoppingPeriod(period: ShoppingPeriod) {
     period.from <= period.to
   )
 }
-export function resolveShoppingPeriod(saved: ShoppingPeriod | null, today = new Date()) {
-  const fallback = defaultShoppingPeriod(today)
-  if (!saved) return { period: fallback, notice: null }
+export function resolveShoppingPeriod(
+  saved: ShoppingPeriod | null,
+  today = new Date(),
+  defaultKind: ShoppingPreset = 'week',
+) {
+  const fallback = chooseShoppingPeriod(defaultKind, today)
+  if (!saved || saved.kind === 'default')
+    return { period: fallback, choice: 'default' as ShoppingPeriodKind, notice: null }
   if (!validShoppingPeriod(saved) || saved.weekStart !== fallback.weekStart)
     return {
       period: fallback,
-      notice:
-        'The previous shopping period has ended or is no longer valid. Showing the full active week.',
+      choice: 'default' as ShoppingPeriodKind,
+      notice: 'The previous shopping period has ended. Using your household default.',
     }
-  return { period: saved, notice: null }
+  return { period: saved, choice: saved.kind, notice: null }
 }
 export function selectedPeriodMeals(period: ShoppingPeriod, meals: readonly PeriodMeal[]) {
   const order = ['breakfast', 'lunch', 'dinner', 'snack']
@@ -92,8 +105,9 @@ export function shoppingPeriodView(
   saved: ShoppingPeriod | null,
   meals: PeriodMeal[],
   today = new Date(),
+  defaultKind: ShoppingPreset = 'week',
 ): ShoppingPeriodView {
-  const { period, notice } = resolveShoppingPeriod(saved, today)
+  const { period, choice, notice } = resolveShoppingPeriod(saved, today, defaultKind)
   const selected = selectedPeriodMeals(period, meals)
   const included = new Set(selected.map((m) => m.id))
   const items = rows.flatMap((row) => {
@@ -118,8 +132,10 @@ export function shoppingPeriodView(
   const range = `${formatDisplayDate(period.from)} to ${formatDisplayDate(period.to)}`
   return {
     period,
+    choice,
+    defaultKind,
     items,
     notice,
-    description: `${period.kind === 'next3' || period.kind === 'next5' ? `Next ${period.kind === 'next3' ? 3 : 5} planned meals, ` : ''}${range}. ${selected.length} planned ${selected.length === 1 ? 'meal' : 'meals'} included.${selected.length ? '' : ' Choose another range or add meals in Plan.'}`,
+    description: `${range} · ${selected.length} planned ${selected.length === 1 ? 'meal' : 'meals'}`,
   }
 }
