@@ -5,6 +5,7 @@ import type { Recipe } from '../../domain/recipes/types'
 /** One deliberate choice: a visible recipe or a named meal without ingredients. */
 export function MealSearchField({
   value,
+  label = 'Dinner',
   recipes,
   freezerMeals = [],
   onFreezer,
@@ -16,6 +17,7 @@ export function MealSearchField({
   onManual,
 }: {
   value: string
+  label?: string
   recipes: Recipe[]
   freezerMeals?: FreezerMeal[]
   onFreezer?: (meal: FreezerMeal) => void
@@ -87,9 +89,9 @@ export function MealSearchField({
       }}
     >
       <label className="field" htmlFor={id}>
-        Dinner
+        {label}
       </label>
-      <div className="meal-search-anchor">
+      <div className="meal-search-anchor field">
         <input
           id={id}
           data-autofocus
@@ -116,7 +118,7 @@ export function MealSearchField({
             className="recipe-search-results"
             id={`${id}-results`}
             role="listbox"
-            aria-label="Dinner choices"
+            aria-label={`${label} choices`}
           >
             {freezerMatches.map((meal, position) => (
               <button

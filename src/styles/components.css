@@ -2234,6 +2234,11 @@ button.card:hover {
   position: relative;
 }
 
+.meal-search-anchor {
+  position: relative;
+  min-width: 0;
+}
+
 .week-plan-proposal label {
   align-items: center;
   display: flex;
@@ -2844,5 +2849,51 @@ button.card:hover {
 
   .home-overview-grid .card {
     padding-inline: 20px;
+  }
+}
+
+.freezer-panel {
+  min-width: 0;
+  border-block: 1px solid var(--colour-border);
+  padding-block: var(--space-2);
+}
+.freezer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.freezer-toolbar > h2 {
+  flex: 1 1 9rem;
+  margin: 0;
+  font: inherit;
+  min-width: 0;
+}
+.freezer-toolbar > h2 .button {
+  text-align: left;
+  padding-inline: 0;
+  white-space: normal;
+}
+.freezer-toolbar small {
+  display: block;
+  color: var(--colour-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: normal;
+}
+.freezer-panel article h3 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 36rem) {
+  .pantry-discovery {
+    padding-inline: 0;
+  }
+  .pantry-discovery-row {
+    --touch-target: 48px;
+    grid-template-columns: minmax(0, 1fr) repeat(3, 48px);
+  }
+  .pantry-discovery-row .field {
+    min-width: 0;
   }
 }

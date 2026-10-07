@@ -4,8 +4,8 @@
 
 - **Jira issue:** [CS-99](https://smillins.atlassian.net/browse/CS-99)
 - **Epic:** Pantry (CS-3)
-- **Status:** Implemented, manual validation pending
-- **Branch:** `feat/cs-99-prepared-freezer-meals`
+- **Status:** PR192 merged; compact freezer follow-up in draft review
+- **Branch:** `feat/cs-99-compact-freezer` (follow-up; PR192 merged)
 - **Depends on:** CS-96 and current Planner/Shopping reconciliation
 - **Blocks:** CS-78 freezer-meal patterns
 
@@ -74,3 +74,7 @@ Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. API-contract expecta
 ## Integration after PR191
 
 Integrated accepted main `3f6ecebf8dd922be990cd6f022218ea7adde0e4b`. Table-contract expectations retain freezer, favourites and Shopping-period tables. Accepted planner anchoring, Shopping period/mark behaviour and security/HTTP/WebKit contracts remain. Exact-head checks are recorded in PR192. PR191 database release37538439556 was waiting at read-only inspection; no approval or deployment performed. Existing freezer migration release requirements remain; no new migration or Edge change.
+
+## Owner-requested compact freezer follow-up (7 October)
+
+Based on accepted main `19bb8c573c5f7dc75c595285a967fcd876d8974f`. See [follow-up handover](../../docs/engineering/handovers/cs99-compact-freezer.md). A compact stock/count row and Add meal replace the large default section; details/archives/refresh expand on demand. The popup reuses Plan recipe/manual search without automatic linking or loss of typed names. The date label is Add to this day; existing date metadata and explicit Plan reservation semantics remain unchanged. Stock refreshes on app return with error retry. No new migration, Edge Function, dependency or paid cost. Reservation/use/undo, shopping exclusion and isolation remain covered. Owner visual and authenticated hosted acceptance remain pending. Home remains deferred.

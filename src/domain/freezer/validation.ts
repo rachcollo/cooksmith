@@ -11,7 +11,7 @@ export const freezerMealInputSchema = z
     importedRecipeId: z.uuid().nullable(),
   })
   .refine((v) => !v.useFirstOn || v.useFirstOn >= v.frozenOn, {
-    message: 'Use-first date cannot be before the frozen date.',
+    message: 'Choose a day on or after the frozen date.',
     path: ['useFirstOn'],
   })
   .refine((v) => !v.householdRecipeId || !v.importedRecipeId, {
