@@ -38,3 +38,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [015](015-shared-lossless-ingredient-structure.md) | Proposed | Share lossless ingredient structure across recipe consumers |
 | [016](016-prepared-freezer-reservations.md) | Proposed | Reserve prepared freezer meals without shopping ingredients |
 | [017](017-shopping-put-away-receipts.md) | Proposed | Apply shopping to Pantry once using availability receipts |
+| [018](018-measured-stock-and-meal-completion.md) | Proposed | Preserve measured stock across buying, put-away and meal completion |
