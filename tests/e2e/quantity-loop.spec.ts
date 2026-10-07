@@ -88,6 +88,34 @@ test('known groceries need one batch confirmation, dinner one Done and one Undo,
   )
   await page.setViewportSize({ width: 320, height: 780 })
   await page.goto('/tests/e2e/fixtures/quantity-loop.html')
+  const period = page.getByRole('combobox', { name: 'Buy for' })
+  await expect(period).toHaveValue('default')
+  await period.selectOption('week')
+  await expect(period).toBeEnabled()
+  expect(
+    (
+      await must(
+        client
+          .from('household_shopping_periods')
+          .select('shopping_period_kind')
+          .eq('household_id', household)
+          .single(),
+      )
+    ).shopping_period_kind,
+  ).toBe('week')
+  await period.selectOption('default')
+  await expect(period).toBeEnabled()
+  expect(
+    (
+      await must(
+        client
+          .from('household_shopping_periods')
+          .select('shopping_period_kind')
+          .eq('household_id', household)
+          .single(),
+      )
+    ).shopping_period_kind,
+  ).toBe('default')
   const buy = page.getByRole('button', { name: `Mark as done: ${name}` })
   await expect(buy).toBeVisible()
   await buy.click()

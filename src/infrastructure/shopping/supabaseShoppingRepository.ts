@@ -85,8 +85,20 @@ export function createSupabaseShoppingRepository(
   const selection =
     'plan_override, combine_with_plan, measurement_system, id, household_id, display_name, quantity, unit, category, completed, position, updated_at, manual, shopping_item_contributions(planned_meal_id, quantity, unit, source_quantities)'
 
+  async function loadDefault(householdId: string) {
+    const result = await database
+      .from('household_settings')
+      .select('shopping_default_period')
+      .eq('household_id', householdId)
+      .single()
+    shoppingError(result.error)
+    return z.enum(['week', 'next3', 'next5']).parse(result.data?.shopping_default_period)
+  }
   async function loadPeriod(householdId: string) {
-    const snapshot = await database.rpc('shopping_stock_snapshot', { p_household_id: householdId })
+    const [snapshot, defaultKind] = await Promise.all([
+      database.rpc('shopping_stock_snapshot', { p_household_id: householdId }),
+      loadDefault(householdId),
+    ])
     shoppingError(snapshot.error)
     const state = snapshot.data as unknown as {
       items: ShoppingRow[]
@@ -162,10 +174,23 @@ export function createSupabaseShoppingRepository(
       ),
       saved,
       meals,
+      new Date(),
+      defaultKind,
     )
   }
 
   return {
+    loadDefault,
+    async saveDefault(householdId, preset) {
+      const value = z.enum(['week', 'next3', 'next5']).parse(preset)
+      const result = await database
+        .from('household_settings')
+        .update({ shopping_default_period: value })
+        .eq('household_id', householdId)
+        .select('household_id')
+        .single()
+      shoppingError(result.error)
+    },
     async buy(householdId, operationId, name, items, amounts) {
       const result = await database.rpc('record_shopping_stock_purchase', {
         p_household_id: householdId,

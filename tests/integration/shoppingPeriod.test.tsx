@@ -14,7 +14,7 @@ import {
 } from '../renderApp'
 import { defaultShoppingPeriod, type ShoppingPeriodView } from '../../src/domain/shopping/period'
 
-it('saves a shared range deliberately, suppresses duplicate submits and recovers from failure', async () => {
+it('auto-applies a preset, suppresses rapid duplicate changes and recovers from failure', async () => {
   let view: ShoppingPeriodView = {
     period: defaultShoppingPeriod(),
     items: [],
@@ -46,10 +46,11 @@ it('saves a shared range deliberately, suppresses duplicate submits and recovers
     repo,
   )
   await userEvent.selectOptions(await screen.findByRole('combobox', { name: 'Buy for' }), 'next3')
-  expect(save).not.toHaveBeenCalled()
-  const form = screen.getByRole('button', { name: 'Apply period' }).closest('form')!
-  fireEvent.submit(form)
-  fireEvent.submit(form)
+  expect(screen.queryByRole('button', { name: 'Apply period' })).not.toBeInTheDocument()
+  expect(screen.getByRole('combobox', { name: 'Buy for' })).toBeDisabled()
+  fireEvent.change(screen.getByRole('combobox', { name: 'Buy for' }), {
+    target: { value: 'next5' },
+  })
   expect(save).toHaveBeenCalledOnce()
   view = {
     ...view,
@@ -58,9 +59,9 @@ it('saves a shared range deliberately, suppresses duplicate submits and recovers
   }
   resolve()
   await screen.findByText('Next 3 planned meals selected.')
+  expect(screen.getByRole('combobox', { name: 'Buy for' })).toHaveFocus()
   save.mockRejectedValueOnce(new Error('offline'))
   await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Buy for' }), 'next5')
-  await userEvent.click(screen.getByRole('button', { name: 'Apply period' }))
   expect(await screen.findByText(/previous list is still available/)).toBeVisible()
   expect(screen.getByText('Next 3 planned meals selected.')).toBeVisible()
   view = {
@@ -113,3 +114,60 @@ it('clears an old household period and ignores its late response after switching
   expect(screen.queryByText('Old household shopping period')).not.toBeInTheDocument()
   expect(repository.savePeriod).not.toHaveBeenCalled()
 })
+
+it.each(['resolve', 'reject'])(
+  'ignores a stale background %s after an automatic selection',
+  async (outcome) => {
+    let current: ShoppingPeriodView = {
+      period: defaultShoppingPeriod(),
+      items: [],
+      description: 'Initial range',
+      notice: null,
+    }
+    let finish!: (view: ShoppingPeriodView) => void
+    let fail!: (error: Error) => void
+    const pending = new Promise<ShoppingPeriodView>((resolve, reject) => {
+      finish = resolve
+      fail = reject
+    })
+    const load = vi
+      .fn(async () => current)
+      .mockImplementationOnce(async () => current)
+      .mockImplementationOnce(() => pending)
+    const repository = {
+      ...defaultShoppingRepository,
+      loadPeriod: load,
+      savePeriod: vi.fn(async () => {
+        current = {
+          ...current,
+          period: { ...current.period, kind: 'next3' },
+          description: 'Latest selected range',
+        }
+      }),
+    }
+    renderApp(
+      '/shopping',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+    )
+    await screen.findByText('Initial range')
+    fireEvent.focus(window)
+    await waitFor(() => expect(load).toHaveBeenCalledTimes(2))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Buy for' }), 'next3')
+    await screen.findByText('Latest selected range')
+    await act(async () => {
+      if (outcome === 'resolve') finish({ ...current, description: 'Stale range' })
+      else fail(new Error('stale offline'))
+    })
+    expect(screen.queryByText('Stale range')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Could not refresh the shared/)).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Buy for' })).toHaveValue('next3')
+  },
+)

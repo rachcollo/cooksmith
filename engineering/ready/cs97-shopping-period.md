@@ -4,8 +4,8 @@
 
 - **Jira issue:** [CS-97](https://smillins.atlassian.net/browse/CS-97)
 - **Epic:** Shopping Lists (CS-6)
-- **Status:** Ready
-- **Branch:** `feat/cs-97-shopping-period`
+- **Status:** In Review
+- **Branch:** `feat/cs-97-shopping-default-dropdown` (follow-up; original PR191 merged)
 - **Depends on:** CS-22
 - **Blocks:** CS-25
 
@@ -62,3 +62,14 @@ Integrated accepted main `754579745957f70edfa88b30cc3396f605b518bc`. Preserve pe
 ## Integration after owner merges PR189 and PR190
 
 Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. The API table-contract conflict retains both `household_recipe_favourites` and `household_shopping_periods`; no schema or policy change is introduced by this resolution. Preserve accepted planner anchoring, favourites and PR196 polish/security contracts. Exact-head results are recorded in PR191. Database release still requires separately reviewed history/pending migrations and the protected `allow_out_of_order_migrations` option; no deployment performed.
+
+## Owner-requested compact default follow-up (7 October)
+
+Rach reports PR191 functions correctly but its period panel is too cluttered. See [follow-up handover](../../docs/engineering/handovers/cs97-shopping-default-dropdown.md). The owner-managed household Settings default is separate from the shared current-week Shopping override. The compact dropdown auto-applies presets; custom dates alone need Save dates. Existing purchases, manual items, overrides, bought state and history remain intact. Next 3/5 means planned meals, not days.
+
+Migration: `20261007020500_household_shopping_default.sql`; no Edge Function or added cost. New migration must precede the new client through a separately approved protected release. Owner visual acceptance, hosted authenticated verification and physical-device checks remain pending. No automatic Jira Done or public-smoke acceptance.
+
+
+## Reconciliation after accepted CS-102
+
+Baseline `ad8e7491cfee160d012e8058daf0d235c37583dc` includes merged PR199/200. Preserve CS-102 stock allocation before period filtering, measured purchase/put-away and Done/Undo while applying the owner-managed default and explicit shared override. HTTP and browser regressions exercise the combined flow; exact-head evidence is recorded on PR197 and the follow-up handover. No new migration or Edge change is introduced by reconciliation. Existing default migration20261007020500 predates released CS-102 versions: review pending history and the protected out-of-order option during a separately approved release. No production action is authorised by this package.

@@ -323,6 +323,31 @@ test('generated 600g + 400g demand allocates 500g once, then buy, put-away, Done
     let view = await shopping.loadPeriod(householdId),
       row = view.items.find((i) => i.name === name)
     assert.equal(row.quantity, 500)
+    // A later-period override must not reallocate stock already assigned to earlier meals.
+    const week = {
+      kind: 'week',
+      weekStart: view.period.weekStart,
+      from: view.period.weekStart,
+      to: view.period.to,
+    }
+    await shopping.saveDefault(householdId, 'week')
+    await shopping.savePeriod(householdId, { ...week, kind: 'default' })
+    assert.equal((await shopping.loadPeriod(householdId)).choice, 'default')
+    await shopping.savePeriod(householdId, {
+      ...week,
+      kind: 'custom',
+      from: meals[1].meal_date,
+      to: meals[1].meal_date,
+    })
+    await shopping.saveDefault(householdId, 'next3')
+    const custom = await shopping.loadPeriod(householdId)
+    assert.equal(custom.choice, 'custom')
+    assert.equal(custom.items.find((item) => item.name === name).quantity, 400)
+    await shopping.saveDefault(householdId, 'week')
+    await shopping.savePeriod(householdId, { ...week, kind: 'default' })
+    view = await shopping.loadPeriod(householdId)
+    row = view.items.find((item) => item.name === name)
+    assert.equal(row.quantity, 500)
     const buyId = crypto.randomUUID()
     await shopping.buy(householdId, buyId, name, [row], [{ quantity: 500, unit: 'g' }])
     view = await shopping.loadPeriod(householdId)

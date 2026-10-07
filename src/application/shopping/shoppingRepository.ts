@@ -1,9 +1,15 @@
+import type {
+  ShoppingPeriod,
+  ShoppingPeriodView,
+  ShoppingPreset,
+} from '../../domain/shopping/period'
 import type { PutAwaySource, PutAwayChoice, PutAwayResult } from '../../domain/shopping/putAway'
-import type { ShoppingPeriod, ShoppingPeriodView } from '../../domain/shopping/period'
 import type { Recipe } from '../../domain/recipes/types'
 import type { ShoppingItem, ShoppingItemInput } from '../../domain/shopping/types'
 
 export interface ShoppingRepository {
+  loadDefault?(householdId: string): Promise<ShoppingPreset>
+  saveDefault?(householdId: string, preset: ShoppingPreset): Promise<void>
   buy?(
     householdId: string,
     operationId: string,
