@@ -11,6 +11,8 @@ export type PlannedMealRecipeState =
   | { kind: 'archived'; recipe: LinkedRecipeSummary }
   | { kind: 'unavailable'; recipeId: string }
 export interface PlannedMeal {
+  completedAt?: string | null
+  completionRevision?: number
   freezerMealId?: string | null
   freezerPortions?: number
   freezerState?: 'reserved' | 'consumed'

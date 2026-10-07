@@ -78,13 +78,13 @@ describe('one purchasing row per product', () => {
       groupShoppingPurchases(names.map((name, i) => row(String(i), name, 1, null))).map(
         (item) => item.name,
       ),
-    ).toEqual([
-      'tomato',
-      'avocados',
-      'canned diced tomato',
-      'diced tomato',
-      'handfuls fresh baby spinach',
+    ).toEqual(['tomato', 'avocados', 'canned diced tomato', 'diced tomato', 'fresh baby spinach'])
+  })
+  it('retains a legacy measure when cleaning its product label', () => {
+    const [purchase] = groupShoppingPurchases([
+      row('spinach', 'handfuls fresh baby spinach', 2, null),
     ])
+    expect(purchase?.amountLabel).toBe('2 handful')
   })
   it('cleans fresh generated identities while retaining substitution wording in provenance', () => {
     const recipe = {

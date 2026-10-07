@@ -52,3 +52,10 @@ describe('pantry reconciliation', () => {
     expect(applyQuantityDelta(pantryItem, -5)).toMatchObject({ quantity: 0, available: false })
   })
 })
+
+it('optional adjustments preserve unknown totals and lower-bound confidence', () => {
+  expect(applyQuantityDelta({ ...pantryItem, quantity: null }, 2)).toMatchObject({ quantity: null })
+  expect(
+    applyQuantityDelta({ ...pantryItem, quantity: 2, quantityUntracked: true }, -2),
+  ).toMatchObject({ quantity: 0, quantityUntracked: true, available: true })
+})

@@ -21,6 +21,7 @@ it('groups equivalent purchases, honours cancel, exclusions and corrected names'
   expect(f.applied.size).toBe(0)
   await user.click(screen.getByRole('button', { name: 'Put shopping away' }))
   await user.click(screen.getByRole('checkbox', { name: 'Include milk' }))
+  await user.click(screen.getByRole('button', { name: 'Change apple' }))
   const name = screen.getByRole('textbox', { name: 'Pantry name for apple' })
   await user.clear(name)
   await user.type(name, 'Green apples')
@@ -53,7 +54,7 @@ it('retries uncertain commit with the same operation, prevents duplicate submit 
   fireEvent.submit(form)
   await screen.findByText(/Could not confirm put-away/)
   expect(f.repository.putAway).toHaveBeenCalledOnce()
-  expect(screen.getByRole('textbox', { name: 'Pantry name for milk' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Change milk' })).toBeDisabled()
   await user.click(screen.getByRole('button', { name: 'Put selected items away' }))
   await screen.findByText('2 Pantry items are now available.')
   const calls = vi.mocked(f.repository.putAway!).mock.calls
@@ -84,7 +85,7 @@ it('discards an old household draft and late eligibility response', async () => 
     finish([{ key: 'm:old', token: 'old', name: 'Old food', shoppingItemId: 'old' }]),
   )
   await waitFor(() =>
-    expect(within(screen.getByRole('dialog')).getByRole('textbox')).toHaveValue('new food'),
+    expect(within(screen.getByRole('dialog')).getByText('new food')).toBeInTheDocument(),
   )
 })
 
@@ -101,6 +102,24 @@ it('unlocks corrections after a definite rejected review without treating it as 
   await userEvent.click(await screen.findByRole('button', { name: 'Put shopping away' }))
   await userEvent.click(screen.getByRole('button', { name: 'Put selected items away' }))
   await screen.findByText('Use the exact Pantry name. Nothing was put away.')
-  expect(screen.getByRole('textbox', { name: 'Pantry name for milk' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: 'Change milk' })).toBeEnabled()
   expect(f.applied.size).toBe(0)
+})
+
+it('offers one batch confirmation with no required typing for recognised purchases', async () => {
+  const f = putAwayFixture()
+  render(
+    <ShoppingRepositoryContext.Provider value={f.repository}>
+      <ShoppingPutAway householdId="household" refreshKey="one" onApplied={() => undefined} />
+    </ShoppingRepositoryContext.Provider>,
+  )
+  const user = userEvent.setup()
+  await user.click(await screen.findByRole('button', { name: 'Put shopping away' }))
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  expect(
+    screen.getAllByRole('checkbox').every((checkbox) => (checkbox as HTMLInputElement).checked),
+  ).toBe(true)
+  await user.click(screen.getByRole('button', { name: 'Put selected items away' }))
+  await screen.findByText('2 Pantry items are now available.')
+  expect(f.applied.size).toBe(3)
 })

@@ -126,8 +126,10 @@ export function buildCookedMealProposals(
 }
 
 export function applyQuantityDelta(item: PantryItem, delta: number | null): PantryItemInput {
-  const nextQuantity = delta === null ? item.quantity : Math.max(0, (item.quantity ?? 0) + delta)
+  const nextQuantity =
+    delta === null || item.quantity === null ? item.quantity : Math.max(0, item.quantity + delta)
   return {
+    quantityUntracked: item.quantityUntracked,
     name: item.name,
     category: item.category,
     categorySource: item.categorySource,
@@ -140,7 +142,7 @@ export function applyQuantityDelta(item: PantryItem, delta: number | null): Pant
       nextQuantity === null
         ? item.available
         : nextQuantity === 0
-          ? false
+          ? Boolean(item.quantityUntracked)
           : item.available || nextQuantity > 0,
   }
 }

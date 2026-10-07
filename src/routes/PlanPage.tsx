@@ -1,3 +1,4 @@
+import { MealCompletionAction } from './meal-plans/MealCompletionAction'
 import { useFreezerRepository } from '../app/freezer/freezerContext'
 import type { FreezerMeal } from '../domain/freezer/types'
 import {
@@ -14,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GripVertical,
+  MoreHorizontal,
   Pencil,
   RefreshCw,
   X,
@@ -134,6 +136,7 @@ function HouseholdPlanPage() {
   const [choiceConfirmed, setChoiceConfirmed] = useState(false)
   const submitLock = useRef(false)
   const retryMeal = useRef<PlannedMeal | null>(null)
+  const [completionMessage, setCompletionMessage] = useState<string | null>(null)
   const [recipeError, setRecipeError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [draggingMealId, setDraggingMealId] = useState<string | null>(null)
@@ -146,6 +149,13 @@ function HouseholdPlanPage() {
     [householdId, meals],
   )
   const weekEnd = addDays(weekStart, 6)
+  const activeWeek = useRef('')
+  useEffect(() => {
+    activeWeek.current = `${householdId}:${weekStart}`
+    return () => {
+      activeWeek.current = ''
+    }
+  }, [householdId, weekStart])
   const activeRecipes = useMemo(() => recipes.filter((recipe) => !recipe.archivedAt), [recipes])
   const selectedRecipe = recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null
 
@@ -648,6 +658,7 @@ function HouseholdPlanPage() {
         arrow.
       </span>
 
+      {completionMessage ? <p role="status">{completionMessage}</p> : null}
       {loading ? (
         <LoadingState label="Loading this week’s dinners" />
       ) : (
@@ -680,21 +691,19 @@ function HouseholdPlanPage() {
 
                 {meal ? (
                   <div
-                    className={`planned-meal${draggingMealId === meal.id ? ' dragging' : ''}`}
+                    className={`planned-meal${mealRecipe?.imageUrl ? ' has-photo' : ''}${draggingMealId === meal.id ? ' dragging' : ''}`}
                     onPointerDown={(event) => startDrag(meal, event)}
                     onPointerMove={continueDrag}
                     onPointerUp={finishDrag}
                     onPointerCancel={finishDrag}
                   >
                     <GripVertical aria-hidden="true" className="meal-drag-handle" />
-                    <span className="photo-frame meal-plan-photo" aria-hidden="true">
-                      <span className="photo-frame-backdrop" />
-                      {mealRecipe?.imageUrl ? (
+                    {mealRecipe?.imageUrl ? (
+                      <span className="photo-frame meal-plan-photo" aria-hidden="true">
+                        <span className="photo-frame-backdrop" />
                         <img className="photo-frame-media" src={mealRecipe.imageUrl} alt="" />
-                      ) : (
-                        <span className="photo-frame-media is-empty" />
-                      )}
-                    </span>
+                      </span>
+                    ) : null}
                     <button
                       className="planned-meal-title"
                       aria-label={displayTitleForPlannedMeal(meal)}
@@ -730,7 +739,26 @@ function HouseholdPlanPage() {
                       {meal.notes ? <span>{meal.notes}</span> : null}
                     </button>
                     <div className="planned-meal-actions">
-                      {meal.freezerMealId && freezerRepository ? (
+                      {repository.complete ? (
+                        <MealCompletionAction
+                          meal={meal}
+                          onStatus={setCompletionMessage}
+                          recipe={mealRecipe ?? null}
+                          onChanged={async () => {
+                            if (!householdId) return
+                            const key = `${householdId}:${weekStart}`
+                            const current = await repository.listWeek(
+                              householdId,
+                              weekStart,
+                              weekEnd,
+                            )
+                            if (activeWeek.current !== key) return
+                            setMeals(current)
+                            await refreshFreezer()
+                          }}
+                        />
+                      ) : null}
+                      {meal.freezerMealId && freezerRepository && !repository.complete ? (
                         <Button
                           variant="quiet"
                           disabled={freezerBusy !== null}
@@ -741,35 +769,57 @@ function HouseholdPlanPage() {
                           {meal.freezerState === 'consumed' ? 'Undo use' : 'Mark used'}
                         </Button>
                       ) : null}
-                      <button
-                        className="meal-remove"
-                        type="button"
-                        aria-label={`Replace ${displayTitleForPlannedMeal(meal)} with a random recipe`}
-                        aria-busy={replacingMealId === meal.id}
-                        disabled={replacingMealId !== null || Boolean(meal.freezerMealId)}
+                      <details
+                        className="planned-meal-more"
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') {
+                            event.currentTarget.open = false
+                            event.currentTarget.querySelector('summary')?.focus()
+                          }
+                        }}
+                        onClick={(event) => {
+                          if ((event.target as HTMLElement).closest('button'))
+                            event.currentTarget.open = false
+                        }}
                         onPointerDown={(event) => event.stopPropagation()}
-                        onClick={() => void replaceMeal(meal)}
                       >
-                        <RefreshCw aria-hidden="true" />
-                      </button>
-                      <button
-                        className="meal-remove"
-                        type="button"
-                        aria-label={`Edit planned dinner ${displayTitleForPlannedMeal(meal)}`}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={() => openEdit(meal)}
-                      >
-                        <Pencil aria-hidden="true" />
-                      </button>
-                      <button
-                        className="meal-remove"
-                        type="button"
-                        aria-label={`Remove ${displayTitleForPlannedMeal(meal)}`}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={() => void remove(meal)}
-                      >
-                        <X aria-hidden="true" />
-                      </button>
+                        <summary aria-label={`More actions for ${meal.title}`}>
+                          <MoreHorizontal aria-hidden="true" />
+                        </summary>
+                        <div className="planned-meal-menu">
+                          {!meal.freezerMealId && !meal.completedAt ? (
+                            <button
+                              className="meal-remove"
+                              type="button"
+                              aria-label={`Replace ${displayTitleForPlannedMeal(meal)} with a random recipe`}
+                              aria-busy={replacingMealId === meal.id}
+                              disabled={replacingMealId !== null || Boolean(meal.freezerMealId)}
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={() => void replaceMeal(meal)}
+                            >
+                              <RefreshCw aria-hidden="true" /> Replace
+                            </button>
+                          ) : null}
+                          <button
+                            className="meal-remove"
+                            type="button"
+                            aria-label={`Edit planned dinner ${displayTitleForPlannedMeal(meal)}`}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={() => openEdit(meal)}
+                          >
+                            <Pencil aria-hidden="true" /> Edit
+                          </button>
+                          <button
+                            className="meal-remove"
+                            type="button"
+                            aria-label={`Remove ${displayTitleForPlannedMeal(meal)}`}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={() => void remove(meal)}
+                          >
+                            <X aria-hidden="true" /> Remove
+                          </button>
+                        </div>
+                      </details>
                     </div>
                   </div>
                 ) : (

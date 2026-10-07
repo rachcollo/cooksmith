@@ -20,12 +20,15 @@ export interface PeriodMeal {
   mealType: string
 }
 export interface ShoppingContribution {
+  stockCheck?: boolean
   plannedMealId: string
   quantity: number | null
   unit: string | null
   sourceQuantities: ShoppingSourceQuantity[]
 }
 export interface PeriodShoppingItem extends ShoppingItem {
+  boughtQuantity?: number | null
+  boughtUnit?: string | null
   planOverride?: boolean
   contributions: ShoppingContribution[]
 }
@@ -100,12 +103,17 @@ export function shoppingPeriodView(
     if (row.manual !== false && (!row.planOverride || row.contributions.length === 0)) return [row]
     const contributions = row.contributions.filter((c) => included.has(c.plannedMealId))
     if (!contributions.length) return []
+    if (row.completed && row.boughtQuantity !== undefined)
+      return [{ ...row, quantity: row.boughtQuantity, unit: row.boughtUnit ?? null }]
+    const stockCheck = contributions.some((c) => c.stockCheck)
     const sources = contributions.flatMap((c) => c.sourceQuantities)
     if (row.planOverride) return [{ ...row, sourceQuantities: sources }]
+    if (contributions.every((c) => c.quantity === 0)) return []
     const units = new Set(contributions.map((c) => c.unit ?? ''))
     return [
       {
         ...row,
+        stockCheck,
         quantity:
           units.size === 1 && contributions.every((c) => c.quantity !== null)
             ? contributions.reduce((sum, c) => sum + c.quantity!, 0)

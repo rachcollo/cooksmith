@@ -92,3 +92,96 @@
   display: block;
   font-size: var(--font-size-small);
 }
+
+.planned-meal {
+  grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+}
+.planned-meal.has-photo {
+  grid-template-columns: 0.75rem var(--touch-target) minmax(0, 1fr) auto;
+}
+.planned-meal-actions {
+  position: relative;
+  align-items: start;
+}
+.planned-meal-more {
+  position: relative;
+}
+.planned-meal-more > summary {
+  list-style: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+.planned-meal-more > summary::-webkit-details-marker {
+  display: none;
+}
+.planned-meal-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 100%;
+  z-index: 5;
+  min-width: 9rem;
+  padding: var(--space-2);
+  background: var(--colour-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-small);
+  box-shadow: var(--shadow-overlay);
+  display: grid;
+  gap: var(--space-1);
+}
+.planned-meal-menu .meal-remove {
+  display: flex;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  width: 100%;
+}
+.planned-meal-actions .meal-remove {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+@media (max-width: 36rem) {
+  .planned-meal.has-photo {
+    grid-template-columns: 0.75rem minmax(0, 1fr) auto;
+  }
+  .planned-meal .meal-plan-photo {
+    display: none;
+  }
+  .planned-meal-actions {
+    gap: 0;
+  }
+}
+@media (min-width: 44rem) {
+  .planned-meal,
+  .planned-meal.has-photo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Leave room for real meal names and let the secondary menu leave the card. */
+.meal-day {
+  container-type: inline-size;
+  overflow: visible;
+}
+@media (max-width: 36rem) {
+  .meal-day {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.25rem 0.5rem;
+  }
+  .meal-day-heading > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  @container (max-width: 15rem) {
+    .planned-meal,
+    .planned-meal.has-photo {
+      grid-template-columns: 0.75rem minmax(0, 1fr);
+    }
+    .planned-meal-actions {
+      grid-column: 2;
+      justify-self: end;
+    }
+  }
+}

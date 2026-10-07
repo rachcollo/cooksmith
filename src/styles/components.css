@@ -2897,3 +2897,33 @@ button.card:hover {
     min-width: 0;
   }
 }
+
+.put-away-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: var(--border-default);
+  padding-block: var(--space-2);
+}
+.put-away-row > .field,
+.put-away-fields {
+  grid-column: 1 / -1;
+}
+.put-away-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+}
+.put-away-choice span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.put-away-choice strong,
+.put-away-choice small {
+  display: block;
+}
+.put-away-choice small {
+  color: var(--colour-text-muted);
+}

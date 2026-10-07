@@ -23,6 +23,7 @@ export type PantryStorageLocation =
 export type PantryClassificationSource = 'automatic' | 'explicit'
 
 export interface PantryItem {
+  quantityUntracked?: boolean
   id: string
   householdId: string
   name: string
@@ -39,6 +40,7 @@ export interface PantryItem {
 }
 
 export interface PantryItemInput {
+  quantityUntracked?: boolean
   name: string
   category: PantryItemCategory
   categorySource: PantryClassificationSource

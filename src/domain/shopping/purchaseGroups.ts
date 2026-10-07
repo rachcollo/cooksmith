@@ -28,8 +28,10 @@ export function purchasingName(name: string) {
 export function purchaseAmount(
   item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'measurementSystem'>,
 ): PurchaseAmount {
-  const legacy = item.quantity === null && !item.unit ? parsePurchaseLine(item.name) : null
-  const quantity = legacy ? parseIngredientQuantity(legacy.quantity) : item.quantity
+  const parsed = !item.unit ? parsePurchaseLine(item.name) : null
+  const legacy =
+    item.quantity === null || (parsed?.unit && parsed.quantity === null) ? parsed : null
+  const quantity = legacy?.quantity ? parseIngredientQuantity(legacy.quantity) : item.quantity
   return convertPurchaseAmount(
     purchasingName(legacy?.name ?? item.name),
     quantity,
@@ -133,7 +135,7 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
       amounts,
       quantity: amounts.length === 1 ? amounts[0]!.quantity : null,
       unit: amounts.length === 1 ? amounts[0]!.unit : null,
-      amountLabel: formatPurchaseAmounts(amounts),
+      amountLabel: `${visible.some((item) => item.stockCheck) ? 'up to ' : ''}${formatPurchaseAmounts(amounts)}${visible.some((item) => item.stockCheck) ? ' · check Pantry' : ''}`,
       completed: remaining.length === 0,
     }
   })
