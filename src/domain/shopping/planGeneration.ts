@@ -149,7 +149,8 @@ export function categoriseIngredient(name: string): ShoppingCategory {
 }
 
 export function buildPlanAdditions(
-  meals: (Pick<PlannedMeal, 'recipeState'> & Partial<Pick<PlannedMeal, 'recipeSource'>>)[],
+  meals: (Pick<PlannedMeal, 'recipeState'> &
+    Partial<Pick<PlannedMeal, 'recipeSource' | 'freezerMealId'>>)[],
   recipes: Recipe[],
   existingItems: ShoppingItem[],
 ): PlanAdditions {
@@ -170,6 +171,7 @@ export function buildPlanAdditions(
   let unlinkedMealCount = 0
 
   for (const meal of meals) {
+    if (meal.freezerMealId) continue
     const recipeId = meal.recipeState.kind === 'active' ? meal.recipeState.recipe.id : null
     const matching = recipes.filter((candidate) => candidate.id === recipeId)
     const recipe = recipeId

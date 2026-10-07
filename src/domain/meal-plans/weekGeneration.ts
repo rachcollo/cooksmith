@@ -49,7 +49,12 @@ export function proposeWeekMeals({
   const days = weekDays(weekStart)
   const dinners = meals.filter((meal) => meal.mealType === 'dinner' && days.includes(meal.mealDate))
   const occupiedDates = new Set(dinners.map((meal) => meal.mealDate))
-  const targets = replace ? days : days.filter((day) => !occupiedDates.has(day))
+  const freezerDates = new Set(
+    dinners.filter((meal) => meal.freezerMealId).map((meal) => meal.mealDate),
+  )
+  const targets = replace
+    ? days.filter((day) => !freezerDates.has(day))
+    : days.filter((day) => !occupiedDates.has(day))
   const existingRecipeIds = new Set(
     replace ? [] : dinners.map((meal) => meal.recipeId).filter((id): id is string => Boolean(id)),
   )
@@ -63,8 +68,8 @@ export function proposeWeekMeals({
 
   return {
     proposals,
-    preservedMeals: replace ? [] : dinners,
-    replacedMeals: replace ? dinners : [],
+    preservedMeals: replace ? dinners.filter((meal) => meal.freezerMealId) : dinners,
+    replacedMeals: replace ? dinners.filter((meal) => !meal.freezerMealId) : [],
     unfilledDates: targets.slice(proposals.length),
   }
 }

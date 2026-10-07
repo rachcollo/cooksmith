@@ -94,6 +94,182 @@ export type Database = {
         }
         Relationships: []
       }
+      freezer_meal_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          freezer_meal_id: string
+          household_id: string
+          id: string
+          planned_meal_id: string | null
+          request: Json
+          result: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          freezer_meal_id: string
+          household_id: string
+          id?: string
+          planned_meal_id?: string | null
+          request: Json
+          result: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          freezer_meal_id?: string
+          household_id?: string
+          id?: string
+          planned_meal_id?: string | null
+          request?: Json
+          result?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'freezer_meal_events_freezer_meal_id_fkey'
+            columns: ['freezer_meal_id']
+            isOneToOne: false
+            referencedRelation: 'freezer_meals'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'freezer_meal_events_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      freezer_meal_reservations: {
+        Row: {
+          created_at: string
+          freezer_meal_id: string
+          household_id: string
+          id: string
+          planned_meal_id: string
+          portions: number
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          freezer_meal_id: string
+          household_id: string
+          id?: string
+          planned_meal_id: string
+          portions: number
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          freezer_meal_id?: string
+          household_id?: string
+          id?: string
+          planned_meal_id?: string
+          portions?: number
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'freezer_meal_reservations_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'freezer_reservation_plan_fk'
+            columns: ['planned_meal_id', 'household_id']
+            isOneToOne: false
+            referencedRelation: 'planned_meals'
+            referencedColumns: ['id', 'household_id']
+          },
+          {
+            foreignKeyName: 'freezer_reservation_stock_fk'
+            columns: ['freezer_meal_id', 'household_id']
+            isOneToOne: false
+            referencedRelation: 'freezer_meals'
+            referencedColumns: ['id', 'household_id']
+          },
+        ]
+      }
+      freezer_meals: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          frozen_on: string
+          household_id: string
+          household_recipe_id: string | null
+          id: string
+          imported_recipe_id: string | null
+          name: string
+          notes: string | null
+          portions: number
+          revision: number
+          updated_at: string
+          use_first_on: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          frozen_on: string
+          household_id: string
+          household_recipe_id?: string | null
+          id?: string
+          imported_recipe_id?: string | null
+          name: string
+          notes?: string | null
+          portions: number
+          revision?: number
+          updated_at?: string
+          use_first_on?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          frozen_on?: string
+          household_id?: string
+          household_recipe_id?: string | null
+          id?: string
+          imported_recipe_id?: string | null
+          name?: string
+          notes?: string | null
+          portions?: number
+          revision?: number
+          updated_at?: string
+          use_first_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'freezer_meals_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'freezer_meals_household_recipe_id_fkey'
+            columns: ['household_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'household_recipes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'freezer_meals_imported_recipe_id_fkey'
+            columns: ['imported_recipe_id']
+            isOneToOne: false
+            referencedRelation: 'imported_recipes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_allergies: {
         Row: {
           allergen: string
@@ -800,6 +976,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          freezer_meal_id: string | null
           household_id: string
           id: string
           imported_recipe_id: string | null
@@ -814,6 +991,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          freezer_meal_id?: string | null
           household_id: string
           id?: string
           imported_recipe_id?: string | null
@@ -828,6 +1006,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          freezer_meal_id?: string | null
           household_id?: string
           id?: string
           imported_recipe_id?: string | null
@@ -840,6 +1019,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: 'planned_freezer_household_fk'
+            columns: ['freezer_meal_id', 'household_id']
+            isOneToOne: false
+            referencedRelation: 'freezer_meals'
+            referencedColumns: ['id', 'household_id']
+          },
           {
             foreignKeyName: 'planned_meals_household_id_fkey'
             columns: ['household_id']
@@ -1940,6 +2126,17 @@ export type Database = {
           invitation_token: string
           invited_email: string
         }[]
+      }
+      freezer_command: {
+        Args: {
+          p_action: string
+          p_freezer_id: string
+          p_household_id: string
+          p_operation_id: string
+          p_payload?: Json
+          p_plan_id?: string
+        }
+        Returns: Json
       }
       has_application_role: {
         Args: {
