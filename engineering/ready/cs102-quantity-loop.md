@@ -24,7 +24,7 @@ Included: exact quantity allocation, measured put-away, revisioned meal completi
 
 - [ ] Allocate each known Pantry balance once in deterministic meal date/type/id order before period projection; 600g + 400g demand less 500g stock produces 500g shortfall.
 - [ ] Keep manual entries, deliberate overrides and purchase history. Bought but not put-away counts once; put-away transfers coverage to Pantry without counting both.
-- [ ] Review actual bought quantities and apply each purchase once atomically. Unknown existing balances retain uncertainty: a confirmed measured receipt establishes a labelled lower bound; it never fabricates the previous total. Optional current-count correction can restore an exact total.
+- [ ] Review actual bought quantities and apply each purchase once atomically. Put-away corrections explicitly edit only the amount remaining after any cooking, with consumed-stock explanation when relevant. Unknown existing balances retain uncertainty: a confirmed measured receipt establishes a labelled lower bound; it never fabricates the previous total. Optional current-count correction can restore an exact total.
 - [ ] Done removes outstanding source demand and records reviewed stock deductions or freezer consumption in one transaction. Manual/leftover completion has no inferred ingredient effect.
 - [ ] Undo uses immutable effect receipts, expected completion revision and fresh reviewed stock versions. Later changes are shown for review; never restore a stale whole row or recompute recipe quantities.
 - [ ] Exact g/kg, ml/l and explicit count conversions only. Unknown, ambiguous and unsupported quantities stay checks, with correction/skip available.
