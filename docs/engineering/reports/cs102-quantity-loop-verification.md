@@ -2,7 +2,7 @@
 
 ## Assessment
 
-The measured quantity loop is implemented locally. The release is **not yet signed off**: exact-head CI, owner visual acceptance and the existing hosted/manual authentication and Get Ahead gates remain. No production configuration/data changes, merge, deployment or paid evaluation occurred.
+The measured quantity loop is implemented locally. The release is **not yet signed off**: owner visual acceptance and the existing hosted/manual authentication and Get Ahead gates remain. Exact-head CI is recorded on the implementation PR. No production configuration/data changes, merge, manual deployment or paid evaluation occurred; opening the draft PRs runs the repository’s existing preview automation.
 
 The source baseline is `main` at `3e3c53b496912d27b746098b5600db60aad701a4`. Package draft [PR199](https://github.com/rachcollo/cooksmith/pull/199) contains the package/ADR/audit commit `92164ab`. Implementation branch `feat/cs-102-quantity-loop` targets main; its draft PR records the exact head and CI results. See the [handover](../handovers/cs102-quantity-loop.md) for behaviour, migrations and the release sequence.
 
