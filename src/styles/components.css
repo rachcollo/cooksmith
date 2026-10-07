@@ -2105,17 +2105,23 @@ button.card:hover {
   }
 
   .shopping-quick-add {
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--space-1);
-    grid-template-columns: minmax(0, 1fr) 4.75rem auto;
   }
 
   .shopping-quick-add > .form-error {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
   }
 
   .shopping-quick-add .field {
+    flex: 1 1 7rem;
     gap: var(--space-1);
     min-width: 0;
+  }
+
+  .shopping-quick-add .field:nth-child(2) {
+    flex: 0 1 4.75rem;
   }
 
   .shopping-quick-add .field input {
@@ -2125,6 +2131,7 @@ button.card:hover {
   }
 
   .shopping-quick-add .button {
+    width: auto;
     padding-inline: var(--space-2);
     white-space: nowrap;
   }
@@ -2860,8 +2867,20 @@ button.card:hover {
   min-width: 0;
 }
 .shopping-period-control select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 19px) center,
+    calc(100% - 14px) center;
+  background-repeat: no-repeat;
+  background-size: 5px 5px;
+  padding-right: 40px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 .shopping-period-control > p {

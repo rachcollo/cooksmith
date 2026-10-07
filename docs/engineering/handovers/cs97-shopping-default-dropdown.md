@@ -5,7 +5,7 @@
 - **Target:** `main`
 - **Baseline:** started from accepted `3f6ecebf8dd922be990cd6f022218ea7adde0e4b` (PR191), then integrated accepted `19bb8c573c5f7dc75c595285a967fcd876d8974f` (PR192).
 - **Status:** Implemented, hosted/manual validation pending. Draft review; no merge or release performed.
-- **Commit and PR:** See the linked CS-97 follow-up PR for its exact head and CI results.
+- **Pull request:** [PR197](https://github.com/rachcollo/cooksmith/pull/197); its description records the exact head and CI results.
 
 ## Objective and product impact
 
@@ -19,7 +19,7 @@ Rach reports PR191 functions correctly but its Shopping period UI is too clutter
 - Current-list changes remain shared among active household members. Defaults retain existing owner-only Settings write permission. No RLS policies or grants change.
 - Preference writes do not reconcile, delete or rewrite purchases/contributions. Manual items, explicit quantities, bought state and source history remain intact.
 - Pending controls disable duplicate writes, errors retain the previous list, stale background successes/errors cannot supersede a newer selection, and successful changes preserve select focus. Household switching ignores old responses.
-- At 320px and 200% text, Shopping item controls retain 48px targets without forcing horizontal overflow. The title row wraps rather than squeezing the title between the count and viewport.
+- At 320px and 200% text, Shopping item controls retain 48px targets without forcing horizontal overflow. The Add row wraps when text grows. The title row wraps rather than squeezing the title between the count and viewport.
 
 ## Files and components affected
 
@@ -48,12 +48,12 @@ This PR does not deploy Production. After a separately approved merge, release t
 | Local database lint                                                                           | Passed: no schema errors (loopback connection with `PGSSLMODE=disable`)                                                          |
 | Fresh generated types from migrated local schema                                              | Exact match                                                                                                                      |
 | Real local PostgREST 14.5 HTTP suite, serial                                                  | Passed: 5 checks, including real-adapter owner/member/isolation, separate override/default and unchanged purchases/contributions |
-| Full Playwright with Chromium/mobile and Shopping WebKit                                      | Passed: 50 checks; desktop/mobile Chromium and six real WebKit Shopping checks                                                   |
+| Full Playwright with Chromium/mobile and Shopping WebKit                                      | Passed: 52 checks; desktop/mobile Chromium and eight real WebKit Shopping checks                                                 |
 | Preflight, documented command audit, database config, secrets and production dependency audit | Passed; existing reviewed browser-only React Router RSC advisory exception                                                       |
 
 All database/API data was synthetic and local. The local CLI launcher tried writing to a read-only home directory; preflight used the installed pinned 2.109.1 Go binary via `SUPABASE_CLI_BINARY_OVERRIDE`. Local API tests used explicit loopback configuration. A repeated HTTP run initially collided with the existing suite's retained recipe fixture; a clean synthetic reset passed all five tests. No production retry/reset was performed.
 
-Initial browser work exposed and fixed 200% text overflow. A full run on local port 4190 passed 44 Chromium checks but WebKit refused that restricted port before loading any app code. The final run uses port 4191. Local WebKit uses extracted runtime libraries; only the host-dependency preflight is bypassed, not browser execution. CI installs its normal browser dependencies. No assertions were removed to pass validation.
+Initial browser work exposed and fixed 200% text overflow. An extra WebKit run of the new Settings-to-Shopping journey then exposed Add-row overflow; the row now wraps. WebKit also retained native select overflow at enlarged text, so the select uses a contained appearance with an explicit chevron while retaining native keyboard/menu semantics. Both new journey checks are included in regular WebKit CI. A full run on local port 4190 passed 44 Chromium checks but WebKit refused that restricted port before loading any app code. The final run uses port 4191. Local WebKit uses extracted runtime libraries; only the host-dependency preflight is bypassed, not browser execution. CI installs its normal browser dependencies. A subsequent full run passed 51/52 but sampled Pantry dialog contrast during its opacity transition. The existing polish accessibility helper now waits for finite animations, matching the Shopping helper; no Pantry product change or contrast assertion was removed. Final full results are listed above.
 
 ## Hosted preview and manual verification
 
