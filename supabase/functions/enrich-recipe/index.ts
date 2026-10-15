@@ -1,3 +1,4 @@
+import { supportedFoodIntelligenceModel } from '../_shared/openaiProfile.ts'
 import {
   buildDeterministicRecipeIntelligence,
   recipeIntelligenceRulesVersion,
@@ -39,7 +40,10 @@ type Version = {
   imported_recipe_id: string | null
   fingerprint: string
   source_snapshot: {
-    recipe?: { sourceUrl?: string | null; measurementSystem?: RecipeIntelligenceSource['measurementSystem'] }
+    recipe?: {
+      sourceUrl?: string | null
+      measurementSystem?: RecipeIntelligenceSource['measurementSystem']
+    }
     ingredients?: SnapshotIngredient[]
     steps?: RecipeIntelligenceSource['steps']
   }
@@ -369,7 +373,7 @@ async function processOne(modelKey?: string) {
     if (job.model_key === 'provider-assisted-v1' || job.model_key === 'provider-assisted-v2') {
       if (!config.ai_enabled) throw new Error('disabled')
       if (!(await currentVersionMatches(version))) throw new Error('stale_version')
-      modelKey = Deno.env.get('RECIPE_INTELLIGENCE_MODEL') ?? 'gpt-5-mini-2025-08-07'
+      modelKey = Deno.env.get('RECIPE_INTELLIGENCE_MODEL')?.trim() || supportedFoodIntelligenceModel
       const assisted = await resolveAmbiguousLinks({
         apiKey: env('OPENAI_API_KEY'),
         model: modelKey,

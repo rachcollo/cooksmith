@@ -1,3 +1,8 @@
+import {
+  completedOutputText,
+  responsesOptions,
+  type OpenAIResponse,
+} from '../_shared/openaiProfile.ts'
 import type {
   EnrichmentConfidence,
   ProviderIngredientSuggestion,
@@ -11,11 +16,6 @@ import {
   compactRecipeSource,
   normaliseProviderOutput,
 } from '../../../src/domain/recipes/providerEnrichment.ts'
-
-type OpenAIResponse = {
-  output?: Array<{ content?: Array<{ type?: string; text?: string }> }>
-  usage?: { input_tokens?: number; output_tokens?: number }
-}
 
 type OpenAIErrorResponse = {
   error?: { code?: unknown; type?: unknown; message?: unknown; param?: unknown }
@@ -161,6 +161,7 @@ export async function resolveAmbiguousLinks(input: {
   const nullableNumber = { type: ['number', 'null'] }
   const payload = {
     model: input.model,
+    ...responsesOptions(input.model, 'enrichment'),
     input: [
       {
         role: 'system',
@@ -357,10 +358,7 @@ export async function resolveAmbiguousLinks(input: {
   }
 
   const body = (await response.json()) as OpenAIResponse
-  const text = body.output
-    ?.flatMap((item) => item.content ?? [])
-    .find((item) => item.type === 'output_text')?.text
-  if (!text) throw new Error('schema_invalid')
+  const text = completedOutputText(body)
 
   let parsed: { ingredients?: unknown[]; preparationOpportunities?: unknown[] }
   try {

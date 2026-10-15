@@ -1,3 +1,4 @@
+import { isWeeklyModelProfileConfigured } from '../_shared/openaiProfile.ts'
 import {
   applyAndValidateModelDecision,
   buildDeterministicWeeklyPreparationPlan,
@@ -162,6 +163,8 @@ Deno.serve(async (request) => {
     const rows = (await settingsResponse.json()) as (typeof settings)[]
     if (!rows[0]) return json(412, { error: 'configuration_incomplete' })
     settings = rows[0]
+    if (!isWeeklyModelProfileConfigured(model, settings.prompt_version))
+      return json(412, { error: 'configuration_incomplete' })
 
     if (settings.model_identifier !== model) {
       await rest('weekly_preparation_settings?singleton=eq.true', {

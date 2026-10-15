@@ -61,6 +61,7 @@ jobs:
 
       - name: Check Edge Function source
         run: |
+          test -f supabase/functions/_shared/openaiProfile.ts
           test -f supabase/functions/import-recipe/index.ts
           test -f supabase/functions/import-recipe/extractor.ts
           test -f supabase/functions/import-recipe/urlSafety.ts

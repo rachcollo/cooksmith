@@ -1,3 +1,4 @@
+import { isWeeklyModelProfileConfigured } from '../_shared/openaiProfile.ts'
 import {
   applyAndValidateModelDecision,
   buildDeterministicWeeklyPreparationPlan,
@@ -175,6 +176,12 @@ Deno.serve(async (request) => {
         availableMinutes,
       ].join(':'),
     }
+    if (
+      settings &&
+      !isWeeklyModelProfileConfigured(settings.model_identifier, settings.prompt_version)
+    )
+      return json(503, { error: 'ai_unavailable' })
+
     const cached = await loadCached(
       deterministic.householdId,
       deterministic.planId,
