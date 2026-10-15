@@ -48,6 +48,7 @@ describe('generated database API contract', () => {
       | 'shopping_put_away_receipts'
       | 'shopping_stock_purchases'
       | 'weekly_preparation_plans'
+      | 'weekly_preparation_profile_audit'
       | 'weekly_preparation_evaluation_acceptances'
       | 'weekly_preparation_evaluation_cases'
       | 'weekly_preparation_generation_attempts'

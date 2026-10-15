@@ -90,3 +90,9 @@ Public imported recipes remain readable but cannot be updated or deleted by ordi
 ## CS-102 measured stock and meal completion
 
 `shopping_stock_purchases` and `meal_stock_operations` permit active-household SELECT only; client writes and anonymous access are denied. Narrow private commands derive `auth.uid()`, validate household ownership and expected versions, use empty search paths and persist exact operation requests for idempotent retries. `meal_stock_undo_review` and `shopping_stock_snapshot` are invoker reads under the same RLS. Freezer and Shopping advisory locks coordinate the transaction; row versions reject concurrent manual edits. Completion fields cannot be written directly, and completed source edits require Undo. No public recipe writes are introduced. Historical receipts remain after plan deletion. See ADR018, pgTAP0045 and the local HTTP quantity-loop suite.
+
+## CS-103 model profile transition
+
+`configure_weekly_preparation_luna_profile()` is an invoker RPC delegating to a private, fixed-purpose definer function. It derives the actor from `auth.uid()` and checks the database-backed admin role; no caller identity or arbitrary profile values are accepted. Both AI features must be disabled, the corpus must be v13, and active evaluation/enrichment work blocks the transition. Settings rows are locked during the transaction. Existing column grants and activation triggers remain unchanged.
+
+`weekly_preparation_profile_audit` has RLS and admin-only SELECT; browser insert/update/delete are denied. Each effective transition atomically records non-secret before/after profile and smoke metadata with the actor. Repeating the same transition preserves fresh smoke evidence. Evaluation/acceptance history is never changed. The application displays evaluation evidence matching the current model, prompt, corpus, planner and schema. pgTAP0046 covers access, paused-state requirements, audit and activation denial.

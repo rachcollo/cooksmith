@@ -90,6 +90,7 @@ export interface WeeklyPreparationAdminRepository {
     aiEnabled: boolean
     emergencyStop: boolean
   }): Promise<WeeklyPreparationSettings>
+  configureLunaProfile(): Promise<void>
   getLatestEvaluation(): Promise<WeeklyPreparationEvaluation | null>
   runEvaluation(): Promise<void>
   acceptEvaluation(runId: string): Promise<void>

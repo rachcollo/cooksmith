@@ -109,12 +109,25 @@ export function createSupabaseWeeklyPreparationAdminRepository(
       if (error) throw new Error('Cooksmith could not update weekly preparation controls.')
       return settingsFrom(data)
     },
+    async configureLunaProfile() {
+      const { error } = await database.rpc('configure_weekly_preparation_luna_profile')
+      if (error)
+        throw new Error(
+          'Profile unchanged. Disable both AI features and wait for active work to finish before trying again.',
+        )
+    },
     async getLatestEvaluation() {
+      const settings = await this.getSettings()
       const { data, error } = await database
         .from('weekly_preparation_evaluation_runs')
         .select(
           'id, status, error_reason, created_at, plan_count, deterministic_count, model_call_count, valid_output_count, rejected_count, fallback_count, reviewed_correct_count, unsupported_count, total_latency_ms, input_tokens, output_tokens, estimated_cost_aud, ambiguous_decision, acceptances:weekly_preparation_evaluation_acceptances(id), cases:weekly_preparation_evaluation_cases(case_number, case_key, outcome, reason_code, available_minutes, meal_names, generated_tasks)',
         )
+        .eq('model_identifier', settings.modelIdentifier)
+        .eq('prompt_version', settings.promptVersion)
+        .eq('corpus_version', settings.corpusVersion)
+        .eq('schema_version', 'weekly-preparation-plan-v2')
+        .eq('planner_version', 'weekly-preparation-planner-v13')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()

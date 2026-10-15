@@ -535,6 +535,28 @@ function WeeklyPreparationOperations() {
     setMessage('')
   }
 
+  async function configureLunaProfile() {
+    if (
+      !window.confirm(
+        'Prepare the Luna low profile? Confirm server model and pricing settings are configured and both AI features are disabled. This clears previous smoke readiness; fresh evaluation and acceptance are still required.',
+      )
+    )
+      return
+    setSaving(true)
+    setMessage('')
+    try {
+      await adminRepository.configureLunaProfile()
+      await refresh()
+      setMessage(
+        'Luna profile prepared. AI remains disabled. Run and review a fresh evaluation before accepting and enabling it.',
+      )
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'The model profile could not be changed.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function runEvaluation() {
     if (
       !window.confirm(
@@ -606,6 +628,24 @@ function WeeklyPreparationOperations() {
         <p>Prove readiness, review evidence and activate model assistance in separate steps.</p>
       </div>
       <p aria-live="polite">{message}</p>
+      <Panel>
+        <h3>Model profile</h3>
+        <p>
+          Prepare gpt-6-luna with low reasoning and the v13 prompt. Server model settings must
+          already match. Pricing uses A$0.16 input and A$0.80 output per million tokens at the
+          recorded USD1=AUD1.60 accounting assumption.
+        </p>
+        <p>
+          Disable weekly and recipe AI first and wait for active work to finish. This action makes
+          no model calls and does not enable either feature.
+        </p>
+        <Button
+          disabled={saving || evaluating || settings.aiEnabled}
+          onClick={() => void configureLunaProfile()}
+        >
+          Prepare Luna profile
+        </Button>
+      </Panel>
       <Panel>
         <h3>Release readiness</h3>
         <p>
@@ -722,13 +762,17 @@ function WeeklyPreparationOperations() {
       <Panel>
         <h3>30-plan evaluation</h3>
         <div className="cluster">
-          <Button disabled={evaluating} onClick={() => void runEvaluation()}>
+          <Button disabled={saving || evaluating} onClick={() => void runEvaluation()}>
             {evaluating ? 'Running evaluation…' : 'Run 30-plan evaluation'}
           </Button>
           <Button
             variant="secondary"
             disabled={
-              evaluating || !evaluation || !evaluation.acceptanceEligible || evaluation.accepted
+              saving ||
+              evaluating ||
+              !evaluation ||
+              !evaluation.acceptanceEligible ||
+              evaluation.accepted
             }
             onClick={() => void acceptEvaluation()}
           >
