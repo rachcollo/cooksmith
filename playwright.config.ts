@@ -19,7 +19,12 @@ export default defineConfig({
   projects: [
     {
       name: 'shopping-webkit',
-      testMatch: ['purchase-groups.spec.ts', 'shopping-period.spec.ts', 'freezer.spec.ts'],
+      testMatch: [
+        'purchase-groups.spec.ts',
+        'shopping-period.spec.ts',
+        'freezer.spec.ts',
+        'recipe-repair.spec.ts',
+      ],
       use: { ...devices['Desktop Safari'] },
     },
     {

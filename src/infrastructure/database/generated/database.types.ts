@@ -1238,6 +1238,8 @@ export type Database = {
           provider_started_at: string | null
           recipe_id: string | null
           recipe_version_id: string
+          repair_actor_id: string | null
+          repair_request_id: string | null
           rules_version: string
           schema_version: string
           source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
@@ -1267,6 +1269,8 @@ export type Database = {
           provider_started_at?: string | null
           recipe_id?: string | null
           recipe_version_id: string
+          repair_actor_id?: string | null
+          repair_request_id?: string | null
           rules_version?: string
           schema_version?: string
           source_kind?: Database['cooksmith']['Enums']['recipe_enrichment_source']
@@ -1296,6 +1300,8 @@ export type Database = {
           provider_started_at?: string | null
           recipe_id?: string | null
           recipe_version_id?: string
+          repair_actor_id?: string | null
+          repair_request_id?: string | null
           rules_version?: string
           schema_version?: string
           source_kind?: Database['cooksmith']['Enums']['recipe_enrichment_source']
@@ -2338,6 +2344,25 @@ export type Database = {
           status: string
           updated_at: string
         }[]
+      }
+      admin_recipe_repair_claim: {
+        Args: { target_job_id: string }
+        Returns: Json
+      }
+      admin_recipe_repair_inspect: {
+        Args: {
+          target_recipe_id: string
+          target_source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+        }
+        Returns: Json
+      }
+      admin_recipe_repair_prepare: {
+        Args: {
+          request_id: string
+          target_recipe_id: string
+          target_source_kind: Database['cooksmith']['Enums']['recipe_enrichment_source']
+        }
+        Returns: string
       }
       admin_retry_recipe_enrichment: {
         Args: {

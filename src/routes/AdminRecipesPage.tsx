@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { useWeeklyPreparationAdminRepository } from '../app/admin/weeklyPreparationAdminContext'
 import { DocumentTitle } from '../app/router/DocumentTitle'
-import type { AdminRecipeEnrichment } from '../application/admin/weeklyPreparationAdminRepository'
+import type {
+  AdminRecipeEnrichment,
+  RecipeRepairInspection,
+} from '../application/admin/weeklyPreparationAdminRepository'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Stack } from '../components/layout/LayoutPrimitives'
 import { Button } from '../components/ui/Button'
@@ -26,7 +29,16 @@ export function AdminRecipesPage() {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<AdminRecipeEnrichment['status'] | 'all'>('all')
   const [message, setMessage] = useState('')
-  const [retrying, setRetrying] = useState<string | null>(null)
+  const [selected, setSelected] = useState<AdminRecipeEnrichment | null>(null)
+  const [inspection, setInspection] = useState<RecipeRepairInspection | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [repairMessage, setRepairMessage] = useState('')
+  const sequence = useRef(0)
+  const requestId = useRef<string | null>(null)
+  const inspectionHeading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    inspectionHeading.current?.focus()
+  }, [selected])
 
   const load = useCallback(async () => {
     if (!repository) return
@@ -46,19 +58,79 @@ export function AdminRecipesPage() {
     return <ErrorState title="Recipe management unavailable" message="Try opening Admin again." />
   if (!recipes && !message) return <LoadingState label="Loading recipe insight statuses" />
 
-  async function retry(recipe: AdminRecipeEnrichment) {
-    if (!window.confirm(`Retry insights for ${recipe.name}?`)) return
-    setRetrying(recipe.recipeId)
+  async function inspect(recipe: AdminRecipeEnrichment) {
+    const current = ++sequence.current
+    setSelected(recipe)
+    setInspection(null)
+    setRepairMessage('')
+    requestId.current = null
     try {
-      await repository!.retryRecipeEnrichment(recipe.recipeId, recipe.sourceKind)
-      setMessage('Recipe insights queued for retry.')
-      await load()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Recipe insights could not be retried.')
-    } finally {
-      setRetrying(null)
+      const result = await repository!.inspectRecipeRepair(recipe.recipeId, recipe.sourceKind)
+      if (current === sequence.current) setInspection(result)
+    } catch {
+      if (current === sequence.current)
+        setRepairMessage('Recipe details could not be loaded. Select Inspect again.')
     }
   }
+
+  async function refreshRepair() {
+    if (!selected) return
+    const current = sequence.current
+    try {
+      const result = await repository!.inspectRecipeRepair(selected.recipeId, selected.sourceKind)
+      if (current !== sequence.current) return
+      setInspection(result)
+      if (
+        result.repair &&
+        !['pending', 'processing'].includes(result.repair.state) &&
+        (!result.repair.providerStarted || result.repair.estimatedCostAud !== null)
+      )
+        requestId.current = null
+    } catch {
+      if (current !== sequence.current) return
+      setInspection(null)
+      setRepairMessage('The latest result could not be loaded. Refresh before another attempt.')
+    }
+  }
+
+  async function repair() {
+    if (!selected || !inspection || busy) return
+    if (
+      !window.confirm(
+        `Repair insights for ${selected.name} only? This makes at most one paid AI attempt. Original recipe content stays unchanged.`,
+      )
+    )
+      return
+    setBusy(true)
+    setRepairMessage('Repairing this recipe. You can return here to review the result.')
+    try {
+      // Retain this key when reservation acknowledgement is lost.
+      requestId.current ??= crypto.randomUUID()
+      const jobId =
+        inspection.repair?.state === 'pending'
+          ? inspection.repair.jobId
+          : await repository!.prepareRecipeRepair(
+              selected.recipeId,
+              selected.sourceKind,
+              requestId.current,
+            )
+      await repository!.runRecipeRepair(jobId)
+      setRepairMessage('Review the recorded outcome and cost below before another attempt.')
+    } catch (error) {
+      setRepairMessage(
+        error instanceof Error ? error.message : 'Repair response unavailable. Refresh the result.',
+      )
+    } finally {
+      await refreshRepair()
+      await load()
+      setBusy(false)
+    }
+  }
+
+  const lastRepair = inspection?.repair
+  const needsReview =
+    lastRepair?.state === 'processing' ||
+    (lastRepair?.providerStarted && lastRepair.estimatedCostAud === null)
 
   return (
     <Stack gap="large">
@@ -94,6 +166,78 @@ export function AdminRecipesPage() {
         </div>
       </Panel>
       <p aria-live="polite">{message}</p>
+      {selected ? (
+        <Panel>
+          <Stack>
+            <h2 ref={inspectionHeading} tabIndex={-1}>
+              {selected.name}
+            </h2>
+            <p>{selected.ownerLabel}</p>
+            {inspection ? (
+              <>
+                <p>
+                  Current rules ({inspection.rulesVersion}):{' '}
+                  {inspection.currentRules ? 'Ready' : 'Missing or outdated AI insights'}
+                </p>
+                <p>Latest failure: {failureLabel(inspection.failureCategory)}</p>
+                {!inspection.enabled ? (
+                  <p>
+                    Repair is paused. Recipe Intelligence must be enabled and unpaused in Admin
+                    before a repair can run.
+                  </p>
+                ) : null}
+                {lastRepair ? (
+                  <>
+                    <p>
+                      Last repair: {lastRepair.state}
+                      {lastRepair.leaseExpired ? ' — response overdue; review required' : ''} ·{' '}
+                      {failureLabel(lastRepair.failureCategory)}
+                    </p>
+                    <p>
+                      Estimated cost:{' '}
+                      {lastRepair.estimatedCostAud === null
+                        ? lastRepair.providerStarted
+                          ? 'Unavailable — review required'
+                          : 'Not incurred yet'
+                        : `A$${lastRepair.estimatedCostAud.toFixed(6)}`}
+                    </p>
+                  </>
+                ) : (
+                  <p>No targeted repair recorded.</p>
+                )}
+                {needsReview ? (
+                  <p>
+                    Refresh the result. Another attempt is blocked while processing or while its
+                    cost is unknown.
+                  </p>
+                ) : null}
+                <div className="admin-recipe-actions">
+                  <Button
+                    disabled={!inspection.enabled || Boolean(needsReview)}
+                    busy={busy}
+                    onClick={() => void repair()}
+                  >
+                    {lastRepair?.state === 'pending' ? 'Run reserved repair' : 'Repair this recipe'}
+                  </Button>
+                  <Button variant="secondary" disabled={busy} onClick={() => void refreshRepair()}>
+                    Refresh result
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p>
+                  {repairMessage ? 'Recipe details are unavailable.' : 'Loading recipe details…'}
+                </p>
+                <Button variant="secondary" disabled={busy} onClick={() => void refreshRepair()}>
+                  Refresh result
+                </Button>
+              </>
+            )}
+            <p aria-live="polite">{repairMessage}</p>
+          </Stack>
+        </Panel>
+      ) : null}
       <Panel>
         <div className="admin-recipe-table-wrap">
           <table aria-label="Recipe insight management">
@@ -122,15 +266,14 @@ export function AdminRecipesPage() {
                   </td>
                   <td>
                     <div className="admin-recipe-actions">
-                      {recipe.retryable ? (
-                        <Button
-                          variant="secondary"
-                          busy={retrying === recipe.recipeId}
-                          onClick={() => void retry(recipe)}
-                        >
-                          Retry insights
-                        </Button>
-                      ) : null}
+                      <Button
+                        variant="secondary"
+                        aria-label={`Inspect ${recipe.name}`}
+                        disabled={busy}
+                        onClick={() => void inspect(recipe)}
+                      >
+                        Inspect
+                      </Button>
                       {recipe.canEdit ? (
                         <Link
                           className="button button-quiet button-default"
@@ -154,4 +297,21 @@ export function AdminRecipesPage() {
       </Panel>
     </Stack>
   )
+}
+
+function failureLabel(category: string | null) {
+  const labels: Record<string, string> = {
+    schema_invalid: 'AI output did not pass validation',
+    unsupported_data: 'Recipe data is not supported',
+    unsupported_reference: 'AI output referenced missing recipe details',
+    source_mismatch: 'AI output did not match the source recipe',
+    stale_version: 'Recipe changed during processing',
+    timeout: 'Provider timed out',
+    transient_provider: 'Temporary provider failure',
+    permanent_provider: 'Provider rejected the request',
+    internal_validation: 'Processing failed validation',
+    disabled: 'Recipe Intelligence was paused',
+    usage_limit: 'Processing budget reached',
+  }
+  return category ? (labels[category] ?? 'Processing could not complete') : 'None recorded'
 }

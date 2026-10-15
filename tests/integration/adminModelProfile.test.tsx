@@ -55,7 +55,9 @@ function setup(aiEnabled = false, failure = false) {
     setRecipeIntelligenceAi: async () => enrichment,
     setRecipeIntelligenceDailyLimit: async () => enrichment,
     listRecipeEnrichments: async () => [],
-    retryRecipeEnrichment: vi.fn(),
+    inspectRecipeRepair: vi.fn(),
+    prepareRecipeRepair: vi.fn(),
+    runRecipeRepair: vi.fn(),
   }
   renderApp(
     '/admin',

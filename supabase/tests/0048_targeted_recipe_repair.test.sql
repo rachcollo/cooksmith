@@ -1,0 +1,83 @@
+begin;
+select no_plan();
+insert into auth.users(id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+values ('98000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000000','authenticated','authenticated','repair-admin@test.invalid','',now(),now());
+insert into cooksmith.app_user_roles(user_id, role) values ('98000000-0000-4000-8000-000000000001','admin');
+update cooksmith.recipe_intelligence_settings set enqueue_enabled=false, ai_enabled=false;
+insert into cooksmith.imported_recipes(id,visibility,owner_id,name,source_url,ingredient_rows,instruction_steps)
+values ('98000000-0000-4000-8000-000000000010','public','10000000-0000-4000-8000-000000000001','Selected recipe','https://example.invalid/repair','[]','[]'),
+('98000000-0000-4000-8000-000000000011','private','10000000-0000-4000-8000-000000000001','Private recipe','https://example.invalid/private-repair','[]','[]');
+create temporary table before_jobs as select id,state,attempt_count from cooksmith.recipe_enrichment_jobs;
+set local role anon;
+select throws_ok($$select cooksmith.admin_recipe_repair_inspect('98000000-0000-4000-8000-000000000010','shared_platform')$$,'42501',null,'Anonymous cannot inspect repair metadata');
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select throws_ok($$select cooksmith.admin_recipe_repair_inspect('98000000-0000-4000-8000-000000000010','shared_platform')$$,'42501',null,'Household owner cannot inspect admin repair metadata');
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020')$$,'42501',null,'Household owner cannot reserve repairs');
+select throws_ok($$select cooksmith.admin_recipe_repair_claim('98000000-0000-4000-8000-000000000020')$$,'42501',null,'Household owner cannot claim repairs');
+select set_config('request.jwt.claims','{"sub":"98000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select is(cooksmith.admin_recipe_repair_inspect('98000000-0000-4000-8000-000000000010','shared_platform')->>'enabled','false','Paused inspection is readable');
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020')$$,'55000',null,'Reservation cannot enable AI');
+reset role;
+update cooksmith.recipe_intelligence_settings set enqueue_enabled=true, ai_enabled=true, emergency_stop=false, backfill_paused=false;
+set local role authenticated;
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000011','shared_platform','98000000-0000-4000-8000-000000000020')$$,'22023',null,'Private imports cannot enter shared repair');
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','household','98000000-0000-4000-8000-000000000020')$$,'22023',null,'Source kind cannot be substituted');
+select lives_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020')$$,'Admin reserves exactly the selected missing source');
+select is(cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020'),
+ cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020'),'Repeated request is idempotent');
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000011','shared_platform','98000000-0000-4000-8000-000000000020')$$,'22023',null,'Request identity is bound to source');
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000021')$$,'55000',null,'New request cannot overlap reserved attempt');
+reset role;
+select is((select count(*)::integer from cooksmith.recipe_enrichment_jobs where imported_recipe_id='98000000-0000-4000-8000-000000000010'),1,'No ordinary deterministic or provider jobs are queued');
+select is((select available_at::text from cooksmith.recipe_enrichment_jobs where repair_request_id='98000000-0000-4000-8000-000000000020'),'infinity','Older workers cannot consume reserved job');
+select is((select repair_actor_id::text from cooksmith.recipe_enrichment_jobs where repair_request_id='98000000-0000-4000-8000-000000000020'),'98000000-0000-4000-8000-000000000001','Actor audit derives from authenticated user');
+select is((select count(*)::integer from before_jobs b join cooksmith.recipe_enrichment_jobs j using(id) where b.state<>j.state or b.attempt_count<>j.attempt_count),0,'Unrelated work is unchanged');
+set local role authenticated;
+select ok(cooksmith.admin_recipe_repair_claim(cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020')) is not null,'Exact repair can be claimed');
+select ok(cooksmith.admin_recipe_repair_claim(cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000020')) is null,'Duplicate dispatch cannot call provider twice');
+reset role;
+update cooksmith.recipe_enrichment_jobs set state='failed', failure_category='timeout', leased_until=null where repair_request_id='98000000-0000-4000-8000-000000000020';
+set local role authenticated;
+select is(cooksmith.admin_recipe_repair_inspect('98000000-0000-4000-8000-000000000010','shared_platform')->'repair'->>'estimatedCostAud',null,'Missing cost remains unknown');
+select throws_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000021')$$,'55000',null,'Unknown spend prevents another attempt');
+reset role;
+select is((select name from cooksmith.imported_recipes where id='98000000-0000-4000-8000-000000000010'),'Selected recipe','Original recipe is unchanged');
+update cooksmith.recipe_enrichment_jobs set estimated_cost_aud=0.001 where repair_request_id='98000000-0000-4000-8000-000000000020';
+set local role authenticated;
+select lives_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000021')$$,'Explicit subsequent attempt retains prior cost evidence');
+reset role;
+update cooksmith.recipe_intelligence_settings set emergency_stop=true;
+set local role authenticated;
+select throws_ok($$select cooksmith.admin_recipe_repair_claim(cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','shared_platform','98000000-0000-4000-8000-000000000021'))$$,'55000',null,'Emergency stop is rechecked at claim');
+reset role;
+update cooksmith.recipe_intelligence_settings set emergency_stop=false, enqueue_enabled=false;
+insert into cooksmith.household_recipes(id,household_id,name)
+values ('98000000-0000-4000-8000-000000000010','20000000-0000-4000-8000-000000000001','Household selected recipe');
+update cooksmith.recipe_intelligence_settings set enqueue_enabled=true;
+set local role authenticated;
+select lives_ok($$select cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','household','98000000-0000-4000-8000-000000000022')$$,'Household source with colliding ID reserves independently');
+reset role;
+select is((select household_id::text from cooksmith.recipe_enrichment_jobs where repair_request_id='98000000-0000-4000-8000-000000000022'),'20000000-0000-4000-8000-000000000001','Household identity derives from source');
+update cooksmith.recipe_intelligence_settings set monthly_cost_limit_aud=0.001;
+set local role authenticated;
+select throws_ok($$select cooksmith.admin_recipe_repair_claim(cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','household','98000000-0000-4000-8000-000000000022'))$$,'55000','usage_limit','Cost limit is enforced before claim');
+reset role;
+update cooksmith.recipe_intelligence_settings set monthly_cost_limit_aud=10;
+update cooksmith.household_recipes set name='Changed after reservation' where id='98000000-0000-4000-8000-000000000010';
+-- Make latest-version ordering deterministic within this transaction.
+update cooksmith.recipe_content_versions set created_at=created_at-interval '1 second'
+where id=(select recipe_version_id from cooksmith.recipe_enrichment_jobs where repair_request_id='98000000-0000-4000-8000-000000000022');
+set local role authenticated;
+select ok(cooksmith.admin_recipe_repair_claim(cooksmith.admin_recipe_repair_prepare('98000000-0000-4000-8000-000000000010','household','98000000-0000-4000-8000-000000000022')) is null,'Stale reserved version is not sent to provider');
+reset role;
+select is((select state::text from cooksmith.recipe_enrichment_jobs where repair_request_id='98000000-0000-4000-8000-000000000022'),'cancelled','Stale reservation is released for explicit review and retry');
+update cooksmith.imported_recipes set archived_at=now() where id='98000000-0000-4000-8000-000000000010';
+set local role authenticated;
+select throws_ok($$select cooksmith.admin_recipe_repair_inspect('98000000-0000-4000-8000-000000000010','shared_platform')$$,'22023',null,'Archived sources are unavailable for repair');
+select set_config('request.jwt.claims','{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+select throws_ok($$select * from cooksmith.recipe_enrichment_jobs where repair_request_id='98000000-0000-4000-8000-000000000022'$$,'42501',null,'Unrelated household cannot read targeted household repair');
+reset role;
+select * from finish();
+rollback;
