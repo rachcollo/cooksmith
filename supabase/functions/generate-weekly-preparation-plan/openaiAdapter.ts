@@ -1,4 +1,9 @@
 import {
+  completedOutputText,
+  responsesOptions,
+  type OpenAIResponse,
+} from '../_shared/openaiProfile.ts'
+import {
   isWeeklyPreparationCandidateEligible,
   weeklyPreparationQualityRules,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
@@ -6,11 +11,6 @@ import type {
   WeeklyPreparationCandidate,
   WeeklyPreparationModelDecision,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
-
-type OpenAIResponse = {
-  output?: Array<{ content?: Array<{ type?: string; text?: string }> }>
-  usage?: { input_tokens?: number; output_tokens?: number }
-}
 
 type OpenAIErrorResponse = {
   error?: { code?: unknown; type?: unknown; param?: unknown }
@@ -62,6 +62,7 @@ export async function decideAmbiguousPreparation(input: {
       },
       body: JSON.stringify({
         model: input.model,
+        ...responsesOptions(input.model, 'weekly'),
         input: [
           {
             role: 'system',
@@ -168,10 +169,7 @@ export async function decideAmbiguousPreparation(input: {
     )
   }
   const body = (await response.json()) as OpenAIResponse
-  const text = body.output
-    ?.flatMap((item) => item.content ?? [])
-    .find((item) => item.type === 'output_text')?.text
-  if (!text) throw new Error('schema_invalid')
+  const text = completedOutputText(body)
   let decision: WeeklyPreparationModelDecision
   try {
     decision = JSON.parse(text) as WeeklyPreparationModelDecision

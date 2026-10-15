@@ -21,7 +21,7 @@ describe('v2 application shell', () => {
       screen.getByRole('navigation', { name: 'Primary mobile navigation' }),
     ).toBeInTheDocument()
     expect(screen.queryByText('v2 test preview')).not.toBeInTheDocument()
-    expect(document.title).toBe('Home | Cooksmith')
+    await waitFor(() => expect(document.title).toBe('Home | Cooksmith'))
   })
 
   it('reports the active environment on the health route', async () => {
@@ -30,6 +30,7 @@ describe('v2 application shell', () => {
     expect(await screen.findByRole('heading', { name: 'The forge is ready.' })).toBeVisible()
     expect(screen.getByText('preview')).toBeVisible()
     expect(screen.getByText('abc123')).toBeVisible()
+    await waitFor(() => expect(document.title).toBe('Foundation status | Cooksmith'))
   })
 
   it('gives a useful next action for unknown routes', async () => {
@@ -37,7 +38,7 @@ describe('v2 application shell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Nothing cooking here' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Back to Cooksmith' })).toHaveAttribute('href', '/')
-    expect(document.title).toBe('Page not found | Cooksmith')
+    await waitFor(() => expect(document.title).toBe('Page not found | Cooksmith'))
   })
 
   it('supports browser-compatible navigation and active route state', async () => {
