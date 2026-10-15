@@ -45,6 +45,7 @@ select results_eq(
     'weekly_preparation_evaluation_runs:SELECT',
     'weekly_preparation_generation_attempts:SELECT',
     'weekly_preparation_plans:SELECT',
+    'weekly_preparation_profile_audit:SELECT',
     'weekly_preparation_settings:SELECT', 'weekly_preparation_settings:UPDATE',
     'weekly_preparation_settings_audit:SELECT'
   ]::text[]) collate "C", 'Policy operation matrix matches the approved API contract'
@@ -86,7 +87,7 @@ select results_eq(
     'shopping_item_contributions', 'shopping_list_items', 'shopping_lists', 'shopping_put_away_batches', 'shopping_put_away_receipts', 'shopping_stock_purchases',
     'weekly_preparation_evaluation_acceptances', 'weekly_preparation_evaluation_cases',
     'weekly_preparation_evaluation_runs', 'weekly_preparation_generation_attempts',
-    'weekly_preparation_plans',
+    'weekly_preparation_plans', 'weekly_preparation_profile_audit',
     'weekly_preparation_settings', 'weekly_preparation_settings_audit'
   ]::text[]) collate "C", 'Private table surface matches the generated API contract'
 );

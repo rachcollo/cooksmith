@@ -103,6 +103,7 @@ describe('admin feature toggles', () => {
         updatedAt: '2026-07-28T00:00:00Z',
       }),
       updateSettings,
+      configureLunaProfile: vi.fn(async () => undefined),
       getLatestEvaluation: async () => ({
         id: '94000000-0000-4000-8000-000000000001',
         status: 'completed',

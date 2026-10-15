@@ -2199,6 +2199,30 @@ export type Database = {
           },
         ]
       }
+      weekly_preparation_profile_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          id: string
+          previous_profile: Json
+          profile: Json
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          id?: string
+          previous_profile: Json
+          profile: Json
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          previous_profile?: Json
+          profile?: Json
+        }
+        Relationships: []
+      }
       weekly_preparation_settings: {
         Row: {
           ai_enabled: boolean
@@ -2332,6 +2356,10 @@ export type Database = {
       }
       canonical_ingredient_name_v1: { Args: { value: string }; Returns: string }
       canonical_ingredient_unit_v1: { Args: { value: string }; Returns: string }
+      configure_weekly_preparation_luna_profile: {
+        Args: never
+        Returns: undefined
+      }
       create_household_invitation: {
         Args: { p_email: string; p_household_id: string }
         Returns: {
