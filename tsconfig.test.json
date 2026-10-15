@@ -17,6 +17,7 @@
     "supabase/functions/import-recipe/urlSafety.ts",
     "supabase/functions/_shared/openaiProfile.ts",
     "supabase/functions/enrich-recipe/openaiAdapter.ts",
-    "supabase/functions/generate-weekly-preparation-plan/openaiAdapter.ts"
+    "supabase/functions/generate-weekly-preparation-plan/openaiAdapter.ts",
+    "supabase/functions/get-weekly-preparation-plan/index.ts"
   ]
 }
