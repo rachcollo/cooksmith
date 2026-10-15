@@ -84,6 +84,22 @@ export type AdminRecipeEnrichment = {
   canEdit: boolean
 }
 
+export type RecipeRepairInspection = {
+  rulesVersion: string
+  currentRules: boolean
+  enabled: boolean
+  failureCategory: string | null
+  repair: {
+    jobId: string
+    state: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+    failureCategory: string | null
+    estimatedCostAud: number | null
+    providerStarted: boolean
+    createdAt: string
+    leaseExpired: boolean | null
+  } | null
+}
+
 export interface WeeklyPreparationAdminRepository {
   getSettings(): Promise<WeeklyPreparationSettings>
   updateSettings(input: {
@@ -111,8 +127,14 @@ export interface WeeklyPreparationAdminRepository {
     query?: string
     status?: AdminRecipeEnrichment['status'] | 'all'
   }): Promise<AdminRecipeEnrichment[]>
-  retryRecipeEnrichment(
+  inspectRecipeRepair(
     recipeId: string,
     sourceKind: AdminRecipeEnrichment['sourceKind'],
-  ): Promise<void>
+  ): Promise<RecipeRepairInspection>
+  prepareRecipeRepair(
+    recipeId: string,
+    sourceKind: AdminRecipeEnrichment['sourceKind'],
+    requestId: string,
+  ): Promise<string>
+  runRecipeRepair(jobId: string): Promise<void>
 }
