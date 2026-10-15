@@ -1,6 +1,7 @@
-import type {
-  WeeklyPreparationCandidate,
-  WeeklyPreparationPlan,
+import {
+  weeklyPreparationQualityRules,
+  type WeeklyPreparationCandidate,
+  type WeeklyPreparationPlan,
 } from '../../../src/domain/get-ahead/weeklyPreparationPlan.ts'
 import { ingredientPreparationEvidence, type RecipeIntelligence } from '../../../src/domain/recipes/intelligence.ts'
 import { fetchWeeklyPreparationHouseholdData } from '../../../src/infrastructure/get-ahead/weeklyPreparationHouseholdData.ts'
@@ -241,25 +242,7 @@ function sourceInstructions(
   return [...ingredients, ...steps].join(' ')
 }
 
-const supportedPreparationActions = new Set([
-  'bake',
-  'blend',
-  'boil',
-  'chop',
-  'cook',
-  'dice',
-  'grate',
-  'marinate',
-  'mince',
-  'mix',
-  'roast',
-  'roughly_chop',
-  'shred',
-  'slice',
-  'steam',
-  'toast',
-  'whisk',
-])
+const supportedPreparationActions = new Set<string>(weeklyPreparationQualityRules.safeActions)
 
 function isSupportedPreparationAction(action: string | null) {
   return action ? supportedPreparationActions.has(action.trim().toLowerCase()) : false
