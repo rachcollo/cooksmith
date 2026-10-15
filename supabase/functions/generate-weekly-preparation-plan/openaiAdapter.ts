@@ -1,6 +1,7 @@
 import {
   completedOutputText,
   responsesOptions,
+  supportedFoodIntelligenceModel,
   type OpenAIResponse,
 } from '../_shared/openaiProfile.ts'
 import {
@@ -77,6 +78,15 @@ export async function decideAmbiguousPreparation(input: {
               'Raw meat may be cut, portioned, seasoned or marinated when the candidate is eligible. Keep raw-protein work in a separate task from vegetables and ready-to-eat ingredients.',
               'Task titles must be concise actions of 3 to 8 words. Name the component being prepared or cooked. Never copy a recipe sentence or include brackets, dashes, preheating, serving or reserving water. Cooking is allowed only for a candidate explicitly classified as component_cook or meal_cook.',
               'Do not create separate duplicate tasks with the same action and ingredient. Group compatible candidates, but keep different recipes separate when their preparation is genuinely different.',
+              ...(input.model === supportedFoodIntelligenceModel
+                ? [
+                    'Small source-backed ingredient prep is not the same as trivial handling. Mincing aromatics, chopping herbs and slicing vegetables can remove useful meal-night work, especially when several eligible candidates share setup and clean-up.',
+                    'Before returning no tasks, assess whether compatible small jobs together form a realistic task of at least 5 minutes. Group the work session while retaining each source and its separate storage; do not mix ingredients merely because they share a task.',
+                    'The candidate canonicalAction and opportunityKind define the advance preparation. A source instruction may mention serving, finishing or later cooking: prepare only the eligible ingredient action now, and leave the later recipe step for meal night.',
+                    'After selecting the highest-value work, check remaining eligible candidates for useful work that fits the remaining budget. Do not omit a useful compatible candidate solely because it belongs to another meal or is a fresh garnish.',
+                    'Never invent quantities, add unsupported preparation, pad durations to reach 5 minutes, or override storage, eligibility or hygiene boundaries to fill time. If no realistic useful task fits, return no tasks.',
+                  ]
+                : []),
               'Return an empty task list when eligibleCandidateIds is empty or no worthwhile prep exists.',
               `Protected rule version: ${weeklyPreparationQualityRules.version}.`,
             ].join(' '),

@@ -1,7 +1,7 @@
 // Server-only Responses API contract. Changing these options requires a new
 // profile identity and fresh hosted acceptance, not reuse of an old model score.
 export const supportedFoodIntelligenceModel = 'gpt-6-luna'
-export const weeklyLunaPromptVersion = 'weekly-preparation-strategy-v13-luna-low-v1'
+export const weeklyLunaPromptVersion = 'weekly-preparation-strategy-v13-luna-low-v2'
 
 export function responsesOptions(model: string, operation: 'enrichment' | 'weekly') {
   if (model !== supportedFoodIntelligenceModel) return {}
