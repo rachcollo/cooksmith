@@ -70,7 +70,7 @@ select throws_ok($$select cooksmith.configure_weekly_preparation_luna_profile()$
 update cooksmith.weekly_preparation_settings set ai_enabled=false where singleton;
 select lives_ok($$select cooksmith.configure_weekly_preparation_luna_profile()$$,'Paused admin can prepare the fixed Luna profile');
 select results_eq($$select model_identifier,prompt_version,pricing_version,corpus_version from cooksmith.weekly_preparation_settings$$,
- $$values ('gpt-6-luna'::text,'weekly-preparation-strategy-v13-luna-low-v1'::text,'openai-luna-standard-aud-fx1_60-20261015-v1'::text,'weekly-preparation-corpus-v13'::text)$$,'Exact approved identity and unchanged corpus');
+ $$values ('gpt-6-luna'::text,'weekly-preparation-strategy-v13-luna-low-v2'::text,'openai-luna-standard-aud-fx1_60-20261015-v1'::text,'weekly-preparation-corpus-v13'::text)$$,'Exact approved identity and unchanged corpus');
 select ok((select not ai_enabled and emergency_stop and smoke_verified_at is null and smoke_deployment_sha is null from cooksmith.weekly_preparation_settings),'AI stays disabled and previous smoke evidence is cleared');
 select is((select count(*)::int from cooksmith.weekly_preparation_profile_audit),1,'One profile audit record');
 select is((select changed_by from cooksmith.weekly_preparation_profile_audit),'a1030000-0000-4000-8000-000000000001'::uuid,'Audit derives actor from authenticated caller');

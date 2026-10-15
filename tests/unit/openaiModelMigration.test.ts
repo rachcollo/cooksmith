@@ -87,6 +87,10 @@ describe('shared supported model contract', () => {
     expect(isWeeklyModelProfileConfigured('gpt-6-luna', 'weekly-preparation-strategy-v13')).toBe(
       false,
     )
+    expect(
+      isWeeklyModelProfileConfigured('gpt-6-luna', 'weekly-preparation-strategy-v13-luna-low-v1'),
+    ).toBe(false)
+    expect(weeklyLunaPromptVersion).toBe('weekly-preparation-strategy-v13-luna-low-v2')
     expect(isWeeklyModelProfileConfigured('gpt-6-luna', weeklyLunaPromptVersion)).toBe(true)
     expect(isWeeklyModelProfileConfigured('gpt-4.1-mini', 'weekly-preparation-strategy-v13')).toBe(
       true,
