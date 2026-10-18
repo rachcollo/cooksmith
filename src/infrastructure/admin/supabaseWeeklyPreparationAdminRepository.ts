@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type {
   WeeklyPreparationAdminRepository,
   WeeklyPreparationEvaluation,
@@ -10,6 +11,24 @@ import {
   passesWeeklyPreparationEvaluation,
   weeklyPreparationMinimumQualityPasses,
 } from '../../domain/get-ahead/weeklyPreparationEvaluationPolicy'
+
+const repairInspectionSchema = z.object({
+  rulesVersion: z.string(),
+  currentRules: z.boolean(),
+  enabled: z.boolean(),
+  failureCategory: z.string().nullable(),
+  repair: z
+    .object({
+      jobId: z.string().uuid(),
+      state: z.enum(['pending', 'processing', 'completed', 'failed', 'cancelled']),
+      failureCategory: z.string().nullable(),
+      estimatedCostAud: z.number().nonnegative().nullable(),
+      providerStarted: z.boolean(),
+      createdAt: z.string(),
+      leaseExpired: z.boolean().nullable(),
+    })
+    .nullable(),
+})
 
 type SettingsRow = {
   ai_enabled: boolean
@@ -293,14 +312,34 @@ export function createSupabaseWeeklyPreparationAdminRepository(
         }
       })
     },
-    async retryRecipeEnrichment(recipeId, sourceKind) {
-      const { error } = await database.rpc('admin_retry_recipe_enrichment', {
+    async inspectRecipeRepair(recipeId, sourceKind) {
+      const { data, error } = await database.rpc('admin_recipe_repair_inspect', {
         target_recipe_id: recipeId,
         target_source_kind: sourceKind,
       })
-      if (error) throw new Error('Cooksmith could not retry recipe insights.')
-      const { error: dispatchError } = await client.functions.invoke('enrich-recipe', { body: {} })
-      if (dispatchError) throw new Error('Recipe insights are queued and will start shortly.')
+      if (error) throw new Error('Cooksmith could not inspect this recipe.')
+      return repairInspectionSchema.parse(data)
+    },
+    async prepareRecipeRepair(recipeId, sourceKind, requestId) {
+      const { data, error } = await database.rpc('admin_recipe_repair_prepare', {
+        target_recipe_id: recipeId,
+        target_source_kind: sourceKind,
+        request_id: requestId,
+      })
+      if (error || !data)
+        throw new Error(
+          'Repair could not be reserved. Refresh the result and check Recipe Intelligence controls.',
+        )
+      return data
+    },
+    async runRecipeRepair(jobId) {
+      const { error } = await client.functions.invoke('enrich-recipe', {
+        body: { repairJobId: jobId },
+      })
+      if (error)
+        throw new Error(
+          'The repair response is unavailable. Refresh its result before taking further action.',
+        )
     },
   }
 }

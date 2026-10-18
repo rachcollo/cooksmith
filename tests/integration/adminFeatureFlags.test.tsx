@@ -204,7 +204,9 @@ describe('admin feature toggles', () => {
       }),
       setRecipeIntelligenceDailyLimit,
       listRecipeEnrichments: async () => [],
-      retryRecipeEnrichment: async () => undefined,
+      inspectRecipeRepair: vi.fn(),
+      prepareRecipeRepair: vi.fn(),
+      runRecipeRepair: vi.fn(),
     }
     const repository: FeatureFlagRepository = {
       isAdmin: async () => true,

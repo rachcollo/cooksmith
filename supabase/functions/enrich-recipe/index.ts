@@ -191,13 +191,13 @@ async function claimJob(modelKey?: string): Promise<{
 
   const modelFilter = modelKey ? `&model_key=eq.${encodeURIComponent(modelKey)}` : ''
   const response = await rest(
-    `recipe_enrichment_jobs?rules_version=eq.${recipeIntelligenceRulesVersion}&state=eq.pending&available_at=lte.now()${modelFilter}&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
+    `recipe_enrichment_jobs?repair_request_id=is.null&rules_version=eq.${recipeIntelligenceRulesVersion}&state=eq.pending&available_at=lte.now()${modelFilter}&order=created_at.asc&limit=1&select=id,source_kind,recipe_id,imported_recipe_id,recipe_version_id,attempt_count,model_key`,
   )
   const jobs = (await response.json()) as Job[]
   const candidate = jobs[0]
   if (!candidate) {
     const waitingResponse = await rest(
-      `recipe_enrichment_jobs?rules_version=eq.${recipeIntelligenceRulesVersion}&state=eq.pending${modelFilter}&order=available_at.asc&limit=1&select=available_at`,
+      `recipe_enrichment_jobs?repair_request_id=is.null&rules_version=eq.${recipeIntelligenceRulesVersion}&state=eq.pending${modelFilter}&order=available_at.asc&limit=1&select=available_at`,
     )
     const waiting = (await waitingResponse.json()) as Array<{ available_at: string }>
     if (!waiting[0]) return { job: null, outcome: 'empty' }
@@ -345,10 +345,16 @@ function estimatedCostAud(inputTokens: number, outputTokens: number) {
   return (inputTokens * inputRate + outputTokens * outputRate) / 1_000_000
 }
 
-async function processOne(modelKey?: string) {
+async function processOne(modelKey?: string, repairJob?: Job) {
   const config = await settings()
-  if (config.emergency_stop || config.backfill_paused) return { outcome: 'disabled' }
-  const claimed = await claimJob(modelKey)
+  if (config.emergency_stop || config.backfill_paused || (repairJob && !config.ai_enabled)) {
+    if (repairJob)
+      await finishJob(repairJob, 'failed', { failure_category: 'disabled', estimated_cost_aud: 0 })
+    return { outcome: 'disabled' }
+  }
+  const claimed = repairJob
+    ? { job: repairJob, outcome: 'claimed' as const }
+    : await claimJob(modelKey)
   if (!claimed.job) {
     if (claimed.outcome === 'busy') return { outcome: 'busy' }
     if (claimed.outcome === 'waiting')
@@ -359,6 +365,10 @@ async function processOne(modelKey?: string) {
   const job = claimed.job
   const startedAt = performance.now()
 
+  let providerAttempted = false
+  let recordedCost: number | null = null
+  let recordedInput: number | null = null
+  let recordedOutput: number | null = null
   try {
     const version = await loadVersion(job)
     const source = intelligenceSource(version)
@@ -370,10 +380,15 @@ async function processOne(modelKey?: string) {
     let outputTokens = 0
     let costAud = 0
 
-    if (job.model_key === 'provider-assisted-v1' || job.model_key === 'provider-assisted-v2') {
+    if (
+      repairJob ||
+      job.model_key === 'provider-assisted-v1' ||
+      job.model_key === 'provider-assisted-v2'
+    ) {
       if (!config.ai_enabled) throw new Error('disabled')
       if (!(await currentVersionMatches(version))) throw new Error('stale_version')
       modelKey = Deno.env.get('RECIPE_INTELLIGENCE_MODEL')?.trim() || supportedFoodIntelligenceModel
+      providerAttempted = true
       const assisted = await resolveAmbiguousLinks({
         apiKey: env('OPENAI_API_KEY'),
         model: modelKey,
@@ -385,6 +400,9 @@ async function processOne(modelKey?: string) {
       inputTokens = assisted.inputTokens
       outputTokens = assisted.outputTokens
       costAud = estimatedCostAud(inputTokens, outputTokens)
+      recordedCost = costAud
+      recordedInput = inputTokens
+      recordedOutput = outputTokens
       provider = 'openai'
     }
 
@@ -412,12 +430,20 @@ async function processOne(modelKey?: string) {
   } catch (error) {
     const category = failureCategory(error)
     const retry =
+      !repairJob &&
       (category === 'transient_provider' || category === 'schema_invalid') &&
       job.attempt_count + 1 < 3
     await finishJob(job, retry ? 'pending' : 'failed', {
       failure_category: category,
       available_at: retry ? new Date(Date.now() + 30_000).toISOString() : undefined,
       latency_ms: Math.round(performance.now() - startedAt),
+      ...(repairJob
+        ? {
+            estimated_cost_aud: providerAttempted ? recordedCost : 0,
+            input_tokens: recordedInput,
+            output_tokens: recordedOutput,
+          }
+        : {}),
       ...providerDiagnostic(error),
     })
     return {
@@ -439,9 +465,30 @@ Deno.serve(async (request) => {
   try {
     if (!(await isAuthorised(request))) return json(401, { error: 'unauthorised' })
     const body = (await request.json().catch(() => ({}))) as {
+      repairJobId?: unknown
       dispatchMode?: unknown
       modelKey?: unknown
       chainDepth?: unknown
+    }
+    if (body.repairJobId !== undefined) {
+      if (
+        typeof body.repairJobId !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.repairJobId)
+      )
+        return json(400, { error: 'invalid_repair_job' })
+      const authorization = request.headers.get('authorization')
+      if (!authorization?.startsWith('Bearer ')) return json(401, { error: 'unauthorised' })
+      // The caller's bearer token reaches the DB admin check; worker tokens cannot repair.
+      const claim = await fetch(`${env('SUPABASE_URL')}/rest/v1/rpc/admin_recipe_repair_claim`, {
+        method: 'POST',
+        headers: userRestHeaders(authorization),
+        body: JSON.stringify({ target_job_id: body.repairJobId }),
+      })
+      if (!claim.ok) return json(409, { error: 'repair_not_started' })
+      const job = (await claim.json()) as Job | null
+      if (!job) return json(200, { outcome: 'already_attempted' })
+      // An explicit repair always returns here: never dispatch unrelated work or retry.
+      return json(200, await processOne(undefined, job))
     }
     const dispatchMode = body.dispatchMode === 'single' ? 'single' : 'chain'
     const modelKey =
