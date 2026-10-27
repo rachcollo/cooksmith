@@ -1,3 +1,5 @@
+import { extractHtmlRecipe } from './htmlFallback.ts'
+
 export interface ImportDraft {
   name: string
   ingredients: string | null
@@ -76,15 +78,30 @@ export function extractRecipe(
     ),
   ]
   let recipe: JsonRecord | undefined
+  const articles: JsonRecord[] = []
   for (const script of scripts) {
     try {
-      recipe = records(JSON.parse(script[1])).find(isRecipe)
+      const entries = records(JSON.parse(script[1]))
+      articles.push(
+        ...entries.filter(
+          (record) => record['@type'] === 'Article' || record['@type'] === 'BlogPosting',
+        ),
+      )
+      recipe = entries.find(isRecipe)
       if (recipe) break
     } catch {
       // A malformed JSON-LD block should not hide a later valid Recipe block.
     }
   }
-  if (!recipe) throw new Error('unsupported')
+  if (!recipe) {
+    const draft = extractHtmlRecipe(html, canonicalUrl ?? requestedUrl)
+    const matching = articles.filter((record) => text(record.headline) === draft.name)
+    if (matching.length === 1) {
+      draft.authorName ??= author(matching[0]!.author)
+      draft.publisherName ??= text(matching[0]!.publisher)
+    }
+    return draft
+  }
   const ingredientLines = Array.isArray(recipe.recipeIngredient)
     ? recipe.recipeIngredient.map(text).filter((line): line is string => Boolean(line))
     : []

@@ -188,3 +188,9 @@ CS-30 is complete when:
 ## 13. Concurrency Boundaries
 
 Begin only after CS-27 and CS-28 merge. It may run alongside CS-20 because both consume the stable recipe contract. Do not modify Meal Planner, Pantry, shopping lists, general-purpose social sharing, or Cook With Me in this package. The shared recipe bank and import visibility rules described here are part of CS-30.
+
+## 2026-10-27 corrective scope: labelled HTML fallback
+
+Owner-approved follow-up to the Cannings import failure: retain Recipe JSON-LD priority and add a conservative, deterministic fallback for clearly labelled ingredient and method content across common HTML layouts. Require both sections and a title; reject ambiguous/incomplete layouts. Preserve attribution and URL safety, add safe user recovery messages and regression tests. No AI, migration or production configuration change. Delivery is a scoped branch and draft PR; merge and Edge Function deployment remain separate owner-approved actions.
+
+Evidence and release guidance: [HTML fallback handover](../handovers/cs30-html-import-fallback.md).
