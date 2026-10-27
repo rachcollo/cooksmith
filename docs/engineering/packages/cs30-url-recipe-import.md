@@ -194,3 +194,5 @@ Begin only after CS-27 and CS-28 merge. It may run alongside CS-20 because both 
 Owner-approved follow-up to the Cannings import failure: retain Recipe JSON-LD priority and add a conservative, deterministic fallback for clearly labelled ingredient and method content across common HTML layouts. Require both sections and a title; reject ambiguous/incomplete layouts. Preserve attribution and URL safety, add safe user recovery messages and regression tests. No AI, migration or production configuration change. Delivery is a scoped branch and draft PR; merge and Edge Function deployment remain separate owner-approved actions.
 
 Evidence and release guidance: [HTML fallback handover](../handovers/cs30-html-import-fallback.md).
+
+The owner additionally approved targeted remediation of the existing DOMPurify and Zod audit findings and updating draft PR #206 on 27 October 2026. Scope is limited to DOMPurify 3.4.17 in the lockfile and the direct Zod 4.6.7 pin, with regression validation; no unrelated upgrades, merge or deployment.

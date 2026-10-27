@@ -24,7 +24,7 @@ Let people import clearly labelled recipe pages that lack Recipe JSON-LD, includ
 
 The import extractor, new `htmlFallback.ts`, handler, recipe repository error adapter, tests, TypeScript test inclusion, npm manifest/lock and function-local Deno dependency configuration are affected. No database migrations.
 
-`htmlparser2@12.0.0` is MIT licensed and parses HTML without a browser or script execution. It is a development dependency for local/CI tests and a function-local npm dependency for Deno; it is not imported into the browser bundle. Both npm and Deno resolutions are locked. Its dependency chain has no findings in the audit taken during this task. Existing production findings in `dompurify` and `zod` also reproduce against the unchanged main lockfile; no unrelated upgrades or audit exceptions were added.
+`htmlparser2@12.0.0` is MIT licensed and parses HTML without a browser or script execution. It is a development dependency for local/CI tests and a function-local npm dependency for Deno; it is not imported into the browser bundle. Both npm and Deno resolutions are locked. Its dependency chain has no findings in the audit taken during this task. The owner separately approved remediation of the baseline audit findings on 27 October: direct `zod` is now pinned to `4.6.7`, and the transitive `dompurify` lock entry is `3.4.17` within PostHog’s existing range. Only those two dependency versions changed. No unrelated upgrades or audit exceptions were added.
 
 ## Verification
 
@@ -32,9 +32,11 @@ The import extractor, new `htmlFallback.ts`, handler, recipe repository error ad
 - A synthetic Cannings-layout fixture is committed, alongside varied inline layout fixtures and negative cases. This is fixture coverage, not a claimed percentage of websites supported.
 - Focused extraction, safe error mapping, handler and UI recovery tests cover schema priority, malformed earlier JSON-LD, entities, groups, ordering, missing content, multiple recipes, hidden content, inert scripts, unsafe image schemes and SSRF redirect rejection.
 - Desktop/mobile Chromium: 50 passed, two existing quantity-loop tests skipped because synthetic PostgREST credentials were not supplied. WebKit was not run.
-- Documentation command audit and secret scan passed. Production dependency audit fails on baseline `dompurify` and `zod` findings; unchanged main was checked separately.
-- Preflight cannot complete: the pinned Supabase CLI attempts to create `/home/agent/.supabase` on a read-only filesystem. No home override, hosted database connection or production configuration change was made. Database tests are not claimed; no database behaviour changed.
+- Documentation command audit and secret scan passed. The production dependency audit now passes after the targeted DOMPurify/Zod remediation. Raw audit still reports the existing reviewed React Router RSC exception and a moderate `fflate` finding; this is not a zero-vulnerability claim.
+- Preflight cannot complete: the pinned Supabase CLI attempts to create `/home/agent/.supabase` on a read-only filesystem. No home override, hosted database connection or production configuration change was made. Local database tests are not claimed; database validation passed in CI for the initial importer commit. No database behaviour changed.
 - `npm run validate:static` passed: formatting, lint, strict types, 101 test files / 761 tests and production build. The existing large-chunk advisory remains. Deno 2.2.12 and 2.9.6 type checks passed; the live-page smoke passed under Deno 2.2.12 with the frozen version-4 lockfile and no network permission. Exact pushed commit, PR and CI status are recorded in the final handover.
+
+The full static suite (761 tests), desktop/mobile Chromium suite (50 passed, two existing skips), documentation audit and production audit were rerun successfully after the DOMPurify/Zod updates. The prior local Supabase CLI preflight limitation remains. Final CI status for the dependency-remediation commit is recorded in PR #206.
 
 ## Limits and review
 
