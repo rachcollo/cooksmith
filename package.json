@@ -61,7 +61,7 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-router-dom": "7.18.1",
-    "zod": "4.4.3"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
@@ -81,6 +81,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.3",
     "globals": "17.7.0",
+    "htmlparser2": "12.0.0",
     "jsdom": "29.1.1",
     "prettier": "3.9.5",
     "supabase": "2.109.1",

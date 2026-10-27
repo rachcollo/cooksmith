@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "htmlparser2": "npm:htmlparser2@12.0.0"
+  }
+}

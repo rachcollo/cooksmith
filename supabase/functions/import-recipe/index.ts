@@ -58,7 +58,7 @@ async function fetchPage(initialUrl: URL) {
     if (!response.ok) throw new Error('unavailable')
     const type = response.headers.get('content-type')?.toLowerCase() ?? ''
     if (!type.includes('text/html') && !type.includes('application/xhtml+xml'))
-      throw new Error('unsupported')
+      throw new Error('unsupported_content_type')
     const length = Number(response.headers.get('content-length') ?? 0)
     if (length > maxBytes) throw new Error('too_large')
     const reader = response.body?.getReader()
@@ -120,7 +120,9 @@ Deno.serve(async (request) => {
         event: 'recipe_import',
         outcome: 'draft_created',
         hostname: sourceHostname,
-        parser: 'schema-org-json-ld',
+        parser: draft.warnings.some((warning) => warning.startsWith('Imported from page text.'))
+          ? 'labelled-html'
+          : 'schema-org-json-ld',
         durationMs: Math.round(performance.now() - startedAt),
       }),
     )

@@ -13,7 +13,7 @@
   "include": [
     "tests",
     "src",
-    "supabase/functions/import-recipe/extractor.ts",
+    "supabase/functions/import-recipe/*.ts",
     "supabase/functions/import-recipe/urlSafety.ts",
     "supabase/functions/_shared/openaiProfile.ts",
     "supabase/functions/enrich-recipe/openaiAdapter.ts",

@@ -108,6 +108,44 @@ describe('recipe library experience', () => {
     expect(await screen.findByText('Private recipe')).toBeVisible()
   })
 
+  it('shows import recovery advice without creating a recipe', async () => {
+    const createImported = vi.fn()
+    const message =
+      'That page does not have complete, clearly labelled ingredients and method. Add the recipe manually so nothing is missed.'
+    const repository: RecipeRepository = {
+      list: async () => [],
+      create: async () => recipe({}),
+      update: async () => recipe({}),
+      archive: async () => recipe({}),
+      importFromUrl: async () => {
+        throw new Error(message)
+      },
+      createImported,
+    }
+    renderApp(
+      '/recipes',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      repository,
+    )
+    await screen.findByRole('heading', { name: 'Start your recipe library' })
+    await userEvent.click(screen.getByRole('button', { name: 'Import' }))
+    const dialog = screen.getByRole('dialog', { name: 'Import a recipe' })
+    await userEvent.type(
+      within(dialog).getByLabelText('Recipe URL'),
+      'https://recipes.example/soup',
+    )
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Import recipe' }))
+    expect(await within(dialog).findByText(message)).toBeVisible()
+    expect(screen.queryByRole('dialog', { name: 'Review imported recipe' })).not.toBeInTheDocument()
+    expect(createImported).not.toHaveBeenCalled()
+  })
+
   it('loads an empty library and creates a recipe that opens in detail', async () => {
     const create = vi.fn(async (householdId, input) =>
       recipe({

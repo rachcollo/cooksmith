@@ -1,3 +1,4 @@
+import { recipeImportError } from './recipeImportError'
 import type { MeasurementSystem } from '../../domain/measurements/purchaseMeasures'
 import type { PostgrestError } from '@supabase/supabase-js'
 
@@ -249,8 +250,7 @@ export function createSupabaseRecipeRepository(client: CooksmithSupabaseClient):
   return {
     async importFromUrl(url) {
       const result = await client.functions.invoke('import-recipe', { body: { url } })
-      if (result.error)
-        throw new Error('Cooksmith could not import that page. Check the URL and try again.')
+      if (result.error) throw new Error(await recipeImportError(result.error))
       return result.data as RecipeImportDraft
     },
     async setFavourite(householdId, recipeId, source, desired) {
