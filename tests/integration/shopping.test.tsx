@@ -150,7 +150,7 @@ describe('shopping list foundation', () => {
     renderShopping(repository)
     await user.click(await screen.findByRole('button', { name: 'Put shopping away' }))
     const dialog = screen.getByRole('dialog', { name: 'Put shopping away' })
-    await user.click(within(dialog).getByRole('button', { name: 'Put selected items away' }))
+    await user.click(within(dialog).getByRole('button', { name: /^Put away \d+ items?$/ }))
     await screen.findByText('1 Pantry item is now available.')
     expect(putAway).toHaveBeenCalledWith(householdId, expect.any(String), [
       {

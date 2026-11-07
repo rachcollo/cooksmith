@@ -7,6 +7,10 @@ import { classifyPantryItem } from '../../domain/pantry/classification'
 import {
   PutAwayReviewError,
   groupPutAwaySources,
+  combinePutAwayChoices,
+  correctPutAwayName,
+  correctPutAwayAmount,
+  selectPutAwayPantry,
   type PutAwayReview,
   type PutAwaySource,
 } from '../../domain/shopping/putAway'
@@ -25,6 +29,7 @@ export function ShoppingPutAway({
   const [review, setReview] = useState<PutAwayReview[] | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showAll, setShowAll] = useState(false)
   const [attemptLocked, setAttemptLocked] = useState(false)
   const readVersion = useRef(0)
   const lock = useRef(false)
@@ -65,6 +70,7 @@ export function ShoppingPutAway({
       setSources(next)
       attempt.current = null
       setAttemptLocked(false)
+      setShowAll(false)
       if (next.length) setReview(groupPutAwaySources(next))
       else setMessage('All bought items have already been put away.')
     } catch {
@@ -92,12 +98,16 @@ export function ShoppingPutAway({
       setMessage('Use an item name between 1 and 100 characters.')
       return
     }
+    if (selected.some((row) => row.attention)) {
+      setMessage('Resolve the items that need attention, or leave them for later.')
+      return
+    }
     const choices = selected.map((row) => {
       const classification = classifyPantryItem(row.name)
       const targetName = row.pantryName ?? row.name.trim()
-      const target = row.sources[0]?.pantryItems?.find(
-        (item) => item.name.trim().toLowerCase() === targetName.toLowerCase(),
-      )
+      const target = row.sources
+        .flatMap((source) => source.pantryItems ?? [])
+        .find((item) => item.name.trim().toLowerCase() === targetName.toLowerCase())
       return {
         name: row.pantryName ?? row.name.trim(),
         quantity: row.quantity,
@@ -109,14 +119,21 @@ export function ShoppingPutAway({
         storageLocation: classification.storageLocation,
       }
     })
-    const key = JSON.stringify(choices)
+    let combinedChoices
+    try {
+      combinedChoices = combinePutAwayChoices(choices)
+    } catch (error) {
+      setMessage(error instanceof PutAwayReviewError ? error.message : 'Check the selected items.')
+      return
+    }
+    const key = JSON.stringify(combinedChoices)
     setAttemptLocked(true)
     if (attempt.current?.key !== key) attempt.current = { id: crypto.randomUUID(), key }
     lock.current = true
     setBusy(true)
     setMessage(null)
     try {
-      const result = await repository.putAway(householdId, attempt.current.id, choices)
+      const result = await repository.putAway(householdId, attempt.current.id, combinedChoices)
       if (!active.current) return
       // The transaction has committed. A later refresh failure must not imply no stock changed.
       setReview(null)
@@ -151,6 +168,8 @@ export function ShoppingPutAway({
     }
   }
   if (!repository.listPutAway || !repository.putAway) return null
+  const readyCount = review?.filter((row) => row.included && !row.attention).length ?? 0
+  const attentionCount = review?.filter((row) => row.attention).length ?? 0
   return (
     <section aria-label="Put shopping away">
       {sources.length ? (
@@ -163,7 +182,7 @@ export function ShoppingPutAway({
         <Dialog
           open
           title="Put shopping away"
-          description="We’ve recognised your bought items. Put them away together, or change anything that needs a second look."
+          description="The ready items are handled together. Only items that need your attention are shown below."
           onOpenChange={(open) => {
             if (!open && !busy) setReview(null)
           }}
@@ -175,132 +194,206 @@ export function ShoppingPutAway({
               void apply()
             }}
           >
-            {review.map((row, index) => (
-              <div key={row.id} className="put-away-row">
-                <label className="put-away-choice">
-                  <input
-                    type="checkbox"
-                    aria-label={`Include ${row.name}`}
-                    checked={row.included}
-                    disabled={busy || attemptLocked || row.ambiguous}
-                    onChange={(event) =>
-                      setReview((rows) =>
-                        rows!.map((r, i) =>
-                          i === index ? { ...r, included: event.target.checked } : r,
-                        ),
-                      )
-                    }
-                  />
-                  <span>
-                    <strong>{row.name}</strong>
-                    {row.quantity !== null ? (
-                      <small>
-                        {row.quantity} {row.unit}
-                        {row.quantityUntracked ? ' · extra stock stays untracked' : ''}
-                      </small>
-                    ) : null}
-                    <small>
-                      {row.ambiguous
-                        ? 'Several Pantry matches. Choose a name or leave for later.'
-                        : row.pantryName
-                          ? 'Recognised in Pantry'
-                          : 'Add to Pantry'}
-                    </small>
-                  </span>
-                </label>
-                <Button
-                  type="button"
-                  variant="quiet"
-                  disabled={busy || attemptLocked}
-                  aria-label={`Change ${row.name}`}
-                  aria-expanded={row.editing}
-                  onClick={() =>
-                    setReview((rows) =>
-                      rows!.map((r, i) => (i === index ? { ...r, editing: !r.editing } : r)),
-                    )
-                  }
-                >
-                  Change
-                </Button>
-                {row.sources.some((source) => source.hasConsumedStock) ? (
-                  <p className="form-hint">
-                    Some of this purchase has already been used in a meal. Check only what is left
-                    to put away, excluding what you have already used.
-                  </p>
-                ) : null}
-                {row.editing ? (
-                  <div className="put-away-fields">
-                    <TextField
-                      label={`Pantry name for ${row.id}`}
-                      value={row.pantryName ?? row.name}
-                      maxLength={100}
-                      required={row.included}
-                      disabled={busy || attemptLocked}
+            <p className="put-away-summary" role="status">
+              {readyCount} {readyCount === 1 ? 'item ready' : 'items ready'}.
+              {attentionCount
+                ? ` ${attentionCount} ${attentionCount === 1 ? 'needs' : 'need'} attention.`
+                : ' Nothing needs checking.'}
+            </p>
+            <Button
+              type="button"
+              variant="quiet"
+              aria-expanded={showAll}
+              onClick={() => setShowAll((value) => !value)}
+            >
+              {showAll
+                ? 'Show only items needing attention'
+                : `View all ${review.length} ${review.length === 1 ? 'item' : 'items'}`}
+            </Button>
+            {review.map((row, index) =>
+              !showAll && !row.attention && !row.editing ? null : (
+                <div key={row.id} className="put-away-row">
+                  <label className="put-away-choice">
+                    <input
+                      type="checkbox"
+                      aria-label={`Include ${row.name}`}
+                      checked={row.included}
+                      disabled={busy || attemptLocked || Boolean(row.attention)}
                       onChange={(event) =>
                         setReview((rows) =>
                           rows!.map((r, i) =>
-                            i === index
-                              ? {
-                                  ...r,
-                                  name: event.target.value,
-                                  pantryName: null,
-                                  ambiguous: false,
-                                  included: true,
-                                }
-                              : r,
+                            i === index ? { ...r, included: event.target.checked } : r,
                           ),
                         )
                       }
                     />
-                    {row.sources.every((source) => source.key.startsWith('p:')) ? (
-                      <>
-                        <TextField
-                          label={`Amount remaining to put away for ${row.id}`}
-                          type="number"
-                          min="0"
-                          max="99999"
-                          step="0.01"
-                          value={row.quantity ?? ''}
+                    <span>
+                      <strong>{row.name}</strong>
+                      {row.quantity !== null ? (
+                        <small>
+                          {row.quantity} {row.unit}
+                          {row.quantityUntracked ? ' · extra stock stays untracked' : ''}
+                        </small>
+                      ) : null}
+                      <small>
+                        {row.attention === 'ingredient'
+                          ? 'Which ingredient did you buy? Choose a name or leave it for later.'
+                          : row.attention === 'pantry-match'
+                            ? 'Choose the Pantry item to update.'
+                            : row.attention === 'unit-conflict'
+                              ? 'The bought amount and Pantry unit cannot be added safely.'
+                              : row.pantryName
+                                ? 'Recognised in Pantry'
+                                : 'Add to Pantry'}
+                      </small>
+                    </span>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="quiet"
+                    disabled={busy || attemptLocked}
+                    aria-label={row.editing ? `Done editing ${row.name}` : `Change ${row.name}`}
+                    aria-expanded={row.editing}
+                    onClick={() =>
+                      setReview((rows) =>
+                        rows!.map((r, i) => (i === index ? { ...r, editing: !r.editing } : r)),
+                      )
+                    }
+                  >
+                    {row.editing ? 'Done' : 'Change'}
+                  </Button>
+                  {row.attention === 'unit-conflict' ? (
+                    <div className="put-away-matches">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={busy || attemptLocked}
+                        onClick={() =>
+                          setReview((rows) =>
+                            rows!.map((r, i) =>
+                              i === index
+                                ? {
+                                    ...correctPutAwayAmount(r, null, null),
+                                    quantityUntracked: true,
+                                    editing: true,
+                                  }
+                                : r,
+                            ),
+                          )
+                        }
+                      >
+                        Keep available without a total
+                      </Button>
+                    </div>
+                  ) : null}
+                  {row.sources.some((source) => source.hasConsumedStock) ? (
+                    <p className="form-hint">
+                      Some of this purchase has already been used in a meal. Check only what is left
+                      to put away, excluding what you have already used.
+                    </p>
+                  ) : null}
+                  {row.attention === 'pantry-match' ? (
+                    <div className="put-away-matches" aria-label={`Pantry matches for ${row.name}`}>
+                      {row.matches.map((target) => (
+                        <Button
+                          key={target.id}
+                          type="button"
+                          variant="secondary"
                           disabled={busy || attemptLocked}
-                          onChange={(event) =>
+                          onClick={() =>
                             setReview((rows) =>
                               rows!.map((r, i) =>
                                 i === index
-                                  ? {
-                                      ...r,
-                                      quantity:
-                                        event.target.value === ''
-                                          ? null
-                                          : Number(event.target.value),
-                                    }
+                                  ? { ...selectPutAwayPantry(r, target), editing: true }
                                   : r,
                               ),
                             )
                           }
-                        />
-                        <TextField
-                          label={`Unit remaining to put away for ${row.id}`}
-                          value={row.unit ?? ''}
-                          disabled={busy || attemptLocked}
-                          onChange={(event) =>
-                            setReview((rows) =>
-                              rows!.map((r, i) =>
-                                i === index ? { ...r, unit: event.target.value || null } : r,
-                              ),
-                            )
-                          }
-                        />
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ))}
+                        >
+                          Use {target.name}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {row.editing ||
+                  row.attention === 'ingredient' ||
+                  row.attention === 'unit-conflict' ? (
+                    <div className="put-away-fields">
+                      <TextField
+                        label="Ingredient"
+                        aria-label={`Ingredient for ${row.id}`}
+                        value={row.pantryName ?? row.name}
+                        maxLength={100}
+                        required={row.included}
+                        disabled={busy || attemptLocked}
+                        onChange={(event) =>
+                          setReview((rows) =>
+                            rows!.map((r, i) =>
+                              i === index
+                                ? { ...correctPutAwayName(r, event.target.value), editing: true }
+                                : r,
+                            ),
+                          )
+                        }
+                      />
+                      {row.sources.every((source) => source.key.startsWith('p:')) ? (
+                        <>
+                          <TextField
+                            label="Amount left"
+                            aria-label={`Amount left for ${row.id}`}
+                            type="number"
+                            min="0"
+                            max="99999"
+                            step="0.01"
+                            value={row.quantity ?? ''}
+                            disabled={busy || attemptLocked}
+                            onChange={(event) =>
+                              setReview((rows) =>
+                                rows!.map((r, i) =>
+                                  i === index
+                                    ? correctPutAwayAmount(
+                                        r,
+                                        event.target.value === ''
+                                          ? null
+                                          : Number(event.target.value),
+                                        r.unit,
+                                      )
+                                    : r,
+                                ),
+                              )
+                            }
+                          />
+                          <TextField
+                            label="Unit"
+                            aria-label={`Unit for ${row.id}`}
+                            value={row.unit ?? ''}
+                            disabled={busy || attemptLocked}
+                            onChange={(event) =>
+                              setReview((rows) =>
+                                rows!.map((r, i) =>
+                                  i === index
+                                    ? correctPutAwayAmount(
+                                        r,
+                                        r.quantity,
+                                        event.target.value || null,
+                                      )
+                                    : r,
+                                ),
+                              )
+                            }
+                          />
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              ),
+            )}
             <p className="form-hint">
               {review.some((row) => row.sources.some((source) => source.key.startsWith('p:')))
-                ? 'Only the remaining amounts shown are added to Pantry. Extra unmeasured stock stays untracked.'
+                ? 'Known remaining amounts are added once. Unmeasured stock stays untracked.'
                 : 'These older purchases mark Pantry items available without inventing quantities.'}{' '}
-              Unticked items can be put away later.
+              Items left out can be put away later.
             </p>
             {message ? <p role="status">{message}</p> : null}
             <div className="dialog-actions">
@@ -312,8 +405,10 @@ export function ShoppingPutAway({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={busy || !review.some((row) => row.included)}>
-                {busy ? 'Putting away…' : 'Put selected items away'}
+              <Button type="submit" disabled={busy || !readyCount}>
+                {busy
+                  ? 'Putting away…'
+                  : `Put away ${readyCount} ${readyCount === 1 ? 'item' : 'items'}`}
               </Button>
             </div>
           </form>

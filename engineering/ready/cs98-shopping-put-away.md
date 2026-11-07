@@ -71,3 +71,16 @@ Integrated accepted main `3f6ecebf8dd922be990cd6f022218ea7adde0e4b`. Combine Sho
 ## Integration after PR192
 
 Integrated accepted freezer main `19bb8c573c5f7dc75c595285a967fcd876d8974f`. Resolve ADR index conflicts by retaining both freezer reservation and put-away receipt entries. Preserve generated types, table contracts and all accepted features. Exact-head CI is recorded in PR193. No new migration, Edge Function, Home redesign or production action. The new CS97 default/dropdown work stays on a separate branch.
+
+## Approved exceptions-only follow-up (2026-11-07)
+
+The owner requested fewer review decisions and automatic separation of ingredient names and explicit measurements, then authorised implementation and publication of a separate draft PR after the CS-97 shopping-period PR. Baseline: accepted `main` at `294d24e50a31433f9a4a522fceeffadccc294921`. Branch: `fix/cs-98-exceptions-only-put-away`. No merge or deployment is authorised.
+
+- Hide safe ready rows by default; keep an optional view-all/correction path and one batch action.
+- Show only unresolved ingredient alternatives, duplicate Pantry matches and incompatible measurements as exceptions. Do not demand unknown amounts.
+- Share deterministic, lossless ingredient structure through shopping projection, purchase receipts and put-away. Preserve source commentary separately, compact measures, explicit equivalents and package totals.
+- Keep actual purchase/remainder evidence authoritative. Never backfill an existing unknown receipt from recipe demand, round a tiny unsupported amount to zero, or infer substitute products, pack sizes or density.
+- Preserve atomic server authorisation, immutable source snapshots, optimistic concurrency, partial application and idempotent retry.
+- Preserve source-bound validation for existing v1 recipe intelligence while deriving new structure with v2 rules.
+
+Verification and limitations: [follow-up handover](../../docs/engineering/handovers/cs98-exceptions-only-put-away.md). Proposed decision: [ADR 019](../../docs/architecture/decisions/019-versioned-ingredient-receipt-evidence.md). This follow-up introduces no migrations, Edge Function changes, dependencies or recurring cost. It does not include the separate CS-97 next-week shopping fix.

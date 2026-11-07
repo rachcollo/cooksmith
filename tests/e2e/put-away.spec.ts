@@ -10,24 +10,29 @@ test('put-away review groups purchases and supports cancel, correction and parti
   await action.focus()
   await page.keyboard.press('Enter')
   const dialog = page.getByRole('dialog', { name: 'Put shopping away' })
+  await expect(dialog.getByRole('checkbox')).toHaveCount(0)
+  await expect(dialog).toContainText('2 items ready. Nothing needs checking.')
+  await dialog.getByRole('button', { name: 'View all 2 items' }).click()
   await expect(dialog.getByRole('checkbox')).toHaveCount(2)
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(action).toBeVisible()
   await action.click()
+  await dialog.getByRole('button', { name: 'View all 2 items' }).click()
   await dialog.getByRole('checkbox', { name: 'Include milk' }).uncheck()
   await dialog.getByRole('button', { name: 'Change apple' }).click()
-  await dialog.getByRole('textbox', { name: 'Pantry name for apple' }).fill('Green apples')
+  await dialog.getByRole('textbox', { name: 'Ingredient for apple' }).fill('Green apples')
   expect(
     (await new AxeBuilder({ page }).include('dialog').analyze()).violations.filter((v) =>
       ['serious', 'critical'].includes(v.impact ?? ''),
     ),
   ).toEqual([])
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await dialog.getByRole('button', { name: 'Put selected items away' }).click()
+  await dialog.getByRole('button', { name: /^Put away \d+ items?$/ }).click()
   await expect(page.getByText('1 Pantry item is now available.')).toBeVisible()
   await action.click()
-  await expect(dialog.getByRole('checkbox')).toHaveCount(1)
-  await dialog.getByRole('button', { name: 'Put selected items away' }).click()
+  await expect(dialog.getByRole('checkbox')).toHaveCount(0)
+  await expect(dialog).toContainText('1 item ready. Nothing needs checking.')
+  await dialog.getByRole('button', { name: /^Put away \d+ items?$/ }).click()
   await expect(action).toBeHidden()
   expect(
     (await new AxeBuilder({ page }).analyze()).violations.filter((v) =>

@@ -59,6 +59,8 @@ Every ADR must contain:
 | [017](../architecture/decisions/017-shopping-put-away-receipts.md) | Proposed | Apply shopping to Pantry once using availability receipts |
 | [018](../architecture/decisions/018-measured-stock-and-meal-completion.md) | Proposed | Preserve measured stock across buying, put-away and meal completion |
 
+| [019](../architecture/decisions/019-versioned-ingredient-receipt-evidence.md) | Proposed | Version ingredient rules while preserving purchase evidence |
+
 The [ADR directory index](../architecture/decisions/README.md) remains the concise status register.
 
 ## When Codex must create an ADR

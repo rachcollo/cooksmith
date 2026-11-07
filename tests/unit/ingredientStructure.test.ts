@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  structureIngredient as structureIngredientV1,
+  structureExistingIngredient as structureExistingIngredientV1,
+} from '../../src/domain/recipes/ingredientStructureV1'
+import {
   structureIngredient,
   structureExistingIngredient,
 } from '../../src/domain/recipes/ingredientStructure'
@@ -190,5 +194,254 @@ describe('explicit metric package quantities', () => {
         parserVersion: 'recipe-content-v1',
       }).quantity.value,
     ).toBeNull()
+  })
+})
+
+describe('source-backed put-away interpretation', () => {
+  it.each([
+    ['600 g of lamb mince or substitute beef', 'lamb mince', 600, 'g', null],
+    ['600g lamb mince or beef mince equivalent', 'lamb mince', 600, 'g', null],
+    ['120ml cream or substitute coconut cream', 'cream', 120, 'ml', null],
+    ['30 g parmesan plus extra to serve', 'parmesan', 30, 'g', null],
+    ['1 tsp freshly cracked black pepper', 'black pepper', 1, 'tsp', 'freshly cracked'],
+    ['2 tsp salt for pasta water', 'salt', 2, 'tsp', null],
+    ['40g pine nuts toasted (note 1)', 'pine nuts', 40, 'g', 'toasted'],
+    ['20g sesame seeds, toasted (note 2)', 'sesame seeds', 20, 'g', 'toasted'],
+    ['3 sheets phyllo pastry (note 3)', 'phyllo pastry', 3, 'sheet', null],
+    ['3 sheets filo pastry note 3', 'filo pastry', 3, 'sheet', null],
+    ['2 tbsp miso (use any type, I used white)', 'miso', 2, 'tbsp', null],
+    ['2 tbsp tahini - I used hulled', 'tahini', 2, 'tbsp', null],
+    ['10 g tarragon, optional', 'tarragon', 10, 'g', null],
+  ])('separates quantity and explicit annotation in %s', (line, name, value, unit, preparation) => {
+    expect(structureIngredient(line)).toMatchObject({
+      originalText: line,
+      name,
+      quantity: { value, unit },
+      preparation,
+    })
+  })
+
+  it.each([
+    [
+      '25g / 1 1/2 tbsp unsalted butter, melted and cooled',
+      'unsalted butter',
+      25,
+      'g',
+      1.5,
+      'tbsp',
+    ],
+    [
+      '1 1/2 tbsp / 25g unsalted butter, melted and cooled',
+      'unsalted butter',
+      25,
+      'g',
+      1.5,
+      'tbsp',
+    ],
+    ['250ml / 1 cup oat milk', 'oat milk', 250, 'ml', 1, 'cup'],
+    ['2 cups / 300 grams plain flour', 'plain flour', 300, 'g', 2, 'cup'],
+  ])(
+    'uses only the explicit metric amount in %s',
+    (line, name, value, unit, alternateValue, alternateUnit) => {
+      const result = structureIngredient(line)
+      expect(result).toMatchObject({
+        originalText: line,
+        name,
+        quantity: {
+          value,
+          maximum: value,
+          unit,
+          state: 'known',
+          alternateMeasures: [{ value: alternateValue, unit: alternateUnit }],
+        },
+      })
+      expect(result.quantity.alternateMeasures).toHaveLength(1)
+      expect(result.unresolved).toEqual([])
+      if (name === 'unsalted butter') expect(result.preparation).toBe('melted and cooled')
+    },
+  )
+
+  it('retains source evidence for annotations instead of inventing preferences', () => {
+    expect(structureIngredient('600 g lamb mince or substitute beef').substitutions).toEqual([
+      'or substitute beef',
+    ])
+    expect(structureIngredient('600g lamb mince or beef mince equivalent').substitutions).toEqual([
+      'or beef mince equivalent',
+    ])
+    expect(structureIngredient('30 g parmesan plus extra to serve').purpose).toBe(
+      'plus extra to serve',
+    )
+    expect(structureIngredient('2 tbsp miso (use any type, I used white)').notes).toEqual([
+      'use any type, I used white',
+    ])
+    expect(structureIngredient('10 g tarragon (optional)').optional).toBe(true)
+    expect(structureIngredient('40 g pine nuts toasted (note 1)').noteReferences).toEqual([
+      'note 1',
+    ])
+  })
+
+  it.each([
+    'currants or raisins or sultanas',
+    'lamb mince or beef mince',
+    'almond flour or plain flour',
+  ])('leaves equal alternatives unresolved: %s', (name) => {
+    expect(structureIngredient(`100 g ${name}`)).toMatchObject({
+      name,
+      unresolved: ['alternative_product'],
+    })
+  })
+
+  it.each([
+    'cracked wheat',
+    'cracked rye',
+    'toasted sesame oil',
+    'toasted pine nuts',
+    'roasted salted almonds',
+    'fresh black pepper',
+    'white miso paste',
+    'gluten-free phyllo pastry',
+    'low-fat Greek yoghurt',
+    'melted cheese slices',
+  ])('preserves meaningful forms in %s', (name) => {
+    expect(structureIngredient(`20 g ${name}`).name).toBe(name)
+  })
+
+  it.each(['25g / 30g butter', '1 cup / 2 cups flour', '25g / 1/0 tbsp butter'])(
+    'does not choose an uncertain amount in %s',
+    (line) => {
+      expect(structureIngredient(line)).toMatchObject({
+        quantity: { state: 'unknown', value: null },
+        unresolved: expect.arrayContaining(['alternative_quantity']),
+      })
+    },
+  )
+
+  it('does not invent a quantity or translate pastry names into synonyms', () => {
+    expect(structureIngredient('phyllo pastry (note 3)')).toMatchObject({
+      name: 'phyllo pastry',
+      quantity: { value: null, state: 'unknown' },
+    })
+    expect(structureIngredient('sheets phyllo pastry note 3')).toMatchObject({
+      name: 'phyllo pastry',
+      quantity: { value: null, state: 'unknown', unit: 'sheet' },
+    })
+    expect(structureIngredient('filo pastry').canonicalName).not.toBe(
+      structureIngredient('phyllo pastry').canonicalName,
+    )
+  })
+})
+
+describe('frozen rules-v1 intelligence validation compatibility', () => {
+  it('reconstructs the complete original source structure without applying new rules', () => {
+    expect(structureIngredientV1('600 g lamb mince or substitute beef')).toEqual({
+      schemaVersion: 'ingredient-structure-v1',
+      rulesVersion: 'ingredient-structure-rules-v1',
+      originalText: '600 g lamb mince or substitute beef',
+      name: 'lamb mince or substitute beef',
+      sourceName: 'lamb mince or substitute beef',
+      canonicalName: 'lamb mince or substitute beef',
+      quantity: { text: '600', value: 600, maximum: 600, state: 'known', unit: 'g' },
+      preparation: null,
+      purpose: null,
+      substitutions: [],
+      noteReferences: [],
+      provenance: 'deterministic',
+      unresolved: ['alternative_product'],
+    })
+  })
+
+  it.each([
+    '25g / 1 1/2 tbsp unsalted butter, melted and cooled',
+    '20g pine nuts toasted (note 1)',
+    '3 sheets phyllo pastry note 3',
+    '2 tbsp miso (use any type, I used white)',
+  ])('keeps v1 source re-derivation stable for %s', (originalLineText) => {
+    const old = structureIngredientV1(originalLineText)
+    expect(
+      structureExistingIngredientV1({
+        name: old.name,
+        quantity: old.quantity.text,
+        unit: old.quantity.unit,
+        preparation: old.preparation,
+        originalLineText,
+        parserVersion: 'recipe-content-v2',
+      }),
+    ).toEqual(old)
+    expect(structureIngredient(originalLineText).rulesVersion).toBe('ingredient-structure-rules-v2')
+  })
+})
+
+describe('recoverable source evidence versus flattened ingredient labels', () => {
+  it('removes of only after an explicit recognised measure', () => {
+    expect(structureIngredient('600 g of lamb mince or beef mince equivalent')).toMatchObject({
+      name: 'lamb mince',
+      quantity: { value: 600, unit: 'g' },
+      substitutions: ['or beef mince equivalent'],
+      unresolved: [],
+    })
+    expect(structureIngredient('600 mystery of lamb mince').name).toBe('mystery of lamb mince')
+    expect(structureIngredient('of lamb mince').name).toBe('of lamb mince')
+  })
+
+  it.each([
+    'coriander (cilantro)',
+    'zucchini/courgette',
+    'capsicum (bell pepper)',
+    'yoghurt (also known as yogurt)',
+  ])('uses existing bounded identity evidence for explicit alias %s', (line) => {
+    const result = structureIngredient(line)
+    expect(result.unresolved).toEqual([])
+    expect(result.notes).toHaveLength(1)
+    expect(result.originalText).toBe(line)
+    expect(result.name).not.toMatch(/[()/]/u)
+  })
+
+  it.each([
+    'cornflour (cornstarch)',
+    'corn flour/corn starch',
+    'chilli/red pepper flakes optional',
+    'thickened/whipping/heavy cream',
+    'cream (low fat)',
+    'almond flour (plain flour)',
+  ])('does not invent equivalence for %s', (line) => {
+    const result = structureIngredient(line)
+    expect(result.unresolved).toContain('alternative_product')
+    expect(result.originalText).toBe(line)
+    expect(result.name).toBe(line.replace(/ optional$/u, ''))
+  })
+
+  it.each(['25g 1 1 2 tbsp unsalted butter', '250ml 1 cup oat milk', '2 400 g tins tomatoes'])(
+    'requires original evidence for a second flattened amount in %s',
+    (line) => {
+      const result = structureIngredient(line)
+      expect(result.quantity).toMatchObject({ state: 'unknown', value: null })
+      expect(result.unresolved).toEqual(
+        expect.arrayContaining(['alternative_quantity', 'product_name']),
+      )
+      expect(result.originalText).toBe(line)
+    },
+  )
+
+  it('does not restore a misleading saved partial quantity over uncertain source evidence', () => {
+    expect(
+      structureExistingIngredient({
+        name: 'butter',
+        quantity: '25',
+        unit: 'g',
+        preparation: null,
+        originalLineText: '25g / 30g butter',
+        parserVersion: 'recipe-content-v2',
+      }).quantity.value,
+    ).toBeNull()
+  })
+
+  it.each([
+    'cornflour cornstarch',
+    'thickened whipping heavy cream',
+    'corn flour',
+    'corn starch',
+    'heavy whipping cream',
+  ])('does not rewrite flattened words or meaningful forms without source evidence: %s', (name) => {
+    expect(structureIngredient(name).name).toBe(name)
   })
 })

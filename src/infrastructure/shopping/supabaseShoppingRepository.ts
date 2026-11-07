@@ -59,10 +59,32 @@ function mapRow(row: ShoppingRow): ShoppingItem {
     position: row.position,
     updatedAt: row.updated_at,
     manual: row.manual,
+    planOverride: row.plan_override,
     sourceQuantities:
       row.shopping_item_contributions?.flatMap((contribution) => contribution.source_quantities) ??
       [],
   }
+}
+
+const putAwayEvidenceSchema = z.object({
+  name: z.string(),
+  purchaseName: z.string().optional(),
+  originalText: z.string().optional(),
+})
+
+/** Old snapshots can lack evidence; malformed metadata never becomes a guessed ingredient. */
+function putAwayNameEvidence(value: unknown, nested = false) {
+  const entries: unknown[] = Array.isArray(value) ? value : []
+  const candidates = nested
+    ? entries.flatMap((entry) => {
+        const envelope = z.object({ sources: z.array(z.unknown()) }).safeParse(entry)
+        return envelope.success ? envelope.data.sources : []
+      })
+    : entries
+  return candidates.flatMap((entry) => {
+    const result = putAwayEvidenceSchema.safeParse(entry)
+    return result.success ? [result.data] : []
+  })
 }
 
 function shoppingError(error: PostgrestError | null): void {
@@ -225,9 +247,10 @@ export function createSupabaseShoppingRepository(
             .parse(purchase.amounts)
           // Original amounts are immutable; compare with the RPC's current remainder,
           // not the earlier read's mutable consumption, to explain this review snapshot.
+          const stored = pending.find((item) => item.id === purchase.id)
           const original = z
             .array(z.object({ quantity: z.number().nullable() }))
-            .parse(pending.find((item) => item.id === purchase.id)?.amounts ?? [])
+            .parse(stored?.amounts ?? [])
           return {
             key: `p:${purchase.id}`,
             token: purchase.snapshot_token,
@@ -235,6 +258,11 @@ export function createSupabaseShoppingRepository(
             shoppingItemId: purchase.item_ids[0]!,
             pantryItems,
             amounts,
+            nameEvidence: putAwayNameEvidence(stored?.source_quantities, true),
+            allowLabelQuantity:
+              stored?.item_ids.length === 1 &&
+              stored.source_keys.length === 1 &&
+              stored.revision === 0,
             hasConsumedStock: amounts.some((amount, index) => {
               const bought = original[index]?.quantity
               return amount.quantity !== null && bought != null && amount.quantity < bought
@@ -251,6 +279,7 @@ export function createSupabaseShoppingRepository(
           token: row.snapshot_token,
           shoppingItemId: row.shopping_item_id,
           name: row.name,
+          nameEvidence: putAwayNameEvidence(row.source_quantities),
         }))
     },
     async putAway(householdId, operationId, choices) {

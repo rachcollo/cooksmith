@@ -29,21 +29,51 @@ export function purchaseAmount(
   item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'measurementSystem'>,
 ): PurchaseAmount {
   const parsed = !item.unit ? parsePurchaseLine(item.name) : null
-  const legacy =
-    item.quantity === null || (parsed?.unit && parsed.quantity === null) ? parsed : null
-  const quantity = legacy?.quantity ? parseIngredientQuantity(legacy.quantity) : item.quantity
-  return convertPurchaseAmount(
-    purchasingName(legacy?.name ?? item.name),
+  const structured = parsed?.structure?.quantity
+  // A separately entered quantity wins over text in a legacy product label.
+  const quantity =
+    item.quantity ??
+    (structured && ['known', 'approximate'].includes(structured.state) ? structured.value : null)
+  const amount = convertPurchaseAmount(
+    purchasingName(parsed?.name ?? item.name),
     quantity,
-    legacy?.unit ?? item.unit,
+    item.unit ?? parsed?.unit ?? null,
     item.measurementSystem,
   )
+  return {
+    ...amount,
+    approximate:
+      amount.approximate || (item.quantity === null && structured?.state === 'approximate'),
+  }
 }
 export function purchaseName(item: Pick<ShoppingItem, 'name' | 'quantity' | 'unit'>) {
-  return purchasingName(
-    item.quantity === null && !item.unit ? parsePurchaseLine(item.name).name : item.name,
-  )
+  return purchasingName(item.name)
 }
+
+/** Snapshot the bought amounts, never reinterpret recipe demand after the purchase. */
+export function purchaseReceiptAmounts(purchase: ShoppingPurchase) {
+  const explicitCount = purchase.members.every((member) => {
+    if (member.unit && ['each', 'whole', 'count'].includes(member.unit.toLowerCase())) return true
+    if (!member.planOverride && member.manual === false && member.sourceQuantities?.length)
+      return member.sourceQuantities.every(
+        (source) =>
+          source.ingredientStructure?.quantity.state === 'known' &&
+          source.ingredientStructure.quantity.unit === null,
+      )
+    const quantity = parsePurchaseLine(member.name).structure?.quantity
+    return quantity?.state === 'known' && quantity.unit === null
+  })
+  return purchase.amounts.map((amount) => ({
+    quantity:
+      amount.approximate ||
+      amount.asNeeded ||
+      purchase.members.some((member) => !member.completed && member.stockCheck)
+        ? null
+        : amount.quantity,
+    unit: amount.unit ?? (explicitCount && !amount.asNeeded ? 'each' : null),
+  }))
+}
+
 export function purchaseDisplayQuantity(quantity: number, approximate = false): number {
   const scale = approximate ? (quantity < 10 ? 10 : 1) : 100
   return approximate
@@ -82,7 +112,16 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
   return [...groups].map(([key, members]) => {
     const name = key.slice(key.indexOf('\u0000') + 1).split('\u0000')[0]!
     const only = members[0]!
-    if (members.length === 1 && only.manual !== false && !purchaseAmount(only).approximate) {
+    const parsed = parsePurchaseLine(only.name)
+    // Ordinary manual entries retain their own display and inline editor. Only
+    // legacy text that actually contains fields to separate needs a derived row.
+    if (
+      members.length === 1 &&
+      only.manual !== false &&
+      parsed.quantity === null &&
+      parsed.name === only.name.trim() &&
+      !purchaseAmount(only).approximate
+    ) {
       const amounts = [{ quantity: only.quantity, unit: only.unit }]
       return { ...only, members, amounts, amountLabel: formatPurchaseAmounts(amounts) }
     }
@@ -91,22 +130,41 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
     const byUnit = new Map<string, PurchaseAmount>()
     for (const item of visible) {
       const sources =
-        item.manual === false && item.quantity === null && item.sourceQuantities?.length
+        !item.completed &&
+        !item.planOverride &&
+        item.manual === false &&
+        item.quantity === null &&
+        item.sourceQuantities?.length
           ? item.sourceQuantities.map((source) => ({
-              name: source.name,
-              quantity:
-                typeof source.quantity === 'number'
+              name: source.originalText ?? source.name,
+              quantity: source.ingredientStructure
+                ? ['known', 'approximate'].includes(source.ingredientStructure.quantity.state)
+                  ? source.ingredientStructure.quantity.value
+                  : null
+                : typeof source.quantity === 'number'
                   ? source.quantity
                   : parseIngredientQuantity(source.quantity),
-              unit: source.unit,
+              unit: source.ingredientStructure
+                ? source.ingredientStructure.quantity.unit
+                : source.unit,
               measurementSystem: source.measurementSystem,
             }))
           : [item]
       for (const source of sources) {
-        const amount = purchaseAmount(source)
-        if (item.manual === false && item.sourceQuantities?.some((source) => source.approximate))
+        const amount: PurchaseAmount =
+          (item.completed || item.planOverride) && item.quantity === null
+            ? { quantity: null, unit: item.unit }
+            : purchaseAmount(source)
+        if (
+          !item.planOverride &&
+          item.manual === false &&
+          item.sourceQuantities?.some((source) => source.approximate)
+        )
           amount.approximate = true
-        const asNeeded = /\b(to taste|as needed|as required)\b/iu.test(source.name)
+        const asNeeded =
+          /\b(to taste|as needed|as required|plus extra|extra (?:to serve|for serving|for garnishing))\b/iu.test(
+            source.name,
+          )
         if (asNeeded) byUnit.set('as-needed', { quantity: null, unit: null, asNeeded: true })
         if (asNeeded && amount.quantity === null) continue
         const key = `${amount.unit ?? ''}:${amount.quantity === null ? 'unknown' : 'known'}`
@@ -118,8 +176,12 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
         }
       }
       if (
+        !item.planOverride &&
+        !item.completed &&
         item.sourceQuantities?.some((source) =>
-          /\b(to taste|as needed|as required)\b/iu.test(source.name),
+          /\b(to taste|as needed|as required|plus extra|extra (?:to serve|for serving|for garnishing))\b/iu.test(
+            source.originalText ?? source.name,
+          ),
         )
       )
         byUnit.set('as-needed', { quantity: null, unit: null, asNeeded: true })
