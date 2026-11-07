@@ -1,6 +1,6 @@
 import { renderApp, defaultShoppingRepository } from '../../renderApp'
 import {
-  defaultShoppingPeriod,
+  chooseShoppingPeriod,
   shoppingPeriodView,
   type ShoppingPeriod,
   type ShoppingPreset,
@@ -12,10 +12,10 @@ import '@fontsource/space-grotesk/latin-400.css'
 import '@fontsource/space-grotesk/latin-500.css'
 import '@fontsource/space-grotesk/latin-700.css'
 import '../../../src/styles/global.css'
-let saved: ShoppingPeriod | null = null
-let defaultKind: ShoppingPreset = 'week'
-const week = defaultShoppingPeriod().weekStart
-const meals = [0, 1, 2, 3, 4].map((day) => ({
+let saved: ShoppingPeriod | null = JSON.parse(sessionStorage.getItem('shopping-period') ?? 'null')
+let defaultKind: ShoppingPreset = 'nextWeek'
+const week = chooseShoppingPeriod('week').weekStart
+const meals = [0, 1, 2, 3, 4, 7, 8, 9, 10, 11].map((day) => ({
   id: `meal-${day}`,
   mealDate: addDays(week, day),
   mealType: 'dinner',
@@ -69,6 +69,7 @@ const repository = {
       throw new Error('offline')
     }
     saved = period
+    sessionStorage.setItem('shopping-period', JSON.stringify(period))
   },
 }
 renderApp(

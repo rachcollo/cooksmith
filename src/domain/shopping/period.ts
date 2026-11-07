@@ -1,10 +1,11 @@
 import { addDays, currentWeek, startOfWeek, toLocalIsoDate } from '../meal-plans/week'
 import type { ShoppingItem, ShoppingSourceQuantity } from './types'
 
-export type ShoppingPeriodKind = 'week' | 'next3' | 'next5' | 'custom' | 'default'
-export type ShoppingPreset = 'week' | 'next3' | 'next5'
+export type ShoppingPreset = 'nextWeek' | 'week' | 'next3' | 'next5'
+export type ShoppingPeriodKind = ShoppingPreset | 'custom' | 'default'
 export const shoppingPresetLabels: Record<ShoppingPreset, string> = {
-  week: 'Full active week',
+  nextWeek: 'Next week',
+  week: 'This week',
   next3: 'Next 3 planned meals',
   next5: 'Next 5 planned meals',
 }
@@ -41,15 +42,15 @@ export interface ShoppingPeriodView {
   notice: string | null
 }
 export function defaultShoppingPeriod(today = new Date()): ShoppingPeriod {
-  const weekStart = currentWeek(today)
-  return { kind: 'week', weekStart, from: weekStart, to: addDays(weekStart, 6) }
+  return chooseShoppingPeriod('nextWeek', today)
 }
 export function chooseShoppingPeriod(kind: ShoppingPeriodKind, today = new Date()): ShoppingPeriod {
-  const period = defaultShoppingPeriod(today)
+  const weekStart = addDays(currentWeek(today), kind === 'nextWeek' || kind === 'default' ? 7 : 0)
   return {
-    ...period,
     kind,
-    from: kind === 'next3' || kind === 'next5' ? toLocalIsoDate(today) : period.from,
+    weekStart,
+    from: kind === 'next3' || kind === 'next5' ? toLocalIsoDate(today) : weekStart,
+    to: addDays(weekStart, 6),
   }
 }
 function calendarDate(value: string) {
@@ -61,7 +62,7 @@ function calendarDate(value: string) {
 }
 export function validShoppingPeriod(period: ShoppingPeriod) {
   return (
-    ['week', 'next3', 'next5', 'custom', 'default'].includes(period.kind) &&
+    ['nextWeek', 'week', 'next3', 'next5', 'custom', 'default'].includes(period.kind) &&
     [period.weekStart, period.from, period.to].every(calendarDate) &&
     startOfWeek(period.weekStart) === period.weekStart &&
     period.from >= period.weekStart &&
@@ -72,12 +73,19 @@ export function validShoppingPeriod(period: ShoppingPeriod) {
 export function resolveShoppingPeriod(
   saved: ShoppingPeriod | null,
   today = new Date(),
-  defaultKind: ShoppingPreset = 'week',
+  defaultKind: ShoppingPreset = 'nextWeek',
 ) {
   const fallback = chooseShoppingPeriod(defaultKind, today)
   if (!saved || saved.kind === 'default')
     return { period: fallback, choice: 'default' as ShoppingPeriodKind, notice: null }
-  if (!validShoppingPeriod(saved) || saved.weekStart !== fallback.weekStart)
+  // A future custom week is still valid before it begins and throughout its
+  // selected dates. Relative presets expire when their calendar week changes.
+  if (
+    !validShoppingPeriod(saved) ||
+    saved.to < toLocalIsoDate(today) ||
+    (saved.kind !== 'custom' &&
+      saved.weekStart !== chooseShoppingPeriod(saved.kind, today).weekStart)
+  )
     return {
       period: fallback,
       choice: 'default' as ShoppingPeriodKind,
@@ -102,7 +110,7 @@ export function shoppingPeriodView(
   saved: ShoppingPeriod | null,
   meals: PeriodMeal[],
   today = new Date(),
-  defaultKind: ShoppingPreset = 'week',
+  defaultKind: ShoppingPreset = 'nextWeek',
 ): ShoppingPeriodView {
   const { period, choice, notice } = resolveShoppingPeriod(saved, today, defaultKind)
   const selected = selectedPeriodMeals(period, meals)

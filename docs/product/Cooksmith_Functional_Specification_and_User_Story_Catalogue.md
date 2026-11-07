@@ -114,6 +114,7 @@ Key MVP:
 - Pantry subtraction
 - Duplicate merging
 - One-tap "Copy for Coles/Woolworths"
+- Shopping starts with the next Monday-to-Sunday week. This week, next 3 or 5 planned meals and custom dates within a selected Monday-to-Sunday week remain available. Future custom dates persist until the selected range ends. Household owners can change the usual preset; shared overrides do not rewrite it.
 
 ### Epic 7 – AI Intelligence
 AI quietly:
