@@ -62,8 +62,8 @@ export function ShoppingDefaultsSection({
     <Panel>
       <h2>Shopping</h2>
       <p>
-        Your usual range. A choice made in Shopping lasts for the active week; it does not change
-        this default.
+        Your usual range. A choice made in Shopping does not change this default. Custom dates stay
+        selected until the range ends.
       </p>
       {preset ? (
         <SelectField

@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Button } from '../../components/ui/Button'
 import { SelectField } from '../../components/ui/SelectField'
 import { TextField } from '../../components/ui/TextField'
-import { addDays } from '../../domain/meal-plans/week'
+import { startOfWeek } from '../../domain/meal-plans/week'
 import {
   chooseShoppingPeriod,
+  shoppingPresetLabels,
   validShoppingPeriod,
   type ShoppingPeriod,
   type ShoppingPeriodKind,
@@ -39,7 +40,9 @@ export function ShoppingPeriodControl({
   async function save(period: ShoppingPeriod) {
     if (busy || locked.current) return
     if (!validShoppingPeriod(period)) {
-      setError('Choose an end date on or after the start, within the active week.')
+      setError(
+        'Choose valid dates in the same Monday-to-Sunday week, with the end on or after the start.',
+      )
       return
     }
     locked.current = true
@@ -60,7 +63,8 @@ export function ShoppingPeriodControl({
   }
   function submit(event: FormEvent) {
     event.preventDefault()
-    void save(draft)
+    // Date inputs describe the chosen week, not the week in which Shopping was opened.
+    void save({ ...draft, weekStart: draft.from ? startOfWeek(draft.from) : draft.weekStart })
   }
   return (
     <section
@@ -75,16 +79,21 @@ export function ShoppingPeriodControl({
           disabled={busy || pending}
           onChange={(event) => {
             if (busy || locked.current) return
-            const next = chooseShoppingPeriod(event.target.value as ShoppingPeriodKind)
+            const kind = event.target.value as ShoppingPeriodKind
+            const next = kind === 'custom' ? { ...view.period, kind } : chooseShoppingPeriod(kind)
             setDraft(next)
             setError(null)
             if (next.kind !== 'custom') void save(next)
           }}
         >
-          <option value="default">Household default</option>
-          <option value="week">Full active week</option>
-          <option value="next3">Next 3 planned meals</option>
-          <option value="next5">Next 5 planned meals</option>
+          <option value="default">
+            Household default ({shoppingPresetLabels[view.defaultKind ?? 'nextWeek']})
+          </option>
+          {Object.entries(shoppingPresetLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
           <option value="custom">Custom dates</option>
         </SelectField>
         {draft.kind === 'custom' ? (
@@ -93,8 +102,6 @@ export function ShoppingPeriodControl({
               <TextField
                 label="From date"
                 type="date"
-                min={draft.weekStart}
-                max={addDays(draft.weekStart, 6)}
                 value={draft.from}
                 disabled={busy || pending}
                 onChange={(event) => setDraft({ ...draft, from: event.target.value })}
@@ -102,8 +109,6 @@ export function ShoppingPeriodControl({
               <TextField
                 label="To date"
                 type="date"
-                min={draft.weekStart}
-                max={addDays(draft.weekStart, 6)}
                 value={draft.to}
                 disabled={busy || pending}
                 onChange={(event) => setDraft({ ...draft, to: event.target.value })}
