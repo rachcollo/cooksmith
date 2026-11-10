@@ -4,6 +4,7 @@ import {
   type MeasurementSystem,
 } from '../measurements/purchaseMeasures.ts'
 import { structureExistingIngredient, type IngredientStructure } from './ingredientStructure.ts'
+import { structureExistingIngredient as structureExistingIngredientV1 } from './ingredientStructureV1.ts'
 export const recipeIntelligenceSchemaVersion = 'recipe-intelligence-v3'
 export const recipeIntelligenceRulesVersion = 'cooksmith-rules-v4'
 
@@ -244,9 +245,14 @@ function linkedStepIds(name: string, steps: RecipeIntelligenceSource['steps']): 
 
 export function buildDeterministicRecipeIntelligence(
   source: RecipeIntelligenceSource,
+  structureRules: IngredientStructure['rulesVersion'] = 'ingredient-structure-rules-v2',
 ): RecipeIntelligence {
+  const deriveStructure =
+    structureRules === 'ingredient-structure-rules-v1'
+      ? structureExistingIngredientV1
+      : structureExistingIngredient
   const ingredients = source.ingredients.map((ingredient) => {
-    const structure = structureExistingIngredient({
+    const structure = deriveStructure({
       name: ingredient.name,
       quantity: ingredient.quantityText,
       unit: ingredient.unit,
@@ -458,16 +464,28 @@ export function validateProviderEnrichment(
   const expected = buildDeterministicRecipeIntelligence(source)
   if (JSON.stringify(candidate.sourceContext) !== JSON.stringify(expected.sourceContext))
     return { ok: false, reason: 'source_mismatch' }
+  // Existing validated v1 results remain usable. Reconstruct their exact historical
+  // semantics from the same immutable source, rather than trusting old metadata.
+  const legacyExpected = candidate.ingredients.some(
+    (ingredient) => ingredient.structure?.rulesVersion === 'ingredient-structure-rules-v1',
+  )
+    ? buildDeterministicRecipeIntelligence(source, 'ingredient-structure-rules-v1')
+    : null
   if (
-    candidate.ingredients.some(
-      (ingredient) =>
+    candidate.ingredients.some((ingredient) => {
+      const derivation =
+        ingredient.structure?.rulesVersion === 'ingredient-structure-rules-v1'
+          ? legacyExpected
+          : expected
+      return (
         JSON.stringify(ingredient.structure) !==
         JSON.stringify(
-          expected.ingredients.find(
+          derivation?.ingredients.find(
             (item) => item.sourceIngredientId === ingredient.sourceIngredientId,
           )?.structure,
-        ),
-    )
+        )
+      )
+    })
   )
     return { ok: false, reason: 'ingredient_structure_mismatch' }
   return { ok: true, value: candidate as RecipeIntelligence }

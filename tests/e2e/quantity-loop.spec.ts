@@ -121,12 +121,14 @@ test('known groceries need one batch confirmation, dinner one Done and one Undo,
   await buy.click()
   await page.getByRole('button', { name: 'Put shopping away' }).click()
   const dialog = page.getByRole('dialog', { name: 'Put shopping away' })
+  await expect(dialog.getByRole('checkbox')).toHaveCount(0)
+  await dialog.getByRole('button', { name: 'View all 1 item' }).click()
   await expect(dialog.getByRole('checkbox')).toHaveCount(1)
   await expect(dialog.getByRole('textbox')).toHaveCount(0)
   await expect(dialog.getByRole('checkbox', { name: `Include ${name}` })).toBeChecked()
   await expect(dialog).toContainText('400 g')
   await expect(dialog.getByText(/Some of this purchase has already been used/)).toHaveCount(0)
-  await dialog.getByRole('button', { name: 'Put selected items away' }).click()
+  await dialog.getByRole('button', { name: /^Put away \d+ items?$/ }).click()
   await expect(dialog).toBeHidden()
   expect(
     (
@@ -264,18 +266,19 @@ test('known groceries need one batch confirmation, dinner one Done and one Undo,
   ).toBe(0)
   await page.getByRole('button', { name: 'Shopping', exact: true }).first().click()
   await page.getByRole('button', { name: 'Put shopping away' }).click()
+  await dialog.getByRole('button', { name: 'View all 1 item' }).click()
   await expect(dialog).toContainText('100 g')
   await expect(dialog.getByText(/Some of this purchase has already been used/)).toBeVisible()
   await dialog.getByRole('button', { name: `Change ${name}` }).click()
   const remaining = dialog.getByRole('spinbutton', {
-    name: `Amount remaining to put away for ${name}`,
+    name: `Amount left for ${name}`,
   })
   await expect(remaining).toHaveValue('100')
   await expect(dialog.getByLabel(/Amount bought/)).toHaveCount(0)
   // The household counts 80g still in the bag; only that correction is transferred.
   await remaining.fill('80')
-  await expect(dialog).toContainText('Only the remaining amounts shown are added to Pantry.')
-  await dialog.getByRole('button', { name: 'Put selected items away' }).click()
+  await expect(dialog).toContainText('Known remaining amounts are added once.')
+  await dialog.getByRole('button', { name: /^Put away \d+ items?$/ }).click()
   await expect(dialog).toBeHidden()
   expect(
     (

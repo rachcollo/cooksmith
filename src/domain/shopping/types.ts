@@ -11,6 +11,7 @@ export type ShoppingCategory =
   | 'other'
 
 export interface ShoppingItem {
+  planOverride?: boolean
   stockCheck?: boolean
   measurementSystem?: MeasurementSystem
   combineWithPlan?: boolean

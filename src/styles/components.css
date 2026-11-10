@@ -2977,3 +2977,20 @@ button.card:hover {
 .put-away-choice small {
   color: var(--colour-text-muted);
 }
+
+.put-away-summary {
+  margin-block: 0 var(--space-2);
+  font-weight: 500;
+}
+.put-away-matches {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.put-away-fields {
+  min-width: 0;
+}
+.put-away-row > .form-hint {
+  grid-column: 1 / -1;
+}

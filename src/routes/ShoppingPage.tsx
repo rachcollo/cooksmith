@@ -28,6 +28,7 @@ import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
 import {
   groupShoppingPurchases,
   purchaseAmount,
+  purchaseReceiptAmounts,
   purchaseDisplayQuantity,
   type ShoppingPurchase,
   type PurchaseAmount,
@@ -358,25 +359,12 @@ function HouseholdShoppingPage() {
         )
         const operationId = purchaseAttempts.current.get(attemptKey) ?? crypto.randomUUID()
         purchaseAttempts.current.set(attemptKey, operationId)
-        const explicitCount = purchase.members.every(
-          (member) =>
-            member.manual === false &&
-            member.sourceQuantities?.length &&
-            member.sourceQuantities.every(
-              (source) =>
-                source.ingredientStructure?.quantity.state === 'known' &&
-                source.ingredientStructure.quantity.unit === null,
-            ),
-        )
         await repository.buy(
           householdId,
           operationId,
           purchase.name,
           purchase.members,
-          purchase.amounts.map((amount) => ({
-            quantity: amount.approximate ? null : amount.quantity,
-            unit: amount.unit ?? (explicitCount ? 'each' : null),
-          })),
+          purchaseReceiptAmounts(purchase),
         )
         purchaseAttempts.current.delete(attemptKey)
         setItems(await repository.list(householdId))
