@@ -22,6 +22,27 @@ Generate Shopping from only the planned meals the household is currently buying 
 - Recurring staples appear once per active shopping cycle and do not multiply when the range changes.
 - CS-61 continues to own alternate week boundaries and undated planning cycles.
 
+### Approved next-week shopping correction
+
+The next-week follow-up supersedes the original full-active-week default and
+current-week-only custom-date restriction above. Shopping defaults to the next
+Monday-to-Sunday week, with explicit Next week and This week presets. The
+existing next 3/5 planned-meal choices remain unchanged. Custom dates are
+anchored to their selected Monday-based week and may be in the future; they
+remain selected until the range ends. This does not introduce CS-61 alternate
+week boundaries or multi-week cycles.
+
+Existing household `week` defaults migrate to `nextWeek`; `next3`/`next5`
+preferences and saved explicit ranges remain intact. The prior schema did
+not distinguish an untouched full-week default from a deliberately chosen one.
+Owners can still choose This week in Settings. Stock allocation reserves
+outstanding current-week meals before projecting future demand.
+
+Follow-up branch: `fix/cs-97-next-week-shopping`. See the
+[next-week handover](../../docs/engineering/handovers/cs97-next-week-shopping.md)
+for validation and coordinated release requirements. No production deployment
+is authorised by this package.
+
 ## Acceptance Criteria
 
 - [x] The active range is always visible and understandable.
@@ -68,7 +89,6 @@ Integrated main `c4f64ed2f5cbe17a2d2a005305e8cf633d82399d`. The API table-contra
 Rach reports PR191 functions correctly but its period panel is too cluttered. See [follow-up handover](../../docs/engineering/handovers/cs97-shopping-default-dropdown.md). The owner-managed household Settings default is separate from the shared current-week Shopping override. The compact dropdown auto-applies presets; custom dates alone need Save dates. Existing purchases, manual items, overrides, bought state and history remain intact. Next 3/5 means planned meals, not days.
 
 Migration: `20261007020500_household_shopping_default.sql`; no Edge Function or added cost. New migration must precede the new client through a separately approved protected release. Owner visual acceptance, hosted authenticated verification and physical-device checks remain pending. No automatic Jira Done or public-smoke acceptance.
-
 
 ## Reconciliation after accepted CS-102
 

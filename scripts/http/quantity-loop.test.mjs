@@ -276,10 +276,14 @@ test('generated 600g + 400g demand allocates 500g once, then buy, put-away, Done
     const { createSupabaseShoppingRepository } = await server.ssrLoadModule(
       '/src/infrastructure/shopping/supabaseShoppingRepository.ts',
     )
+    const { chooseShoppingPeriod } = await server.ssrLoadModule('/src/domain/shopping/period.ts')
+    const { addDays } = await server.ssrLoadModule('/src/domain/meal-plans/week.ts')
     const shopping = createSupabaseShoppingRepository(localSupabaseClient())
     const name = `http generated rice ${crypto.randomUUID().slice(0, 8)}`
-    const monday = new Date()
-    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    // Future fixture dates stay selectable regardless of the day CI runs.
+    const week = chooseShoppingPeriod('nextWeek')
+    await shopping.saveDefault(householdId, 'nextWeek')
+    await shopping.savePeriod(householdId, { ...week, kind: 'default' })
     const stock = await must(
       db
         .from('household_pantry_items')
@@ -301,9 +305,7 @@ test('generated 600g + 400g demand allocates 500g once, then buy, put-away, Done
           .insert({
             household_id: householdId,
             title: `Allocation ${index}`,
-            meal_date: new Date(monday.getTime() + (3 + index) * 86400000)
-              .toISOString()
-              .slice(0, 10),
+            meal_date: addDays(week.weekStart, 3 + index),
             meal_type: 'dinner',
           })
           .select('*')
@@ -324,13 +326,7 @@ test('generated 600g + 400g demand allocates 500g once, then buy, put-away, Done
       row = view.items.find((i) => i.name === name)
     assert.equal(row.quantity, 500)
     // A later-period override must not reallocate stock already assigned to earlier meals.
-    const week = {
-      kind: 'week',
-      weekStart: view.period.weekStart,
-      from: view.period.weekStart,
-      to: view.period.to,
-    }
-    await shopping.saveDefault(householdId, 'week')
+    await shopping.saveDefault(householdId, 'nextWeek')
     await shopping.savePeriod(householdId, { ...week, kind: 'default' })
     assert.equal((await shopping.loadPeriod(householdId)).choice, 'default')
     await shopping.savePeriod(householdId, {
@@ -343,7 +339,7 @@ test('generated 600g + 400g demand allocates 500g once, then buy, put-away, Done
     const custom = await shopping.loadPeriod(householdId)
     assert.equal(custom.choice, 'custom')
     assert.equal(custom.items.find((item) => item.name === name).quantity, 400)
-    await shopping.saveDefault(householdId, 'week')
+    await shopping.saveDefault(householdId, 'nextWeek')
     await shopping.savePeriod(householdId, { ...week, kind: 'default' })
     view = await shopping.loadPeriod(householdId)
     row = view.items.find((item) => item.name === name)

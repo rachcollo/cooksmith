@@ -2,7 +2,7 @@ begin;
 select plan(12);
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
-select is((select shopping_default_period from cooksmith.household_settings where household_id='20000000-0000-4000-8000-000000000001'),'week','Existing households keep full-week default');
+select is((select shopping_default_period from cooksmith.household_settings where household_id='20000000-0000-4000-8000-000000000001'),'nextWeek','Households without a saved preset use next week');
 select lives_ok($$update cooksmith.household_settings set shopping_default_period='next3' where household_id='20000000-0000-4000-8000-000000000001'$$,'Owner changes usual preset');
 select throws_ok($$update cooksmith.household_settings set shopping_default_period='custom'$$,'23514',null,'Default cannot be a stale custom range');
 select throws_ok($$update cooksmith.household_settings set shopping_default_period='default'$$,'23514',null,'Default cannot reference itself');

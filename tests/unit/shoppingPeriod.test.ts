@@ -9,7 +9,7 @@ import {
   type PeriodShoppingItem,
 } from '../../src/domain/shopping/period'
 const today = new Date(2026, 9, 5, 12)
-const week = defaultShoppingPeriod(today)
+const week = chooseShoppingPeriod('week', today)
 const meals = [0, 2, 3, 5, 6].map((day, i) => ({
   id: `meal-${i}`,
   mealDate: `2026-10-${String(5 + day).padStart(2, '0')}`,
@@ -34,7 +34,7 @@ const row: PeriodShoppingItem = {
   })),
 }
 describe('shopping period', () => {
-  it('defaults to the Monday-based calendar week and includes boundary dates', () => {
+  it('keeps this week available and includes boundary dates', () => {
     expect(week).toEqual({
       kind: 'week',
       weekStart: '2026-10-05',
@@ -61,17 +61,17 @@ describe('shopping period', () => {
   })
   it('falls back with an explanation for stale or invalid periods', () => {
     expect(resolveShoppingPeriod({ ...week, weekStart: '2026-09-28' }, today)).toMatchObject({
-      period: week,
+      period: defaultShoppingPeriod(today),
       notice: expect.any(String),
     })
     expect(
       resolveShoppingPeriod({ ...week, from: '2026-10-11', to: '2026-10-05' }, today).period,
-    ).toEqual(week)
+    ).toEqual(defaultShoppingPeriod(today))
     expect(validShoppingPeriod({ ...week, from: '2026-02-30' })).toBe(false)
   })
   it('keeps local calendar boundaries over the Melbourne daylight saving weekend', () => {
-    expect(defaultShoppingPeriod(new Date(2026, 9, 4, 23)).to).toBe('2026-10-04')
-    expect(defaultShoppingPeriod(new Date(2026, 9, 5, 0)).from).toBe('2026-10-05')
+    expect(defaultShoppingPeriod(new Date(2026, 9, 4, 23)).to).toBe('2026-10-11')
+    expect(defaultShoppingPeriod(new Date(2026, 9, 5, 0)).from).toBe('2026-10-12')
   })
   it('filters quantities and provenance reversibly without mutating bought state', () => {
     const original = structuredClone(row)

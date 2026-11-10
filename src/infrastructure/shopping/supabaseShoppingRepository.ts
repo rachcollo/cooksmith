@@ -5,11 +5,11 @@ import { PutAwayReviewError } from '../../domain/shopping/putAway'
 import { z } from 'zod'
 import {
   shoppingPeriodView,
-  resolveShoppingPeriod,
   validShoppingPeriod,
   type ShoppingPeriod,
   type PeriodShoppingItem,
 } from '../../domain/shopping/period'
+import { currentWeek } from '../../domain/meal-plans/week'
 import {
   refreshedIngredientInputs,
   sameIngredientSources,
@@ -114,7 +114,9 @@ export function createSupabaseShoppingRepository(
       .eq('household_id', householdId)
       .single()
     shoppingError(result.error)
-    return z.enum(['week', 'next3', 'next5']).parse(result.data?.shopping_default_period)
+    return z
+      .enum(['nextWeek', 'week', 'next3', 'next5'])
+      .parse(result.data?.shopping_default_period)
   }
   async function loadPeriod(householdId: string) {
     const [snapshot, defaultKind] = await Promise.all([
@@ -187,16 +189,19 @@ export function createSupabaseShoppingRepository(
         putAway: Boolean(p.received_at),
       })),
     )
+    const today = new Date()
     return shoppingPeriodView(
       allocateHouseholdStock(
         rows,
-        meals.filter((m) => m.mealDate >= resolveShoppingPeriod(saved).period.weekStart),
+        // Reserve stock for this week's outstanding meals before shopping ahead.
+        // Changing the displayed range must not allocate that stock a second time.
+        meals.filter((m) => m.mealDate >= currentWeek(today)),
         state.pantry.map(mapPantryRow),
         pending,
       ),
       saved,
       meals,
-      new Date(),
+      today,
       defaultKind,
     )
   }
@@ -204,7 +209,7 @@ export function createSupabaseShoppingRepository(
   return {
     loadDefault,
     async saveDefault(householdId, preset) {
-      const value = z.enum(['week', 'next3', 'next5']).parse(preset)
+      const value = z.enum(['nextWeek', 'week', 'next3', 'next5']).parse(preset)
       const result = await database
         .from('household_settings')
         .update({ shopping_default_period: value })
@@ -317,7 +322,7 @@ export function createSupabaseShoppingRepository(
     loadPeriod,
     async savePeriod(householdId, period) {
       if (!validShoppingPeriod(period))
-        throw new Error('Choose a valid range within the active week.')
+        throw new Error('Choose a valid range within one Monday-to-Sunday week.')
       const result = await database
         .from('household_shopping_periods')
         .upsert({
