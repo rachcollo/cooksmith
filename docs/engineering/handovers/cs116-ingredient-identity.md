@@ -4,7 +4,9 @@
 - **Branch:** `feat/cs-116-ingredient-identity`
 - **Target:** `main`
 - **Baseline:** `37da4f748ef96c704ef4623c8a18aa656ec5f75f`
-- **Status:** Implemented, hosted/manual validation pending; draft PR publication in progress.
+- **PR:** [#228](https://github.com/rachcollo/cooksmith/pull/228), published as draft.
+- **Implementation commit:** `0e93849963cf918daa000ae241fb113273bc9ded`
+- **Status:** Implemented; hosted/manual validation and coordinator clearance pending. Current exact-head CI results are recorded on the PR. Jira is In Review and `codex-ready` remains absent to prevent duplicate scheduled admission.
 
 ## Objective and product impact
 
