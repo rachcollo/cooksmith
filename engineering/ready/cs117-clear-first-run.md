@@ -6,12 +6,18 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-117
 - **Epic:** Beta Launch (CS-8)
 - **Priority:** High
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `feat/cs-117-clear-first-run`
 - **Depends on:** CS-92
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs117-clear-first-run.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings N1, N2, N4, N9 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication and Build Gate
+
+This publishes planning documentation only, not implementation approval. Keep this package Planned and exclude it from automated pickup until the following gate is explicitly resolved:
+
+- Obtain approval of the proposed welcome sentence before implementation. CS-92 implementation PRs are merged; preserve their structure.
 
 ## Product Outcome
 
