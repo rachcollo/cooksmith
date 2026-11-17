@@ -6,12 +6,18 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-113
 - **Epic:** Administration & Public Content (CS-33)
 - **Priority:** Highest
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `feat/cs-113-private-imports-moderated-bank`
 - **Depends on:** None
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs113-private-imports-moderated-bank.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C2, N8, U8 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication and Build Gate
+
+This publishes planning documentation only, not implementation approval. Keep this package Planned and exclude it from automated pickup until the following gate is explicitly resolved:
+
+- Confirm whether private imports are household-wide or member-only, and confirm treatment of existing public recipes before implementation. No automatic unpublishing is approved.
 
 ## Product Outcome
 
