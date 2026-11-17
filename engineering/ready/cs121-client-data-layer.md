@@ -6,12 +6,20 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-121
 - **Epic:** Infrastructure & Release (CS-7)
 - **Priority:** Medium
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `refactor/cs-121-client-data-layer`
 - **Depends on:** CS-114, CS-115
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs121-client-data-layer.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C5, C8, C9, S11 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication Hold
+
+This package is published for planning only. Its acceptance criteria remain proposed, not approved for implementation. Do not start a build or add `codex-ready` until the unresolved decisions below are confirmed by the product owner and the package status is explicitly changed to `Ready`.
+
+Unresolved decisions blocking implementation:
+
+- Approve adding `@tanstack/react-query` as a production dependency.
 
 ## Product Outcome
 
