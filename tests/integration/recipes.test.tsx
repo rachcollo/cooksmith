@@ -45,7 +45,7 @@ describe('recipe library experience', () => {
     expect(screen.getByRole('heading', { name: 'Recipe Library' })).toBeVisible()
   })
 
-  it('imports into a review draft with public default and can save privately', async () => {
+  it('saves imports privately without offering direct publication and preserves attribution', async () => {
     const createImported = vi.fn(async (input, visibility) =>
       recipe({ id: 'imported', householdId: '', scope: visibility, ...input }),
     )
@@ -92,15 +92,17 @@ describe('recipe library experience', () => {
     )
     await userEvent.click(within(urlDialog).getByRole('button', { name: 'Import recipe' }))
     const review = await screen.findByRole('dialog', { name: 'Review imported recipe' })
-    expect(within(review).getByRole('radio', { name: /Public/ })).toBeChecked()
+    expect(within(review).queryByRole('radio')).not.toBeInTheDocument()
+    expect(within(review).getByText('This import is private. Only you can see it.')).toBeVisible()
     expect(within(review).getByLabelText(/Author/)).toHaveValue('Jamie Example')
     await userEvent.selectOptions(within(review).getByLabelText('Cup and spoon measures'), 'au')
-    await userEvent.click(within(review).getByRole('radio', { name: /Private/ }))
     await userEvent.click(within(review).getByRole('button', { name: 'Save imported recipe' }))
     expect(createImported).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Imported noodles',
         authorName: 'Jamie Example',
+        publisherName: 'Example Kitchen',
+        sourceUrl: 'https://example.com/noodles',
         measurementSystem: 'au',
       }),
       'private',

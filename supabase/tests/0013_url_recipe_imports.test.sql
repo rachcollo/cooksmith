@@ -6,11 +6,15 @@ select has_column('cooksmith', 'imported_recipes', 'author_name', 'Author attrib
 select has_column('cooksmith', 'imported_recipes', 'ingredient_rows', 'Derived ingredient structure is stored');
 select has_column('cooksmith', 'imported_recipes', 'instruction_steps', 'Derived instruction structure is stored');
 
+-- A preserved public recipe created before the CS-113 admission restriction.
+insert into cooksmith.imported_recipes (visibility, owner_id, name, source_url, author_name)
+values ('public', '10000000-0000-4000-8000-000000000001', 'Shared pasta', 'https://example.invalid/shared-pasta', 'A Cook');
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-select lives_ok(
-  $$insert into cooksmith.imported_recipes (visibility, name, source_url, author_name) values ('public', 'Shared pasta', 'https://example.invalid/shared-pasta', 'A Cook')$$,
-  'Authenticated user can publish an attributed recipe'
+select throws_ok(
+  $$insert into cooksmith.imported_recipes (visibility, name, source_url) values ('public', 'Unmoderated pasta', 'https://example.invalid/unmoderated-pasta')$$,
+  '42501', null, 'Ordinary authenticated user cannot publish a recipe'
 );
 select lives_ok(
   $$insert into cooksmith.imported_recipes (visibility, name, source_url) values ('private', 'Private soup', 'https://example.invalid/private-soup')$$,
@@ -44,8 +48,9 @@ select results_eq(
   array[]::uuid[],
   'Publisher cannot directly mutate a public canonical recipe'
 );
+reset role;
 select throws_ok(
-  $$insert into cooksmith.imported_recipes (visibility, name, source_url) values ('public', 'Duplicate', 'https://example.invalid/shared-pasta')$$,
+  $$insert into cooksmith.imported_recipes (visibility, owner_id, name, source_url) values ('public', '10000000-0000-4000-8000-000000000001', 'Duplicate', 'https://example.invalid/shared-pasta')$$,
   '23505', null, 'Duplicate public canonical source URLs are rejected'
 );
 reset role;

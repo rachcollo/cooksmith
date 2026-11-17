@@ -21,12 +21,7 @@ import {
   recipeToMultilineInput,
   splitMeaningfulLines,
 } from '../domain/recipes/multilineContent'
-import type {
-  ImportedRecipeVisibility,
-  Recipe,
-  RecipeImportDraft,
-  RecipeInput,
-} from '../domain/recipes/types'
+import type { Recipe, RecipeImportDraft, RecipeInput } from '../domain/recipes/types'
 import { recipeInputSchema } from '../domain/recipes/validationSchemas'
 import { snapshotTitleForRecipe } from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal } from '../domain/meal-plans/types'
@@ -167,7 +162,6 @@ function HouseholdRecipesPage() {
   const [importing, setImporting] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const [importDraft, setImportDraft] = useState<RecipeImportDraft | null>(null)
-  const [importVisibility, setImportVisibility] = useState<ImportedRecipeVisibility>('public')
   const [importError, setImportError] = useState<string | null>(null)
   const [loadingImport, setLoadingImport] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -374,13 +368,12 @@ function HouseholdRecipesPage() {
     setImportError(null)
     try {
       if (!repository.createImported) throw new Error('Recipe importing is not configured yet.')
-      const saved = await repository.createImported(parsed, importVisibility)
+      const saved = await repository.createImported(parsed, 'private')
       setRecipes((current) => [...current, saved].sort((a, b) => a.name.localeCompare(b.name)))
       setSelectedId(recipeKey(saved))
       setImporting(false)
       setImportDraft(null)
       setImportUrl('')
-      setImportVisibility('public')
     } catch (saveError) {
       setImportError(
         saveError instanceof Error ? saveError.message : 'Cooksmith could not save the import.',
@@ -662,33 +655,7 @@ function HouseholdRecipesPage() {
                 })
               }
             />
-            <fieldset className="visibility-choice">
-              <legend>Who can see this recipe?</legend>
-              <label>
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="public"
-                  checked={importVisibility === 'public'}
-                  onChange={() => setImportVisibility('public')}
-                />
-                <span>
-                  <strong>Public</strong> — adds it to Cooksmith’s shared recipe bank.
-                </span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="visibility"
-                  value="private"
-                  checked={importVisibility === 'private'}
-                  onChange={() => setImportVisibility('private')}
-                />
-                <span>
-                  <strong>Private</strong> — only you can see it.
-                </span>
-              </label>
-            </fieldset>
+            <p>This import is private. Only you can see it.</p>
             <p className="recipe-import-source">Source: {importDraft.sourceUrl}</p>
             {importDraft.warnings.map((warning) => (
               <p key={warning}>{warning}</p>

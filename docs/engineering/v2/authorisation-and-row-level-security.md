@@ -96,3 +96,14 @@ Public imported recipes remain readable but cannot be updated or deleted by ordi
 `configure_weekly_preparation_luna_profile()` is an invoker RPC delegating to a private, fixed-purpose definer function. It derives the actor from `auth.uid()` and checks the database-backed admin role; no caller identity or arbitrary profile values are accepted. Both AI features must be disabled, the corpus must be v13, and active evaluation/enrichment work blocks the transition. Settings rows are locked during the transaction. Existing column grants and activation triggers remain unchanged.
 
 `weekly_preparation_profile_audit` has RLS and admin-only SELECT; browser insert/update/delete are denied. Each effective transition atomically records non-secret before/after profile and smoke metadata with the actor. Repeating the same transition preserves fresh smoke evidence. Evaluation/acceptance history is never changed. The application displays evaluation evidence matching the current model, prompt, corpus, planner and schema. pgTAP0046 covers access, paused-state requirements, audit and activation denial.
+
+## CS-113 partial admission restriction
+
+`20261117105820_restrict_import_public_creation.sql` defaults new imports to private.
+Authenticated INSERT still requires `owner_id = auth.uid()` and now requires either private
+visibility or the trusted application-admin role. Existing SELECT/UPDATE policies and
+legacy rows are unchanged: private reads remain uploader-only, public reads require
+authentication, and private owners cannot escalate visibility. Household sharing and
+admin publication are incomplete pending the explicit legacy-provenance decision in
+[the partial handover](../handovers/cs113-private-imports-partial.md). Do not release this
+partial package as the completed household-sharing outcome.
