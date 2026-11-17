@@ -6,12 +6,20 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-119
 - **Epic:** Observability & Monitoring (CS-58)
 - **Priority:** High
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `feat/cs-119-error-reporting-funnel-session`
 - **Depends on:** None
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs119-error-reporting-funnel-session.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C10, S8, S10 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication Hold
+
+This package is published for planning only. Its acceptance criteria remain proposed, not approved for implementation. Do not start a build or add `codex-ready` until the unresolved decisions below are confirmed by the product owner and the package status is explicitly changed to `Ready`.
+
+Unresolved decisions blocking implementation:
+
+- Confirm the five event names and that household id is acceptable as an anonymous grouping key.
 
 ## Product Outcome
 
