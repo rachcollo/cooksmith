@@ -42,3 +42,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [019](019-versioned-ingredient-receipt-evidence.md) | Proposed | Version ingredient rules while preserving purchase evidence |
 
 - [020: Durable build admission](020-durable-build-admission.md) (Proposed)
+
+- [021: Server-sent household invitations](021-server-sent-household-invitations.md) (Proposed)

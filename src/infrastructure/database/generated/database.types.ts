@@ -381,6 +381,54 @@ export type Database = {
           },
         ]
       }
+      household_invitation_send_attempts: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          invitation_id: string
+          recipient_hash: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          invitation_id: string
+          recipient_hash: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          invitation_id?: string
+          recipient_hash?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_invitation_send_attempts_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'household_invitation_send_attempts_invitation_id_fkey'
+            columns: ['invitation_id']
+            isOneToOne: false
+            referencedRelation: 'household_invitations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       household_invitations: {
         Row: {
           accepted_at: string | null
@@ -2381,18 +2429,25 @@ export type Database = {
       }
       canonical_ingredient_name_v1: { Args: { value: string }; Returns: string }
       canonical_ingredient_unit_v1: { Args: { value: string }; Returns: string }
+      claim_household_invitation_delivery: {
+        Args: { p_attempt_id: string; p_token_hash: string }
+        Returns: {
+          email: string
+          household_name: string
+          inviter_name: string
+        }[]
+      }
       configure_weekly_preparation_luna_profile: {
         Args: never
         Returns: undefined
       }
       create_household_invitation: {
         Args: { p_email: string; p_household_id: string }
-        Returns: {
-          invitation_expires_at: string
-          invitation_id: string
-          invitation_token: string
-          invited_email: string
-        }[]
+        Returns: string
+      }
+      finish_household_invitation_delivery: {
+        Args: { p_attempt_id: string; p_sent: boolean }
+        Returns: undefined
       }
       freezer_command: {
         Args: {
@@ -2528,12 +2583,7 @@ export type Database = {
       }
       resend_household_invitation: {
         Args: { p_invitation_id: string }
-        Returns: {
-          invitation_expires_at: string
-          invitation_id: string
-          invitation_token: string
-          invited_email: string
-        }[]
+        Returns: string
       }
       set_household_recipe_favourite: {
         Args: {

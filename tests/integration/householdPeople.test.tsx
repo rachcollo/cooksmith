@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { HouseholdPeopleRepository } from '../../src/application/households/householdPeopleRepository'
-import { authenticatedTestClient, renderApp } from '../renderApp'
+import { authenticatedTestClient, renderApp, signedOutTestAuthState } from '../renderApp'
 
 function repository(overrides: Partial<HouseholdPeopleRepository> = {}): HouseholdPeopleRepository {
   return {
@@ -45,6 +45,7 @@ function repository(overrides: Partial<HouseholdPeopleRepository> = {}): Househo
 }
 
 describe('household people management', () => {
+  beforeEach(() => sessionStorage.clear())
   it('lets an owner invite, resend, cancel and confirm member removal', async () => {
     const invite = vi.fn(async () => undefined)
     const resend = vi.fn(async () => undefined)
@@ -109,5 +110,61 @@ describe('household people management', () => {
     await user.click(screen.getByRole('button', { name: 'Join household' }))
     await waitFor(() => expect(accept).toHaveBeenCalledWith(token, 'Alex'))
     await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+  })
+  it('opens passively, removes the token and starts auth only on explicit acceptance', async () => {
+    const accept = vi.fn()
+    const user = userEvent.setup()
+    const { router } = renderApp(
+      `/invitations/accept?token=${'a'.repeat(64)}`,
+      undefined,
+      null,
+      undefined,
+      repository({ accept }),
+      undefined,
+      undefined,
+      signedOutTestAuthState,
+    )
+    expect(await screen.findByRole('button', { name: 'Accept invitation' })).toBeVisible()
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    expect(accept).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Accept invitation' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/welcome'))
+    expect(router.state.location.search).toBe('?returnTo=%2Finvitations%2Faccept')
+    expect(accept).not.toHaveBeenCalled()
+  })
+  it('keeps failed acceptance recoverable and offers a different account', async () => {
+    const accept = vi.fn(async () => {
+      throw new Error('Sign in with the invited email.')
+    })
+    const user = userEvent.setup()
+    renderApp(
+      `/invitations/accept?token=${'a'.repeat(64)}`,
+      undefined,
+      authenticatedTestClient,
+      undefined,
+      repository({ accept }),
+    )
+    await user.type(await screen.findByLabelText('Display name'), 'Alex')
+    await user.click(screen.getByRole('button', { name: 'Join household' }))
+    expect(await screen.findByText('Sign in with the invited email.')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Use a different account' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Join household' })).toBeEnabled()
+  })
+  it('refreshes pending invitations after a delivery failure and preserves the address for recovery', async () => {
+    const people = repository({
+      invite: async () => {
+        throw new Error('The email could not be confirmed. Use Resend.')
+      },
+    })
+    const load = vi.fn(people.load)
+    people.load = load
+    const user = userEvent.setup()
+    renderApp('/settings', undefined, authenticatedTestClient, undefined, people)
+    await user.type(await screen.findByLabelText('Email address'), 'retry@example.test')
+    await user.click(screen.getByRole('button', { name: 'Send invitation' }))
+    expect(await screen.findByText('The email could not be confirmed. Use Resend.')).toBeVisible()
+    await waitFor(() => expect(load.mock.calls.length).toBeGreaterThan(1))
+    expect(screen.getByLabelText('Email address')).toHaveValue('retry@example.test')
+    expect(screen.getByRole('button', { name: 'Resend' })).toBeEnabled()
   })
 })
