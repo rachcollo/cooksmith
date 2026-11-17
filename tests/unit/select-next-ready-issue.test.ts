@@ -51,7 +51,10 @@ function issue(key: string, priority = 'Medium', links: unknown[] = []) {
 }
 
 function blockedBy(key: string, status: string) {
-  return { type: { name: 'Blocks' }, outwardIssue: { key, fields: { status: { name: status } } } }
+  return {
+    type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+    inwardIssue: { key, fields: { status: { name: status } } },
+  }
 }
 
 function withReadyPackageFixture(jiraKey: string, fn: (cwd: string) => void | Promise<void>) {
@@ -78,6 +81,83 @@ afterEach(() => {
 })
 
 describe('selectNextReadyIssue', () => {
+  it('allows CS-111 while its downstream CS-122 is unfinished', async () => {
+    await withReadyPackageFixture('CS-111', async (cwd) => {
+      vi.stubGlobal(
+        'fetch',
+        mockFetch({
+          issues: [
+            issue('CS-111', 'High', [
+              {
+                type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+                outwardIssue: { key: 'CS-122', fields: { status: { name: 'Backlog' } } },
+              },
+            ]),
+          ],
+        }),
+      )
+      expect((await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })).selected).toBe(
+        'CS-111',
+      )
+    })
+  })
+  it('blocks CS-122 until upstream CS-111 is Done', async () => {
+    await withReadyPackageFixture('CS-122', async (cwd) => {
+      vi.stubGlobal(
+        'fetch',
+        mockFetch({ issues: [issue('CS-122', 'High', [blockedBy('CS-111', 'Ready')])] }),
+      )
+      const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
+      expect(result.selected).toBeNull()
+      expect(result.evaluated[0].reason).toContain('CS-111 (Ready)')
+    })
+  })
+  it.each([
+    ['In Progress', 'Done', false],
+    ['Done', 'In Progress', false],
+    ['Done', 'Done', true],
+  ])('CS-116 requires both CS-79 (%s) and CS-101 (%s) complete', async (first, second, allowed) => {
+    await withReadyPackageFixture('CS-116', async (cwd) => {
+      vi.stubGlobal(
+        'fetch',
+        mockFetch({
+          issues: [
+            issue('CS-116', 'High', [
+              blockedBy('CS-79', String(first)),
+              blockedBy('CS-101', String(second)),
+            ]),
+          ],
+        }),
+      )
+      expect((await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })).selected).toBe(
+        allowed ? 'CS-116' : null,
+      )
+    })
+  })
+  it.each([
+    { type: { name: 'Blocks' }, inwardIssue: { key: 'CS-111' } },
+    {
+      type: { name: 'Blocks', inward: 'blocks', outward: 'is blocked by' },
+      inwardIssue: { key: 'CS-111' },
+    },
+    {
+      type: { name: 'Custom', inward: 'requires', outward: 'enables' },
+      outwardIssue: { key: 'CS-111' },
+    },
+    {
+      type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+      inwardIssue: { key: 'CS-111' },
+      outwardIssue: { key: 'CS-123' },
+    },
+    { type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' } },
+  ])('fails closed on ambiguous link %#', async (link) => {
+    await withReadyPackageFixture('CS-122', async (cwd) => {
+      vi.stubGlobal('fetch', mockFetch({ issues: [issue('CS-122', 'High', [link])] }))
+      const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
+      expect(result.selected).toBeNull()
+      expect(result.evaluated[0].reason).toContain('ambiguous Jira dependency link')
+    })
+  })
   it('reports busy and does not query Jira when the parallel build limit is reached', async () => {
     const fetchMock = mockFetch({
       pulls: [
