@@ -6,22 +6,22 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-113
 - **Epic:** Administration & Public Content (CS-33)
 - **Priority:** Highest
-- **Status:** `Planned`
+- **Status:** `Ready`
 - **Branch:** `feat/cs-113-private-imports-moderated-bank`
 - **Depends on:** None
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs113-private-imports-moderated-bank.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C2, N8, U8 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
 
-## Publication and Build Gate
+## Approved Product Decisions and Build Ownership
 
-This publishes planning documentation only, not implementation approval. Keep this package Planned and exclude it from automated pickup until the following gate is explicitly resolved:
+Rach confirmed on 17 November 2026: imported recipes are visible to the whole importing household, but only the uploader may edit their private imported recipe. Existing public recipes remain public and are preserved; no automatic deletion or unpublishing is approved. Existing administrator moderation and publication remain in scope.
 
-- Confirm whether private imports are household-wide or member-only, and confirm treatment of existing public recipes before implementation. No automatic unpublishing is approved.
+Implementation is reserved for the explicitly assigned CS-113 builder. Keep `codex-ready` absent to prevent duplicate automatic pickup. Protected migration release and required review gates remain in force.
 
 ## Product Outcome
 
-Recipes a household imports stay private unless an administrator publishes them, and owners can edit, archive and favourite their own imports. The shared bank cannot be written to by any signed-up user.
+Recipes a household imports are visible to all current members of that household, but not other households unless an administrator publishes them. Only the uploader can edit or archive a private import; existing favourite behaviour remains available without granting write access. The shared bank cannot be written to by any signed-up user.
 
 ## Current Baseline
 
@@ -38,7 +38,7 @@ Verified against `main` at `17b9c47`. Re-verify before editing; line numbers wil
 
 - RLS change so only administrators can create or update public recipes.
 - Import form saves private; visibility choice removed.
-- Owner edit, archive and favourite for private imports.
+- Uploader-only edit and archive for private imports, with favourites for household-visible recipes.
 - An admin publish action for a private import, preserving attribution.
 - A read-only report of existing public recipes not created by an administrator.
 
@@ -55,7 +55,8 @@ Summarised from Jira, which remains authoritative.
 
 - [ ] New imports are private to the importing household by default and the form offers no direct publication.
 - [ ] Only an application administrator can make a recipe public.
-- [ ] Owners can edit, archive and favourite their own imported recipes.
+- [ ] All current members of the importing household can read and favourite its private imports; members of unrelated households cannot.
+- [ ] Only the uploader can edit or archive a private import, including when another reader is a household owner. Server-side RLS enforces this, not just hidden controls.
 - [ ] RLS denies insert or update of a public recipe by a non-admin, verified by pgTAP.
 - [ ] Existing public recipes are preserved and a list of those not created by an administrator is produced for a human decision.
 - [ ] Source URL, author and publisher remain visible on every imported recipe.
@@ -63,7 +64,7 @@ Summarised from Jira, which remains authoritative.
 ## Technical Direction
 
 - Additive migration: replace the insert policy with `visibility = 'private'` for non-admins; add admin policies using `has_application_role('admin')`.
-- Private imports are currently owner-scoped (`owner_id`), not household-scoped. Keep that unless the product owner chooses household scope (open question).
+- Separate household read scope from uploader write ownership. Preserve `owner_id` as uploader identity; derive and validate household membership server-side. Do not allow the client to forge ownership, move a recipe across households or widen visibility. Stop for review if existing data cannot be mapped unambiguously; never infer a global household.
 - Planned meals and favourites that reference an archived import must keep working (`on delete set null` already applies).
 
 ## Security, Privacy and Accessibility
@@ -74,7 +75,7 @@ Summarised from Jira, which remains authoritative.
 
 ## Test Plan
 
-- pgTAP: tenant isolation matrix extended for imported recipes.
+- pgTAP: uploader can read/edit/archive; a different household member (including household owner) can read but cannot edit/archive; an unrelated household is denied private reads and writes; anonymous readers see only existing public recipes. Cover membership removal, forged owner/household IDs, visibility escalation, administrator publication and unchanged public-recipe access.
 - Integration: import, edit, archive, favourite; admin publish.
 - Regression: shopping refresh for edited imports.
 
@@ -89,8 +90,7 @@ Run the full quality suite required by `docs/engineering/CODEX_BUILD_RULES.md` a
 
 ## Deferred Work and Open Questions
 
-- Do existing user-published recipes stay public pending review, or become private to their owner at release?
-- Should a private import be visible to the whole household or only the importing member?
+- Product decisions resolved: household-wide private reads, uploader-only private edits/archive, and existing public recipes preserved. No automatic unpublishing or deletion.
 
 ## Pull Request
 

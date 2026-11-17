@@ -33,13 +33,20 @@ Codex may select work only when all are true:
 6. No active branch or open PR already claims the issue.
 7. It is the highest-priority eligible item unless a human names another issue.
 
-For equal priority, prefer the lower Jira key unless parallel execution is explicitly authorised.
+For equal priority, prefer the lower Jira key.
 
-This rule is mechanically enforced by
-[`scripts/engineering/select-next-ready-issue.mjs`](../scripts/engineering/select-next-ready-issue.mjs),
-using [`scripts/engineering/validate-package-readiness.mjs`](../scripts/engineering/validate-package-readiness.mjs)
-for rule 4. See [automated pickup](../docs/operations/AI_ENGINEERING_OPERATING_SYSTEM.md#automated-pickup)
-for how selection connects to actually starting a build.
+### Parallel builds
+
+Parallel execution is authorised by the product owner (17 November 2026), up to
+three builds including pre-PR reservations. `COOKSMITH_MAX_PARALLEL_BUILDS`
+accepts only 1, 2 or 3; 1 restores serial delivery. Every builder must obtain a
+durable claim using `scripts/engineering/admit-next-build.mjs` before work begins.
+
+The [admission runbook](../docs/operations/BUILD_ADMISSION.md) defines atomic
+selection, safety metadata and recovery. Different epics, disjoint contract scopes,
+no schema changes and verified dependencies are required for concurrency.
+Unknown evidence serialises; ambiguous claims stop admission. A Jira comment is
+not a lock. Human merge and release approval gates remain unchanged.
 
 ## Active Roadmap
 
