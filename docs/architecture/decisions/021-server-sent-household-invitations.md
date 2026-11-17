@@ -32,7 +32,7 @@ A$0/month and A$0/year in new subscriptions or approved increases. Existing Rese
 
 ## Migration impact
 
-One forward migration adds the RLS-protected attempt log, changes create/resend return contracts and grants, and hardens acceptance. Existing pending invitations are preserved. Merge automatically deploys Vercel; delivery stays disabled until the approved exact-SHA database and Edge releases are coordinated. No hosted deployment is part of this PR.
+The initial forward migration adds the RLS-protected attempt log, changes create/resend return contracts and grants, and hardens acceptance. Existing pending invitations are preserved. A subsequent immutable forward fix reuses a pending replacement when resending a legacy expired predecessor. Merge automatically deploys Vercel; delivery stays disabled until the approved exact-SHA database and Edge releases are coordinated. No hosted deployment is part of this PR.
 
 ## Product Principles supported
 

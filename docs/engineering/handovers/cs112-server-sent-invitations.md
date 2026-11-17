@@ -4,6 +4,8 @@
 - **Branch:** `feat/cs-112-server-sent-invitations`
 - **Target:** `main`
 - **Baseline:** `b68832ee2134d53f36c7c910980085eab9fb3086`, fetched remote main containing documentation PR #230.
+- **Implementation commit:** `e0293573c32953891385123fee9830e06ed3a5fc`; the forward recovery fix is the subsequent commit on this branch.
+- **Pull request:** [Draft #232](https://github.com/rachcollo/cooksmith/pull/232).
 - **Status:** Implemented, validation pending. Keep the PR draft until required CI, isolated hosted authentication validation and human release reviews are complete.
 
 ## Objective and product impact
@@ -13,7 +15,7 @@ Replace inviter-side OTP with a clear invitation email delivered by the server t
 ## Changes and ownership
 
 - `supabase/functions/send-household-invitation/{index,handler}.ts`: bounded, authenticated orchestration, escaped HTML/plain-text template, Resend idempotency key and safe failures.
-- New migration `20261117105847_cs112_server_sent_invitations.sql`: send-attempt log, database rate limits, token-free client RPC results, service-only claim/outcome functions, restricted hash reads and explicit verified-email acceptance.
+- New migration `20261117105847_cs112_server_sent_invitations.sql`, followed by `20261117113711_cs112_resend_pending_recovery.sql`: send-attempt log, database rate limits, token-free client RPC results, service-only claim/outcome functions, restricted hash reads and explicit verified-email acceptance.
 - `src/infrastructure/households/supabaseHouseholdPeopleRepository.ts`: invoke the function, never someone else's Auth OTP.
 - `src/routes/InvitationAcceptancePage.tsx`, `src/app/router/createAppRouter.tsx`: passive public landing, explicit acceptance, tab-scoped continuation, URL cleanup and wrong-account recovery.
 - `src/routes/SettingsPage.tsx`: disable duplicate actions, refresh pending invitations after failure and retain the entered address for retry.
@@ -34,7 +36,7 @@ No dependency, scheduled job or hosted configuration change. CS-117 retains Auth
 | `npm run test`                                                                                 | 111 files, 947 tests passed                                                                                                           |
 | Function tests                                                                                 | 11 handler cases and 2 real-adapter boundary cases, with separate mail/Auth boundaries and synthetic credentials                      |
 | `npm run db:reset` / `db:lint`                                                                 | Fresh migration/seed reset passed; no schema lint errors                                                                              |
-| `npm run db:test`                                                                              | 44 files, 808 pgTAP assertions passed, including `0050_server_sent_invitations.test.sql`                                              |
+| `npm run db:test`                                                                              | 44 files, 811 pgTAP assertions passed, including `0050_server_sent_invitations.test.sql`                                              |
 | `npm run db:test:security`                                                                     | 5 files, 112 assertions passed                                                                                                        |
 | `npm run db:types` / `db:types:check`                                                          | Generated from local database; freshness passed; diff contains invitation objects only; explicit table-name type contract updated     |
 | Local security advisors                                                                        | No issues found (`supabase-go db advisors --local --type security --level warn`)                                                      |
@@ -42,14 +44,14 @@ No dependency, scheduled job or hosted configuration change. CS-117 retains Auth
 | Final invitation browser rerun                                                                 | 4 passed after recovery refinements                                                                                                   |
 | WebKit                                                                                         | 12 tests could not launch due missing GTK/Graphene/Harfbuzz/Manette/Hyphen/WOFF/GLES system libraries; root/su install unavailable    |
 | Docs commands, database config, scoped Markdown links, whitespace, production dependency audit | Passed; dependency audit retains the existing reviewed React Router RSC exception                                                     |
-| Authenticated HTTP contracts                                                                   | See final PR evidence; clean service restart and synthetic tests are run before publication                                           |
+| Authenticated HTTP contracts                                                                   | 12 passed with synthetic users against the isolated local stack                                                                       |
 | Secret scan                                                                                    | Run on staged content before each commit; no credentials or sensitive environment files are included                                  |
 
 The default local Supabase image `17.6.1.143` hit registry throttling and disk exhaustion because this runner uses Docker's `vfs` driver. A second layered image also grew excessively. The safe local workaround flattened the public `17.4.1.064` image's filesystem and startup configuration into one local image layer, used an untracked `.temp/postgres-version` override and excluded Studio. Fresh reset, migrations, pgTAP, lint, advisors and generated types then executed on real isolated Postgres 17. No tracked runtime configuration or hosted resource was altered; normal CI retains the default runtime. The CLI's “branch main” reset message refers to its local database branch, not the Git feature branch.
 
-The first full Playwright attempt was interrupted by database-image disk exhaustion. Chromium passed after recovery. WebKit remains independently pending in CI. Build emits the existing large-chunk advisory. The CLI needed permission to initialise its local configuration directory; this did not grant hosted access.
+The first full Playwright attempt was interrupted by database-image disk exhaustion. Chromium passed after recovery. WebKit passed in the initial implementation CI run; exact-head CI is recorded in the PR. Build emits the existing large-chunk advisory. The CLI needed permission to initialise its local configuration directory; this did not grant hosted access.
 
-GitHub exact-head CI and publication identity are recorded in the draft PR and final delivery report, separately from these local results. No independent reviewer has approved this change; a self-review checked privilege grants, token handling, failure boundaries and scope.
+GitHub exact-head CI and publication identity are recorded in the draft PR and final delivery report, separately from these local results. An independent read-only review of `e0293573` identified one P2 legacy expired/pending resend collision and no other blocking security finding. The new forward migration resolves it by reusing the current pending row under existing locks; pgTAP covers that legacy state. A follow-up read-only review confirmed the fix resolves the P2 and found no further blocking security issues; the reviewer did not independently execute tests. The review did not validate hosted behaviour or grant release approval. A self-review also checked privilege grants, token handling, failure boundaries and scope.
 
 ## Hosted and manual validation
 
@@ -69,7 +71,7 @@ Automated browser accessibility covers the invitation route. Complete WCAG confo
 
 The PR does not deploy Production. Main merges automatically deploy Vercel while protected database/Edge releases can lag. Keep delivery disabled until all versions and configuration align. Never fall back to inviter-side OTP if the new function is unavailable.
 
-Required separate approvals: authentication/security review, merge, exact-SHA protected **Production database release**, protected Edge Function release and delivery enablement. After merge, release the exact approved `main` SHA, verify migration history and dry-run, apply the new immutable migration, release the function, then enable only after approved isolated validation and configuration/quota review. The runbook contains the coordinated sequence.
+Required separate approvals: authentication/security review, merge, exact-SHA protected **Production database release**, protected Edge Function release and delivery enablement. After merge, release the exact approved `main` SHA, verify migration history and dry-run, apply both new immutable migrations in order, release the function, then enable only after approved isolated validation and configuration/quota review. The runbook contains the coordinated sequence.
 
 Disable delivery first on failure; use a new forward migration for released schema fixes. Do not restore the old token-returning RPCs or browser OTP implementation as rollback. Keep acceptance and member management working. No merge, auto-merge, deployment or production release is authorised by this handover.
 

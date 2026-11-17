@@ -61,6 +61,19 @@ select lives_ok($$select cooksmith.create_household_invitation('61000000-0000-40
 reset role;
 select is((select count(*)::integer from auth.users where email = 'not-an-account@test.invalid'), 0, 'Sending does not create an Auth account');
 set local role authenticated;
+reset role;
+insert into cooksmith.household_invitations(id, household_id, email, token_hash, invited_by, status, expires_at) values
+('64000000-0000-4000-8000-000000000001', '61000000-0000-4000-8000-000000000001', 'legacy@test.invalid', encode(extensions.digest(repeat('7',64),'sha256'),'hex'), '60000000-0000-4000-8000-000000000001', 'expired', now() + interval '1 day'),
+('64000000-0000-4000-8000-000000000002', '61000000-0000-4000-8000-000000000001', 'legacy@test.invalid', encode(extensions.digest(repeat('8',64),'sha256'),'hex'), '60000000-0000-4000-8000-000000000001', 'pending', now() + interval '7 days');
+set local role authenticated;
+select set_config('test.legacy_attempt', cooksmith.resend_household_invitation('64000000-0000-4000-8000-000000000001')::text, true);
+reset role;
+select is((select invitation_id from cooksmith.household_invitation_send_attempts where id = current_setting('test.legacy_attempt')::uuid), '64000000-0000-4000-8000-000000000002'::uuid, 'Resending an expired predecessor reuses the current pending invitation');
+set local role service_role;
+select lives_ok($$select cooksmith.claim_household_invitation_delivery(current_setting('test.legacy_attempt')::uuid, repeat('9',64))$$, 'Legacy resend can claim without colliding with the unique pending email');
+reset role;
+select is((select status::text from cooksmith.household_invitations where id = '64000000-0000-4000-8000-000000000001'), 'expired', 'Legacy predecessor remains expired');
+set local role authenticated;
 select set_config('test.attempt', cooksmith.create_household_invitation('61000000-0000-4000-8000-000000000001', 'invitee@test.invalid')::text, true);
 reset role;
 select is((select count(*)::integer from auth.users where email = 'invitee@test.invalid'), 1, 'Reservation does not duplicate an existing account');
