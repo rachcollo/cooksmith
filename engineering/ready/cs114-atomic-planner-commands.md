@@ -6,12 +6,18 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-114
 - **Epic:** Meal Planning (CS-4)
 - **Priority:** High
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `fix/cs-114-atomic-planner-commands`
 - **Depends on:** None
 - **Blocks:** CS-118, CS-121
 - **Package path:** `engineering/ready/cs114-atomic-planner-commands.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings S4, S7, C6 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication and Build Gate
+
+This publishes planning documentation only, not implementation approval. Keep this package Planned and exclude it from automated pickup until the following gate is explicitly resolved:
+
+- Review any production duplicate-dinner report and obtain the owner's explicit resolution decision before implementing or releasing the uniqueness migration.
 
 ## Product Outcome
 
