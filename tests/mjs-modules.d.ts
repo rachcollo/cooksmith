@@ -46,15 +46,32 @@ declare module '*.mjs' {
     vulnerabilities?: Record<string, AuditVulnerability>
   }) => { accepted: AuditEntry[]; blocking: AuditEntry[] }
 
+  export const LOCK: string
+  export const CLAIMS: string
+  export const admitBuild: (options: Record<string, unknown>) => Promise<SelectionResult>
+  export const githubClaimStore: (config: Record<string, string>) => {
+    currentMain: () => Promise<string>
+    create: (ref: string, data: unknown, baseline: string) => Promise<string>
+    list: () => Promise<Record<string, unknown>[]>
+    removeOwned: (ref: string, sha: string) => Promise<void>
+  }
+  export const independent: (a: unknown, b: unknown) => boolean
+  export const readSafety: (cwd: string, key: string) => unknown
+  export const verifySafety: (options: Record<string, unknown>) => Promise<boolean>
+
   type SelectionEvaluation = { key: string; eligible: boolean; reason: string | null }
   type SelectionResult = {
     selected: string | null
     reason?: string
     busyWith?: string
+    inFlight?: string[]
+    maxParallelBuilds?: number
     priority?: string | null
     summary?: string
     evaluated: SelectionEvaluation[]
   }
   export const selectNextReadyIssue: (options: Record<string, unknown>) => Promise<SelectionResult>
   export const formatSelectionReport: (result: SelectionResult) => string
+  export const resolveMaxParallelBuilds: (value: unknown) => number
+  export const DEFAULT_MAX_PARALLEL_BUILDS: number
 }

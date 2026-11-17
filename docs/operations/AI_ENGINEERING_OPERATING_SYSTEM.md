@@ -193,27 +193,20 @@ items (it reads both package conventions in this repository, checkbox-style
 and plain-bulleted). A `Ready` + `codex-ready` story whose package fails this
 check is never picked up, and is reported as skipped with the specific reason.
 
-### Selection script
+### Selection and durable admission
 
-[`scripts/engineering/select-next-ready-issue.mjs`](../../scripts/engineering/select-next-ready-issue.mjs)
-is the decision function, run by whatever starts a build. It:
+The [admission runbook](BUILD_ADMISSION.md) defines the mandatory protocol.
+`admit-next-build.mjs` atomically creates a fixed-name GitHub ref lock, rereads
+claims, branches, open PRs and Jira readiness under that lock, then persists a
+story reservation before returning build permission. `select-next-ready-issue.mjs`
+is diagnostic only. Jira comments are evidence, not locks.
 
-1. Checks GitHub for any already-open pull request referencing a `CS-###`
-   key. If one exists, it reports **busy** and stops immediately, enforcing
-   the Engineering Index's "maximum one active issue" rule without querying
-   Jira at all.
-2. Queries Jira for `project = CS AND status = "Ready" AND labels =
-"codex-ready"`.
-3. Ranks candidates by priority (Highest to Lowest), then by lower Jira key
-   for ties, matching the documented rule exactly.
-4. For each candidate in that order: confirms every issue it "is blocked by"
-   is Done (reading Jira's issue-link data directly, no extra calls), confirms
-   no branch already exists for that key, and runs the readiness validator
-   above. The first candidate that clears all three is selected.
-5. Returns the selection, or a full list of every candidate considered and
-   exactly why each was skipped, for an honest audit trail.
-
-This script is read-only: it never changes Jira or GitHub state itself.
+The limit defaults to three and accepts only 1, 2 or 3. Pre-PR reservations count;
+duplicate story references count once. Unknown implementation branches/PRs force
+serial admission. Different epics, disjoint contract scopes, no schema changes
+and verified dependencies are required for parallel admission. Missing safety
+metadata serialises builds; malformed metadata or uncertain API state stops
+admission. Planned packages never qualify. No automatic expiry or cleanup runs.
 
 ### What still starts the actual build
 

@@ -16,19 +16,19 @@ For a named task:
 > Build CS-18 using its engineering package and stop when the PR and hosted preview are ready for review.
 
 ## Phase 1 — Select and Claim
-1. Query Jira for `project = CS AND status = Ready`.
-2. Read the engineering index.
-3. Exclude issues with incomplete blockers.
-4. Exclude issues without a matching package under `engineering/ready/`.
-5. Check for an existing branch or open PR referencing the Jira key.
-6. Select the highest-priority eligible item.
-7. Read the full Jira issue and package.
-8. Transition Jira to `In Progress`.
-9. Comment with package path, branch, start SHA, and concise plan.
-10. Branch from current `main`.
-11. Move the package from `engineering/ready/` to `engineering/building/` in the branch.
+1. Obtain a durable reservation using `scripts/engineering/admit-next-build.mjs`
+   from a clean, current-main checkout. Follow
+   [Build admission](../docs/operations/BUILD_ADMISSION.md); a diagnostic selection
+   or Jira comment does not grant permission to build.
+2. Continue only after successful admission with a selected story and claim receipt.
+3. Read the full Jira issue and package; stop on scope or dependency drift.
+4. Transition Jira to `In Progress` and comment with package path, claim owner/SHA,
+   branch, baseline SHA and concise plan.
+5. Branch from the claimed baseline and move the package into `engineering/building/`.
+6. Retain the claim through review and release verification. Use the runbook for
+   owner-confirmed retirement; never expire it or release it merely on PR creation.
 
-Claim one issue only unless parallel work is explicitly authorised.
+Each invocation reserves at most one story. All builders share the same protocol.
 
 ## Phase 2 — Validate Baseline
 Before editing:

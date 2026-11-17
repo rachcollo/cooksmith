@@ -25,7 +25,7 @@ Recognise equivalent ingredients across recipe purchasing, Shopping and Pantry w
 
 ## Files and contracts
 
-Domain changes are in `src/domain/shopping`, frozen identity imports in recipe structure validators, and named guidance in `ShoppingPage.tsx`. Tests cover unit, integration, browser and database boundaries. [ADR 020](../../architecture/decisions/020-purchase-identity-v2-stable-sources.md) explains stable backing rows and compatibility. [Fixture review](../../../tests/fixtures/ingredient-identity-v2.md) records category policy.
+Domain changes are in `src/domain/shopping`, frozen identity imports in recipe structure validators, and named guidance in `ShoppingPage.tsx`. Tests cover unit, integration, browser and database boundaries. [ADR 021](../../architecture/decisions/021-purchase-identity-v2-stable-sources.md) explains stable backing rows and compatibility. [Fixture review](../../../tests/fixtures/ingredient-identity-v2.md) records category policy.
 
 ## Migration and release
 

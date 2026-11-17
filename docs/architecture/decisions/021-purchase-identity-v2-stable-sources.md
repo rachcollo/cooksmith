@@ -1,4 +1,4 @@
-# ADR 020: Upgrade purchase identity without replacing source records
+# ADR 021: Upgrade purchase identity without replacing source records
 
 - **Status:** Proposed
 - **Date:** 2026-11-17

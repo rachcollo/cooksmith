@@ -40,4 +40,7 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [017](017-shopping-put-away-receipts.md) | Proposed | Apply shopping to Pantry once using availability receipts |
 | [018](018-measured-stock-and-meal-completion.md) | Proposed | Preserve measured stock across buying, put-away and meal completion |
 | [019](019-versioned-ingredient-receipt-evidence.md) | Proposed | Version ingredient rules while preserving purchase evidence |
-| [020](020-purchase-identity-v2-stable-sources.md) | Proposed | Upgrade purchase identity while retaining source and receipt references |
+
+- [020: Durable build admission](020-durable-build-admission.md) (Proposed)
+
+- [021: Upgrade purchase identity while retaining source and receipt references](021-purchase-identity-v2-stable-sources.md) (Proposed)
