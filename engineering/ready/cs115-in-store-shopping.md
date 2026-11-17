@@ -6,12 +6,18 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-115
 - **Epic:** Shopping Lists (CS-6)
 - **Priority:** Highest
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `feat/cs-115-in-store-shopping`
 - **Depends on:** None
 - **Blocks:** CS-121
 - **Package path:** `engineering/ready/cs115-in-store-shopping.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings S3, C4, U1, U2, U3 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication and Build Gate
+
+This publishes planning documentation only, not implementation approval. Keep this package Planned and exclude it from automated pickup until the following gate is explicitly resolved:
+
+- Confirm Done-item retention and approve Realtime within the existing quota, or choose the lightweight polling alternative, before implementation.
 
 ## Product Outcome
 
