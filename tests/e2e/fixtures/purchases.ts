@@ -1,4 +1,4 @@
-import { renderApp } from '../../renderApp'
+import { renderApp, defaultPantryRepository } from '../../renderApp'
 import type { ShoppingItem } from '../../../src/domain/shopping/types'
 import type { ShoppingRepository } from '../../../src/application/shopping/shoppingRepository'
 import '@fontsource/cormorant-garamond/latin-500.css'
@@ -43,6 +43,49 @@ rows.push({
   updatedAt: '2026-10-04T00:00:00Z',
   sourceQuantities: [{ name: 'brown sugar see note 3', quantity: '55', unit: 'g' }],
 })
+const identityFixture = new URLSearchParams(location.search).has('identity')
+if (identityFixture)
+  rows = [
+    {
+      ...rows[0]!,
+      id: 'mushrooms-old',
+      name: 'mushrooms',
+      quantity: 100,
+      unit: 'g',
+      category: 'other',
+    },
+    {
+      ...rows[0]!,
+      id: 'mushroom-new',
+      name: 'mushroom',
+      quantity: 200,
+      unit: 'g',
+      category: 'other',
+    },
+    { ...rows[0]!, id: 'garlic', name: 'garlic', quantity: 1, unit: null, category: 'produce' },
+  ]
+const pantry = identityFixture
+  ? {
+      ...defaultPantryRepository,
+      list: async () => [
+        {
+          id: 'synthetic-garlic-powder',
+          householdId,
+          name: 'Garlic powder',
+          category: 'herbs_and_spices' as const,
+          categorySource: 'explicit' as const,
+          storageLocation: 'pantry' as const,
+          storageLocationSource: 'explicit' as const,
+          classificationVersion: null,
+          quantity: null,
+          unit: null,
+          available: true,
+          isDefault: false,
+          updatedAt: '2026-11-17T00:00:00Z',
+        },
+      ],
+    }
+  : defaultPantryRepository
 const editFixture = new URLSearchParams(location.search).has('edits')
 if (editFixture) {
   const stored = sessionStorage.getItem('synthetic-shopping-edits')
@@ -115,7 +158,7 @@ renderApp(
   undefined,
   undefined,
   undefined,
-  undefined,
+  pantry,
   undefined,
   undefined,
   undefined,

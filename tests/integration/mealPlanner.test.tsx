@@ -497,7 +497,7 @@ describe('weekly dinner planner', () => {
       ingredientRows: [
         {
           id: 'ingredient-1',
-          name: 'lentils',
+          name: 'lentil',
           quantity: '1',
           unit: 'cup',
           preparation: null,
@@ -563,7 +563,7 @@ describe('weekly dinner planner', () => {
     await waitFor(() =>
       expect(createFromPlan).toHaveBeenCalledWith(householdId, 'linked-created', [
         expect.objectContaining({
-          name: 'lentils',
+          name: 'lentil',
           quantity: 1,
           unit: 'cup',
           category: 'pantry',

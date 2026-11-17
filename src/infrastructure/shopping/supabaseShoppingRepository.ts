@@ -292,12 +292,12 @@ export function createSupabaseShoppingRepository(
         choice.sources.every((source) => source.key.startsWith('p:')),
       )
       const result = measured
-        ? await database.rpc('receive_measured_shopping', {
+        ? await database.rpc('receive_measured_shopping_v2', {
             p_household_id: householdId,
             p_operation_id: operationId,
             p_choices: choices.map((choice) => ({ ...choice })),
           })
-        : await database.rpc('put_shopping_away', {
+        : await database.rpc('put_shopping_away_v2', {
             target_household_id: householdId,
             operation_id: operationId,
             reviewed_items: choices.map((choice) => ({ ...choice })),
@@ -399,7 +399,7 @@ export function createSupabaseShoppingRepository(
       }
       if (batches.length) {
         const result = await database.rpc(
-          'refresh_shopping_ingredient_structure' as never,
+          'refresh_shopping_ingredient_structure_v2' as never,
           { target_household_id: householdId, batches } as never,
         )
         shoppingError(result.error)
@@ -434,7 +434,7 @@ export function createSupabaseShoppingRepository(
             params: Record<string, unknown>,
           ) => Promise<{ error: PostgrestError | null }>
         }
-      ).rpc('reconcile_planned_meal_shopping', {
+      ).rpc('reconcile_planned_meal_shopping_v2', {
         target_household_id: householdId,
         target_planned_meal_id: plannedMealId,
         ingredient_inputs: inputs,

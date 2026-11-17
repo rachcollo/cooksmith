@@ -66,7 +66,8 @@ function sourceStructure(source: PutAwaySource) {
   )
   const structures = evidence.map((item) => structureIngredient(item.originalText!))
   // Never overwrite a renamed purchase or choose one identity from conflicting source lines.
-  return structures.length && new Set(structures.map((item) => item.canonicalName)).size === 1
+  return structures.length &&
+    new Set(structures.map((item) => canonicalIngredientName(item.canonicalName))).size === 1
     ? structures[0]!
     : direct
 }
@@ -181,7 +182,7 @@ export function groupPutAwaySources(sources: readonly PutAwaySource[]): PutAwayR
   const groups = new Map<string, PutAwayReview>()
   for (const source of sources) {
     const structure = sourceStructure(source)
-    const id = structure.canonicalName
+    const id = canonicalIngredientName(structure.canonicalName)
     const group = groups.get(id)
     if (group) group.sources.push(source)
     else

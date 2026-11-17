@@ -42,3 +42,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [019](019-versioned-ingredient-receipt-evidence.md) | Proposed | Version ingredient rules while preserving purchase evidence |
 
 - [020: Durable build admission](020-durable-build-admission.md) (Proposed)
+
+- [022: Upgrade purchase identity while retaining source and receipt references](022-purchase-identity-v2-stable-sources.md) (Proposed)

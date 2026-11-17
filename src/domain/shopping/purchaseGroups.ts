@@ -4,6 +4,7 @@ import {
   type MeasurementSystem,
 } from '../measurements/purchaseMeasures'
 import { canonicalIngredientName, parseIngredientQuantity } from './ingredientIdentity'
+import { categoriseIngredient } from './ingredientCategory'
 import { parsePurchaseLine, purchaseDisplayName } from './purchaseIngredients'
 import type { ShoppingItem } from './types'
 
@@ -98,11 +99,11 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
     let key = purchaseName(item)
     const prefix = `${item.householdId}\u0000`
     const useFlakes =
-      names.has(`${prefix}sea salt flakes`) &&
+      names.has(`${prefix}sea salt flake`) &&
       !names.has(`${prefix}fine sea salt`) &&
       !names.has(`${prefix}coarse sea salt`)
     // An unspecified sea salt can use the explicitly requested flakes. Never infer a density.
-    if (key === 'sea salt' && useFlakes) key = 'sea salt flakes'
+    if (key === 'sea salt' && useFlakes) key = 'sea salt flake'
     const groupKey =
       prefix +
       key +
@@ -193,6 +194,9 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
     return {
       ...members[0]!,
       name: label,
+      category: members.every((member) => member.manual === false)
+        ? categoriseIngredient(name)
+        : members[0]!.category,
       members,
       amounts,
       quantity: amounts.length === 1 ? amounts[0]!.quantity : null,
