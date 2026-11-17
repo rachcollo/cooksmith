@@ -6,12 +6,20 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-106
 - **Epic:** Get Ahead (CS-64)
 - **Priority:** High
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `fix/cs-106-weekly-generation-cost-caps`
 - **Depends on:** None
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs106-weekly-generation-cost-caps.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C3 (extends the 15 Oct production observation) (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication Hold
+
+This package is published for planning only. Its acceptance criteria remain proposed, not approved for implementation. Do not start a build or add `codex-ready` until the unresolved decisions below are confirmed by the product owner and the package status is explicitly changed to `Ready`.
+
+Unresolved decisions blocking implementation:
+
+- Per-household daily cap value. Recommended: 5 model-backed generations per household per day.
 
 ## Product Outcome
 
