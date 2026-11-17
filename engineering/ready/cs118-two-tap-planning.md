@@ -6,12 +6,18 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-118
 - **Epic:** Meal Planning (CS-4)
 - **Priority:** Medium
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `feat/cs-118-two-tap-planning`
 - **Depends on:** CS-96, CS-107, CS-114
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs118-two-tap-planning.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings N3, N6, U4, U6, U7, U11 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication and Build Gate
+
+This publishes planning documentation only, not implementation approval. Keep this package Planned and exclude it from automated pickup until the following gate is explicitly resolved:
+
+- Wait for CS-107 and CS-114 implementation to merge and confirm the undo window before implementation. CS-96 implementation is merged.
 
 ## Product Outcome
 
