@@ -15,7 +15,6 @@ import { Panel } from '../components/ui/Panel'
 import { Tag } from '../components/ui/Tag'
 import { TextArea } from '../components/ui/TextArea'
 import { TextField } from '../components/ui/TextField'
-import { VisuallyHidden } from '../components/ui/VisuallyHidden'
 import {
   prepareMultilineRecipeInput,
   recipeToMultilineInput,
@@ -31,7 +30,7 @@ import { recipeInputSchema } from '../domain/recipes/validationSchemas'
 import { snapshotTitleForRecipe } from '../domain/meal-plans/recipeLinks'
 import type { PlannedMeal } from '../domain/meal-plans/types'
 import { nextEmptyPlanDate, quickAddSearchWindowDays } from '../domain/meal-plans/quickAdd'
-import { addDays, currentWeek, formatDisplayDate } from '../domain/meal-plans/week'
+import { addDays, currentWeek, formatDisplayDate, toLocalIsoDate } from '../domain/meal-plans/week'
 import { recipeSourceForPlan } from '../domain/meal-plans/weekGeneration'
 import { buildPlanAdditions } from '../domain/shopping/planGeneration'
 import { WeekPlanGenerator } from './meal-plans/WeekPlanGenerator'
@@ -456,7 +455,7 @@ function HouseholdRecipesPage() {
     setError(null)
     try {
       const today = new Date()
-      const searchStart = currentWeek(today)
+      const searchStart = toLocalIsoDate(today, state.profile?.timezone)
       const searchEnd = addDays(searchStart, quickAddSearchWindowDays - 1)
       const existingMeals = await plannedMeals.listWeek(householdId, searchStart, searchEnd)
       const result = nextEmptyPlanDate(searchStart, existingMeals)
@@ -507,11 +506,9 @@ function HouseholdRecipesPage() {
         <h1>Recipe Library</h1>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
-      {quickAddStatus ? (
-        <VisuallyHidden aria-live="polite" role="status">
-          {quickAddStatus}
-        </VisuallyHidden>
-      ) : null}
+      <p aria-live="polite" aria-atomic="true" role="status">
+        {quickAddStatus}
+      </p>
 
       <Dialog
         open={creating}

@@ -47,3 +47,10 @@ describe('nextEmptyPlanDate', () => {
     })
   })
 })
+
+it('starts from midweek today even when earlier days are empty', () => {
+  expect(nextEmptyPlanDate('2026-11-19', [meal('2026-11-19')])).toEqual({
+    kind: 'available',
+    mealDate: '2026-11-20',
+  })
+})
