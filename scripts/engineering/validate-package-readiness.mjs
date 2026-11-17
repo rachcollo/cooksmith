@@ -95,7 +95,7 @@ export function assessPackageReadiness({ jiraKey, cwd = process.cwd() } = {}) {
 
   const status = extractStatus(content)
   checks.push(
-    status && /ready/i.test(status)
+    status && /^ready(?: for build)?$/i.test(status) && !packagePath.includes('/planned/')
       ? { ok: true, message: `Package status is "${status}".` }
       : {
           ok: false,

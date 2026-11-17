@@ -76,3 +76,5 @@ Create a proposed ADR when an approved task requires a durable choice that mater
 - an accepted ADR.
 
 Do not create an ADR for routine implementation, reversible local detail, dependency patch updates or unapproved product scope. If the decision exceeds the task's authority, stop at a proposed ADR and request approval before implementation.
+
+- [ADR 020: Durable build admission](../architecture/decisions/020-durable-build-admission.md) (Proposed): atomic GitHub ref admission and explicit reservation recovery.

@@ -90,7 +90,8 @@ Safe in parallel only when:
 - no dependency relationship
 
 Maximum:
-- one active issue per engineer.
+- three builds in flight across the automated delivery routine (see the Engineering Index, "Parallel builds");
+- one active issue per human engineer.
 
 ---
 
@@ -106,3 +107,5 @@ Every completed issue must record:
 - deployment status
 - migration status
 - package path
+
+All builders must reserve work through `scripts/engineering/admit-next-build.mjs` before starting. Follow [Build admission](../../docs/operations/BUILD_ADMISSION.md) for the atomic lock, pre-PR claims, conservative safety gates and explicit recovery. Jira comments and diagnostic selection are not claims.

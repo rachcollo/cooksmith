@@ -26,12 +26,19 @@ async function githubFetch(config, path) {
   return response.json()
 }
 
-// Assumes fewer than 100 open pull requests / branches, which comfortably
-// covers this repository today; add pagination if that ever changes.
-export function listOpenPullRequests(config) {
-  return githubFetch(config, `/repos/${config.owner}/${config.repo}/pulls?state=open&per_page=100`)
+// Exhaust pagination; an incomplete inventory must never permit admission.
+async function listAll(config, path) {
+  const result = []
+  for (let page = 1; ; page += 1) {
+    const batch = await githubFetch(config, `${path}&per_page=100&page=${page}`)
+    if (!Array.isArray(batch)) throw new Error('Invalid GitHub inventory')
+    result.push(...batch)
+    if (batch.length < 100) return result
+  }
 }
-
+export function listOpenPullRequests(config) {
+  return listAll(config, `/repos/${config.owner}/${config.repo}/pulls?state=open`)
+}
 export function listBranches(config) {
-  return githubFetch(config, `/repos/${config.owner}/${config.repo}/branches?per_page=100`)
+  return listAll(config, `/repos/${config.owner}/${config.repo}/branches?`)
 }
