@@ -253,6 +253,49 @@ describe('parallel safety', () => {
     writeFileSync(join(cwd, 'engineering/build-safety.json'), '{"CS-1":{"schemaChange":"false"}}')
     expect(() => readSafety(cwd, 'CS-1')).toThrow('Malformed')
   })
+  it('allows an unfinished downstream dependant while unrelated work is active', async () => {
+    const meta = safety('CS-10', 'pantry')
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      json: async () => ({
+        fields: {
+          parent: { key: 'CS-10', fields: { issuetype: { name: 'Epic' } } },
+          issuelinks: [
+            {
+              type: { name: 'Blocks' },
+              inwardIssue: { key: 'CS-9', fields: { status: { name: 'Backlog' } } },
+            },
+          ],
+        },
+      }),
+    }))
+    expect(
+      await verifySafety({ jiraConfig, key: 'CS-1', safety: meta, activeKeys: ['CS-2'] }),
+    ).toBe(true)
+    expect(
+      await verifySafety({ jiraConfig, key: 'CS-1', safety: meta, activeKeys: ['CS-9'] }),
+    ).toBe(false)
+  })
+  it('denies an upstream dependency on an active story even with a stale Done status', async () => {
+    const meta = safety('CS-10', 'pantry')
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      json: async () => ({
+        fields: {
+          parent: { key: 'CS-10', fields: { issuetype: { name: 'Epic' } } },
+          issuelinks: [
+            {
+              type: { name: 'Blocks' },
+              outwardIssue: { key: 'CS-2', fields: { status: { name: 'Done' } } },
+            },
+          ],
+        },
+      }),
+    }))
+    expect(
+      await verifySafety({ jiraConfig, key: 'CS-1', safety: meta, activeKeys: ['CS-2'] }),
+    ).toBe(false)
+  })
   it('requires verified epic and completed dependencies, including unknown link evidence', async () => {
     const meta = { ...safety('CS-10', 'pantry'), dependencies: ['CS-9'] }
     vi.stubGlobal('fetch', async (url: string) => ({

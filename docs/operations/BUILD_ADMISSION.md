@@ -32,7 +32,11 @@ Only the successful result containing both selected story and claim permits work
 A read-only selector result does not. One invocation admits at most one build.
 
 Claims count before any branch or PR exists. Story references are deduplicated.
-Only `package/*` branches/PRs are exempt; a chore title cannot hide product work.
+Only `package/*` branches/PRs are exempt; this is a strict documentation-only
+namespace reserved for engineering-package proposals. Never put implementation,
+workflow or executable changes there. The exemption assumes this namespace contract;
+review package PR file lists and stop on a violation. A chore title alone cannot
+hide product work.
 Unknown legacy branches and PRs count conservatively and prevent concurrency.
 Retained historical feature branches may therefore block pickup until reviewed.
 Main and historical v2 are baseline branches and excluded.
@@ -63,8 +67,11 @@ merely to unblock a build or decide an unresolved product question.
 Parallel builds require different Jira parent epic keys, disjoint scope names,
 no schema change in either build, and no dependency between the active stories.
 Declared dependencies must currently be Done even for serial admission. Jira
-parent and links are rechecked for both stories; unknown links, incomplete status,
-or non-Done linked issues prevent concurrency. A changed active safety snapshot
+parent and links are rechecked for both stories. Unknown link types/directions,
+incomplete upstream status or non-Done upstream blockers prevent concurrency.
+A dependency link to a concurrently active story prevents concurrency in either
+direction, even if its Jira status says Done. An unfinished downstream dependant
+that is not active does not prevent unrelated work. A changed active safety snapshot
 also prevents concurrency. Missing metadata serialises; malformed metadata fails
 closed. Metadata is not permission to broaden scope: stop if implementation needs
 additional shared files/contracts or schema work.

@@ -25,7 +25,7 @@ export function readSafety(cwd, key) {
   return entry
 }
 
-export async function verifySafety({ jiraConfig, key, safety }) {
+export async function verifySafety({ jiraConfig, key, safety, activeKeys = [] }) {
   if (!safety) return false
   const issue = await jiraFetch(jiraConfig, `/rest/api/3/issue/${key}?fields=parent,issuelinks`)
   if (
@@ -37,8 +37,12 @@ export async function verifySafety({ jiraConfig, key, safety }) {
   // Unknown link types/directions are not evidence of independence.
   for (const link of issue.fields.issuelinks) {
     if (link.type?.name !== 'Blocks') return false
+    if (Boolean(link.inwardIssue) === Boolean(link.outwardIssue)) return false
     const other = link.inwardIssue ?? link.outwardIssue
-    if (!other?.key || other.fields?.status?.name?.toLowerCase() !== 'done') return false
+    if (!/^CS-\d+$/.test(other?.key) || activeKeys.includes(other.key)) return false
+    // This project's verified link convention puts upstream blockers under
+    // outwardIssue. An unfinished downstream dependant does not block its parent.
+    if (link.outwardIssue && other.fields?.status?.name?.toLowerCase() !== 'done') return false
   }
   for (const dependency of safety.dependencies) {
     const issue = await jiraFetch(jiraConfig, `/rest/api/3/issue/${dependency}?fields=status`)

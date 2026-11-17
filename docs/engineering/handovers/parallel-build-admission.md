@@ -7,7 +7,8 @@
 - **Status:** Implemented, validation pending
 - **Initial PR head:** `d3c194f095ccbe604014c99cdc37037cb9b00322`
 - **Baseline:** Initially integrated `37da4f748ef96c704ef4623c8a18aa656ec5f75f`;
-  final main integration and published SHA are recorded in the PR evidence.
+  then integrated `e7b3acfb7dbd3aa815ecac9ff47c636eb71f827c`. Published SHA is
+  recorded in the PR evidence.
 
 ## Objective and product impact
 
@@ -31,7 +32,7 @@ No migrations, Edge Functions, providers, dependencies or protections changed.
 
 ## Validation
 
-`npm ci` and `npm run preflight` passed. The final code validation passed formatting, lint, strict types, 912 tests across
+`npm ci` and `npm run preflight` passed. The final code validation passed formatting, lint, strict types, 914 tests across
 109 files and production build. A pagination fixture initially matched `page=1`
 inside `per_page=100`, repeating the fake page until a worker exited; the fixture
 now reads the exact URL query parameter and the complete rerun passed.
@@ -41,7 +42,9 @@ Documentation-command audit, secret scan and production dependency audit passed
 Tests exercise overlapping atomic admissions, pre-PR capacity, duplicate story,
 uncertain create/unlock, interrupted selection, owner mismatch, malformed state,
 no age expiry, moving-main rejection, pagination, scope/epic/schema/dependency
-conflicts and Planned-package gates.
+conflicts and Planned-package gates. Independent review corrected downstream
+dependency handling: an unfinished future dependant does not block unrelated
+active work; links to active stories still block in both directions.
 
 Local Playwright is unavailable: `npm run preflight:e2e` found no Chromium;
 `npm run test:e2e:install` failed because the CDN archive was truncated/not a ZIP.

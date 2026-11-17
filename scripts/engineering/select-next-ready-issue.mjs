@@ -176,7 +176,7 @@ export async function selectNextReadyIssue({
     if (inFlight.length) {
       safe =
         inFlight.every((active) => claims.some((claim) => claim.key === active)) &&
-        (await verifySafety({ jiraConfig, key, safety }))
+        (await verifySafety({ jiraConfig, key, safety, activeKeys: inFlight }))
       for (const claim of claims) {
         const current = readSafety(cwd, claim.key)
         safe =
@@ -185,7 +185,12 @@ export async function selectNextReadyIssue({
           independent(safety, current) &&
           !safety.dependencies.includes(claim.key) &&
           !current.dependencies.includes(key) &&
-          (await verifySafety({ jiraConfig, key: claim.key, safety: current }))
+          (await verifySafety({
+            jiraConfig,
+            key: claim.key,
+            safety: current,
+            activeKeys: [key, ...inFlight.filter((active) => active !== claim.key)],
+          }))
       }
     }
     if (!safe) {
