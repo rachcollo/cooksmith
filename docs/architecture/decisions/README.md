@@ -43,4 +43,4 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 
 - [020: Durable build admission](020-durable-build-admission.md) (Proposed)
 
-- [021: Upgrade purchase identity while retaining source and receipt references](021-purchase-identity-v2-stable-sources.md) (Proposed)
+- [022: Upgrade purchase identity while retaining source and receipt references](022-purchase-identity-v2-stable-sources.md) (Proposed)

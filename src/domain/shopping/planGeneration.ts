@@ -1,3 +1,4 @@
+import { canonicalIngredientName as canonicalIngredientNameV1 } from './ingredientIdentityV1'
 import { categoriseIngredient } from './ingredientCategory'
 export { categoriseIngredient } from './ingredientCategory'
 import { convertPurchaseAmount, recipeMeasures } from '../measurements/purchaseMeasures'
@@ -88,10 +89,12 @@ export function buildPlanAdditions(
         originalText: row.originalText,
         legacyPurchaseNames: [
           ...new Set(
-            [row.sourceName ?? row.name, ...(row.legacyNames ?? [])].map(canonicalIngredientName),
+            [row.sourceName ?? row.name, ...(row.legacyNames ?? [])].map(canonicalIngredientNameV1),
           ),
         ],
-        purchaseName: displayName,
+        purchaseName: canonicalIngredientNameV1(purchaseProductName(row.name)),
+        purchaseIdentityV2: displayName,
+        purchaseQuantity: quantity,
         measurementSystem: convention.system,
         measureSource: convention.source,
         purchaseUnit: converted.unit,

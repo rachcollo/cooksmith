@@ -318,7 +318,17 @@ test('generated 600g + 400g demand allocates 500g once, then buy, put-away, Done
           quantity,
           unit: 'g',
           category: 'pantry',
-          sourceQuantities: [{ name, quantity, unit: 'g' }],
+          sourceQuantities: [
+            {
+              name,
+              quantity,
+              unit: 'g',
+              purchaseName: name,
+              purchaseQuantity: quantity,
+              purchaseUnit: 'g',
+              ingredientIdentityVersion: 2,
+            },
+          ],
         },
       ])
     }

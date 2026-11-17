@@ -6,7 +6,7 @@
 - **Baseline:** `37da4f748ef96c704ef4623c8a18aa656ec5f75f`
 - **PR:** [#228](https://github.com/rachcollo/cooksmith/pull/228), published as draft.
 - **Implementation commit:** `0e93849963cf918daa000ae241fb113273bc9ded`
-- **Status:** Implemented; hosted/manual validation and coordinator clearance pending. Current exact-head CI results are recorded on the PR. Jira is In Review and `codex-ready` remains absent to prevent duplicate scheduled admission.
+- **Status:** Additive v2 redesign under validation; release held. Earlier evidence below belongs to the superseded combined migration and is not exact-head evidence. Current exact-head CI results are recorded on the PR. Jira is In Review and `codex-ready` remains absent to prevent duplicate scheduled admission.
 
 ## Objective and product impact
 
@@ -16,7 +16,7 @@ Recognise equivalent ingredients across recipe purchasing, Shopping and Pantry w
 
 - Purchasing identity v2 uses inflection rules, noun exceptions and conservative synonyms. Meaningful fresh/powdered, canned/fresh and plain/EVOO distinctions remain.
 - A reviewed fixture covers 233 synthetic ingredient labels. Category expectations and identity idempotence run in Vitest; SQL parity runs in pgTAP.
-- Frozen v1 identity remains available only for released recipe structure validation, protecting saved Recipe Intelligence. New and refreshed purchase sources carry identity version 2.
+- Frozen v1 identity remains available for released recipe structure validation and stable physical purchase partitions, protecting saved Recipe Intelligence. New and refreshed purchase sources carry identity version 2.
 - Existing manual category choices remain authoritative. Generated purchase groups use the current aisle rules.
 - Named related Pantry hints retain the current keyboard-operable disclosure. Household-scoped matching excludes unavailable items and leaves multiple candidates unresolved.
 - Identity-only refresh updates source metadata in place when source multisets and per-product/unit totals match. Original shopping and contribution IDs, per-row bought states and immutable receipts survive. Legacy backing rows can coexist beneath one displayed purchase.
@@ -25,15 +25,17 @@ Recognise equivalent ingredients across recipe purchasing, Shopping and Pantry w
 
 ## Files and contracts
 
-Domain changes are in `src/domain/shopping`, frozen identity imports in recipe structure validators, and named guidance in `ShoppingPage.tsx`. Tests cover unit, integration, browser and database boundaries. [ADR 021](../../architecture/decisions/021-purchase-identity-v2-stable-sources.md) explains stable backing rows and compatibility. [Fixture review](../../../tests/fixtures/ingredient-identity-v2.md) records category policy.
+Domain changes are in `src/domain/shopping`, frozen identity imports in recipe structure validators, and named guidance in `ShoppingPage.tsx`. Tests cover unit, integration, browser and database boundaries. [ADR 022](../../architecture/decisions/022-purchase-identity-v2-stable-sources.md) explains stable backing rows and compatibility. [Fixture review](../../../tests/fixtures/ingredient-identity-v2.md) records category policy.
 
 ## Migration and release
 
-`20261117094901_ingredient_identity_v2.sql` adds v2 functions/indexes and updates reconciliation, refresh and the Pantry alias guard. It does not bulk rewrite or delete household rows. The v1 stored generated identity and its version column retain their old meaning; the new purchasing key and source metadata use v2. Existing shared migrations remain immutable.
+`20261117094901_ingredient_identity_v2.sql` is now an additive expansion. All v1 function definitions/signatures/ACLs and shared Pantry trigger semantics remain unchanged; the migration checks the existing function catalogue before committing. New app repositories explicitly call versioned reconciliation, refresh, Pantry-save and put-away endpoints. Stable v1 physical partitions support old/new clients concurrently; v2 grouping stays in the new client. No bulk data rewrite, automatic Pantry combination or unit-conversion change occurs.
 
-**Release blocker: merging to `main` automatically builds and aliases the Vercel application to `app.smillins.com.au`.** The coordinator verified source `git` at main commit `daa46a858513d4e6537685e301e728fb5da01a64` (PR #226). The protected **Production database release** workflow controls database changes only; it does not prevent application rollout on merge. Therefore this PR must remain draft and unmerged.
+**Release remains held.** Vercel Git integration automatically aliases main to Production; a protected database approval does not hold application adoption. Expansion-only draft [#234](https://github.com/rachcollo/cooksmith/pull/234), head `1e63e592af50366c15fc6ec059823653c8eda02d`, is required before #228 adoption. Migration blob: `cecc851bd2f117bc9773a6c0c3c90efb89064039`. [#233](https://github.com/rachcollo/cooksmith/pull/233) retains the unchanged-main compatibility gate and ordered release plan. The existing protected workflow is retained unchanged and applies all pending migrations at its event SHA after one environment approval. It has only the boolean out-of-order input, not an arbitrary SHA or dry-run-only mode. Keep that input false.
 
-Proposed sequence, requiring separate coordinator approval: establish isolated synthetic staging and validate this candidate; explicitly hold automatic Production application rollout/aliasing before merge; merge only after that hold is verified; run the protected database workflow for the exact approved `main` SHA with dry-run and migration-history checks; then release the matching application and perform approved smoke checks. An alternative sequence must provide equivalent verified database-before-application ordering. No deployment settings were changed and no hosted migration was applied here. Do not run repair on real households as PR verification. Released database fixes use a new forward migration. No Edge Function release is required.
+Accepted-main snapshot: `b68832ee2134d53f36c7c910980085eab9fb3086`, 17 November 2026. Exclude CS-112 #232 head `9931a20d1f4eb88330bbb59a6c08514d0760745b` and migrations `20261117105847` / `20261117113711`, which intentionally change old inviter behaviour; exclude CS-113 partial `20261117105820`. CS-107 #227 head `8d511f5bd0c8c46690dabf11d86668118178085e` has no database migration. Regenerate types from only the accepted schema plus this expansion. Remote migration history, backups and restore readiness remain unverified; no production access or ordering bypass was attempted.
+
+The #233 accepted-main compatibility gate passed against the additive local schema. V2 local application buy/put-away/retry also passed. Final exact-head evidence and expansion/application boundaries will be recorded on the draft PRs; these checks are not hosted validation.
 
 ## Local validation
 

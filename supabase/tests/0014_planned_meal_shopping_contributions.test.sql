@@ -29,7 +29,7 @@ select lives_ok(
 select results_eq(
   $$select quantity, unit from cooksmith.shopping_list_items
     where household_id = '20000000-0000-4000-8000-000000000001'
-      and normalised_name = 'lentil'$$,
+      and normalised_name = 'lentils'$$,
   $$values (3.00::numeric, 'cup'::text)$$,
   'Shared ingredient quantities aggregate across planned meals'
 );
@@ -40,7 +40,7 @@ where id = '80000000-0000-4000-8000-000000000021';
 select results_eq(
   $$select quantity, unit from cooksmith.shopping_list_items
     where household_id = '20000000-0000-4000-8000-000000000001'
-      and normalised_name = 'lentil'$$,
+      and normalised_name = 'lentils'$$,
   $$values (2.00::numeric, 'cup'::text)$$,
   'Removing one meal preserves the other meal contribution'
 );
@@ -51,7 +51,7 @@ where id = '80000000-0000-4000-8000-000000000022';
 select results_eq(
   $$select count(*)::integer from cooksmith.shopping_list_items
     where household_id = '20000000-0000-4000-8000-000000000001'
-      and normalised_name = 'lentil'$$,
+      and normalised_name = 'lentils'$$,
   array[0],
   'Removing the final meal removes the generated shopping item'
 );

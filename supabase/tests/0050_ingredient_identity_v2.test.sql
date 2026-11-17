@@ -248,27 +248,27 @@ insert into cooksmith.shopping_item_contributions(id,household_id,shopping_item_
 select cooksmith.record_shopping_stock_purchase('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000030','mushrooms',(select jsonb_agg(jsonb_build_object('id',id,'updatedAt',updated_at)) from cooksmith.shopping_list_items where id in ('b1160000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000002')),'[{"quantity":200,"unit":"g"}]');
 create temporary table before_receipt as select to_jsonb(p) snapshot from cooksmith.shopping_stock_purchases p where id='b1160000-0000-4000-8000-000000000030';
 create function pg_temp.identity_inputs() returns jsonb language sql as $$
- select '[{"name":"mushroom","quantity":200,"unit":"g","category":"produce","sourceQuantities":[{"name":"mushrooms","quantity":"100","unit":"g","purchaseName":"mushroom","ingredientIdentityVersion":2},{"name":"mushroom","quantity":"100","unit":"g","purchaseName":"mushroom","ingredientIdentityVersion":2}]}]'::jsonb;
+ select '[{"name":"mushroom","quantity":200,"unit":"g","category":"produce","sourceQuantities":[{"name":"mushrooms","quantity":"100","unit":"g","purchaseName":"mushrooms","purchaseQuantity":100,"purchaseUnit":"g","ingredientIdentityVersion":2},{"name":"mushroom","quantity":"100","unit":"g","purchaseName":"mushroom","purchaseQuantity":100,"purchaseUnit":"g","ingredientIdentityVersion":2}]}]'::jsonb;
 $$;
 create function pg_temp.identity_batch() returns jsonb language sql as $$
  select jsonb_build_array(jsonb_build_object('mealId','b1160000-0000-4000-8000-000000000010','recipeId','b1160000-0000-4000-8000-000000000011','recipeSource','household','recipeVersion',(select updated_at from cooksmith.household_recipes where id='b1160000-0000-4000-8000-000000000011'),
  'expected',(select jsonb_agg(to_jsonb(c)) from (select id,shopping_item_id,planned_meal_id,quantity,unit,source_quantities from cooksmith.shopping_item_contributions where planned_meal_id='b1160000-0000-4000-8000-000000000010') c),'inputs',pg_temp.identity_inputs()));
 $$;
 create temporary table stale_batch as select pg_temp.identity_batch() payload;
-select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Identity refresh preserves source-backed rows');
+select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Identity refresh preserves source-backed rows');
 select is((select count(*) from cooksmith.shopping_item_contributions where id in ('b1160000-0000-4000-8000-000000000021','b1160000-0000-4000-8000-000000000022')),2::bigint,'Both original contribution IDs survive');
 select is((select count(*) from cooksmith.shopping_list_items where id in ('b1160000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000002') and completed),2::bigint,'Both original bought row IDs survive');
 select is((select sum(quantity) from cooksmith.shopping_item_contributions where planned_meal_id='b1160000-0000-4000-8000-000000000010'),200::numeric,'No quantity duplicated');
 select ok((select bool_and(s.value->>'ingredientIdentityVersion'='2') from cooksmith.shopping_item_contributions c cross join lateral jsonb_array_elements(c.source_quantities) s where c.planned_meal_id='b1160000-0000-4000-8000-000000000010'),'Sources carry v2 identity');
 select is((select to_jsonb(p) from cooksmith.shopping_stock_purchases p where id='b1160000-0000-4000-8000-000000000030'),(select snapshot from before_receipt),'Receipt including source keys, snapshot and amounts is byte-equivalent');
-select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',(select payload from stale_batch))$$,'PT409','Shopping contributions changed.','Interrupted stale retry rejects atomically');
-select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Fresh repeated refresh succeeds without duplication');
+select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001',(select payload from stale_batch))$$,'PT409','Shopping contributions changed.','Interrupted stale retry rejects atomically');
+select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Fresh repeated refresh succeeds without duplication');
 select is((select count(*) from cooksmith.shopping_item_contributions where planned_meal_id='b1160000-0000-4000-8000-000000000010'),2::bigint,'Repeated refresh retains both source keys');
-select lives_ok($$select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000010',pg_temp.identity_inputs())$$,'Normal recipe reconciliation also recognises identity-only updates');
+select lives_ok($$select cooksmith.reconcile_planned_meal_shopping_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000010',pg_temp.identity_inputs())$$,'Normal recipe reconciliation also recognises identity-only updates');
 select is((select count(*) from cooksmith.shopping_stock_purchases where id='b1160000-0000-4000-8000-000000000030'),1::bigint,'One purchase receipt remains');
-select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.identity_batch(),'{0,inputs,0,sourceQuantities,0,name}','"Changed source"'))$$,'PT409','Purchased source evidence requires a separate repair.','Structural repair cannot replace receipt-bound contributions');
+select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001',jsonb_set(pg_temp.identity_batch(),'{0,inputs,0,sourceQuantities,0,name}','"Changed source"'))$$,'PT409','Purchased source evidence requires a separate repair.','Structural repair cannot replace receipt-bound contributions');
 update cooksmith.shopping_list_items set completed=false where id='b1160000-0000-4000-8000-000000000002';
-select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch());
+select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch());
 select ok((select completed from cooksmith.shopping_list_items where id='b1160000-0000-4000-8000-000000000001'),'Identity-only refresh preserves individually bought backing row');
 select ok((select not completed from cooksmith.shopping_list_items where id='b1160000-0000-4000-8000-000000000002'),'Identity-only refresh preserves individually outstanding backing row');
 -- An explicit renamed purchase still owns the original recipe demand. Identity
@@ -278,18 +278,38 @@ where id='b1160000-0000-4000-8000-000000000001';
 update cooksmith.shopping_item_contributions c set source_quantities=(
   select jsonb_agg((s-'ingredientIdentityVersion')||jsonb_build_object('purchaseName','mushrooms')) from jsonb_array_elements(c.source_quantities) s
 ) where id='b1160000-0000-4000-8000-000000000021';
-select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Identity refresh accepts a renamed receipt-bound override');
+select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Identity refresh accepts a renamed receipt-bound override');
 select ok((select bool_and(s.value->>'ingredientIdentityVersion'='2') from cooksmith.shopping_item_contributions c cross join lateral jsonb_array_elements(c.source_quantities) s where c.id='b1160000-0000-4000-8000-000000000021'),'Renamed override source metadata advances to v2');
-select lives_ok($$select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000010',pg_temp.identity_inputs())$$,'Normal identity reconciliation accepts a renamed override');
+select lives_ok($$select cooksmith.reconcile_planned_meal_shopping_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000010',pg_temp.identity_inputs())$$,'Normal identity reconciliation accepts a renamed override');
 select is((select count(*) from cooksmith.shopping_item_contributions where id in ('b1160000-0000-4000-8000-000000000021','b1160000-0000-4000-8000-000000000022')),2::bigint,'Renamed override retains both original receipt source IDs');
 select ok((select display_name='Special mushrooms' and quantity=250 and category='other' from cooksmith.shopping_list_items where id='b1160000-0000-4000-8000-000000000001'),'Identity refresh preserves explicit name, quantity and aisle');
 select is((select to_jsonb(p) from cooksmith.shopping_stock_purchases p where id='b1160000-0000-4000-8000-000000000030'),(select snapshot from before_receipt),'Renamed override leaves immutable receipt unchanged');
 insert into cooksmith.household_pantry_items(household_id,name,category,storage_location) values('20000000-0000-4000-8000-000000000001','mushrooms','produce','fridge');
-select throws_ok($$insert into cooksmith.household_pantry_items(household_id,name,category,storage_location) values('20000000-0000-4000-8000-000000000001','mushroom','produce','fridge')$$,'23505',null,'New Pantry plural alias is rejected rather than combined');
+select throws_ok($$select * from cooksmith.save_pantry_item_v2('20000000-0000-4000-8000-000000000001',null,'{"name":"mushroom","category":"produce","categorySource":"explicit","storageLocation":"fridge","storageLocationSource":"explicit","available":true}')$$,'23505',null,'V2 Pantry plural alias is rejected rather than combined');
 select is((select count(*) from cooksmith.household_pantry_items where name in ('mushroom','mushrooms')),1::bigint,'Existing Pantry item remains intact');
+
+-- A v2 writer keeps the exact physical product partition that an old writer uses.
+insert into cooksmith.planned_meals(id,household_id,meal_date,meal_type,title) values('b1160000-0000-4000-8000-000000000050','20000000-0000-4000-8000-000000000001','2026-11-17','lunch','Cross-client fixture');
+create function pg_temp.cross_inputs() returns jsonb language sql as $$ select '[{"name":"compat mango","quantity":200,"unit":"g","category":"produce","sourceQuantities":[{"name":"compat mangoes","quantity":"100","unit":"g","purchaseName":"compat mangoes","purchaseQuantity":100,"purchaseUnit":"g","ingredientIdentityVersion":2},{"name":"compat mango","quantity":"100","unit":"g","purchaseName":"compat mango","purchaseQuantity":100,"purchaseUnit":"g","ingredientIdentityVersion":2}]}]'::jsonb; $$;
+select lives_ok($$select cooksmith.reconcile_planned_meal_shopping_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000050',pg_temp.cross_inputs())$$,'V2 grouped demand can create v1-compatible physical rows');
+select is((select count(*) from cooksmith.shopping_item_contributions where planned_meal_id='b1160000-0000-4000-8000-000000000050'),2::bigint,'V1 spelling partitions remain distinct beneath v2 grouping');
+create temporary table cross_before as select id,shopping_item_id from cooksmith.shopping_item_contributions where planned_meal_id='b1160000-0000-4000-8000-000000000050';
+select cooksmith.record_shopping_stock_purchase('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000060','compat mango',(select jsonb_agg(jsonb_build_object('id',i.id,'updatedAt',i.updated_at)) from cross_before b join cooksmith.shopping_list_items i on i.id=b.shopping_item_id),'[{"quantity":200,"unit":"g"}]');
+create temporary table cross_receipt as select to_jsonb(p) snapshot from cooksmith.shopping_stock_purchases p where id='b1160000-0000-4000-8000-000000000060';
+select lives_ok($$select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000050',(select jsonb_agg(jsonb_build_object('name',s->>'purchaseName','quantity',100,'unit','g','category','produce','sourceQuantities',jsonb_build_array(s-array['ingredientIdentityVersion','purchaseQuantity']))) from jsonb_array_elements(pg_temp.cross_inputs()) i cross join lateral jsonb_array_elements(i->'sourceQuantities') s))$$,'Old client can reconcile new-client rows');
+select is((select count(*) from cross_before b join cooksmith.shopping_item_contributions c using(id,shopping_item_id)),2::bigint,'Old client preserves new-client row and contribution IDs');
+select lives_ok($$select cooksmith.reconcile_planned_meal_shopping_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000050',pg_temp.cross_inputs())$$,'New client can refresh the old client metadata again');
+select is((select count(*) from cross_before b join cooksmith.shopping_item_contributions c using(id,shopping_item_id)),2::bigint,'Cross-client round trip preserves both source IDs');
+select is((select to_jsonb(p) from cooksmith.shopping_stock_purchases p where id='b1160000-0000-4000-8000-000000000060'),(select snapshot from cross_receipt),'Cross-client reconciliation preserves the immutable purchase receipt');
+-- Explicit v2 boundary, never a global trigger change for old applications.
+select lives_ok($$insert into cooksmith.household_pantry_items(household_id,name,category,storage_location) values('20000000-0000-4000-8000-000000000001','compat quiches','other','fridge'),('20000000-0000-4000-8000-000000000001','compat quiche','other','fridge')$$,'Legacy direct Pantry writes retain v1 alias behaviour');
+select is((select count(*) from cooksmith.household_pantry_items where name in ('compat quiche','compat quiches')),2::bigint,'Legacy Pantry aliases are not silently combined');
+
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000003',true);
-select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001','[]')$$,'42501',null,'Unrelated household cannot refresh');
+select throws_ok($$select cooksmith.refresh_shopping_ingredient_structure_v2('20000000-0000-4000-8000-000000000001','[]')$$,'42501',null,'Unrelated household cannot refresh');
 select throws_ok($$select cooksmith_private.refresh_purchase_identity_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000010',pg_temp.identity_inputs())$$,'42501',null,'Helper independently rejects unrelated household');
+select throws_ok($$select * from cooksmith.save_pantry_item_v2('20000000-0000-4000-8000-000000000001',null,'{"name":"forbidden"}')$$,'42501',null,'V2 Pantry rejects other households');
+select throws_ok($$select cooksmith.receive_measured_shopping_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000099','[]')$$,'42501',null,'V2 receipt boundary rejects other households');
 reset role;
 select * from finish();
 rollback;
