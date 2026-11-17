@@ -13,6 +13,12 @@
 - **Package path:** `engineering/ready/cs112-server-sent-invitations.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C1 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
 
+## Approved Product Decisions
+
+Rach confirmed on 17 November 2026: use the existing Resend integration for server-side invitation delivery. Do not create an invitee auth account when sending or resending an invitation, or merely opening its link; create an account only when the recipient explicitly accepts and completes the verified sign-up flow. Existing users sign in and accept without duplicate account creation.
+
+Implementation is prepared for an explicitly assigned builder; do not add `codex-ready` while that builder owns the story. Production authentication, migration and Edge Function release approvals remain required.
+
 ## Product Outcome
 
 An invited person receives an email that names the inviter and the household, and no account is created for them until they act. A member can no longer use Cooksmith to send sign-in emails to arbitrary addresses.
@@ -44,7 +50,8 @@ Verified against `main` at `17b9c47`. Re-verify before editing; line numbers wil
 
 Summarised from Jira, which remains authoritative.
 
-- [ ] Invitation email is sent server-side using a dedicated template naming the inviter's display name and household.
+- [ ] Invitation email is sent server-side through the existing Resend integration using a dedicated template naming the inviter's display name and household.
+- [ ] Sending, resending or opening the invitation does not create an auth account; a new account is created only after explicit acceptance and verified sign-up. Existing users do not get duplicate accounts.
 - [ ] No client code calls `signInWithOtp` for an address other than the signed-in user's own entry.
 - [ ] The raw token is never returned to the inviter's client; only a hash is stored.
 - [ ] Create and resend are rate limited per household and per recipient.
@@ -66,6 +73,9 @@ Summarised from Jira, which remains authoritative.
 
 ## Test Plan
 
+- Stub Resend and Auth separately: send, resend, link preview and initial landing make no auth-account creation call; explicit acceptance follows the verified sign-up/sign-in flow.
+- Cover delivery failures, retries, duplicate clicks, expired/revoked/used tokens and wrong signed-in email. Prevent replay, cross-household acceptance and account enumeration; never log raw tokens or mail-provider credentials.
+
 - pgTAP: token never selectable by authenticated role; rate-limit behaviour; cross-household denial.
 - Function unit tests with a stub mailer.
 - Integration: Settings invite, resend and cancel flows.
@@ -77,11 +87,11 @@ Run the full quality suite required by `docs/engineering/CODEX_BUILD_RULES.md` a
 - **Expected migration:** Yes: invitation send log, RPC result change.
 - **Expected Edge Function:** Yes: new invitation delivery function.
 - **Rollback:** Revert application changes; forward-fix any released schema.
-- **Recurring cost:** Depends on the delivery decision below. Option A is A$0. Option B needs cost approval before build.
+- **Recurring cost:** Reuse the existing Resend account and plan. No new provider, subscription, paid upgrade or increased spending limit is approved; check the configured quota and report any cost blocker before a change.
 
 ## Deferred Work and Open Questions
 
-- Delivery mechanism. Option A: Supabase Auth invite email from the function (no new provider, A$0, but an auth record in invited state is created at send time). Option B: a transactional email provider (meets "no account until they act" exactly; recurring cost and approval required). The Jira criterion as written needs Option B; confirm or relax it.
+- Delivery mechanism resolved: existing Resend, with account creation only after explicit acceptance and verified sign-up. Do not use the Supabase Auth invite-email API that creates an auth record at send time.
 - Security-sensitive authentication change: human approval is required before release.
 
 ## Pull Request
