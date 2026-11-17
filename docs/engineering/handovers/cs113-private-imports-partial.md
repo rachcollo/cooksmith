@@ -78,10 +78,30 @@ forged uploader identity, private escalation, current private read boundaries, p
 admin owned-public insertion and unchanged anonymous denial. These tests do not claim to
 prove the blocked household-sharing implementation.
 
-Local PostgreSQL reset/lint/pgTAP/security/types and authenticated HTTP checks are pending:
-the initial Supabase startup hit an ECR rate limit; the smaller database/API stack is still
-extracting its database image. No database-policy test result is claimed yet. Exact-head CI
-and preview status remain pending publication.
+Local PostgreSQL reset/lint/pgTAP/security/types remain unavailable. Both full and smaller
+Supabase startup attempts failed while registering the PostgreSQL image with `no space left
+on device` under Docker's VFS storage driver; the first attempt also hit an ECR rate limit.
+Startup retries were stopped. `db:reset`, `db:lint`, `db:test`, `db:test:security`, `db:types`
+and `db:types:check` were attempted and each exited 1 because Supabase is not running.
+Authenticated HTTP checks were also attempted and cannot run without the local stack.
+Generated types were not hand-edited. No successful RLS execution is claimed.
+
+One HTTP regression previously created its public fixture as an ordinary user. It now uses
+the explicitly local Supabase SQL command (`db query --local`) for synthetic setup only.
+All behaviour assertions still use authenticated clients and real policies; this does not mock RLS.
+
+## Publication and approval block
+
+The branch was published; local and remote tree equality was verified. Opening the draft PR
+was denied twice by automatic approval review, which stated that explicit permission to publish
+through a GitHub PR was missing. The second attempt followed verification of user-authored
+history requesting builds, publication and PR governance. No workaround was attempted and no
+PR exists. Required quality/PR-governance CI has not run. Only branch-created Jira sync passed.
+The first published head received a successful Vercel status; this is deployment metadata,
+not hosted interaction validation. Final commit/status evidence belongs in the completion report.
+
+A verified patch, Git bundle and prepared draft PR description are retained outside the
+repository in `/workspace/cs113-artifacts`. The patch is checked against the approved baseline.
 
 ## Hosted preview and manual verification
 

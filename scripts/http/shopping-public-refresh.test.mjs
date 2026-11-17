@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { test } from 'node:test'
 import { createServer } from 'vite'
@@ -13,44 +14,59 @@ test('ordinary member refreshes public recipe amounts through the real repositor
     const db = localClient(),
       member = localClient(2)
     const shopping = createSupabaseShoppingRepository(localSupabaseClient(2))
-    const recipe = await must(
-      db
-        .from('imported_recipes')
-        .insert({
-          owner_id: '10000000-0000-4000-8000-000000000001',
-          visibility: 'public',
-          name: 'Synthetic public refresh',
-          source_url: `https://example.invalid/refresh/${randomUUID()}`,
-          ingredients: '55 g caster sugar see note 3',
-          description: 'Mix.',
-          ingredient_rows: [
-            {
-              id: 'legacy-sugar',
-              ingredient_name: 'caster sugar see note 3',
-              quantity_text: '55',
-              unit: 'g',
-              preparation: null,
-              original_line_text: '55 g caster sugar see note 3',
-              parser_version: 'recipe-content-v1',
-              derivation_status: 'derived',
-              position: 0,
-            },
-            {
-              id: 'tomato',
-              ingredient_name: 'tomato',
-              quantity_text: '2',
-              unit: null,
-              preparation: null,
-              original_line_text: '2 tomato',
-              parser_version: 'recipe-content-v1',
-              derivation_status: 'derived',
-              position: 1,
-            },
-          ],
-        })
-        .select()
-        .single(),
+    // Set up a preserved legacy public row through the strictly local SQL boundary.
+    // All assertions below remain authenticated HTTP requests under real RLS.
+    const recipeId = randomUUID()
+    const fixture = {
+      id: recipeId,
+      owner_id: '10000000-0000-4000-8000-000000000001',
+      visibility: 'public',
+      name: 'Synthetic public refresh',
+      source_url: `https://example.invalid/refresh/${randomUUID()}`,
+      ingredients: '55 g caster sugar see note 3',
+      description: 'Mix.',
+      ingredient_rows: [
+        {
+          id: 'legacy-sugar',
+          ingredient_name: 'caster sugar see note 3',
+          quantity_text: '55',
+          unit: 'g',
+          preparation: null,
+          original_line_text: '55 g caster sugar see note 3',
+          parser_version: 'recipe-content-v1',
+          derivation_status: 'derived',
+          position: 0,
+        },
+        {
+          id: 'tomato',
+          ingredient_name: 'tomato',
+          quantity_text: '2',
+          unit: null,
+          preparation: null,
+          original_line_text: '2 tomato',
+          parser_version: 'recipe-content-v1',
+          derivation_status: 'derived',
+          position: 1,
+        },
+      ],
+    }
+    const fixtureJson = JSON.stringify(fixture).replaceAll("'", "''")
+    execFileSync(
+      'node_modules/.bin/supabase',
+      [
+        'db',
+        'query',
+        '--local',
+        `
+      insert into cooksmith.imported_recipes
+        (id, owner_id, visibility, name, source_url, ingredients, description, ingredient_rows)
+      select id, owner_id, visibility, name, source_url, ingredients, description, ingredient_rows
+      from jsonb_populate_record(null::cooksmith.imported_recipes, '${fixtureJson}'::jsonb)
+    `,
+      ],
+      { stdio: 'pipe' },
     )
+    const recipe = await must(db.from('imported_recipes').select().eq('id', recipeId).single())
     const meal = await must(
       member
         .from('planned_meals')
