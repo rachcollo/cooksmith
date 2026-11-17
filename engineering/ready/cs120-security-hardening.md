@@ -6,12 +6,20 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-120
 - **Epic:** Infrastructure & Release (CS-7)
 - **Priority:** High
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `fix/cs-120-security-hardening`
 - **Depends on:** None
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs120-security-hardening.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C7, C11, C12, C15 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication Hold
+
+This package is published for planning only. Its acceptance criteria remain proposed, not approved for implementation. Do not start a build or add `codex-ready` until the unresolved decisions below are confirmed by the product owner and the package status is explicitly changed to `Ready`.
+
+Unresolved decisions blocking implementation:
+
+- Image handling: accept hot-linking with `referrerpolicy=no-referrer` and https only (A$0, IP still visible to hosts), or re-host on import (private, possible cost and copyright consideration)?
 
 ## Product Outcome
 
