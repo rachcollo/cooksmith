@@ -18,7 +18,18 @@ function parseIsoDate(date: string): Date {
 export function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10)
 }
-export function toLocalIsoDate(date: Date): string {
+export function toLocalIsoDate(date: Date, timeZone?: string): string {
+  if (timeZone) {
+    const parts = new Intl.DateTimeFormat('en-AU', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date)
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((candidate) => candidate.type === type)!.value
+    return `${part('year')}-${part('month')}-${part('day')}`
+  }
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
