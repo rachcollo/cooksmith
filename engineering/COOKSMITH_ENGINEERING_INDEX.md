@@ -37,15 +37,16 @@ For equal priority, prefer the lower Jira key.
 
 ### Parallel builds
 
-Parallel execution is authorised by the product owner (17 November 2026). Up to three builds may be in flight at once, where a build in flight is an open, non-exempt pull request carrying a `CS-###` key. The limit is `DEFAULT_MAX_PARALLEL_BUILDS` in `scripts/engineering/select-next-ready-issue.mjs` and can be overridden with `COOKSMITH_MAX_PARALLEL_BUILDS`; a value of `1` restores serial delivery.
+Parallel execution is authorised by the product owner (17 November 2026), up to
+three builds including pre-PR reservations. `COOKSMITH_MAX_PARALLEL_BUILDS`
+accepts only 1, 2 or 3; 1 restores serial delivery. Every builder must obtain a
+durable claim using `scripts/engineering/admit-next-build.mjs` before work begins.
 
-Each selection still returns one story. A story is never selected while it has its own build in flight, an existing branch, or a Jira blocker that is not Done, so dependent stories remain sequenced by their `Blocks` links. Record every real dependency as a Jira `Blocks` link: that link is the only thing that keeps two conflicting stories from being built at the same time.
-
-This rule is mechanically enforced by
-[`scripts/engineering/select-next-ready-issue.mjs`](../scripts/engineering/select-next-ready-issue.mjs),
-using [`scripts/engineering/validate-package-readiness.mjs`](../scripts/engineering/validate-package-readiness.mjs)
-for rule 4. See [automated pickup](../docs/operations/AI_ENGINEERING_OPERATING_SYSTEM.md#automated-pickup)
-for how selection connects to actually starting a build.
+The [admission runbook](../docs/operations/BUILD_ADMISSION.md) defines atomic
+selection, safety metadata and recovery. Different epics, disjoint contract scopes,
+no schema changes and verified dependencies are required for concurrency.
+Unknown evidence serialises; ambiguous claims stop admission. A Jira comment is
+not a lock. Human merge and release approval gates remain unchanged.
 
 ## Active Roadmap
 

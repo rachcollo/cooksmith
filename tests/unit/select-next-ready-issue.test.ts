@@ -40,7 +40,13 @@ function mockFetch({
 function issue(key: string, priority = 'Medium', links: unknown[] = []) {
   return {
     key,
-    fields: { summary: `${key} summary`, priority: { name: priority }, issuelinks: links },
+    fields: {
+      summary: `${key} summary`,
+      priority: { name: priority },
+      status: { name: 'Ready' },
+      labels: ['codex-ready'],
+      issuelinks: links,
+    },
   }
 }
 
@@ -92,9 +98,40 @@ describe('selectNextReadyIssue', () => {
       maxParallelBuilds: 3,
       evaluated: [],
     })
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('counts a pre-PR branch even without a pull request', async () => {
+    vi.stubGlobal('fetch', mockFetch({ branches: [{ name: 'feat/cs-99-working' }] }))
+    expect(
+      (await selectNextReadyIssue({ jiraConfig, githubConfig, maxParallelBuilds: 1 })).reason,
+    ).toBe('busy')
+  })
+  it('reads beyond the first GitHub inventory page before admission', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/pulls')) return jsonResponse([])
+        if (new URL(url).searchParams.get('page') === '1')
+          return jsonResponse(
+            Array.from({ length: 100 }, (_, n) => ({ name: `package/cs-${n}-draft` })),
+          )
+        if (new URL(url).searchParams.get('page') === '2')
+          return jsonResponse([{ name: 'feat/cs-99-working' }])
+        throw new Error('Should not query Jira when busy')
+      }),
+    )
+    expect(
+      (await selectNextReadyIssue({ jiraConfig, githubConfig, maxParallelBuilds: 1 })).reason,
+    ).toBe('busy')
+  })
+  it('fails closed when Jira approval or link evidence is missing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockFetch({ issues: [{ key: 'CS-1', fields: { summary: 'incomplete' } }] }),
+    )
+    expect((await selectNextReadyIssue({ jiraConfig, githubConfig })).selected).toBeNull()
+  })
   it('keeps serial delivery when the limit is one', async () => {
     const fetchMock = mockFetch({ pulls: [{ title: 'CS-21: Shopping List Foundation' }] })
     vi.stubGlobal('fetch', fetchMock)
@@ -103,10 +140,10 @@ describe('selectNextReadyIssue', () => {
 
     expect(result.reason).toBe('busy')
     expect(result.inFlight).toEqual(['CS-21'])
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  it('selects another story while a build is in flight below the limit', async () => {
+  it('serialises when an existing build has no verified safety metadata', async () => {
     await withReadyPackageFixture('CS-57', async (cwd) => {
       const fetchMock = mockFetch({
         pulls: [{ title: 'CS-21: Shopping List Foundation' }],
@@ -116,8 +153,9 @@ describe('selectNextReadyIssue', () => {
 
       const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
 
-      expect(result.selected).toBe('CS-57')
-      expect(result.inFlight).toEqual(['CS-21'])
+      expect(result.selected).toBeNull()
+      expect(result.evaluated[0].reason).toContain('parallel safety')
+      expect(result.selected).toBeNull()
     })
   })
 
@@ -148,14 +186,20 @@ describe('selectNextReadyIssue', () => {
 
       const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
 
-      expect(result.selected).toBe('CS-57')
+      expect(result.selected).toBeNull()
+      expect(result.reason).not.toBe('busy')
     })
   })
 
   it('does not treat an open engineering-package PR as a build in flight', async () => {
     await withReadyPackageFixture('CS-57', async (cwd) => {
       const fetchMock = mockFetch({
-        pulls: [{ title: 'chore(package): CS-58 — engineering package draft' }],
+        pulls: [
+          {
+            title: 'chore(package): CS-58 — engineering package draft',
+            head: { ref: 'package/cs-58-draft' },
+          },
+        ],
         issues: [issue('CS-57')],
       })
       vi.stubGlobal('fetch', fetchMock)
@@ -223,7 +267,7 @@ describe('selectNextReadyIssue', () => {
     expect(result.evaluated[0]).toMatchObject({
       key: 'CS-52',
       eligible: false,
-      reason: 'a branch already exists for this issue',
+      reason: 'a build is already in flight for this issue',
     })
   })
 
@@ -285,11 +329,11 @@ describe('selectNextReadyIssue', () => {
 })
 
 describe('resolveMaxParallelBuilds', () => {
-  it('uses a valid positive integer and falls back to the default otherwise', () => {
-    expect(resolveMaxParallelBuilds('5')).toBe(5)
-    expect(resolveMaxParallelBuilds('1')).toBe(1)
+  it('defaults only when absent and never authorises more than three', () => {
     expect(resolveMaxParallelBuilds(undefined)).toBe(3)
-    expect(resolveMaxParallelBuilds('0')).toBe(3)
-    expect(resolveMaxParallelBuilds('many')).toBe(3)
+    for (const value of ['1', '2', '3']) expect(resolveMaxParallelBuilds(value)).toBe(Number(value))
+    for (const value of ['5', '0', 'many', '', '1.5', 'Infinity', '03', null]) {
+      expect(() => resolveMaxParallelBuilds(value)).toThrow()
+    }
   })
 })

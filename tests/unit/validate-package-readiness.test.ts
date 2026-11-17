@@ -13,6 +13,7 @@ function withFixture(files: Record<string, string>, fn: (cwd: string) => void) {
   const cwd = mkdtempSync(join(tmpdir(), 'cooksmith-readiness-'))
   try {
     mkdirSync(join(cwd, 'engineering', 'ready'), { recursive: true })
+    mkdirSync(join(cwd, 'engineering', 'planned'), { recursive: true })
     mkdirSync(join(cwd, 'docs', 'engineering', 'packages'), { recursive: true })
     for (const [path, content] of Object.entries(files)) {
       writeFileSync(join(cwd, path), content)
@@ -38,6 +39,26 @@ const readyChecklistPackage = [
 ].join('\n')
 
 describe('validate-package-readiness', () => {
+  it.each(['Planned; Ready after approval', 'Not Ready', 'Ready pending approval'])(
+    'rejects misleading status %s',
+    (status) => {
+      withFixture(
+        { 'engineering/ready/cs-40.md': readyChecklistPackage.replace('`Ready`', status) },
+        (cwd) => {
+          expect(formatReadinessReport(assessPackageReadiness({ jiraKey: 'CS-40', cwd })).ok).toBe(
+            false,
+          )
+        },
+      )
+    },
+  )
+  it('rejects a package still in the planned directory even with Ready metadata', () => {
+    withFixture({ 'engineering/planned/cs-40.md': readyChecklistPackage }, (cwd) => {
+      expect(formatReadinessReport(assessPackageReadiness({ jiraKey: 'CS-40', cwd })).ok).toBe(
+        false,
+      )
+    })
+  })
   it('fails when no package exists for the key', () => {
     withFixture({}, (cwd) => {
       const result = formatReadinessReport(assessPackageReadiness({ jiraKey: 'CS-40', cwd }))

@@ -26,9 +26,11 @@ project CS, cloudId d14250fb-f9d3-4ca4-9f89-37b4288080ce.
 ## Step 0 — get the repo current
 
 Work from the latest commit on rachcollo/cooksmith `main`. If your
-environment already has a clone, fetch and hard-reset it to `origin/main`;
-otherwise clone the repository fresh and check out `main`. Do not start
-from a cached or stale checkout.
+environment already has a clone, fetch without changing its working tree and
+create a separate clean worktree at the verified current `origin/main` SHA;
+otherwise clone fresh. Preserve all existing branches, uncommitted and untracked
+work. Never hard-reset or clean an existing clone. Verify the isolated checkout
+is clean and equals remote main before admission.
 
 ## Step 1 — read the rules before doing anything else
 
@@ -80,37 +82,36 @@ route.
    Ready and label it codex-ready automatically.
 8. Do not merge the package PR. Do not transition the Jira issue.
 
-## Phase B — build one eligible story (up to three in flight)
+## Phase B — reserve and build one eligible story
 
-1. List open GitHub pull requests. Count the distinct `CS-###` keys in open
-   PR titles that do NOT start with `chore:`, `chore(...):`, `infra:` or
-   `infra(...):`. These are the builds in flight. If three or more are in
-   flight, end the session here. Otherwise continue; this firing may start
-   one more build alongside them.
-2. Query Jira: `project = CS AND status = "Ready" AND labels = "codex-ready"
-ORDER BY key ASC`.
-3. Rank by priority (Highest, High, Medium, Low, Lowest), then by lower key
-   for ties.
-4. Walk the ranked list. For each candidate: confirm via Jira issue links
-   that every issue it "is blocked by" is Done; confirm it is not one of the
-   builds in flight and that no branch other than `package/*` branches
-   contains its key (case-insensitive); run
-   `node scripts/engineering/validate-package-readiness.mjs CS-NN` and
-   require it to pass. First candidate clearing all three is selected.
-5. If none clear, end the session quietly — no comment, no branch, no PR.
-6. For the selected story, proceed exactly as if a human had said
-   "Build CS-NN". Follow engineering/CODEX_BUILDER_GUIDE.md phase by phase:
-   claim the issue with a Jira comment (package path, branch, plan), branch
-   from current main, implement only the package scope, add or update
-   tests, run the full local validation required by the package and
-   CODEX_BUILD_RULES.md, review your own diff for security, RLS and
-   migration risk, commit with the Jira key, open a pull request using the
-   repository PR template titled `CS-NN: <concise title>`, and add the PR
-   link to Jira.
-7. Do not change acceptance criteria, expand scope, weaken tests, commit
-   secrets, or make unrelated refactors. Do not merge. Do not deploy or
-   release anything. Stop once the PR is open and required checks have
-   started.
+1. Read `docs/operations/BUILD_ADMISSION.md`. Use a separate clean checkout of
+   current remote main (Phase A may have left package work in its own worktree).
+   Every scheduled and manual builder must use the same admission protocol.
+2. Run `node scripts/engineering/admit-next-build.mjs` with the approved GitHub
+   and Jira credentials supplied securely by the runner. The single configured
+   `COOKSMITH_MAX_PARALLEL_BUILDS` value may be 1, 2 or 3 (default 3).
+   Do not reproduce selection in prose or use the diagnostic selector as build
+   permission. If credentials/API writes are unavailable, stop and report the
+   missing admission capability. Do not fall back to a Jira comment as a lock.
+3. Continue only after the command exits successfully and returns both a
+   `selected` story and its durable `claim` (owner, SHA and baseline). Retain that
+   receipt in the session handover. No selection means no build. An error or
+   uncertain result means stop and reconcile; never rerun to acquire someone
+   else's reservation or delete an old lock based on age.
+4. Read the full selected story and package; follow `engineering/CODEX_BUILDER_GUIDE.md`.
+   The reservation already owns the slot. Add the Jira evidence comment (package,
+   claim receipt, branch and plan), branch from the receipt's baseline, implement
+   only approved scope, validate fully, and open the normal story PR. If scope,
+   schema impact or dependencies differ from the approved safety metadata, stop
+   before implementation and retain the claim for review.
+5. Keep the claim through implementation, PR review and required release verification.
+   Opening a PR, stopping a session, removing codex-ready or elapsed time never
+   releases it. Follow the runbook for explicit owner-confirmed retirement and
+   interrupted-operation recovery. Do not retry or resume an old owner in a new
+   session without that reconciliation.
+6. Do not change acceptance criteria, expand scope, weaken tests, commit secrets,
+   merge, deploy or release anything. Stop once the PR is open and required
+   checks have started; provide the claim receipt for the reviewing operator.
 
 If you hit a stop condition from CODEX_BUILD_RULES.md (baseline conflict,
 unresolved product decision, production risk, ambiguous scope, and so on),

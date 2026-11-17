@@ -107,3 +107,5 @@ Every completed issue must record:
 - deployment status
 - migration status
 - package path
+
+All builders must reserve work through `scripts/engineering/admit-next-build.mjs` before starting. Follow [Build admission](../../docs/operations/BUILD_ADMISSION.md) for the atomic lock, pre-PR claims, conservative safety gates and explicit recovery. Jira comments and diagnostic selection are not claims.
