@@ -6,12 +6,20 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-122
 - **Epic:** Orchard Editorial design-system migration (CS-82)
 - **Priority:** Low
-- **Status:** `Ready`
+- **Status:** `Planned`
 - **Branch:** `refactor/cs-122-glossary-visible-actions-css`
 - **Depends on:** CS-111
 - **Blocks:** None
 - **Package path:** `engineering/ready/cs122-glossary-visible-actions-css.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings C14, N5, N6, N7 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
+
+## Publication Hold
+
+This package is published for planning only. Its acceptance criteria remain proposed, not approved for implementation. Do not start a build or add `codex-ready` until the unresolved decisions below are confirmed by the product owner and the package status is explicitly changed to `Ready`.
+
+Unresolved decisions blocking implementation:
+
+- Preferred terms for approval: Pantry (not staples), Plan (not Meal Planner), Shopping, Get Ahead, Put away.
 
 ## Product Outcome
 
