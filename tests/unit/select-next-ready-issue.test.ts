@@ -4,7 +4,10 @@ import { join } from 'node:path'
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { selectNextReadyIssue } from '../../scripts/engineering/select-next-ready-issue.mjs'
+import {
+  resolveMaxParallelBuilds,
+  selectNextReadyIssue,
+} from '../../scripts/engineering/select-next-ready-issue.mjs'
 
 const jiraConfig = {
   baseUrl: 'https://example.atlassian.net',
@@ -69,14 +72,84 @@ afterEach(() => {
 })
 
 describe('selectNextReadyIssue', () => {
-  it('reports busy and does not query Jira when a story PR is already open', async () => {
-    const fetchMock = mockFetch({ pulls: [{ title: '[CS-21] M10A — Shopping List Foundation' }] })
+  it('reports busy and does not query Jira when the parallel build limit is reached', async () => {
+    const fetchMock = mockFetch({
+      pulls: [
+        { title: '[CS-21] M10A — Shopping List Foundation' },
+        { title: 'CS-22: Generate shopping list' },
+        { title: 'CS-23: Pantry reconciliation' },
+      ],
+    })
     vi.stubGlobal('fetch', fetchMock)
 
     const result = await selectNextReadyIssue({ jiraConfig, githubConfig })
 
-    expect(result).toEqual({ selected: null, reason: 'busy', busyWith: 'CS-21', evaluated: [] })
+    expect(result).toEqual({
+      selected: null,
+      reason: 'busy',
+      busyWith: 'CS-21',
+      inFlight: ['CS-21', 'CS-22', 'CS-23'],
+      maxParallelBuilds: 3,
+      evaluated: [],
+    })
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps serial delivery when the limit is one', async () => {
+    const fetchMock = mockFetch({ pulls: [{ title: 'CS-21: Shopping List Foundation' }] })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await selectNextReadyIssue({ jiraConfig, githubConfig, maxParallelBuilds: 1 })
+
+    expect(result.reason).toBe('busy')
+    expect(result.inFlight).toEqual(['CS-21'])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('selects another story while a build is in flight below the limit', async () => {
+    await withReadyPackageFixture('CS-57', async (cwd) => {
+      const fetchMock = mockFetch({
+        pulls: [{ title: 'CS-21: Shopping List Foundation' }],
+        issues: [issue('CS-57')],
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
+
+      expect(result.selected).toBe('CS-57')
+      expect(result.inFlight).toEqual(['CS-21'])
+    })
+  })
+
+  it('never selects a story that already has a build in flight', async () => {
+    const fetchMock = mockFetch({
+      pulls: [{ title: 'CS-57: Observability' }],
+      issues: [issue('CS-57')],
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await selectNextReadyIssue({ jiraConfig, githubConfig })
+
+    expect(result.selected).toBeNull()
+    expect(result.evaluated[0].reason).toBe('a build is already in flight for this issue')
+  })
+
+  it('counts two pull requests for one story as a single build', async () => {
+    await withReadyPackageFixture('CS-57', async (cwd) => {
+      const fetchMock = mockFetch({
+        pulls: [
+          { title: 'CS-21: part one' },
+          { title: 'CS-21: part two' },
+          { title: 'CS-22: other' },
+        ],
+        issues: [issue('CS-57')],
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const result = await selectNextReadyIssue({ jiraConfig, githubConfig, cwd })
+
+      expect(result.selected).toBe('CS-57')
+    })
   })
 
   it('does not treat an open engineering-package PR as a build in flight', async () => {
@@ -208,5 +281,15 @@ describe('selectNextReadyIssue', () => {
     } finally {
       rmSync(cwd, { recursive: true, force: true })
     }
+  })
+})
+
+describe('resolveMaxParallelBuilds', () => {
+  it('uses a valid positive integer and falls back to the default otherwise', () => {
+    expect(resolveMaxParallelBuilds('5')).toBe(5)
+    expect(resolveMaxParallelBuilds('1')).toBe(1)
+    expect(resolveMaxParallelBuilds(undefined)).toBe(3)
+    expect(resolveMaxParallelBuilds('0')).toBe(3)
+    expect(resolveMaxParallelBuilds('many')).toBe(3)
   })
 })

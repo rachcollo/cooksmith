@@ -33,7 +33,13 @@ Codex may select work only when all are true:
 6. No active branch or open PR already claims the issue.
 7. It is the highest-priority eligible item unless a human names another issue.
 
-For equal priority, prefer the lower Jira key unless parallel execution is explicitly authorised.
+For equal priority, prefer the lower Jira key.
+
+### Parallel builds
+
+Parallel execution is authorised by the product owner (17 November 2026). Up to three builds may be in flight at once, where a build in flight is an open, non-exempt pull request carrying a `CS-###` key. The limit is `DEFAULT_MAX_PARALLEL_BUILDS` in `scripts/engineering/select-next-ready-issue.mjs` and can be overridden with `COOKSMITH_MAX_PARALLEL_BUILDS`; a value of `1` restores serial delivery.
+
+Each selection still returns one story. A story is never selected while it has its own build in flight, an existing branch, or a Jira blocker that is not Done, so dependent stories remain sequenced by their `Blocks` links. Record every real dependency as a Jira `Blocks` link: that link is the only thing that keeps two conflicting stories from being built at the same time.
 
 This rule is mechanically enforced by
 [`scripts/engineering/select-next-ready-issue.mjs`](../scripts/engineering/select-next-ready-issue.mjs),

@@ -80,18 +80,21 @@ route.
    Ready and label it codex-ready automatically.
 8. Do not merge the package PR. Do not transition the Jira issue.
 
-## Phase B — build one eligible story
+## Phase B — build one eligible story (up to three in flight)
 
-1. List open GitHub pull requests. If any open PR title contains a `CS-###`
-   key and does NOT start with `chore:`, `chore(...):`, `infra:` or
-   `infra(...):`, a build is already in flight — end the session here.
+1. List open GitHub pull requests. Count the distinct `CS-###` keys in open
+   PR titles that do NOT start with `chore:`, `chore(...):`, `infra:` or
+   `infra(...):`. These are the builds in flight. If three or more are in
+   flight, end the session here. Otherwise continue; this firing may start
+   one more build alongside them.
 2. Query Jira: `project = CS AND status = "Ready" AND labels = "codex-ready"
 ORDER BY key ASC`.
 3. Rank by priority (Highest, High, Medium, Low, Lowest), then by lower key
    for ties.
 4. Walk the ranked list. For each candidate: confirm via Jira issue links
-   that every issue it "is blocked by" is Done; confirm no branch other than
-   `package/*` branches contains its key (case-insensitive); run
+   that every issue it "is blocked by" is Done; confirm it is not one of the
+   builds in flight and that no branch other than `package/*` branches
+   contains its key (case-insensitive); run
    `node scripts/engineering/validate-package-readiness.mjs CS-NN` and
    require it to pass. First candidate clearing all three is selected.
 5. If none clear, end the session quietly — no comment, no branch, no PR.

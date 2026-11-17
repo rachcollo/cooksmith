@@ -90,7 +90,8 @@ Safe in parallel only when:
 - no dependency relationship
 
 Maximum:
-- one active issue per engineer.
+- three builds in flight across the automated delivery routine (see the Engineering Index, "Parallel builds");
+- one active issue per human engineer.
 
 ---
 

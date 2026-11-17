@@ -198,17 +198,19 @@ check is never picked up, and is reported as skipped with the specific reason.
 [`scripts/engineering/select-next-ready-issue.mjs`](../../scripts/engineering/select-next-ready-issue.mjs)
 is the decision function, run by whatever starts a build. It:
 
-1. Checks GitHub for any already-open pull request referencing a `CS-###`
-   key. If one exists, it reports **busy** and stops immediately, enforcing
-   the Engineering Index's "maximum one active issue" rule without querying
-   Jira at all.
+1. Counts the stories that already have an open, non-exempt pull request
+   referencing a `CS-###` key. If that count has reached the parallel build
+   limit (three by default, `COOKSMITH_MAX_PARALLEL_BUILDS` to override), it
+   reports **busy** and stops immediately without querying Jira at all. The
+   product owner authorised parallel builds on 17 November 2026; set the
+   limit to `1` to return to one active issue at a time.
 2. Queries Jira for `project = CS AND status = "Ready" AND labels =
 "codex-ready"`.
 3. Ranks candidates by priority (Highest to Lowest), then by lower Jira key
    for ties, matching the documented rule exactly.
 4. For each candidate in that order: confirms every issue it "is blocked by"
    is Done (reading Jira's issue-link data directly, no extra calls), confirms
-   no branch already exists for that key, and runs the readiness validator
+   no build is in flight and no branch already exists for that key, and runs the readiness validator
    above. The first candidate that clears all three is selected.
 5. Returns the selection, or a full list of every candidate considered and
    exactly why each was skipped, for an honest audit trail.

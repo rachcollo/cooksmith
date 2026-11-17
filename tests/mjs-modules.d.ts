@@ -51,10 +51,14 @@ declare module '*.mjs' {
     selected: string | null
     reason?: string
     busyWith?: string
+    inFlight?: string[]
+    maxParallelBuilds?: number
     priority?: string | null
     summary?: string
     evaluated: SelectionEvaluation[]
   }
   export const selectNextReadyIssue: (options: Record<string, unknown>) => Promise<SelectionResult>
   export const formatSelectionReport: (result: SelectionResult) => string
+  export const resolveMaxParallelBuilds: (value: unknown) => number
+  export const DEFAULT_MAX_PARALLEL_BUILDS: number
 }

@@ -1,7 +1,8 @@
-// Selects the single highest-priority Jira issue eligible for an autonomous
-// build, implementing the "Next-Task Selection Rule" in
-// engineering/COOKSMITH_ENGINEERING_INDEX.md. Read-only: this script never
-// changes Jira or GitHub state. The `codex-ready` label is the human
+// Selects the highest-priority Jira issue eligible for an autonomous build,
+// implementing the "Next-Task Selection Rule" in
+// engineering/COOKSMITH_ENGINEERING_INDEX.md. Builds may run in parallel up
+// to a fixed limit; each call still selects at most one new issue. Read-only:
+// this script never changes Jira or GitHub state. The `codex-ready` label is the human
 // approval gate — a product owner must apply it deliberately before an
 // issue can ever be picked up here.
 
@@ -16,6 +17,10 @@ import { EXEMPT_PREFIX_PATTERN } from './validate-pr-governance.mjs'
 
 const PRIORITY_RANK = { highest: 0, high: 1, medium: 2, low: 3, lowest: 4 }
 const JIRA_KEY_IN_TEXT = /\bCS-(\d+)\b/i
+// Parallel execution is authorised by the product owner up to this many
+// builds in flight (open, non-exempt pull requests carrying a CS key).
+// Override with COOKSMITH_MAX_PARALLEL_BUILDS; 1 restores serial delivery.
+export const DEFAULT_MAX_PARALLEL_BUILDS = 3
 const JQL = 'project = CS AND status = "Ready" AND labels = "codex-ready" ORDER BY key ASC'
 
 function priorityRank(name) {
@@ -24,6 +29,11 @@ function priorityRank(name) {
 
 function keyNumber(key) {
   return Number(key.split('-')[1])
+}
+
+export function resolveMaxParallelBuilds(value) {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : DEFAULT_MAX_PARALLEL_BUILDS
 }
 
 function rankIssues(issues) {
@@ -51,17 +61,35 @@ function unmetBlockers(issue) {
   return unmet
 }
 
-export async function selectNextReadyIssue({ jiraConfig, githubConfig, cwd = process.cwd() } = {}) {
+export async function selectNextReadyIssue({
+  jiraConfig,
+  githubConfig,
+  cwd = process.cwd(),
+  maxParallelBuilds = DEFAULT_MAX_PARALLEL_BUILDS,
+} = {}) {
   // Infrastructure PRs, including "chore(package):" engineering-package
   // drafts awaiting product-owner approval, are docs-only and do not count
   // as a build in flight even when their titles carry a Jira key.
   const openPulls = await listOpenPullRequests(githubConfig)
-  const busyPull = openPulls.find(
-    (pr) => !EXEMPT_PREFIX_PATTERN.test(pr.title ?? '') && JIRA_KEY_IN_TEXT.test(pr.title ?? ''),
-  )
-  if (busyPull) {
-    const busyWith = `CS-${busyPull.title.match(JIRA_KEY_IN_TEXT)[1]}`
-    return { selected: null, reason: 'busy', busyWith, evaluated: [] }
+  const inFlight = [
+    ...new Set(
+      openPulls
+        .filter(
+          (pr) =>
+            !EXEMPT_PREFIX_PATTERN.test(pr.title ?? '') && JIRA_KEY_IN_TEXT.test(pr.title ?? ''),
+        )
+        .map((pr) => `CS-${pr.title.match(JIRA_KEY_IN_TEXT)[1]}`),
+    ),
+  ]
+  if (inFlight.length >= maxParallelBuilds) {
+    return {
+      selected: null,
+      reason: 'busy',
+      busyWith: inFlight[0],
+      inFlight,
+      maxParallelBuilds,
+      evaluated: [],
+    }
   }
 
   const branches = await listBranches(githubConfig)
@@ -76,6 +104,15 @@ export async function selectNextReadyIssue({ jiraConfig, githubConfig, cwd = pro
   const evaluated = []
   for (const issue of ranked) {
     const key = issue.key
+
+    if (inFlight.includes(key)) {
+      evaluated.push({
+        key,
+        eligible: false,
+        reason: 'a build is already in flight for this issue',
+      })
+      continue
+    }
 
     const blockers = unmetBlockers(issue)
     if (blockers.length > 0) {
@@ -103,6 +140,8 @@ export async function selectNextReadyIssue({ jiraConfig, githubConfig, cwd = pro
       selected: key,
       summary: issue.fields.summary,
       priority: issue.fields.priority?.name ?? null,
+      inFlight,
+      maxParallelBuilds,
       evaluated,
     }
   }
@@ -119,7 +158,7 @@ export function formatSelectionReport(result) {
     return `Selected ${result.selected} (${result.priority ?? 'no priority'}): ${result.summary}\n${lines.join('\n')}\n`
   }
   if (result.reason === 'busy') {
-    return `No selection: an autonomous build is already in progress for ${result.busyWith}.\n`
+    return `No selection: ${result.inFlight.length} of ${result.maxParallelBuilds} parallel builds are in flight (${result.inFlight.join(', ')}).\n`
   }
   return `No eligible issue found.\n${lines.join('\n')}\n`
 }
@@ -142,7 +181,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 
   try {
-    const result = await selectNextReadyIssue({ jiraConfig, githubConfig })
+    const result = await selectNextReadyIssue({
+      jiraConfig,
+      githubConfig,
+      maxParallelBuilds: resolveMaxParallelBuilds(process.env.COOKSMITH_MAX_PARALLEL_BUILDS),
+    })
     process.stdout.write(formatSelectionReport(result))
   } catch (error) {
     process.stderr.write(`Selection failed: ${error.message}\n`)
