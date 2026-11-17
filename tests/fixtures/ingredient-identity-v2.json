@@ -1,0 +1,914 @@
+[
+  {
+    "name": "apple",
+    "category": "produce"
+  },
+  {
+    "name": "apples",
+    "category": "produce"
+  },
+  {
+    "name": "banana",
+    "category": "produce"
+  },
+  {
+    "name": "bananas",
+    "category": "produce"
+  },
+  {
+    "name": "pear",
+    "category": "produce"
+  },
+  {
+    "name": "pears",
+    "category": "produce"
+  },
+  {
+    "name": "peach",
+    "category": "produce"
+  },
+  {
+    "name": "peaches",
+    "category": "produce"
+  },
+  {
+    "name": "plum",
+    "category": "produce"
+  },
+  {
+    "name": "plums",
+    "category": "produce"
+  },
+  {
+    "name": "lemon",
+    "category": "produce"
+  },
+  {
+    "name": "lemons",
+    "category": "produce"
+  },
+  {
+    "name": "lime",
+    "category": "produce"
+  },
+  {
+    "name": "limes",
+    "category": "produce"
+  },
+  {
+    "name": "orange",
+    "category": "produce"
+  },
+  {
+    "name": "oranges",
+    "category": "produce"
+  },
+  {
+    "name": "mandarin",
+    "category": "produce"
+  },
+  {
+    "name": "mandarins",
+    "category": "produce"
+  },
+  {
+    "name": "mango",
+    "category": "produce"
+  },
+  {
+    "name": "pineapple",
+    "category": "produce"
+  },
+  {
+    "name": "grape",
+    "category": "produce"
+  },
+  {
+    "name": "grapes",
+    "category": "produce"
+  },
+  {
+    "name": "strawberry",
+    "category": "produce"
+  },
+  {
+    "name": "strawberries",
+    "category": "produce"
+  },
+  {
+    "name": "blueberry",
+    "category": "produce"
+  },
+  {
+    "name": "blueberries",
+    "category": "produce"
+  },
+  {
+    "name": "raspberry",
+    "category": "produce"
+  },
+  {
+    "name": "raspberries",
+    "category": "produce"
+  },
+  {
+    "name": "watermelon",
+    "category": "produce"
+  },
+  {
+    "name": "kiwifruit",
+    "category": "produce"
+  },
+  {
+    "name": "nectarine",
+    "category": "produce"
+  },
+  {
+    "name": "apricot",
+    "category": "produce"
+  },
+  {
+    "name": "avocado",
+    "category": "produce"
+  },
+  {
+    "name": "avocados",
+    "category": "produce"
+  },
+  {
+    "name": "onion",
+    "category": "produce"
+  },
+  {
+    "name": "onions",
+    "category": "produce"
+  },
+  {
+    "name": "red onion",
+    "category": "produce"
+  },
+  {
+    "name": "brown onions",
+    "category": "produce"
+  },
+  {
+    "name": "spring onions",
+    "category": "produce"
+  },
+  {
+    "name": "scallions",
+    "category": "produce"
+  },
+  {
+    "name": "green onions",
+    "category": "produce"
+  },
+  {
+    "name": "garlic",
+    "category": "produce"
+  },
+  {
+    "name": "ginger",
+    "category": "produce"
+  },
+  {
+    "name": "carrot",
+    "category": "produce"
+  },
+  {
+    "name": "carrots",
+    "category": "produce"
+  },
+  {
+    "name": "potato",
+    "category": "produce"
+  },
+  {
+    "name": "potatoes",
+    "category": "produce"
+  },
+  {
+    "name": "sweet potatoes",
+    "category": "produce"
+  },
+  {
+    "name": "tomato",
+    "category": "produce"
+  },
+  {
+    "name": "tomatoes",
+    "category": "produce"
+  },
+  {
+    "name": "capsicum",
+    "category": "produce"
+  },
+  {
+    "name": "capsicums",
+    "category": "produce"
+  },
+  {
+    "name": "bell peppers",
+    "category": "produce"
+  },
+  {
+    "name": "zucchini",
+    "category": "produce"
+  },
+  {
+    "name": "courgettes",
+    "category": "produce"
+  },
+  {
+    "name": "eggplant",
+    "category": "produce"
+  },
+  {
+    "name": "aubergines",
+    "category": "produce"
+  },
+  {
+    "name": "cucumber",
+    "category": "produce"
+  },
+  {
+    "name": "lettuce",
+    "category": "produce"
+  },
+  {
+    "name": "spinach",
+    "category": "produce"
+  },
+  {
+    "name": "kale",
+    "category": "produce"
+  },
+  {
+    "name": "cabbage",
+    "category": "produce"
+  },
+  {
+    "name": "broccoli",
+    "category": "produce"
+  },
+  {
+    "name": "cauliflower",
+    "category": "produce"
+  },
+  {
+    "name": "mushrooms",
+    "category": "produce"
+  },
+  {
+    "name": "pumpkin",
+    "category": "produce"
+  },
+  {
+    "name": "celery",
+    "category": "produce"
+  },
+  {
+    "name": "corn",
+    "category": "produce"
+  },
+  {
+    "name": "peas",
+    "category": "produce"
+  },
+  {
+    "name": "green beans",
+    "category": "produce"
+  },
+  {
+    "name": "runner beans",
+    "category": "produce"
+  },
+  {
+    "name": "broad beans",
+    "category": "produce"
+  },
+  {
+    "name": "snow peas",
+    "category": "produce"
+  },
+  {
+    "name": "mangetout",
+    "category": "produce"
+  },
+  {
+    "name": "rocket",
+    "category": "produce"
+  },
+  {
+    "name": "arugula",
+    "category": "produce"
+  },
+  {
+    "name": "beetroot",
+    "category": "produce"
+  },
+  {
+    "name": "radishes",
+    "category": "produce"
+  },
+  {
+    "name": "leeks",
+    "category": "produce"
+  },
+  {
+    "name": "fennel",
+    "category": "produce"
+  },
+  {
+    "name": "asparagus",
+    "category": "produce"
+  },
+  {
+    "name": "parsnips",
+    "category": "produce"
+  },
+  {
+    "name": "turnips",
+    "category": "produce"
+  },
+  {
+    "name": "chillies",
+    "category": "produce"
+  },
+  {
+    "name": "cilantro",
+    "category": "produce"
+  },
+  {
+    "name": "coriander",
+    "category": "produce"
+  },
+  {
+    "name": "parsley",
+    "category": "produce"
+  },
+  {
+    "name": "fresh basil",
+    "category": "produce"
+  },
+  {
+    "name": "fresh mint",
+    "category": "produce"
+  },
+  {
+    "name": "fresh oregano",
+    "category": "produce"
+  },
+  {
+    "name": "chicken stock",
+    "category": "pantry"
+  },
+  {
+    "name": "beef stock",
+    "category": "pantry"
+  },
+  {
+    "name": "vegetable stock",
+    "category": "pantry"
+  },
+  {
+    "name": "cream of tartar",
+    "category": "pantry"
+  },
+  {
+    "name": "black beans",
+    "category": "pantry"
+  },
+  {
+    "name": "kidney beans",
+    "category": "pantry"
+  },
+  {
+    "name": "cannellini beans",
+    "category": "pantry"
+  },
+  {
+    "name": "butter beans",
+    "category": "pantry"
+  },
+  {
+    "name": "baked beans",
+    "category": "pantry"
+  },
+  {
+    "name": "lentils",
+    "category": "pantry"
+  },
+  {
+    "name": "chickpeas",
+    "category": "pantry"
+  },
+  {
+    "name": "garbanzo beans",
+    "category": "pantry"
+  },
+  {
+    "name": "plain flour",
+    "category": "pantry"
+  },
+  {
+    "name": "all purpose flour",
+    "category": "pantry"
+  },
+  {
+    "name": "self rising flour",
+    "category": "pantry"
+  },
+  {
+    "name": "sugar",
+    "category": "pantry"
+  },
+  {
+    "name": "icing sugar",
+    "category": "pantry"
+  },
+  {
+    "name": "powdered sugar",
+    "category": "pantry"
+  },
+  {
+    "name": "rice",
+    "category": "pantry"
+  },
+  {
+    "name": "brown rice",
+    "category": "pantry"
+  },
+  {
+    "name": "pasta",
+    "category": "pantry"
+  },
+  {
+    "name": "egg noodles",
+    "category": "pantry"
+  },
+  {
+    "name": "noodles",
+    "category": "pantry"
+  },
+  {
+    "name": "olive oil",
+    "category": "pantry"
+  },
+  {
+    "name": "extra virgin olive oil",
+    "category": "pantry"
+  },
+  {
+    "name": "EVOO",
+    "category": "pantry"
+  },
+  {
+    "name": "canola oil",
+    "category": "pantry"
+  },
+  {
+    "name": "vinegar",
+    "category": "pantry"
+  },
+  {
+    "name": "rice vinegar",
+    "category": "pantry"
+  },
+  {
+    "name": "soy sauce",
+    "category": "pantry"
+  },
+  {
+    "name": "fish sauce",
+    "category": "pantry"
+  },
+  {
+    "name": "tomato sauce",
+    "category": "pantry"
+  },
+  {
+    "name": "salt",
+    "category": "pantry"
+  },
+  {
+    "name": "black pepper",
+    "category": "pantry"
+  },
+  {
+    "name": "cumin",
+    "category": "pantry"
+  },
+  {
+    "name": "paprika",
+    "category": "pantry"
+  },
+  {
+    "name": "dried oregano",
+    "category": "pantry"
+  },
+  {
+    "name": "garlic powder",
+    "category": "pantry"
+  },
+  {
+    "name": "onion powder",
+    "category": "pantry"
+  },
+  {
+    "name": "curry paste",
+    "category": "pantry"
+  },
+  {
+    "name": "tomato paste",
+    "category": "pantry"
+  },
+  {
+    "name": "coconut milk",
+    "category": "pantry"
+  },
+  {
+    "name": "coconut cream",
+    "category": "pantry"
+  },
+  {
+    "name": "almond milk",
+    "category": "pantry"
+  },
+  {
+    "name": "oat milk",
+    "category": "pantry"
+  },
+  {
+    "name": "soy milk",
+    "category": "pantry"
+  },
+  {
+    "name": "honey",
+    "category": "pantry"
+  },
+  {
+    "name": "oats",
+    "category": "pantry"
+  },
+  {
+    "name": "couscous",
+    "category": "pantry"
+  },
+  {
+    "name": "quinoa",
+    "category": "pantry"
+  },
+  {
+    "name": "mustard",
+    "category": "pantry"
+  },
+  {
+    "name": "peanut butter",
+    "category": "pantry"
+  },
+  {
+    "name": "almonds",
+    "category": "pantry"
+  },
+  {
+    "name": "cashews",
+    "category": "pantry"
+  },
+  {
+    "name": "walnuts",
+    "category": "pantry"
+  },
+  {
+    "name": "peanuts",
+    "category": "pantry"
+  },
+  {
+    "name": "sesame seeds",
+    "category": "pantry"
+  },
+  {
+    "name": "tahini",
+    "category": "pantry"
+  },
+  {
+    "name": "raisins",
+    "category": "pantry"
+  },
+  {
+    "name": "sultanas",
+    "category": "pantry"
+  },
+  {
+    "name": "canned tuna",
+    "category": "pantry"
+  },
+  {
+    "name": "tinned salmon",
+    "category": "pantry"
+  },
+  {
+    "name": "canned chopped tomatoes",
+    "category": "pantry"
+  },
+  {
+    "name": "breadcrumbs",
+    "category": "pantry"
+  },
+  {
+    "name": "bread crumbs",
+    "category": "pantry"
+  },
+  {
+    "name": "baking powder",
+    "category": "pantry"
+  },
+  {
+    "name": "baking soda",
+    "category": "pantry"
+  },
+  {
+    "name": "yeast",
+    "category": "pantry"
+  },
+  {
+    "name": "coffee",
+    "category": "pantry"
+  },
+  {
+    "name": "tea",
+    "category": "pantry"
+  },
+  {
+    "name": "chocolate",
+    "category": "pantry"
+  },
+  {
+    "name": "cocoa",
+    "category": "pantry"
+  },
+  {
+    "name": "chicken breast",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "chicken thighs",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "beef mince",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "pork mince",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "lamb chops",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "bacon",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "sausages",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "ham",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "chorizo",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "steak",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "turkey",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "fish",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "salmon",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "tuna",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "prawns",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "shrimp",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "duck",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "sardines",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "anchovies",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "mussels",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "squid",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "oysters",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "crab",
+    "category": "meat_and_seafood"
+  },
+  {
+    "name": "milk",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "full cream milk",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "lactose free milk",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "cheddar cheese",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "butter",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "cream",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "sour cream",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "yoghurt",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "Greek yogurt",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "eggs",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "feta",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "parmesan",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "mozzarella",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "halloumi",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "ricotta",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "mascarpone",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "buttermilk",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "kefir",
+    "category": "dairy_and_eggs"
+  },
+  {
+    "name": "bread",
+    "category": "bakery"
+  },
+  {
+    "name": "bread rolls",
+    "category": "bakery"
+  },
+  {
+    "name": "wraps",
+    "category": "bakery"
+  },
+  {
+    "name": "tortillas",
+    "category": "bakery"
+  },
+  {
+    "name": "buns",
+    "category": "bakery"
+  },
+  {
+    "name": "pita",
+    "category": "bakery"
+  },
+  {
+    "name": "bagels",
+    "category": "bakery"
+  },
+  {
+    "name": "croissants",
+    "category": "bakery"
+  },
+  {
+    "name": "frozen peas",
+    "category": "frozen"
+  },
+  {
+    "name": "frozen chicken",
+    "category": "frozen"
+  },
+  {
+    "name": "frozen green beans",
+    "category": "frozen"
+  },
+  {
+    "name": "ice cream",
+    "category": "frozen"
+  },
+  {
+    "name": "frozen berries",
+    "category": "frozen"
+  },
+  {
+    "name": "frozen diced onions",
+    "category": "frozen"
+  },
+  {
+    "name": "foil",
+    "category": "household"
+  },
+  {
+    "name": "cling wrap",
+    "category": "household"
+  },
+  {
+    "name": "paper towels",
+    "category": "household"
+  },
+  {
+    "name": "dishwashing liquid",
+    "category": "household"
+  },
+  {
+    "name": "soap",
+    "category": "household"
+  },
+  {
+    "name": "detergent",
+    "category": "household"
+  },
+  {
+    "name": "unknown ingredient",
+    "category": "other"
+  },
+  {
+    "name": "hamper",
+    "category": "other"
+  },
+  {
+    "name": "egg timer",
+    "category": "household"
+  },
+  {
+    "name": "oily rag",
+    "category": "other"
+  },
+  {
+    "name": "boiled water",
+    "category": "other"
+  }
+]

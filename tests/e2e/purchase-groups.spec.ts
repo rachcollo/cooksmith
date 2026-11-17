@@ -160,3 +160,28 @@ test('multiple mobile edits keep one small mark per row and match a fresh render
   await checkMarks()
   expect(await accessibility(page)).toEqual([])
 })
+
+test('plural purchases and named related Pantry hints survive dismissal and reload', async ({
+  page,
+}) => {
+  await page.goto('/tests/e2e/fixtures/purchases.html?identity')
+  await expect(page.getByText('mushroom', { exact: true })).toHaveCount(1)
+  await expect(page.getByText('300 g', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Fruit and vegetables', exact: true }),
+  ).toBeVisible()
+  const hint = page.getByRole('button', { name: 'Why should I check my pantry for garlic?' })
+  await hint.click()
+  await expect(page.getByRole('tooltip')).toContainText('Check Pantry: Garlic powder.')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  await hint.focus()
+  await hint.click()
+  await expect(page.getByRole('tooltip')).toContainText('Garlic powder')
+  expect(await accessibility(page)).toEqual([])
+  await page.mouse.move(0, 0)
+  await page.reload()
+  await expect(page.getByText('300 g', { exact: true })).toBeVisible()
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})

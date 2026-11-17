@@ -1,12 +1,15 @@
+import { categoriseIngredient } from './ingredientCategory'
+export { categoriseIngredient } from './ingredientCategory'
 import { convertPurchaseAmount, recipeMeasures } from '../measurements/purchaseMeasures'
 import type { PlannedMeal } from '../meal-plans/types'
 import { purchaseIngredientsFor, purchaseProductName } from './purchaseIngredients'
 import { purchaseMeasure } from './purchaseGroups'
 import type { Recipe } from '../recipes/types'
-import type { ShoppingCategory, ShoppingItem, ShoppingItemInput } from './types'
+import type { ShoppingItem, ShoppingItemInput } from './types'
 import {
   canonicalIngredientName,
   ingredientPurchaseKey,
+  ingredientIdentityVersion,
   parseIngredientQuantity,
 } from './ingredientIdentity'
 
@@ -18,135 +21,6 @@ export interface PlanAdditions {
 }
 
 const maxNameLength = 100
-
-const categoryKeywords: [ShoppingCategory, string[]][] = [
-  ['frozen', ['frozen', 'ice cream']],
-  [
-    'pantry',
-    [
-      'coconut milk',
-      'coconut cream',
-      'tomato paste',
-      'curry paste',
-      'stock',
-      'flour',
-      'sugar',
-      'rice',
-      'pasta',
-      'noodle',
-      'oil',
-      'vinegar',
-      'soy sauce',
-      'sauce',
-      'salt',
-      'pepper',
-      'spice',
-      'cumin',
-      'paprika',
-      'oregano',
-      'lentil',
-      'chickpea',
-      'canned',
-      'tinned',
-      'honey',
-      'oats',
-      'couscous',
-      'quinoa',
-      'mustard',
-      'peanut butter',
-    ],
-  ],
-  [
-    'meat_and_seafood',
-    [
-      'chicken',
-      'beef',
-      'pork',
-      'lamb',
-      'mince',
-      'bacon',
-      'sausage',
-      'ham',
-      'chorizo',
-      'steak',
-      'turkey',
-      'fish',
-      'salmon',
-      'tuna',
-      'prawn',
-      'seafood',
-    ],
-  ],
-  [
-    'dairy_and_eggs',
-    [
-      'milk',
-      'cheese',
-      'butter',
-      'cream',
-      'yoghurt',
-      'yogurt',
-      'egg',
-      'feta',
-      'parmesan',
-      'mozzarella',
-      'haloumi',
-    ],
-  ],
-  ['bakery', ['bread', 'roll', 'wrap', 'tortilla', 'bun', 'pita', 'bagel', 'croissant']],
-  [
-    'produce',
-    [
-      'spring onion',
-      'sweet potato',
-      'onion',
-      'garlic',
-      'tomato',
-      'potato',
-      'carrot',
-      'capsicum',
-      'zucchini',
-      'cucumber',
-      'lettuce',
-      'spinach',
-      'kale',
-      'cabbage',
-      'broccoli',
-      'cauliflower',
-      'mushroom',
-      'pumpkin',
-      'celery',
-      'corn',
-      'peas',
-      'bean',
-      'apple',
-      'banana',
-      'lemon',
-      'lime',
-      'orange',
-      'berries',
-      'berry',
-      'avocado',
-      'ginger',
-      'chilli',
-      'coriander',
-      'parsley',
-      'basil',
-      'mint',
-      'salad',
-    ],
-  ],
-  ['household', ['paper towel', 'foil', 'cling wrap', 'detergent', 'dishwashing', 'soap']],
-]
-
-const orderedKeywords = categoryKeywords
-  .flatMap(([category, keywords]) => keywords.map((keyword) => ({ category, keyword })))
-  .sort((left, right) => right.keyword.length - left.keyword.length)
-
-export function categoriseIngredient(name: string): ShoppingCategory {
-  const normalised = name.toLocaleLowerCase()
-  return orderedKeywords.find(({ keyword }) => normalised.includes(keyword))?.category ?? 'other'
-}
 
 export function buildPlanAdditions(
   meals: (Pick<PlannedMeal, 'recipeState'> &
@@ -205,6 +79,7 @@ export function buildPlanAdditions(
       if (displayName === '') continue
       const quantity = converted.quantity
       const source = {
+        ingredientIdentityVersion,
         ingredientStructure: row.structure,
         sourceIngredientId: row.sourceIngredientId,
         sourceRecipeId: recipe.id,

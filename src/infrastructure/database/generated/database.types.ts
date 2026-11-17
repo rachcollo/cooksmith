@@ -2380,6 +2380,7 @@ export type Database = {
         Returns: undefined
       }
       canonical_ingredient_name_v1: { Args: { value: string }; Returns: string }
+      canonical_ingredient_name_v2: { Args: { value: string }; Returns: string }
       canonical_ingredient_unit_v1: { Args: { value: string }; Returns: string }
       configure_weekly_preparation_luna_profile: {
         Args: never

@@ -6,11 +6,11 @@
 - **Jira link:** https://smillins.atlassian.net/browse/CS-116
 - **Epic:** Shopping Lists (CS-6)
 - **Priority:** High
-- **Status:** `Ready`
+- **Status:** `In Review`
 - **Branch:** `feat/cs-116-ingredient-identity`
 - **Depends on:** CS-79, CS-101
 - **Blocks:** None
-- **Package path:** `engineering/ready/cs116-ingredient-identity.md`
+- **Package path:** `engineering/review/cs116-ingredient-identity.md`
 - **Source:** Four-reviewer review, 17 November 2026, findings S5 (`docs/engineering/reports/2026-11-17-four-reviewer-review.md`)
 
 ## Product Outcome
@@ -76,7 +76,7 @@ Run the full quality suite required by `docs/engineering/CODEX_BUILD_RULES.md` a
 
 ## Release, Rollback and Cost
 
-- **Expected migration:** None expected; confirm during build whether the server-side refresh RPC embeds identity.
+- **Migration:** `20261117094901_ingredient_identity_v2.sql`; additive v2 lookup and in-place identity-only refresh. Existing v1 storage keys and receipt references remain intact.
 - **Expected Edge Function:** None.
 - **Rollback:** Revert application changes; forward-fix any released schema.
 - **Recurring cost:** A$0/month and A$0/year.

@@ -102,18 +102,18 @@ describe('clean combined purchases', () => {
       item('s2', 'sea salt flakes', 50, 'g'),
       item('s3', 'sea salt flakes plus extra to taste', null, null),
     ])
-    expect(await screen.findByText('sea salt flakes', { exact: true })).toBeVisible()
+    expect(await screen.findByText('sea salt flake', { exact: true })).toBeVisible()
     expect(screen.getByText('5 ml + 50 g + to taste')).toBeVisible()
     expect(screen.queryByText('Recipe amounts')).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Mark as done: sea salt flakes' })).toHaveLength(1)
-    await userEvent.click(screen.getByRole('button', { name: 'Mark as done: sea salt flakes' }))
+    expect(screen.getAllByRole('button', { name: 'Mark as done: sea salt flake' })).toHaveLength(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as done: sea salt flake' }))
     expect(
-      await screen.findByRole('button', { name: 'Mark as needed: sea salt flakes' }),
+      await screen.findByRole('button', { name: 'Mark as needed: sea salt flake' }),
     ).toBeVisible()
     expect(repository.setCompletedMany).toHaveBeenCalledWith(householdId, ['s1', 's2', 's3'], true)
-    await userEvent.click(screen.getByRole('button', { name: 'Mark as needed: sea salt flakes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as needed: sea salt flake' }))
     expect(
-      await screen.findByRole('button', { name: 'Mark as done: sea salt flakes' }),
+      await screen.findByRole('button', { name: 'Mark as done: sea salt flake' }),
     ).toBeVisible()
     expect(repository.setCompletedMany).toHaveBeenLastCalledWith(
       householdId,

@@ -29,6 +29,7 @@ export interface ShoppingItem {
 }
 
 export interface ShoppingSourceQuantity {
+  ingredientIdentityVersion?: number
   ingredientStructure?: IngredientStructure
   sourceIngredientId?: string
   sourceRecipeId?: string
