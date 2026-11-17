@@ -19,6 +19,9 @@ describe('reviewed Australian purchasing fixtures', () => {
     expect(canonicalIngredientName(canonical)).toBe(canonical)
   })
   it.each([
+    ['mangoes', 'mango'],
+    ['quiches', 'quiche'],
+    ['mousses', 'mousse'],
     ['mushrooms', 'mushroom'],
     ['berries', 'berry'],
     ['radishes', 'radish'],

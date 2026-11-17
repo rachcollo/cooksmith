@@ -3,6 +3,11 @@ select no_plan();
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
 -- Cross-runtime parity for the reviewed ingredient fixture.
+select is(cooksmith.canonical_ingredient_name_v2('mangoes'),'mango','mangoes: SQL/TypeScript identity parity');
+select is(cooksmith.canonical_ingredient_name_v2('quiche'),'quiche','quiche: SQL/TypeScript identity parity');
+select is(cooksmith.canonical_ingredient_name_v2('quiches'),'quiche','quiches: SQL/TypeScript identity parity');
+select is(cooksmith.canonical_ingredient_name_v2('mousse'),'mousse','mousse: SQL/TypeScript identity parity');
+select is(cooksmith.canonical_ingredient_name_v2('mousses'),'mousse','mousses: SQL/TypeScript identity parity');
 select is(cooksmith.canonical_ingredient_name_v2('apple'),'apple','apple: SQL/TypeScript identity parity');
 select is(cooksmith.canonical_ingredient_name_v2('apples'),'apple','apples: SQL/TypeScript identity parity');
 select is(cooksmith.canonical_ingredient_name_v2('banana'),'banana','banana: SQL/TypeScript identity parity');
@@ -266,6 +271,19 @@ update cooksmith.shopping_list_items set completed=false where id='b1160000-0000
 select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch());
 select ok((select completed from cooksmith.shopping_list_items where id='b1160000-0000-4000-8000-000000000001'),'Identity-only refresh preserves individually bought backing row');
 select ok((select not completed from cooksmith.shopping_list_items where id='b1160000-0000-4000-8000-000000000002'),'Identity-only refresh preserves individually outstanding backing row');
+-- An explicit renamed purchase still owns the original recipe demand. Identity
+-- refresh must not fall back to merging its receipt-bound alias contributions.
+update cooksmith.shopping_list_items set manual=true,plan_override=true,display_name='Special mushrooms',quantity=250,category='other'
+where id='b1160000-0000-4000-8000-000000000001';
+update cooksmith.shopping_item_contributions c set source_quantities=(
+  select jsonb_agg((s-'ingredientIdentityVersion')||jsonb_build_object('purchaseName','mushrooms')) from jsonb_array_elements(c.source_quantities) s
+) where id='b1160000-0000-4000-8000-000000000021';
+select lives_ok($$select cooksmith.refresh_shopping_ingredient_structure('20000000-0000-4000-8000-000000000001',pg_temp.identity_batch())$$,'Identity refresh accepts a renamed receipt-bound override');
+select ok((select bool_and(s.value->>'ingredientIdentityVersion'='2') from cooksmith.shopping_item_contributions c cross join lateral jsonb_array_elements(c.source_quantities) s where c.id='b1160000-0000-4000-8000-000000000021'),'Renamed override source metadata advances to v2');
+select lives_ok($$select cooksmith.reconcile_planned_meal_shopping('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000010',pg_temp.identity_inputs())$$,'Normal identity reconciliation accepts a renamed override');
+select is((select count(*) from cooksmith.shopping_item_contributions where id in ('b1160000-0000-4000-8000-000000000021','b1160000-0000-4000-8000-000000000022')),2::bigint,'Renamed override retains both original receipt source IDs');
+select ok((select display_name='Special mushrooms' and quantity=250 and category='other' from cooksmith.shopping_list_items where id='b1160000-0000-4000-8000-000000000001'),'Identity refresh preserves explicit name, quantity and aisle');
+select is((select to_jsonb(p) from cooksmith.shopping_stock_purchases p where id='b1160000-0000-4000-8000-000000000030'),(select snapshot from before_receipt),'Renamed override leaves immutable receipt unchanged');
 insert into cooksmith.household_pantry_items(household_id,name,category,storage_location) values('20000000-0000-4000-8000-000000000001','mushrooms','produce','fridge');
 select throws_ok($$insert into cooksmith.household_pantry_items(household_id,name,category,storage_location) values('20000000-0000-4000-8000-000000000001','mushroom','produce','fridge')$$,'23505',null,'New Pantry plural alias is rejected rather than combined');
 select is((select count(*) from cooksmith.household_pantry_items where name in ('mushroom','mushrooms')),1::bigint,'Existing Pantry item remains intact');

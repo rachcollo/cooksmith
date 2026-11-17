@@ -15,7 +15,7 @@ Recognise equivalent ingredients across recipe purchasing, Shopping and Pantry w
 ## Changes
 
 - Purchasing identity v2 uses inflection rules, noun exceptions and conservative synonyms. Meaningful fresh/powdered, canned/fresh and plain/EVOO distinctions remain.
-- A reviewed fixture covers 228 synthetic ingredient labels. Category expectations and identity idempotence run in Vitest; SQL parity runs in pgTAP.
+- A reviewed fixture covers 233 synthetic ingredient labels. Category expectations and identity idempotence run in Vitest; SQL parity runs in pgTAP.
 - Frozen v1 identity remains available only for released recipe structure validation, protecting saved Recipe Intelligence. New and refreshed purchase sources carry identity version 2.
 - Existing manual category choices remain authoritative. Generated purchase groups use the current aisle rules.
 - Named related Pantry hints retain the current keyboard-operable disclosure. Household-scoped matching excludes unavailable items and leaves multiple candidates unresolved.
@@ -31,7 +31,9 @@ Domain changes are in `src/domain/shopping`, frozen identity imports in recipe s
 
 `20261117094901_ingredient_identity_v2.sql` adds v2 functions/indexes and updates reconciliation, refresh and the Pantry alias guard. It does not bulk rewrite or delete household rows. The v1 stored generated identity and its version column retain their old meaning; the new purchasing key and source metadata use v2. Existing shared migrations remain immutable.
 
-The PR does not deploy Production. Production deployment occurs only after merge and coordinator clearance, through the protected **Production database release** workflow using the exact approved `main` SHA. Dry-run and migration-history verification are mandatory. Apply the migration before application rollout. Do not run repair on real households as part of PR verification. Any released database fix uses a new forward migration. No Edge Function release is required.
+**Release blocker: merging to `main` automatically builds and aliases the Vercel application to `app.smillins.com.au`.** The coordinator verified source `git` at main commit `daa46a858513d4e6537685e301e728fb5da01a64` (PR #226). The protected **Production database release** workflow controls database changes only; it does not prevent application rollout on merge. Therefore this PR must remain draft and unmerged.
+
+Proposed sequence, requiring separate coordinator approval: establish isolated synthetic staging and validate this candidate; explicitly hold automatic Production application rollout/aliasing before merge; merge only after that hold is verified; run the protected database workflow for the exact approved `main` SHA with dry-run and migration-history checks; then release the matching application and perform approved smoke checks. An alternative sequence must provide equivalent verified database-before-application ordering. No deployment settings were changed and no hosted migration was applied here. Do not run repair on real households as PR verification. Released database fixes use a new forward migration. No Edge Function release is required.
 
 ## Local validation
 
@@ -50,6 +52,15 @@ Local automated evidence follows. Initial regression failures identified expecte
 ## Hosted and manual validation
 
 No hosted preview, hosted provider, physical device or assistive-technology check has been performed. Before review, use synthetic staging data only: two recipes with mushroom/mushrooms should show one purchase and the summed compatible amount; canned/fresh tomatoes, garlic/powder and olive oil/EVOO should stay distinct. Check named related Pantry hints by keyboard, then reload. Validate explicit repair and a fresh retry with synthetic legacy contributions and immutable receipts. Test member versus unrelated-household access. Do not use real household data.
+
+## Follow-up independent review (17 November)
+
+Reviewed the full implementation diff against the authoritative Jira acceptance criteria, including frozen structure compatibility, rule precedence, meaningful forms, source preservation, SQL grants/RLS and receipt references.
+
+- Confirmed and fixed renamed manual overrides failing the identity-only check: compare the unambiguous original source product, preserving the household display name, quantity and aisle. The regression failed before the fix: explicit refresh returned PT409 and normal reconciliation reduced two original contribution IDs to one.
+- Added TypeScript/SQL exceptions and paired fixtures for mango/mangoes, quiche/quiches and mousse/mousses. The fixture now contains 233 labels; quiche and mousse remain Other because no more specific aisle policy is established.
+- Hosted interaction is **blocked**: non-decrypted Vercel environment metadata contains a single `VITE_SUPABASE_URL` record and a single `VITE_SUPABASE_PUBLISHABLE_KEY` record, each targeting both Production and Preview, with no branch-specific alternatives. There are no custom Vercel staging environments, and Supabase Preview is skipped. This does not establish the distinct synthetic staging backend required by [environment guidance](../v2/environment-and-preview.md) and [staging setup](../v2/staging-supabase-setup.md). No hosted household reads, writes or test seeding were attempted; no credentials were decrypted or introduced. Deployment READY is not interaction evidence.
+- Follow-up local reruns: 109 application test files / 1,147 tests; fresh database reset/lint and 44 pgTAP files / 1,030 assertions; 112 dedicated security assertions; 12 authenticated HTTP regressions; generated-type freshness; affected Chromium desktop/mobile browser suite 14/14. All passed. The exact new head and CI results are recorded in the PR evidence. Earlier validation counts above refer to the initial implementation head.
 
 ## Accessibility, security, privacy and cost
 

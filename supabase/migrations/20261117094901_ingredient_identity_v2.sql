@@ -21,6 +21,9 @@ begin
    when 'oats' then 'oats'
    when 'news' then 'news'
    when 'swiss' then 'swiss'
+   when 'mangoes' then 'mango'
+   when 'quiches' then 'quiche'
+   when 'mousses' then 'mousse'
    when 'potatoes' then 'potato'
    when 'tomatoes' then 'tomato'
    when 'chillies' then 'chilli'
@@ -86,7 +89,14 @@ begin
  into new_sources from jsonb_array_elements(ingredient_inputs) i cross join lateral jsonb_array_elements(i->'sourceQuantities') s;
  if old_sources is null or old_sources is distinct from new_sources then return false; end if;
  select jsonb_agg(to_jsonb(t) order by name,unit) into old_totals from (
-  select cooksmith.canonical_ingredient_name_v2(i.display_name) name,coalesce(c.unit,'') unit,
+  -- A household override may rename the purchase without changing recipe demand.
+  -- Compare its unambiguous source product, not the shopper's display label.
+  select case when i.plan_override then coalesce((
+    select min(cooksmith.canonical_ingredient_name_v2(coalesce(s->>'purchaseName',s->>'name')))
+    from jsonb_array_elements(c.source_quantities) s
+    having count(distinct cooksmith.canonical_ingredient_name_v2(coalesce(s->>'purchaseName',s->>'name')))=1
+  ),cooksmith.canonical_ingredient_name_v2(i.display_name))
+  else cooksmith.canonical_ingredient_name_v2(i.display_name) end name,coalesce(c.unit,'') unit,
    case when count(c.quantity)=count(*) then sum(c.quantity) else null end quantity
   from cooksmith.shopping_item_contributions c join cooksmith.shopping_list_items i on i.id=c.shopping_item_id
   where c.household_id=target_household_id and c.planned_meal_id=target_planned_meal_id

@@ -38,7 +38,7 @@ A$0/month and A$0/year. No dependency or provider added.
 
 ## Migration impact
 
-Apply `20261117094901_ingredient_identity_v2.sql` before releasing the application. It creates functions/indexes and updates routine definitions; it performs no bulk data rewrite or row deletion. Released migration files remain immutable. The PR does not deploy Production. A coordinated protected Production database release after merge must use the exact approved main SHA, dry-run and migration-history verification.
+Apply `20261117094901_ingredient_identity_v2.sql` before releasing the application. It creates functions/indexes and updates routine definitions; it performs no bulk data rewrite or row deletion. Released migration files remain immutable. Merging this PR would automatically deploy and alias the application through Vercel Git integration. The protected database workflow does not gate that application rollout. Keep the PR unmerged until the coordinator approves and verifies a hold on automatic application rollout, isolated staging validation, then exact-SHA database release with dry-run/history verification before releasing the matching application. No settings or hosted data are changed by this review.
 
 ## Product Principles supported
 

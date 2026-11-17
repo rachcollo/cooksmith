@@ -910,5 +910,25 @@
   {
     "name": "boiled water",
     "category": "other"
+  },
+  {
+    "name": "mangoes",
+    "category": "produce"
+  },
+  {
+    "name": "quiche",
+    "category": "other"
+  },
+  {
+    "name": "quiches",
+    "category": "other"
+  },
+  {
+    "name": "mousse",
+    "category": "other"
+  },
+  {
+    "name": "mousses",
+    "category": "other"
   }
 ]
