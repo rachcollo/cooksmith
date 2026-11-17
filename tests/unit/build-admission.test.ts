@@ -262,18 +262,18 @@ describe('parallel safety', () => {
           parent: { key: 'CS-10', fields: { issuetype: { name: 'Epic' } } },
           issuelinks: [
             {
-              type: { name: 'Blocks' },
-              inwardIssue: { key: 'CS-9', fields: { status: { name: 'Backlog' } } },
+              type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+              outwardIssue: { key: 'CS-122', fields: { status: { name: 'Backlog' } } },
             },
           ],
         },
       }),
     }))
     expect(
-      await verifySafety({ jiraConfig, key: 'CS-1', safety: meta, activeKeys: ['CS-2'] }),
+      await verifySafety({ jiraConfig, key: 'CS-111', safety: meta, activeKeys: ['CS-2'] }),
     ).toBe(true)
     expect(
-      await verifySafety({ jiraConfig, key: 'CS-1', safety: meta, activeKeys: ['CS-9'] }),
+      await verifySafety({ jiraConfig, key: 'CS-111', safety: meta, activeKeys: ['CS-122'] }),
     ).toBe(false)
   })
   it('denies an upstream dependency on an active story even with a stale Done status', async () => {
@@ -285,15 +285,62 @@ describe('parallel safety', () => {
           parent: { key: 'CS-10', fields: { issuetype: { name: 'Epic' } } },
           issuelinks: [
             {
-              type: { name: 'Blocks' },
-              outwardIssue: { key: 'CS-2', fields: { status: { name: 'Done' } } },
+              type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+              inwardIssue: { key: 'CS-111', fields: { status: { name: 'Done' } } },
             },
           ],
         },
       }),
     }))
     expect(
-      await verifySafety({ jiraConfig, key: 'CS-1', safety: meta, activeKeys: ['CS-2'] }),
+      await verifySafety({ jiraConfig, key: 'CS-122', safety: meta, activeKeys: ['CS-111'] }),
+    ).toBe(false)
+  })
+  it.each(['In Progress', 'Done', undefined])(
+    'checks genuine CS-116 upstream status %s for parallel admission',
+    async (status) => {
+      const meta = safety('CS-10', 'pantry')
+      vi.stubGlobal('fetch', async () => ({
+        ok: true,
+        json: async () => ({
+          fields: {
+            parent: { key: 'CS-10', fields: { issuetype: { name: 'Epic' } } },
+            issuelinks: ['CS-79', 'CS-101'].map((key) => ({
+              type: { name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
+              inwardIssue: { key, fields: { status: { name: status } } },
+            })),
+          },
+        }),
+      }))
+      expect(
+        await verifySafety({ jiraConfig, key: 'CS-116', safety: meta, activeKeys: ['CS-2'] }),
+      ).toBe(status === 'Done')
+      expect(
+        await verifySafety({ jiraConfig, key: 'CS-116', safety: meta, activeKeys: ['CS-79'] }),
+      ).toBe(false)
+    },
+  )
+  it.each([
+    { name: 'Blocks' },
+    { name: 'Blocks', inward: 'blocks', outward: 'is blocked by' },
+    { name: 'Custom', inward: 'requires', outward: 'enables' },
+  ])('refuses unverified custom direction %# in parallel checks', async (type) => {
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      json: async () => ({
+        fields: {
+          parent: { key: 'CS-10', fields: { issuetype: { name: 'Epic' } } },
+          issuelinks: [{ type, outwardIssue: { key: 'CS-122' } }],
+        },
+      }),
+    }))
+    expect(
+      await verifySafety({
+        jiraConfig,
+        key: 'CS-111',
+        safety: safety('CS-10', 'pantry'),
+        activeKeys: ['CS-2'],
+      }),
     ).toBe(false)
   })
   it('requires verified epic and completed dependencies, including unknown link evidence', async () => {

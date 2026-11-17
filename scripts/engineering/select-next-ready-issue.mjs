@@ -1,3 +1,4 @@
+import { readBlockingLink } from './lib/jira-dependencies.mjs'
 // Diagnostic selection only; use admit-next-build.mjs before starting any work.
 import { readSafety, verifySafety, independent } from './lib/build-safety.mjs'
 import { jiraFetch, readConfig as readJiraConfig } from './lib/jira.mjs'
@@ -37,19 +38,19 @@ function rankIssues(issues) {
   })
 }
 
-// A "Blocks"-type issue link on an issue X carries the *other* issue under
-// outwardIssue when X is the blocked (inward) party, and under inwardIssue
-// when X is the blocking (outward) party. Verified against the live CS-20 ->
-// CS-21 relationship: CS-20's package declares "Blocks: CS-21", and fetching
-// CS-21 returns that link with CS-20 under outwardIssue.
 function unmetBlockers(issue) {
   const links = issue.fields?.issuelinks ?? []
   const unmet = []
   for (const link of links) {
-    if (link.type?.name !== 'Blocks' || !link.outwardIssue) continue
-    const status = link.outwardIssue.fields?.status?.name
-    if (!status || status.toLowerCase() !== 'done') {
-      unmet.push(`${link.outwardIssue.key} (${status ?? 'unknown status'})`)
+    const dependency = readBlockingLink(link)
+    if (!dependency) {
+      unmet.push('ambiguous Jira dependency link')
+      continue
+    }
+    if (!dependency.upstream) continue
+    const status = dependency.issue.fields?.status?.name
+    if (typeof status !== 'string' || status.toLowerCase() !== 'done') {
+      unmet.push(`${dependency.issue.key} (${status ?? 'unknown status'})`)
     }
   }
   return unmet

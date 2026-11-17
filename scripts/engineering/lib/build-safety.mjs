@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { readBlockingLink } from './jira-dependencies.mjs'
 import { jiraFetch } from './jira.mjs'
 
 export function readSafety(cwd, key) {
@@ -36,13 +37,12 @@ export async function verifySafety({ jiraConfig, key, safety, activeKeys = [] })
     return false
   // Unknown link types/directions are not evidence of independence.
   for (const link of issue.fields.issuelinks) {
-    if (link.type?.name !== 'Blocks') return false
-    if (Boolean(link.inwardIssue) === Boolean(link.outwardIssue)) return false
-    const other = link.inwardIssue ?? link.outwardIssue
-    if (!/^CS-\d+$/.test(other?.key) || activeKeys.includes(other.key)) return false
-    // This project's verified link convention puts upstream blockers under
-    // outwardIssue. An unfinished downstream dependant does not block its parent.
-    if (link.outwardIssue && other.fields?.status?.name?.toLowerCase() !== 'done') return false
+    const dependency = readBlockingLink(link)
+    if (!dependency || activeKeys.includes(dependency.issue.key)) return false
+    // Unfinished downstream work does not block its upstream prerequisite.
+    const status = dependency.issue.fields?.status?.name
+    if (dependency.upstream && (typeof status !== 'string' || status.toLowerCase() !== 'done'))
+      return false
   }
   for (const dependency of safety.dependencies) {
     const issue = await jiraFetch(jiraConfig, `/rest/api/3/issue/${dependency}?fields=status`)

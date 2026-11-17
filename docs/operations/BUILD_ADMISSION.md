@@ -69,6 +69,13 @@ no schema change in either build, and no dependency between the active stories.
 Declared dependencies must currently be Done even for serial admission. Jira
 parent and links are rechecked for both stories. Unknown link types/directions,
 incomplete upstream status or non-Done upstream blockers prevent concurrency.
+For the verified Jira `Blocks` type, `inward: "is blocked by"` with `inwardIssue`
+identifies an upstream blocker; `outward: "blocks"` with `outwardIssue` identifies
+a downstream dependant. Both labels must match and exactly one endpoint must
+exist. Missing, custom or reversed labels fail closed in selection and parallel
+checks. Read-only evidence: CS-111 has outwardIssue CS-122; CS-122 has inwardIssue
+CS-111. CS-116 has inwardIssue CS-79 and CS-101. No Jira links are rewritten.
+
 A dependency link to a concurrently active story prevents concurrency in either
 direction, even if its Jira status says Done. An unfinished downstream dependant
 that is not active does not prevent unrelated work. A changed active safety snapshot
