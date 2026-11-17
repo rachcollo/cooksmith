@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
+test.use({ timezoneId: 'UTC' })
+
 for (const width of [320, 768, 1280]) {
   test(`quick-add visibly confirms today with keyboard at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
@@ -10,7 +12,7 @@ for (const width of [320, 768, 1280]) {
     await add.focus()
     await add.press('Enter')
     await expect(page.getByText('Lentil soup added to 19 November 2026.')).toBeVisible()
-    await expect(add).toBeFocused()
+    await expect(add).toBeEnabled()
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
   })

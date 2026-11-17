@@ -53,9 +53,14 @@ describe('recipe quick-add from today', () => {
   it('ignores empty past days and visibly announces today in the profile timezone', async () => {
     const { listWeek, create, createFromPlan } = setup()
     const button = await screen.findByRole('button', { name: buttonName })
+    const liveRegion = screen
+      .getAllByRole('status')
+      .find((element) => element.getAttribute('aria-live') === 'polite')
+    expect(liveRegion).toBeEmptyDOMElement()
     button.focus()
     await userEvent.keyboard('{Enter}')
     const confirmation = await screen.findByText('Lentil soup added to 19 November 2026.')
+    expect(confirmation).toBe(liveRegion)
     expect(confirmation).toBeVisible()
     expect(confirmation).toHaveAttribute('role', 'status')
     expect(confirmation).toHaveAttribute('aria-live', 'polite')

@@ -506,11 +506,9 @@ function HouseholdRecipesPage() {
         <h1>Recipe Library</h1>
       </header>
       {error ? <ErrorState title="Recipe library needs a quick check" message={error} /> : null}
-      {quickAddStatus ? (
-        <p aria-live="polite" role="status">
-          {quickAddStatus}
-        </p>
-      ) : null}
+      <p aria-live="polite" aria-atomic="true" role="status">
+        {quickAddStatus}
+      </p>
 
       <Dialog
         open={creating}

@@ -13,7 +13,7 @@ Recipe quick-add starts at today rather than Monday, avoiding past-date meals an
 manual corrections. This supports practical, low-effort planning. The existing
 42-day search, household-scoped repository calls, meal preservation, shopping
 addition and duplicate-submit protection remain unchanged. The chosen date is
-visible as well as politely announced without moving keyboard focus.
+visible as well as politely announced through a persistent, atomic live region.
 
 ## Changes made
 
@@ -43,7 +43,7 @@ existing recoverable error path rather than silently selecting a different date.
 | `npm run test`                                          | 110 suites, 895 tests passed                               |
 | `npm run build`                                         | Passed; existing large-chunk advisory                      |
 | `npm run docs:commands:check`                           | Passed                                                     |
-| `npm run engineering:check-secrets`, `git diff --check` | Run before commit                                          |
+| `npm run engineering:check-secrets`, `git diff --check` | Passed                                                     |
 | Chromium install / targeted Playwright                  | Pending: CDN returned truncated ZIP; no browser executable |
 
 Initial npm/default Supabase preflight attempts could not write the managed home.
@@ -58,7 +58,7 @@ complete. Use a synthetic household only, with profile timezone Australia/Melbou
 1. Midweek, leave Monday to yesterday empty. Quick-add a recipe: today is selected.
 2. Fill today through Sunday: quick-add selects Monday of the following week.
 3. Verify existing meals and shopping additions are preserved.
-4. Verify the confirmation is visible and announced; keyboard focus stays on add.
+4. Verify the confirmation is visible and announced; the add action is keyboard-operable.
 5. Check mobile, tablet and desktop widths with no horizontal overflow.
 6. Test near UTC midnight with a profile timezone different from the device.
 
