@@ -42,3 +42,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 | [019](019-versioned-ingredient-receipt-evidence.md) | Proposed | Version ingredient rules while preserving purchase evidence |
 
 - [020: Durable build admission](020-durable-build-admission.md) (Proposed)
+
+- [021: Reviewed serial legacy build recovery](021-reviewed-legacy-build-recovery.md) (Proposed).

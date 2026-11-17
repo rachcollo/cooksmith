@@ -356,3 +356,11 @@ this marked Done":
 - Deployment verification checks only public, unauthenticated smoke signals.
   It is not a substitute for the hosted preview and manual verification steps
   already required by the Codex Builder Guide and Release Checklist.
+
+## Temporary legacy recovery freeze
+
+Normal new admission is frozen by `engineering/build-recovery.json`. The reviewed
+[legacy recovery procedure](BUILD_ADMISSION.md#reviewed-legacy-recovery-freeze-17-november-2026)
+is the sole path to one exact existing repair after independent evidence review.
+This supersedes normal pickup during recovery. Keep the scheduler off; this change
+does not activate it, adopt work, clear claims or grant merge/release permission.

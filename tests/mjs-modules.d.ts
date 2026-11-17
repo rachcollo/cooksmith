@@ -46,6 +46,25 @@ declare module '*.mjs' {
     vulnerabilities?: Record<string, AuditVulnerability>
   }) => { accepted: AuditEntry[]; blocking: AuditEntry[] }
 
+  export const reviewedManifest: (raw: string, digest: string, baseline: string) => unknown
+  export const adoptRecovery: (options: Record<string, unknown>) => Promise<unknown>
+  export const validateRecovery: (manifest: unknown, snapshot: unknown, baseline: string) => unknown
+  export const assertNormalAdmission: (cwd?: string) => never
+  export const inventorySnapshot: (
+    branches: unknown[],
+    pulls: unknown[],
+  ) => {
+    branches: { name: string; sha: string }[]
+    pulls: {
+      number: number
+      branch: string
+      sha: string
+      repository: string
+      base: string
+      baseSha: string
+      draft: boolean
+    }[]
+  }
   export const LOCK: string
   export const CLAIMS: string
   export const admitBuild: (options: Record<string, unknown>) => Promise<SelectionResult>
@@ -53,6 +72,7 @@ declare module '*.mjs' {
     currentMain: () => Promise<string>
     create: (ref: string, data: unknown, baseline: string) => Promise<string>
     list: () => Promise<Record<string, unknown>[]>
+    assertOwned: (ref: string, sha: string) => Promise<void>
     removeOwned: (ref: string, sha: string) => Promise<void>
   }
   export const independent: (a: unknown, b: unknown) => boolean

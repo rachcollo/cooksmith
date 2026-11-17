@@ -138,3 +138,110 @@ and obtain an approved compatible configuration rather than weakening protection
 To disable pickup, pause the Routine and manual admissions. Preserve outstanding
 claims; reverting code or setting the limit to 1 does not release existing builds.
 Merge and production release remain separate human approval gates.
+
+## Reviewed legacy recovery freeze (17 November 2026)
+
+The owner explicitly authorised one scoped governance bootstrap despite the
+admission deadlock: “Yes action and then fix”. This authorises preparation and
+review of this recovery mechanism on a chore branch from verified main, without
+inventing a normal claim. It does not authorise feature repairs before adoption,
+merges, releases, scheduler activation, platform-permission bypasses or future
+bootstrap exceptions. The scheduler remains off. Existing release, review, tag
+protection, package and dependency gates remain in force.
+
+`engineering/build-recovery.json` freezes normal/manual/scheduled new admission.
+The executable admission command stops even if that file is missing or malformed.
+The diagnostic selector also stops when it sees the freeze. Returning to normal
+or parallel operation requires a separate reviewed code change and positive
+owner/safety verification; changing an environment limit cannot lift this freeze.
+Old checkouts do not acquire new behaviour automatically: the operator must stop
+all old workers and admission sources before any recovery execution.
+
+### Prepare an exact external manifest, without adopting anything
+
+After this mechanism is reviewed and accepted, an operator must positively stop
+and join all existing owners, resumed sessions and admission sources. Suspended,
+unknown, uncontactable or merely old sessions are not terminated. Keep provider
+stop/join receipts and all relevant session IDs. Review every branch, every open
+PR and every existing lock/claim, including historical/package/v2 branches and
+branches with no PR. Preserve every branch and its work. Do not infer review
+clearance from Jira status, a closed PR or an old worker report.
+
+Capture the complete paginated branch and open-PR inventory after those stops,
+using the schema consumed by `inventorySnapshot` and `validateRecovery` in
+[`build-recovery.mjs`](../../scripts/engineering/lib/build-recovery.mjs). Store the
+manifest outside the checkout as an immutable review artifact, not on a new
+repository branch. A manifest containing its own publishing branch's final SHA
+would be circular. Obtain explicit independent approval of the exact artifact,
+canonical JSON digest, current main SHA, repair scope and termination evidence.
+The approval record must name all four; an arbitrary URL is not approval. The
+command validates evidence presence and exact state, but cannot authenticate a
+human decision or prove that an external worker was actually joined. The operator
+must verify the linked records and maintain the exclusive freeze throughout.
+
+Manifest fields (no live inventory or termination assertion is supplied here):
+
+- `version: 1`, `mode: "frozen"`, `baseline`: exact accepted remote main SHA.
+- `adoption.approval`: immutable review-request/evidence URL. The independent
+  approval of the digest is recorded separately so it does not change the artifact.
+- `adoption.sourcesStopped`: evidence URL confirming every admission source is off.
+- `adoption.owners`: nonempty records with `id`, `state: "terminated"`, nonempty
+  `sessions` IDs, and `evidence` URL proving stop/join, including resumed sessions.
+- `adoption.branches`: every remote branch except main, each with `name`, exact
+  `sha`, `owner` matching a terminated owner, `evidence` and `classification` of
+  `historical`, `frozen` or `target`. Exactly one is `target`. Historical means
+  preserved and stopped, never ignored: any movement still blocks adoption.
+- `adoption.pulls`: every open PR, with `number`, `branch`, `sha`, `repository`,
+  `base`, `baseSha`, `draft`. Every PR must map to its exact local branch, target
+  main at the baseline, and belong to rachcollo/cooksmith. Foreign or missing head
+  branches block recovery until explicitly reconciled through separate review.
+- `adoption.target`: `key`, `branch`, `sha`, `pr`, complete `dependencies` key list
+  and `scope` URL identifying the approved existing package and bounded repair.
+
+Compute the reviewed digest as SHA-256 of `JSON.stringify(JSON.parse(file))`.
+Changing any manifest field, even a historical classification, requires a new
+review. A new/missing/moving branch, changed PR draft/head/base, or moved main
+requires stopping and refreshing review, never silently editing the artifact.
+Package completeness still applies; only package lifecycle status may additionally
+be Building, In Progress, In Review or Testing for an existing repair. Jira must
+be In Progress, In Review or Testing. Ready/codex-ready selection remains the gate
+for ordinary new work, which is frozen. Unknown Jira links fail closed; every
+upstream and declared dependency (including build-safety metadata) must be Done.
+No metadata is added merely to manufacture eligibility.
+
+### Execute one adopted repair only after separate acceptance
+
+In an isolated clean checkout of that exact current remote main, with the existing
+secure GitHub and Jira credentials and independently verified review record, run:
+
+```sh
+node scripts/engineering/adopt-existing-build.mjs EXACT_MAIN_SHA /secure/path/reviewed-manifest.json REVIEWED_CANONICAL_JSON_SHA256
+```
+
+This command is not run by this governance change. Connector-only substitution,
+new credentials and weakening tag protection remain prohibited. First validate
+API permissions in a disposable repository using the existing API-contract plan.
+
+The command atomically creates the same fixed admission lock with a fresh owner,
+refuses any existing claim, verifies main, inventory, dependencies and lock
+ownership, creates an immutable `cooksmith-builds/recovery/<manifest-digest>`
+consumption receipt, repeats verification, creates the ordinary per-story claim
+with exact adoption metadata, verifies again, and removes only its owned lock.
+Only successful returned permission authorises the one exact existing branch
+repair. Record the receipt, claim, owner and baseline; recheck target/main immediately
+before editing. Stop if scope, ownership or any frozen work changes. The new owner
+must remain the sole writer until explicitly stopped and reconciled.
+
+Any failure preserves committed receipts and claims, and preserves the lock unless
+an unlock actually completed. A lost response never authorises work. Do not retry
+a possibly successful operation to recover permission; reconcile first. Stale
+locks/claims are not automatically retired. The existing stopped-owner recovery
+procedure still governs them. Never delete consumption receipts: they prevent
+reuse of a reviewed manifest even after its claim is retired. Another repair needs
+fresh evidence, fresh review and a different manifest, after the previous owner and
+all implementation/review/release occupancy have been reconciled. There is no TTL.
+
+The smallest next step for CS-111 is review/acceptance of this mechanism, followed
+by positive owner termination and an exact approved external manifest for PR #231.
+Its React onCancel repair remains outside this governance change. No other feature
+branch, including CS-113, is published, edited or adopted here.
