@@ -117,3 +117,10 @@ If you hit a stop condition from CODEX_BUILD_RULES.md (baseline conflict,
 unresolved product decision, production risk, ambiguous scope, and so on),
 stop, leave any safe completed work in place, and clearly report the
 blocker instead of guessing.
+
+## Temporary recovery freeze
+
+Keep this Routine disabled during legacy recovery. `engineering/build-recovery.json`
+freezes normal admission. Do not invoke existing-work adoption from the scheduler;
+it requires a separately reviewed exact manifest and stopped-owner evidence under
+BUILD_ADMISSION.md. No scheduler restart is authorised by the recovery change.
