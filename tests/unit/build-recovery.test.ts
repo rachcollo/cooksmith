@@ -14,6 +14,7 @@ import { LOCK, CLAIMS } from '../../scripts/engineering/lib/build-claims.mjs'
 
 const baseline = 'a'.repeat(40)
 const head = 'b'.repeat(40)
+const olderBase = 'c'.repeat(40)
 function fixture() {
   const branches = [
     {
@@ -38,7 +39,8 @@ function fixture() {
       sha: head,
       repository: 'rachcollo/cooksmith',
       base: 'main',
-      baseSha: baseline,
+      baseRepository: 'rachcollo/cooksmith',
+      baseSha: olderBase,
       draft: false,
     },
   ]
@@ -74,7 +76,7 @@ function fixture() {
     pulls.map((p) => ({
       number: p.number,
       head: { ref: p.branch, sha: p.sha, repo: { full_name: p.repository } },
-      base: { ref: p.base, sha: p.baseSha },
+      base: { ref: p.base, sha: p.baseSha, repo: { full_name: p.baseRepository } },
       draft: p.draft,
     })),
   )
@@ -113,6 +115,36 @@ function fixture() {
 }
 
 describe('reviewed serial legacy recovery', () => {
+  it('accepts faithful older PR base metadata while pinning current main', async () => {
+    const { args, refs, manifest, snapshot } = fixture()
+    expect(snapshot.pulls[0].baseSha).toBe(olderBase)
+    expect(snapshot.pulls[0].baseSha).not.toBe(baseline)
+    expect(validateRecovery(manifest, snapshot, baseline)).toEqual(manifest.adoption.target)
+    await adoptRecovery(args)
+    expect(refs.has(`${CLAIMS}CS-111`)).toBe(true)
+  })
+  it.each(['base', 'baseRepository'])('rejects an approved but wrong PR %s', (field) => {
+    const { manifest, snapshot } = fixture()
+    Object.assign(manifest.adoption.pulls[0], { [field]: field === 'base' ? 'v2' : 'foreign/repo' })
+    Object.assign(snapshot.pulls[0], { [field]: field === 'base' ? 'v2' : 'foreign/repo' })
+    expect(() => validateRecovery(manifest, snapshot, baseline)).toThrow('unowned or foreign PR')
+  })
+  it('rejects missing base repository evidence', () => {
+    expect(() =>
+      inventorySnapshot(
+        [],
+        [
+          {
+            number: 1,
+            head: { ref: 'fix/cs-111-ui', sha: head, repo: { full_name: 'rachcollo/cooksmith' } },
+            base: { ref: 'main', sha: olderBase },
+            draft: false,
+          },
+        ],
+      ),
+    ).toThrow('invalid PR head')
+  })
+
   it('binds review to exact baseline and historical classification without branch publication', () => {
     const { manifest } = fixture()
     const raw = JSON.stringify(manifest)
@@ -179,7 +211,7 @@ describe('reviewed serial legacy recovery', () => {
     manifest.adoption.owners[0].sessions = []
     expect(() => validateRecovery(manifest, snapshot, baseline)).toThrow('owner')
   })
-  it.each(['target', 'historical', 'pr', 'new', 'deleted'])(
+  it.each(['target', 'historical', 'pr', 'baseSha', 'base', 'baseRepository', 'new', 'deleted'])(
     'rejects %s movement even after claim creation',
     async (kind) => {
       const { args, snapshot, refs } = fixture()
@@ -189,6 +221,9 @@ describe('reviewed serial legacy recovery', () => {
           if (kind === 'target') changed.branches[0].sha = 'c'.repeat(40)
           if (kind === 'historical') changed.branches[1].sha = 'c'.repeat(40)
           if (kind === 'pr') changed.pulls[0].sha = 'c'.repeat(40)
+          if (kind === 'baseSha') changed.pulls[0].baseSha = baseline
+          if (kind === 'base') changed.pulls[0].base = 'v2'
+          if (kind === 'baseRepository') changed.pulls[0].baseRepository = 'foreign/repo'
           if (kind === 'new') changed.branches.push({ name: 'new', sha: head })
           if (kind === 'deleted') changed.branches.pop()
         }

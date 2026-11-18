@@ -61,6 +61,7 @@ declare module '*.mjs' {
       sha: string
       repository: string
       base: string
+      baseRepository: string
       baseSha: string
       draft: boolean
     }[]

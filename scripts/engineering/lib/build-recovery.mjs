@@ -46,6 +46,7 @@ export function inventorySnapshot(branches, pulls) {
           sha.test(p.head?.sha) &&
           text(p.head?.repo?.full_name) &&
           text(p.base?.ref) &&
+          text(p.base?.repo?.full_name) &&
           sha.test(p.base?.sha) &&
           typeof p.draft === 'boolean',
         'invalid PR head',
@@ -56,6 +57,7 @@ export function inventorySnapshot(branches, pulls) {
         sha: p.head.sha,
         repository: p.head.repo.full_name,
         base: p.base.ref,
+        baseRepository: p.base.repo.full_name,
         baseSha: p.base.sha,
         draft: p.draft,
       }
@@ -66,7 +68,8 @@ export function inventorySnapshot(branches, pulls) {
       new Set(prRows.map((p) => p.number)).size === prRows.length,
     'duplicate inventory',
   )
-  // Main is verified independently, including PR base SHAs. All other branches, including
+  // PR base SHAs are exact observed metadata, not the authoritative current main ref.
+  // Main is verified independently. All other branches, including
   // package/v2/historical branches, remain exact-head witnesses rather than free capacity.
   return { branches: branchRows.filter((b) => b.name !== 'main'), pulls: prRows }
 }
@@ -102,7 +105,7 @@ export function validateRecovery(manifest, snapshot, baseline) {
     plan.pulls.map((p) => ({
       number: p.number,
       head: { ref: p.branch, sha: p.sha, repo: { full_name: p.repository } },
-      base: { ref: p.base, sha: p.baseSha },
+      base: { ref: p.base, sha: p.baseSha, repo: { full_name: p.baseRepository } },
       draft: p.draft,
     })),
   )
@@ -112,7 +115,7 @@ export function validateRecovery(manifest, snapshot, baseline) {
       expected.pulls.every(
         (p) =>
           p.base === 'main' &&
-          p.baseSha === baseline &&
+          p.baseRepository === 'rachcollo/cooksmith' &&
           p.repository === 'rachcollo/cooksmith' &&
           plan.branches.some((b) => b.name === p.branch && b.sha === p.sha),
       ),

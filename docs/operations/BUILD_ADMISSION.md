@@ -192,8 +192,12 @@ Manifest fields (no live inventory or termination assertion is supplied here):
   `historical`, `frozen` or `target`. Exactly one is `target`. Historical means
   preserved and stopped, never ignored: any movement still blocks adoption.
 - `adoption.pulls`: every open PR, with `number`, `branch`, `sha`, `repository`,
-  `base`, `baseSha`, `draft`. Every PR must map to its exact local branch, target
-  main at the baseline, and belong to rachcollo/cooksmith. Foreign or missing head
+  `base`, `baseRepository`, `baseSha`, `draft`. Every PR must map to its exact local
+  branch and target `main` in `rachcollo/cooksmith`. Its head repository must also
+  be `rachcollo/cooksmith`. Preserve the exact reported PR `baseSha`, even when it
+  predates current main; never replace it with the invocation baseline. Current
+  remote main is pinned and revalidated separately. Any change to the reported
+  PR base SHA, branch or repository still invalidates the inventory. Foreign or missing head
   branches block recovery until explicitly reconciled through separate review.
 - `adoption.target`: `key`, `branch`, `sha`, `pr`, complete `dependencies` key list
   and `scope` URL identifying the approved existing package and bounded repair.
