@@ -31,7 +31,8 @@ For each repair the supervisor must record, before editing:
    reconciliation; never delete, overwrite, ignore or fabricate them. Retain all
    consumption receipts. Missing/incomplete API evidence stops the repair.
 3. Current Jira/package scope and completeness, upstream blockers and declared
-   dependencies. Unknown links, unmet dependencies or scope drift still stop work.
+   dependencies. Unknown links, unmet dependencies or scope drift still stop work,
+   except for the precisely bounded CS-79/CS-101 status allowance for #234 below.
    Existing-repair Jira status must be In Progress, In Review or Testing; package
    completeness uses the existing recovery status allowance. Existing connected
    read access may supply this supervised evidence. The atomic admission commands
@@ -89,6 +90,54 @@ Its historical owner-termination requirements do not apply to this supervised
 exception. Prior handovers remain dated evidence, not current operating authority.
 To stop this exception, stop assigning supervised work, preserve all evidence/refs
 and keep pickup disabled; no expiry or automatic cleanup is introduced.
+
+## Selected #234 repair: merged baseline versus release acceptance
+
+This clarification becomes operative only after independent review, human acceptance
+and merge of this governance proposal. On 19 November 2026, Rach explicitly
+approved this one-off proposal despite the freeze: “Yep i'm happy to remove that
+rule so you can keep going, then we move to jira done after the final check.”
+This authority covers preparation of this scoped policy change, not a reusable
+coordinator bootstrap or a platform-denial override.
+
+For a freshly selected supervised repair of existing PR **#234**, branch
+`feat/cs-116-database-expansion`, only the requirement that **CS-79 and CS-101 be
+Done before engineering repair** is replaced by verified merged technical
+baselines. Both remain In Review; preserve their dependency links and outstanding
+acceptance. The accepted CS-116 package already requires their code to be merged.
+Verify the merge commits in the [evidence handover](../engineering/handovers/cs234-repair-prerequisites.md)
+are ancestors of current accepted main and that the relevant baseline contracts
+remain available and compatible in the selected feature head. Unexpected baseline
+changes, missing contracts or new dependencies still stop work. If feature/main
+integration is needed, obtain the existing bounded integration decision first.
+
+Scope is only #234's reviewed database-expansion lock-order/contention and
+validation-before-lock repair, its deterministic legacy/v2 concurrency and
+compatibility/security tests, necessary generated types and handover. It does not
+permit #228 application adoption/release, unrelated CS-116 work, new stories,
+package pickup or scheduled/parallel work. Every other supervised prerequisite
+remains: fresh exact heads/main, complete inventory, named single supervisor and
+writer, no existing lock/claim refs, preserved receipts/history, honest unresolved
+worker risk, package scope, tests, independent review and exact-head CI. The denied
+archive/publication boundaries and ordinary/atomic admission freeze remain intact.
+No runtime admission command or normal dependency rule is changed.
+
+**Release and final-verification gates remain outstanding.** Before the relevant
+production release, record actual CS-79 product acceptance of supported conversion
+catalogue/ingredient-form coverage, source quality, precision/rounding and honest
+fallback; and CS-101 hosted acceptance of Shopping refresh, idempotence, deliberate
+overrides and household isolation, plus Get Ahead current-result/cache lifecycle.
+The accepted temporary Get Ahead unavailable/preparing behaviour is not a new
+zero-downtime requirement. Merged code, green CI and this engineering allowance
+are not acceptance evidence or release approval. Preserve compatibility, RLS/ACLs,
+receipt/source IDs, migration provenance and protected release controls; never
+rewrite released migrations. Keep Jira statuses honest and move to Done only
+after actual final checks. This proposal performs no Jira transition, hosted write,
+paid backfill, feature repair, merge or deployment.
+
+This is a scoped supplement to ADR 022; [ADR 023](../architecture/decisions/023-cs234-merged-baseline-repair.md)
+records the decision. Stop the allowance if its baseline/scope or release gates
+cannot be established; do not extend it to other dependency failures.
 
 ## Ordinary atomic admission (currently frozen)
 
