@@ -48,16 +48,20 @@ No hosted product flow, live admission, archive or production action is tested h
 
 1. Human review and merge of this policy PR. It enables only explicit supervisor
    selection of one bounded existing-PR repair, with its head/main/evidence record.
-2. If selected, fix #231's nested onCancel propagation with a genuinely nested
-   regression; complete required tests, independent review and exact-head CI.
-   Full route adoption is not implied by that bounded repair.
-3. Choose the smallest beta scope based on verified user-facing blockers. The five
-   open PRs are not a mandatory release batch. Database expansion, invitations and
-   ingredient adoption carry separate dependencies and hosted/release requirements;
-   exclude unready work rather than assuming it must ship on the target date.
-4. Verify relevant hosted journeys, review threads, migrations/Edge Function impact
-   and exact release commit. Rach separately approves merge/release; use existing
-   protected production workflows where needed and verify the actual deployment.
+2. Finish all five unfinished PRs (#228, #231, #232, #233 and #234), selecting
+   one explicit bounded existing-PR repair at a time with fresh evidence. Complete
+   each repair's required tests, independent review and exact-head CI, respecting
+   dependencies and separate hosted/release requirements. If #231 is selected,
+   its nested onCancel repair needs a genuinely nested regression; full route
+   adoption is not implied by that bounded repair.
+3. After the existing-PR phase, address the reported planner allergy and freezer
+   replacement issues as final MVP work. Each requires a defined bounded scope
+   and appropriate authority; this existing-PR exception does not authorise new
+   feature work or establish the details of either defect.
+4. Then complete release checks: verify relevant hosted journeys, review threads,
+   migrations/Edge Function impact and the exact release commit. Rach separately
+   approves merge/release; use existing protected production workflows where
+   needed and verify the actual deployment.
 
 The date is a target, not a readiness claim. This task promises no beta launch or
 feature repair. Runtime credentials/old-owner proofs are not required for the
