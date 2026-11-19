@@ -1,11 +1,96 @@
 # Build admission and recovery
 
-Every scheduled or manual builder must reserve work before branching or editing.
-This protocol protects cooperative builders; it cannot prevent a person or old
-scheduler from bypassing it. Pause old pickup runs and reconcile all existing
-workers before activation. Do not activate while an untracked worker is running.
+Ordinary new builds and scheduled pickup must reserve work before branching or editing.
+They remain frozen. The sole manual exception is the explicitly supervised
+existing-PR repair policy below; it does not use or claim atomic admission.
+The atomic protocol protects cooperative builders; it cannot prevent a person or
+old scheduler from bypassing it. Before activating ordinary/atomic pickup, pause
+old runs and reconcile all existing workers. The supervised exception below
+explicitly accepts unresolved old-worker risk without activating pickup.
 
-## Admission
+## Supervised serial existing-PR repair
+
+This policy takes effect only after human acceptance and merge of its governance
+PR. The owner authorised this narrower reversal on 19 November 2026, accepting
+residual concurrent-worker risk. It supersedes the universal reservation and
+exhaustive historical-owner termination prerequisites **only for explicitly
+supervised repair of an already open implementation PR**. This governance task
+authorises no feature edits itself. It is not permission for new stories,
+package pickup, unattended work, parallel pickup, CS-113 publication or release.
+
+For each repair the supervisor must record, before editing:
+
+1. The owner's authorised bounded repair, one named supervisor and one selected
+   worker/session. Name the existing PR, Jira key, branch and exact current head,
+   independently verified current remote main, allowed files/behaviour and tests.
+   Do not infer that all open PRs are selected or must ship for a release date.
+2. A fresh complete branch/open-PR inventory and build lock/claim/receipt ref read.
+   Preserve the evidence and every historical branch. Unknown historical owners
+   are explicitly **unknown**, and their occupancy does not block this supervised
+   exception. Existing lock or claim refs still block it pending separate operator
+   reconciliation; never delete, overwrite, ignore or fabricate them. Retain all
+   consumption receipts. Missing/incomplete API evidence stops the repair.
+3. Current Jira/package scope and completeness, upstream blockers and declared
+   dependencies. Unknown links, unmet dependencies or scope drift still stop work.
+   Existing-repair Jira status must be In Progress, In Review or Testing; package
+   completeness uses the existing recovery status allowance. Existing connected
+   read access may supply this supervised evidence. The atomic admission commands
+   retain their secure GitHub/Jira credential contract; do not impersonate their
+   permission/claim receipts or extract connector credentials.
+4. The unresolved owner/session inventory and the owner's acceptance of the
+   resulting risk. State that no exhaustive cessation or exclusive writer fence
+   is proved. Completed turns, CS-110's limited archive receipt, stable branch
+   SHAs, rulesets and connector expected-SHA leases do not prove all workers stopped.
+
+Read and record the operative governance (AGENTS, build rules, runbook and relevant
+standards) from the exact verified current accepted main SHA before entering the
+feature checkout. Apply that accepted policy to this explicitly supervised repair;
+older governance files in the existing feature head do not reinstate superseded
+reservation rules. Keep this policy provenance separate from the feature-code
+baseline, and do not merge main solely to copy the policy.
+
+Use an isolated clean checkout of the explicitly authorised existing PR head,
+not an unrelated feature branch or main. Record current main separately; do not
+rewrite the PR's historical baseline. Preserve existing commits and real work.
+The default new-task workflow remains one scoped branch from verified main;
+this exception repairs only the exact named existing branch. If main integration
+is required, stop for a bounded integration decision, preserve history and rerun
+checks; never force-push, reset shared history or create a replacement feature PR.
+
+The supervisor coordinates **one selected repair at a time**, keeps all pickup
+sources off and issues no overlapping repair instructions. Record its outcome and
+end the current worker's edit instructions before selecting the next repair.
+A resumed session requires fresh supervisor selection and head/main checks; this
+is a cooperative operating rule, not a technical guarantee that old sessions
+cannot resume. Recheck target head, main and claim/lock refs before edits and
+publication. Unexpected movement, new refs, competing edits or uncertain writes
+stop the repair for reconciliation; do not overwrite them or retry a denied action.
+Use supported publication with exact-head checks and ordinary non-force history
+preservation. Never describe a client-side lease as an exclusive writer lock.
+
+This route creates **no live admission lock, claim or adoption receipt**. Its
+handover is a supervised work record, not an atomic reservation. A stale or
+unknown worker can still write between checks, and two cooperative supervisors
+could select conflicting work. Accepting that residual risk changes repository
+operating policy; it does not establish cessation or authorise provider bypasses.
+The earlier automatic-review denial of archiving CS-111 remains binding: do not
+retry that archive, delegate it or substitute another stopping action.
+
+All required tests, independent review, exact-head CI, applicable hosted validation,
+resolved review threads, human PR merge and separate protected production release
+remain required. AIEOS_Rules protects the default branch, not exclusive feature
+branch ownership. Do not alter rulesets, credentials, providers or live data.
+Keep new admission frozen in `engineering/build-recovery.json`; the scheduler and
+parallel pickup remain off. No executable bypass flag or new scheduler is added.
+
+The [atomic recovery route below](#reviewed-legacy-recovery-freeze-17-november-2026)
+remains available only when its stronger evidence and runtime requirements are met.
+Its historical owner-termination requirements do not apply to this supervised
+exception. Prior handovers remain dated evidence, not current operating authority.
+To stop this exception, stop assigning supervised work, preserve all evidence/refs
+and keep pickup disabled; no expiry or automatic cleanup is introduced.
+
+## Ordinary atomic admission (currently frozen)
 
 Run `node scripts/engineering/admit-next-build.mjs` from an isolated clean checkout
 of current remote `main`. It verifies HEAD against remote main and repository
@@ -123,7 +208,7 @@ Never use elapsed time alone as evidence that a worker has stopped.
 
 ## Activation and rollback
 
-Activation is blocked until the runner has the required secure environment
+Atomic admission activation is blocked until the runner has the required secure environment
 credentials. Connector-only access is not a substitute for this command; do not
 create or transmit new credentials as part of this repair.
 
@@ -140,6 +225,9 @@ claims; reverting code or setting the limit to 1 does not release existing build
 Merge and production release remain separate human approval gates.
 
 ## Reviewed legacy recovery freeze (17 November 2026)
+
+This is the retained atomic recovery route and its historical rationale. Its
+requirements govern that command, not the supervised exception above.
 
 The owner explicitly authorised one scoped governance bootstrap despite the
 admission deadlock: “Yes action and then fix”. This authorises preparation and
@@ -245,7 +333,8 @@ reuse of a reviewed manifest even after its claim is retired. Another repair nee
 fresh evidence, fresh review and a different manifest, after the previous owner and
 all implementation/review/release occupancy have been reconciled. There is no TTL.
 
-The smallest next step for CS-111 is review/acceptance of this mechanism, followed
-by positive owner termination and an exact approved external manifest for PR #231.
+For atomic CS-111 adoption, positive owner termination and an exact approved
+external manifest for PR #231 remain required. Supervised manual repair instead
+follows the exception above once that policy is accepted and the repair selected.
 Its React onCancel repair remains outside this governance change. No other feature
 branch, including CS-113, is published, edited or adopted here.
