@@ -27,6 +27,7 @@ Cooksmith quietly removes the invisible work of feeding a household. Apply the P
 ## Repository workflow
 
 - During the temporary MVP workflow, create one scoped feature branch from the latest accepted `main` commit and target its pull request to `main`.
+- An explicitly authorised existing-PR repair may instead use its exact existing head under [supervised serial repair](docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair). This exception does not enable ordinary or scheduled pickup.
 - Never work directly on `main`. The retained `v2` branch is historical and is not the active integration target.
 - Keep the user out of Terminal work while a safe local or connected GitHub route exists.
 - Do not begin later milestones, add unapproved scope, force-push or rewrite accepted history.

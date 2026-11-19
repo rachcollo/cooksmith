@@ -195,7 +195,7 @@ check is never picked up, and is reported as skipped with the specific reason.
 
 ### Selection and durable admission
 
-The [admission runbook](BUILD_ADMISSION.md) defines the mandatory protocol.
+The [admission runbook](BUILD_ADMISSION.md) defines ordinary atomic admission and the bounded supervised existing-PR exception.
 `admit-next-build.mjs` atomically creates a fixed-name GitHub ref lock, rereads
 claims, branches, open PRs and Jira readiness under that lock, then persists a
 story reservation before returning build permission. `select-next-ready-issue.mjs`
@@ -356,3 +356,12 @@ this marked Done":
 - Deployment verification checks only public, unauthenticated smoke signals.
   It is not a substitute for the hosted preview and manual verification steps
   already required by the Codex Builder Guide and Release Checklist.
+
+## Temporary legacy recovery freeze
+
+Normal new admission is frozen by `engineering/build-recovery.json`. The [supervised serial existing-PR repair policy](BUILD_ADMISSION.md#supervised-serial-existing-pr-repair)
+permits one explicitly selected manual repair with acknowledged unresolved old-worker
+risk. The stronger atomic recovery route remains available when its prerequisites
+are met. Neither route enables ordinary, scheduled or parallel pickup.
+This supersedes normal pickup during recovery. Keep the scheduler off; this change
+does not activate it, adopt work, clear claims or grant merge/release permission.
