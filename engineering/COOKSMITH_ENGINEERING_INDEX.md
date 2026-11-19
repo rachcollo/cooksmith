@@ -23,7 +23,9 @@ Never keep duplicate package copies in multiple status folders.
 
 ## Next-Task Selection Rule
 
-Codex may select work only when all are true:
+For ordinary new-story selection (currently frozen), all conditions below must
+hold. Explicitly selected existing-PR repairs instead use the [supervised
+exception](../docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair).
 
 1. Jira project is `CS`.
 2. Status is `Ready`.
@@ -37,9 +39,14 @@ For equal priority, prefer the lower Jira key.
 
 ### Parallel builds
 
+The historical authorisation below is currently suspended: new, scheduled and
+parallel pickup remain frozen. The only manual exception is [supervised serial
+existing-PR repair](../docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair).
+Parallel-safe notes in the roadmap below are historical assessments, not activation.
+
 Parallel execution is authorised by the product owner (17 November 2026), up to
 three builds including pre-PR reservations. `COOKSMITH_MAX_PARALLEL_BUILDS`
-accepts only 1, 2 or 3; 1 restores serial delivery. Every builder must obtain a
+accepts only 1, 2 or 3; 1 restores serial delivery. Every ordinary new-story builder must obtain a
 durable claim using `scripts/engineering/admit-next-build.mjs` before work begins.
 
 The [admission runbook](../docs/operations/BUILD_ADMISSION.md) defines atomic

@@ -49,6 +49,24 @@ This dated repair record supersedes the original draft/review status below; the
   Revert only the repair commit to roll it back. Worker stops editing at handoff;
   coordinator handles any separately authorised merge/release after verification.
 
+## Authorised main integration — 19 November 2026
+
+After the repair passed review and CI, the coordinator explicitly authorised a
+non-destructive merge of verified main `4e04bae3a155be1a8e430d10b2c50ae90e1bc8ee`
+into existing feature head `bce318b27ad6bb17efdd3ab627d27edab0a2a2a9` to satisfy
+strict up-to-date checks. This supersedes the earlier no-integration status, not
+the bounded scope or release limits. Fresh inventory again showed 240 branches,
+five open PRs, 481 refs and no build refs; Jira remained In Review with no upstream
+or declared dependencies. Evidence: `/workspace/cs111-integration-evidence`.
+
+Git merged cleanly with no conflicts or manual application resolutions. All
+existing feature commits and accepted-main changes are retained; no rebase or
+force push. The nested cancellation fix and genuine nested regression fixtures
+are unchanged. Only this dated handover note was added beyond the automatic
+merge. Resulting parents/tree, renewed validation, independent review and CI are
+recorded in PR #231 when complete. No PR merge, deployment, next repair, new
+feature scope, archive action or claim/ref cleanup is authorised to this worker.
+
 ## Objective and product impact
 
 Support the principles of saving time, reducing mental load and preserving household control: retain typed amounts and let a parent refuse to discard a draft. Existing Dialog and Sheet callers retain their props. Numeric and confirmation route adoption remains deferred.

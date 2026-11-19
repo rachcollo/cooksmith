@@ -78,3 +78,7 @@ Create a proposed ADR when an approved task requires a durable choice that mater
 Do not create an ADR for routine implementation, reversible local detail, dependency patch updates or unapproved product scope. If the decision exceeds the task's authority, stop at a proposed ADR and request approval before implementation.
 
 - [ADR 020: Durable build admission](../architecture/decisions/020-durable-build-admission.md) (Proposed): atomic GitHub ref admission and explicit reservation recovery.
+
+- [ADR 021: Reviewed serial legacy build recovery](../architecture/decisions/021-reviewed-legacy-build-recovery.md) (Proposed): frozen new admission and exact reviewed adoption of one existing repair.
+
+- [ADR 022: Supervised serial existing-PR repair](../architecture/decisions/022-supervised-existing-pr-repair.md) (Proposed): explicitly supervised repair with acknowledged unresolved old-worker risk; no automatic pickup.

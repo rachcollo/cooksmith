@@ -16,6 +16,12 @@ For a named task:
 > Build CS-18 using its engineering package and stop when the PR and hosted preview are ready for review.
 
 ## Phase 1 — Select and Claim
+
+Ordinary pickup remains frozen. Only an explicitly selected [supervised existing-PR
+repair](../docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair)
+uses the runbook exception instead of this new-story selection/claim phase. It
+records exact existing head and current main without fabricating a claim. All
+later quality/review/release phases still apply.
 1. Obtain a durable reservation using `scripts/engineering/admit-next-build.mjs`
    from a clean, current-main checkout. Follow
    [Build admission](../docs/operations/BUILD_ADMISSION.md); a diagnostic selection
@@ -28,11 +34,13 @@ For a named task:
 6. Retain the claim through review and release verification. Use the runbook for
    owner-confirmed retirement; never expire it or release it merely on PR creation.
 
-Each invocation reserves at most one story. All builders share the same protocol.
+Each invocation reserves at most one story. All ordinary new-story builders share the same protocol.
 
 ## Phase 2 — Validate Baseline
 Before editing:
-- pull current `main`;
+- for ordinary new work, pull current `main`; for supervised repair, verify remote
+  main read-only and retain the exact selected feature head unless integration is
+  separately authorised;
 - inspect recent relevant PRs;
 - inspect schema, migrations, RLS, components, server actions, and tests;
 - run targeted existing tests where feasible;
@@ -74,11 +82,16 @@ For failures:
 Validate migrations only against a disposable or approved non-production environment.
 
 ## Phase 5 — Open PR
-1. Move the package to `engineering/review/`.
+1. For new work, move the package to `engineering/review/`. For supervised repair,
+   preserve the existing package and lifecycle evidence unless its bounded scope
+   requires a documented update.
 2. Push the branch.
-3. Open a PR titled `[CS-###] [Milestone] — [Title]`.
+3. For ordinary new work, open a PR titled `[CS-###] [Milestone] — [Title]`.
+   Supervised repair updates only its selected existing PR after fresh exact-head
+   checks, preserving history; never open a replacement feature PR.
 4. Include Jira link, package path, outcome, implementation summary, schema/migration notes, security/RLS notes, tests, screenshots, preview link, manual checklist, limitations, and rollback notes.
-5. Transition Jira to `In Review`.
+5. Transition Jira forward to `In Review` where applicable; do not regress an
+   existing repair from a later lifecycle state.
 6. Add the PR link to Jira.
 
 Do not merge automatically.
