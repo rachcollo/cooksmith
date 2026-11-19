@@ -84,6 +84,8 @@ export function ModalSurface({
       ref={dialogRef}
       onCancel={(event) => {
         event.preventDefault()
+        // React propagates cancel through nested surfaces, unlike the native event.
+        event.stopPropagation()
         requestClose()
       }}
     >

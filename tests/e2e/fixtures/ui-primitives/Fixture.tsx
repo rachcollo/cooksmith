@@ -44,20 +44,20 @@ export function Fixture() {
           />
           <button>Save amount</button>
         </form>
+        <ConfirmationDialog
+          open={confirm}
+          title="Discard changes?"
+          description="Your draft will be lost."
+          confirmLabel="Discard"
+          cancelLabel="Keep editing"
+          destructive
+          onOpenChange={setConfirm}
+          onConfirm={() => {
+            setConfirm(false)
+            setOpen(false)
+          }}
+        />
       </Surface>
-      <ConfirmationDialog
-        open={confirm}
-        title="Discard changes?"
-        description="Your draft will be lost."
-        confirmLabel="Discard"
-        cancelLabel="Keep editing"
-        destructive
-        onOpenChange={setConfirm}
-        onConfirm={() => {
-          setConfirm(false)
-          setOpen(false)
-        }}
-      />
     </main>
   )
 }

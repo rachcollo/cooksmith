@@ -142,3 +142,66 @@ it('does not let a queued native close event close a newly reopened dialog', asy
   unmount()
   expect(dialog).not.toHaveAttribute('open')
 })
+
+for (const Surface of [Dialog, Sheet]) {
+  it(`${Surface.name} isolates a genuinely nested confirmation cancellation`, async () => {
+    const requested = vi.fn()
+    const discarded = vi.fn()
+    function Harness() {
+      const [open, setOpen] = useState(false)
+      const [confirm, setConfirm] = useState(false)
+      return (
+        <>
+          <button onClick={() => setOpen(true)}>Edit amount</button>
+          <Surface
+            open={open}
+            title="Edit amount"
+            onOpenChange={() => {
+              requested()
+              setConfirm(true)
+            }}
+          >
+            <input aria-label="Raw draft" data-autofocus defaultValue="1." />
+            <ConfirmationDialog
+              open={confirm}
+              title="Discard draft?"
+              description="Your draft will be lost."
+              confirmLabel="Discard"
+              cancelLabel="Keep editing"
+              onOpenChange={setConfirm}
+              onConfirm={() => {
+                discarded()
+                setConfirm(false)
+                setOpen(false)
+              }}
+            />
+          </Surface>
+        </>
+      )
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.click(screen.getByRole('button', { name: 'Edit amount' }))
+    const parent = screen.getByRole('dialog', { name: 'Edit amount' })
+    const draft = screen.getByLabelText('Raw draft')
+    for (const cancelWithEscape of [true, false, true]) {
+      await user.click(draft)
+      act(() => parent.dispatchEvent(new Event('cancel', { cancelable: true })))
+      const child = screen.getByRole('dialog', { name: 'Discard draft?' })
+      expect(parent).toContainElement(child)
+      expect(screen.getByRole('button', { name: 'Keep editing' })).toHaveFocus()
+      const requestsBeforeCancel = requested.mock.calls.length
+      if (cancelWithEscape) {
+        act(() => child.dispatchEvent(new Event('cancel', { cancelable: true })))
+      } else {
+        await user.click(screen.getByRole('button', { name: 'Keep editing' }))
+      }
+      expect(child).not.toHaveAttribute('open')
+      expect(parent).toHaveAttribute('open')
+      expect(draft).toHaveValue('1.')
+      expect(draft).toHaveFocus()
+      expect(requested).toHaveBeenCalledTimes(requestsBeforeCancel)
+      expect(discarded).not.toHaveBeenCalled()
+    }
+  })
+}
