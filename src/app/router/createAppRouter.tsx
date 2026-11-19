@@ -63,10 +63,10 @@ export const appRoutes: RouteObject[] = [
         ],
       },
       { path: 'health', element: <HealthPage /> },
+      { path: 'invitations/accept', element: <InvitationAcceptancePage /> },
       {
         element: <RequireAuth />,
         children: [
-          { path: 'invitations/accept', element: <InvitationAcceptancePage /> },
           {
             element: <OnboardingGate />,
             children: [

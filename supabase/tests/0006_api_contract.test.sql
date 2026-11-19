@@ -54,7 +54,7 @@ select results_eq(
 select results_eq(
   $$select tablename::text from pg_catalog.pg_tables
     where schemaname = 'cooksmith'
-      and tablename in ('infrastructure_health', 'app_user_roles')
+      and tablename in ('infrastructure_health', 'app_user_roles', 'household_invitation_send_attempts')
       and exists (select 1 from pg_catalog.pg_policies p
         where p.schemaname = 'cooksmith' and p.tablename = pg_tables.tablename)
     order by tablename$$,
@@ -78,7 +78,7 @@ select results_eq(
   $$select table_name::text collate "C" from information_schema.tables
     where table_schema = 'cooksmith' and table_type = 'BASE TABLE' order by table_name$$,
   (array[
-    'app_user_roles', 'feature_flag_audit', 'feature_flags', 'freezer_meal_events', 'freezer_meal_reservations', 'freezer_meals', 'household_allergies', 'household_dietary_requirements', 'household_invitations',
+    'app_user_roles', 'feature_flag_audit', 'feature_flags', 'freezer_meal_events', 'freezer_meal_reservations', 'freezer_meals', 'household_allergies', 'household_dietary_requirements', 'household_invitation_send_attempts', 'household_invitations',
     'household_members', 'household_pantry_items', 'household_preference_profiles', 'household_recipe_favourites', 'household_recipes', 'household_settings', 'household_shopping_periods', 'households',
 
     'imported_recipes', 'infrastructure_health', 'meal_stock_operations', 'planned_meals', 'profiles',

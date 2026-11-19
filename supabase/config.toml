@@ -110,3 +110,6 @@ verify_jwt = true
 
 [functions.evaluate-weekly-preparation]
 verify_jwt = true
+
+[functions.send-household-invitation]
+verify_jwt = true

@@ -68,17 +68,21 @@ export function SettingsPage() {
   }, [onboarding.householdId, repository, user])
 
   async function run(key: string, work: () => Promise<void>, success: string) {
+    if (busy) return false
     setBusy(key)
     setFeedback(null)
     try {
       await work()
       setFeedback({ tone: 'success', message: success })
       await load()
+      return true
     } catch (error) {
       setFeedback({
         tone: 'error',
         message: error instanceof Error ? error.message : 'Please try again.',
       })
+      await load()
+      return false
     } finally {
       setBusy('')
     }
@@ -92,12 +96,12 @@ export function SettingsPage() {
       setFeedback({ tone: 'error', message: result.error.issues[0]?.message ?? 'Check the email.' })
       return
     }
-    await run(
+    const sent = await run(
       'invite',
       async () => repository.invite(state.householdId, result.data),
       'Invitation sent.',
     )
-    setEmail('')
+    if (sent) setEmail('')
   }
 
   if (loadError)
@@ -145,7 +149,12 @@ export function SettingsPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
-            <Button type="submit" busy={busy === 'invite'} busyLabel="Sending invitation">
+            <Button
+              type="submit"
+              disabled={Boolean(busy)}
+              busy={busy === 'invite'}
+              busyLabel="Sending invitation"
+            >
               Send invitation
             </Button>
           </form>
@@ -195,6 +204,7 @@ export function SettingsPage() {
                   <div className="person-actions">
                     <Button
                       variant="secondary"
+                      disabled={Boolean(busy)}
                       busy={busy === `resend-${invitation.id}`}
                       onClick={() =>
                         void run(
@@ -208,6 +218,7 @@ export function SettingsPage() {
                     </Button>
                     <Button
                       variant="quiet"
+                      disabled={Boolean(busy)}
                       busy={busy === `cancel-${invitation.id}`}
                       onClick={() =>
                         void run(

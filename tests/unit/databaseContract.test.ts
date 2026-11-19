@@ -20,6 +20,7 @@ describe('generated database API contract', () => {
       | 'freezer_meals'
       | 'household_allergies'
       | 'household_dietary_requirements'
+      | 'household_invitation_send_attempts'
       | 'household_invitations'
       | 'household_members'
       | 'household_pantry_items'

@@ -48,3 +48,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 - [022: Supervised serial existing-PR repair](022-supervised-existing-pr-repair.md) (Proposed): bounded manual exception; ordinary pickup stays frozen.
 
 - [023: Merged prerequisites for the bounded #234 repair](023-cs234-merged-baseline-repair.md) (Proposed): release acceptance retained.
+
+- [024: Server-sent household invitations](024-server-sent-household-invitations.md) (Proposed).
