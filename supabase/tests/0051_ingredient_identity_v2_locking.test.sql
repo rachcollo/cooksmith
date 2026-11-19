@@ -5,8 +5,11 @@
 begin;
 create extension if not exists dblink with schema extensions;
 select no_plan();
-select extensions.dblink_connect('legacy','dbname=postgres user=postgres');
-select extensions.dblink_connect('v2','dbname=postgres user=postgres');
+-- Use this disposable server's bridge address: loopback uses trust and dblink
+-- correctly refuses that for the non-superuser postgres test role. The password
+-- is the public local-CLI fixture default, never a hosted credential.
+select extensions.dblink_connect('legacy',format('host=%s port=%s dbname=%I user=%I password=postgres',inet_server_addr(),inet_server_port(),current_database(),current_user));
+select extensions.dblink_connect('v2',format('host=%s port=%s dbname=%I user=%I password=postgres',inet_server_addr(),inet_server_port(),current_database(),current_user));
 select extensions.dblink_exec('legacy',$q$
  set role authenticated;
  set request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
@@ -71,7 +74,7 @@ begin
   perform extensions.dblink_send_query('v2',$q$select count(*)::integer from cooksmith.save_pantry_item_v2('20000000-0000-4000-8000-000000000001','b1160000-0000-4000-8000-000000000101','{"name":"locking rice","category":"other","categorySource":"explicit","storageLocation":"pantry","storageLocationSource":"explicit","classificationVersion":1,"quantity":300,"unit":"g","available":true}')$q$);
   return next ok(pg_temp.wait_for_lock('v2','ExclusiveLock'),scenario.name||': v2 is queued before legacy UPDATE');
   select t.value into result from extensions.dblink('legacy',scenario.command) as t(value text);
-  return next ok(result is not null,scenario.name||': actual v1 RPC completes without deadlock');
+  return next ok(result is not null,scenario.name||': actual stock RPC completes without deadlock');
   perform extensions.dblink_exec('legacy','rollback');
   select n into saved from extensions.dblink_get_result('v2') as t(n integer);
   return next is(saved,1,scenario.name||': v2 completes after legacy transaction ends');
