@@ -2380,6 +2380,7 @@ export type Database = {
         Returns: undefined
       }
       canonical_ingredient_name_v1: { Args: { value: string }; Returns: string }
+      canonical_ingredient_name_v2: { Args: { value: string }; Returns: string }
       canonical_ingredient_unit_v1: { Args: { value: string }; Returns: string }
       configure_weekly_preparation_luna_profile: {
         Args: never
@@ -2475,7 +2476,23 @@ export type Database = {
         }
         Returns: Json
       }
+      put_shopping_away_v2: {
+        Args: {
+          operation_id: string
+          reviewed_items: Json
+          target_household_id: string
+        }
+        Returns: Json
+      }
       receive_measured_shopping: {
+        Args: {
+          p_choices: Json
+          p_household_id: string
+          p_operation_id: string
+        }
+        Returns: Json
+      }
+      receive_measured_shopping_v2: {
         Args: {
           p_choices: Json
           p_household_id: string
@@ -2504,6 +2521,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      reconcile_planned_meal_shopping_v2: {
+        Args: {
+          ingredient_inputs: Json
+          target_household_id: string
+          target_planned_meal_id: string
+        }
+        Returns: undefined
+      }
       record_shopping_stock_purchase: {
         Args: {
           p_amounts: Json
@@ -2515,6 +2540,10 @@ export type Database = {
         Returns: undefined
       }
       refresh_shopping_ingredient_structure: {
+        Args: { batches: Json; target_household_id: string }
+        Returns: undefined
+      }
+      refresh_shopping_ingredient_structure_v2: {
         Args: { batches: Json; target_household_id: string }
         Returns: undefined
       }
@@ -2534,6 +2563,35 @@ export type Database = {
           invitation_token: string
           invited_email: string
         }[]
+      }
+      save_pantry_item_v2: {
+        Args: { p_household_id?: string; p_input?: Json; p_item_id?: string }
+        Returns: {
+          available: boolean
+          category: Database['cooksmith']['Enums']['pantry_item_category']
+          category_source: Database['cooksmith']['Enums']['pantry_classification_source']
+          classification_version: number | null
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          is_default: boolean
+          name: string
+          normalised_name: string | null
+          quantity: number | null
+          quantity_untracked: boolean
+          storage_location: Database['cooksmith']['Enums']['pantry_storage_location']
+          storage_location_source: Database['cooksmith']['Enums']['pantry_classification_source']
+          unit: string | null
+          updated_at: string
+          updated_by: string | null
+        }[]
+        SetofOptions: {
+          from: '*'
+          to: 'household_pantry_items'
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       set_household_recipe_favourite: {
         Args: {
@@ -2565,6 +2623,10 @@ export type Database = {
         }[]
       }
       shopping_sources_overlap: {
+        Args: { left_sources: Json; right_sources: Json }
+        Returns: boolean
+      }
+      shopping_sources_overlap_v2: {
         Args: { left_sources: Json; right_sources: Json }
         Returns: boolean
       }
