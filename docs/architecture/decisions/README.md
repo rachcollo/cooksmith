@@ -44,3 +44,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 - [020: Durable build admission](020-durable-build-admission.md) (Proposed)
 
 - [021: Reviewed serial legacy build recovery](021-reviewed-legacy-build-recovery.md) (Proposed).
+
+- [022: Supervised serial existing-PR repair](022-supervised-existing-pr-repair.md) (Proposed): bounded manual exception; ordinary pickup stays frozen.
