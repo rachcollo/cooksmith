@@ -46,3 +46,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 - [021: Reviewed serial legacy build recovery](021-reviewed-legacy-build-recovery.md) (Proposed).
 
 - [022: Supervised serial existing-PR repair](022-supervised-existing-pr-repair.md) (Proposed): bounded manual exception; ordinary pickup stays frozen.
+
+- [023: Merged prerequisites for the bounded #234 repair](023-cs234-merged-baseline-repair.md) (Proposed): release acceptance retained.

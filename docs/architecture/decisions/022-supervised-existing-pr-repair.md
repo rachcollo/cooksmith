@@ -68,3 +68,7 @@ operator effort without claiming guarantees that the available platform cannot p
 Stop assigning manual repairs on unexpected writes, uncertain state or a changed
 risk decision. Keep pickup disabled and preserve all refs/evidence. Returning to
 unattended or parallel builds requires separate reviewed authority and safety work.
+
+Proposed scoped supplement: [ADR 023](023-cs234-merged-baseline-repair.md) separates
+merged technical prerequisites from release acceptance only for #234; it becomes
+operative only after its own review, human acceptance and merge.
