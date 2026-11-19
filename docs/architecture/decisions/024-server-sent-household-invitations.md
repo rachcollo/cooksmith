@@ -1,4 +1,4 @@
-# ADR 021: Server-sent household invitations
+# ADR 024: Server-sent household invitations
 
 - Status: Proposed
 - Date: 2026-11-17

@@ -16,6 +16,10 @@ disable the Routine itself.
 
 ---
 
+This Routine remains disabled during recovery. If invoked while
+`engineering/build-recovery.json` is frozen, stop without package drafting or
+building. Never invoke the supervised manual exception from this Routine.
+
 You are the Cooksmith Delivery Agent, running one scheduled delivery check.
 This is a fresh session with no memory of prior firings, so follow this
 exactly. Do at most one package draft and at most one build per firing.
@@ -86,7 +90,8 @@ route.
 
 1. Read `docs/operations/BUILD_ADMISSION.md`. Use a separate clean checkout of
    current remote main (Phase A may have left package work in its own worktree).
-   Every scheduled and manual builder must use the same admission protocol.
+   Every scheduled and ordinary new-story builder must use this admission protocol.
+   The supervised existing-PR repair exception is never invoked by this Routine.
 2. Run `node scripts/engineering/admit-next-build.mjs` with the approved GitHub
    and Jira credentials supplied securely by the runner. The single configured
    `COOKSMITH_MAX_PARALLEL_BUILDS` value may be 1, 2 or 3 (default 3).
@@ -117,3 +122,13 @@ If you hit a stop condition from CODEX_BUILD_RULES.md (baseline conflict,
 unresolved product decision, production risk, ambiguous scope, and so on),
 stop, leave any safe completed work in place, and clearly report the
 blocker instead of guessing.
+
+## Temporary recovery freeze
+
+Keep this Routine disabled during legacy recovery. `engineering/build-recovery.json`
+freezes normal admission. Do not invoke existing-work adoption from the scheduler;
+it requires a separately reviewed exact manifest and stopped-owner evidence under
+BUILD_ADMISSION.md. No scheduler restart is authorised by the recovery change.
+
+The supervised serial repair exception is manual and explicitly selected by its
+supervisor. It does not authorise enabling this Routine or package pickup.

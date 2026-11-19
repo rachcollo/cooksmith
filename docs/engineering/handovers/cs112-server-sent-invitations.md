@@ -22,7 +22,7 @@ Replace inviter-side OTP with a clear invitation email delivered by the server t
 - `vercel.json`: invitation-route no-referrer/no-store headers.
 - Protected Edge release workflow: declare/deploy/verify the new function under the existing exact-SHA approval gate; not dispatched.
 - Scoped generated types, pgTAP/API contracts, function/component/browser tests and `tsconfig.test.json` include.
-- [Invitation runbook](../v2/household-invitations.md) and [proposed ADR 021](../../architecture/decisions/021-server-sent-household-invitations.md).
+- [Invitation runbook](../v2/household-invitations.md) and [proposed ADR 024](../../architecture/decisions/024-server-sent-household-invitations.md).
 
 No dependency, scheduled job or hosted configuration change. CS-117 retains AuthPages/authErrors welcome/password copy, onboarding and optional preferences. This branch does not change those files. CS-113/CS-116 scopes and migrations are untouched. CS-117's proposed neutral profile name requires a product decision: invitation email can render it, but “Household member” does not meaningfully identify the inviter. Existing names must be preserved.
 
@@ -78,3 +78,61 @@ Disable delivery first on failure; use a new forward migration for released sche
 ## Readiness
 
 The scoped draft is ready for engineering review once exact-head required CI is green. Hosted validation and human release prerequisites remain pending. No later package is started and automated pickup remains untouched.
+
+## Supervised integration — 19 November 2026
+
+The preceding sections record the original implementation and its historical checks.
+Evie recovery coordinator selected this existing PR alone, with recovery task
+`6afcd63b-b5f8-8191-8144-97a12829903f` as sole writer. The coordinator explicitly
+approved non-force main integration. Operative policy is accepted main
+`c4086fd7c5ccb56a97973b4ac38b5e667da041ce`; existing feature head was
+`9931a20d1f4eb88330bbb59a6c08514d0760745b`. All existing commits are preserved.
+
+Fresh complete inventory contained 241 branches, four open PRs and 482 refs, with
+no build lock, claim or receipt refs. CS-112 remains In Review with no Jira links;
+its Ready package has eight criteria and no dependencies. Package approval merge
+`b68832ee2134d53f36c7c910980085eab9fb3086` is an ancestor of both baselines.
+Unknown historical owners remain unknown: this supervised record is neither an
+atomic admission receipt nor proof of cessation or an exclusive writer fence.
+Scheduler pickup remains off. No denied archive/publication action was retried.
+
+Only the ADR index conflicted. Accepted ADRs 021–023 were retained unchanged;
+the unmerged invitation ADR became 024 and its references were updated. No
+application, schema, dependency, provider or release-workflow behaviour was changed
+by this integration. Shared invitation migrations remain unchanged. #234 work is
+preserved and was not integrated into this branch.
+
+Current local checks passed: preflight, formatter/write and check, lint, strict
+types, 1,030 application tests, production build, fresh disposable Supabase reset,
+database lint, 811 pgTAP assertions, 112 security assertions, generated-type
+freshness and 12 authenticated local HTTP contracts. Documentation commands,
+database configuration, production dependency audit and secret scan also passed.
+An initial HTTP invocation omitted the runner-specific SUPABASE_HOME and failed
+before tests when the CLI tried the read-only home directory; the correctly
+configured invocation passed all 12. No repository workaround was needed.
+
+The disposable database used the official pinned PostgreSQL 17.6.1.143 image
+filesystem flattened locally for the runner's vfs capacity, preserving image
+startup configuration. Browser checks use the official Playwright 1.61.1 image
+filesystem with the required Node/npm versions. These local runtime adjustments
+do not alter tracked configuration or establish hosted acceptance. Final browser,
+exact-tree independent review, remote identity and CI results are recorded in the
+PR delivery report rather than inferred from historical CI.
+
+Independent source review found no blocking defect and separately passed 15 focused
+invitation tests. Explicit acceptance followed by a self-entered passwordless email
+verification is consistent with the approved account-creation boundary; no shared
+authentication redesign was made. Isolated acceptance must cover both passwordless
+and password signup, including verification-email return with the pending invitation
+retained. Local mock flows do not establish hosted Auth behaviour.
+
+The coordinated-release hold remains: cached old clients are not controlled by the
+new Edge enable flag; old-client/new-schema send compatibility is not zero-downtime;
+new Edge against old schema can invoke the legacy mutating reservation before
+rejecting its result shape. Do not enable or release versions independently without
+the approved coordinated sequence and isolated compatibility evidence. No isolated
+hosted setup was available, so no hosted account, invitation email or data write was
+performed. Sender/origin/secret presence, quota, hosted authentication, full protected
+Edge deployment set and separate human release approvals remain outstanding. The
+PR is currently non-draft (contrary to the historical prose); this task does not
+change its readiness state or grant merge/release approval.

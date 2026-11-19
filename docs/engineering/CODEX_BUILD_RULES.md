@@ -36,7 +36,9 @@ Inspect the repository before coding. Reuse current conventions where they satis
 
 The user reviews in GitHub and must not be asked to perform Git or Terminal work except when every safe alternative is exhausted.
 
-Before editing, Codex must:
+For an explicitly selected [supervised existing-PR repair](../operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair), record current remote main and use the authorised exact existing PR head in an isolated clean checkout. That bounded exception replaces steps 1, 3 and 4 below and the new-branch default in section 4; preserve history and all testing, publication, review and release requirements. It does not authorise new work or concurrent pickup.
+
+For other work, before editing, Codex must:
 
 1. begin from the latest remote `main` unless the approved task explicitly names another base;
 2. verify the active branch and that the working tree is clean;

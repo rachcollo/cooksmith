@@ -6,7 +6,7 @@ Use the applicable section before requesting review or release. Record actual ev
 
 Apply the branch truthfulness, pull-request verification, hosted-preview and completion-report requirements in [Codex build rules](CODEX_BUILD_RULES.md) before requesting review.
 
-- [ ] Branch was created from the latest accepted `main` commit.
+- [ ] Branch was created from the latest accepted `main` commit, or the explicitly authorised supervised existing-PR repair records its exact existing head and independently verified current main.
 - [ ] Pull request targets `main`; `main` changes only through the reviewed merge.
 - [ ] Diff contains only the approved milestone scope and no later-milestone work.
 - [ ] Product code, tests and documentation follow the engineering standards and accepted ADRs.

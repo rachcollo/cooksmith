@@ -1,8 +1,9 @@
-import { useId, type InputHTMLAttributes } from 'react'
+import { useId, type InputHTMLAttributes, type Ref } from 'react'
 
 import { FormError, FormHint, FormLabel } from './FormField'
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+  ref?: Ref<HTMLInputElement>
   error?: string
   hint?: string
   label: string
