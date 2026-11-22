@@ -40,8 +40,11 @@ For equal priority, prefer the lower Jira key.
 ### Parallel builds
 
 The historical authorisation below is currently suspended: new, scheduled and
-parallel pickup remain frozen. The only manual exception is [supervised serial
-existing-PR repair](../docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair).
+parallel pickup remain frozen. Manual exceptions are [supervised serial
+existing-PR repair](../docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair)
+and the single [CS-79 local preparation proposal](../docs/operations/BUILD_ADMISSION.md#single-cs-79-quantity-correction-local-preparation),
+the latter inactive until independent review, human acceptance and merge, then
+fresh selection. CS-79 publication requires separate authority.
 Parallel-safe notes in the roadmap below are historical assessments, not activation.
 
 Parallel execution is authorised by the product owner (17 November 2026), up to
