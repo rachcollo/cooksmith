@@ -130,6 +130,7 @@ export function shoppingPeriodView(
       {
         ...row,
         stockCheck,
+        remainingContributions: row.completed ? undefined : contributions,
         quantity:
           units.size === 1 && contributions.every((c) => c.quantity !== null)
             ? contributions.reduce((sum, c) => sum + c.quantity!, 0)

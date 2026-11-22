@@ -76,9 +76,11 @@ export function purchaseReceiptAmounts(purchase: ShoppingPurchase) {
 
 export function purchaseDisplayQuantity(quantity: number, approximate = false): number {
   const scale = approximate ? (quantity < 10 ? 10 : 1) : 100
-  return approximate
+  const rounded = approximate
     ? Math.ceil(quantity * scale - 1e-9) / scale
     : Math.round(quantity * scale) / scale
+  // Exact nonzero demand must not disappear, including source-derived tiny amounts.
+  return quantity > 0 && rounded === 0 ? quantity : rounded
 }
 export function formatPurchaseAmounts(amounts: PurchaseAmount[]): string {
   return amounts
@@ -91,6 +93,44 @@ export function formatPurchaseAmounts(amounts: PurchaseAmount[]): string {
     )
     .join(' + ')
 }
+function purchaseSources(
+  item: ShoppingItem,
+): Pick<ShoppingItem, 'name' | 'quantity' | 'unit' | 'measurementSystem'>[] {
+  if (
+    !item.completed &&
+    !item.planOverride &&
+    item.manual === false &&
+    item.quantity === null &&
+    item.remainingContributions
+  ) {
+    return item.remainingContributions.flatMap((contribution) =>
+      purchaseSources({
+        ...item,
+        ...contribution,
+        remainingContributions: undefined,
+      }),
+    )
+  }
+  return !item.completed &&
+    !item.planOverride &&
+    item.manual === false &&
+    item.quantity === null &&
+    item.sourceQuantities?.length
+    ? item.sourceQuantities.map((source) => ({
+        name: source.originalText ?? source.name,
+        quantity: source.ingredientStructure
+          ? ['known', 'approximate'].includes(source.ingredientStructure.quantity.state)
+            ? source.ingredientStructure.quantity.value
+            : null
+          : typeof source.quantity === 'number'
+            ? source.quantity
+            : parseIngredientQuantity(source.quantity),
+        unit: source.ingredientStructure ? source.ingredientStructure.quantity.unit : source.unit,
+        measurementSystem: source.measurementSystem,
+      }))
+    : [item]
+}
+
 export function groupShoppingPurchases(items: readonly ShoppingItem[]): ShoppingPurchase[] {
   const names = new Set(items.map((item) => `${item.householdId}\u0000${purchaseName(item)}`))
   const groups = new Map<string, ShoppingItem[]>()
@@ -129,27 +169,7 @@ export function groupShoppingPurchases(items: readonly ShoppingItem[]): Shopping
     const visible = remaining.length ? remaining : members
     const byUnit = new Map<string, PurchaseAmount>()
     for (const item of visible) {
-      const sources =
-        !item.completed &&
-        !item.planOverride &&
-        item.manual === false &&
-        item.quantity === null &&
-        item.sourceQuantities?.length
-          ? item.sourceQuantities.map((source) => ({
-              name: source.originalText ?? source.name,
-              quantity: source.ingredientStructure
-                ? ['known', 'approximate'].includes(source.ingredientStructure.quantity.state)
-                  ? source.ingredientStructure.quantity.value
-                  : null
-                : typeof source.quantity === 'number'
-                  ? source.quantity
-                  : parseIngredientQuantity(source.quantity),
-              unit: source.ingredientStructure
-                ? source.ingredientStructure.quantity.unit
-                : source.unit,
-              measurementSystem: source.measurementSystem,
-            }))
-          : [item]
+      const sources = purchaseSources(item)
       for (const source of sources) {
         const amount: PurchaseAmount =
           (item.completed || item.planOverride) && item.quantity === null
