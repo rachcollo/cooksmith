@@ -298,3 +298,104 @@ describe('shopping list foundation', () => {
     expect(await screen.findByRole('heading', { name: 'Your list is ready' })).toBeVisible()
   })
 })
+
+describe('Shopping decimal drafts', () => {
+  it.each(['type', 'paste'] as const)(
+    'keeps %s of 0.004 through save and reopen',
+    async (entry) => {
+      const user = userEvent.setup()
+      let saved = item({ name: 'Saffron', quantity: 1, unit: 'kg' })
+      const update = vi.fn(async (_id, input) => (saved = { ...saved, ...input }))
+      renderShopping({
+        list: async () => [saved],
+        create: async () => saved,
+        update,
+        setCompleted: async () => saved,
+        remove: async () => undefined,
+      })
+      await user.click(await screen.findByRole('button', { name: 'Edit Saffron' }))
+      const form = screen.getByRole('button', { name: 'Save changes to Saffron' }).closest('form')!
+      const quantity = within(form).getByLabelText('Quantity')
+      await user.clear(quantity)
+      if (entry === 'type') await user.type(quantity, '0.004')
+      else await user.paste('0.004')
+      expect(quantity).toHaveValue('0.004')
+      await user.click(within(form).getByRole('button', { name: 'Save changes to Saffron' }))
+      expect(update).toHaveBeenCalledWith(
+        saved.id,
+        expect.objectContaining({ quantity: 4, unit: 'g' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Edit Saffron' }))
+      expect(
+        within(
+          screen.getByRole('button', { name: 'Save changes to Saffron' }).closest('form')!,
+        ).getByLabelText('Quantity'),
+      ).toHaveValue('4')
+    },
+  )
+  it('rejects tiny unsupported amounts without losing the draft, then accepts an ordinary edit', async () => {
+    const user = userEvent.setup()
+    const saved = item({ name: 'Saffron', quantity: 1, unit: 'g' })
+    const update = vi.fn(async (_id, input) => ({ ...saved, ...input }))
+    renderShopping({
+      list: async () => [saved],
+      create: async () => saved,
+      update,
+      setCompleted: async () => saved,
+      remove: async () => undefined,
+    })
+    await user.click(await screen.findByRole('button', { name: 'Edit Saffron' }))
+    const form = screen.getByRole('button', { name: 'Save changes to Saffron' }).closest('form')!
+    const quantity = within(form).getByLabelText('Quantity')
+    await user.clear(quantity)
+    await user.type(quantity, '0.004')
+    await user.click(within(form).getByRole('button', { name: 'Save changes to Saffron' }))
+    expect(update).not.toHaveBeenCalled()
+    expect(quantity).toHaveValue('0.004')
+    expect(quantity).toHaveAccessibleDescription(/at most two decimal places/)
+    await user.clear(quantity)
+    await user.type(quantity, '1.5')
+    await user.click(within(form).getByRole('button', { name: 'Save changes to Saffron' }))
+    expect(update).toHaveBeenCalledWith(
+      saved.id,
+      expect.objectContaining({ quantity: 1.5, unit: 'g' }),
+    )
+  })
+})
+
+it('preserves an add draft and reports incomplete/tiny counts before accepting ordinary quantity', async () => {
+  const user = userEvent.setup()
+  const create = vi.fn(async (_householdId, input) => item({ ...input, id: 'created' }))
+  renderShopping({
+    list: async () => [],
+    create,
+    update: async () => item(),
+    setCompleted: async () => item(),
+    remove: async () => undefined,
+  })
+  await screen.findByLabelText('Item name')
+  const name = screen.getByLabelText('Item name')
+  const form = name.closest('form')!
+  await user.type(name, 'Synthetic rice')
+  const quantity = within(form).getByLabelText(/Quantity/)
+  await user.type(quantity, '0.')
+  await user.click(within(form).getByRole('button', { name: /Add/ }))
+  expect(create).not.toHaveBeenCalled()
+  expect(quantity).toHaveValue('0.')
+  await user.type(quantity, '004')
+  await user.click(within(form).getByRole('button', { name: /Add/ }))
+  expect(create).not.toHaveBeenCalled()
+  expect(quantity).toHaveValue('0.004')
+  await user.clear(quantity)
+  await user.paste(`0.${'0'.repeat(330)}4`)
+  await user.click(within(form).getByRole('button', { name: /Add/ }))
+  expect(create).not.toHaveBeenCalled()
+  expect(quantity).toHaveAccessibleDescription(/too small/)
+  await user.clear(quantity)
+  await user.type(quantity, '0.25')
+  await user.click(within(form).getByRole('button', { name: /Add/ }))
+  expect(create).toHaveBeenCalledWith(
+    householdId,
+    expect.objectContaining({ quantity: 0.25, unit: null }),
+  )
+})

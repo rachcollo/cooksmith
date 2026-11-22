@@ -251,7 +251,13 @@ export function buildPlanAdditions(
   }
 
   return {
-    additions: [...merged.values()],
+    // Preserve source evidence when numeric(10,2) cannot represent positive demand.
+    // Null keeps it unquantified in storage; display can still use the exact sources.
+    additions: [...merged.values()].map((item) => ({
+      ...item,
+      quantity:
+        item.quantity !== null && item.quantity > 0 && item.quantity < 0.01 ? null : item.quantity,
+    })),
     linkedMealCount,
     unlinkedMealCount,
     alreadyListedNames: [...alreadyListed.values()],
