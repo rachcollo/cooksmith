@@ -17,11 +17,14 @@ For a named task:
 
 ## Phase 1 — Select and Claim
 
-Ordinary pickup remains frozen. Only an explicitly selected [supervised existing-PR
+Ordinary pickup remains frozen. An explicitly selected [supervised existing-PR
 repair](../docs/operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair)
 uses the runbook exception instead of this new-story selection/claim phase. It
 records exact existing head and current main without fabricating a claim. All
-later quality/review/release phases still apply.
+later quality/review/release phases still apply. The single [CS-79 local preparation
+proposal](../docs/operations/BUILD_ADMISSION.md#single-cs-79-quantity-correction-local-preparation)
+is a separate exception only after independent review, human acceptance and merge,
+then fresh selection; publication remains separately authorised.
 1. Obtain a durable reservation using `scripts/engineering/admit-next-build.mjs`
    from a clean, current-main checkout. Follow
    [Build admission](../docs/operations/BUILD_ADMISSION.md); a diagnostic selection
@@ -154,3 +157,7 @@ Never bypass checks, force-push shared branches without approval, deploy product
 
 ## Completion Summary
 Report Jira issue/status, branch, PR, package path, commits, checks/results, preview result, migration/deployment result, remaining human action, and follow-up Jira issues.
+
+## Single CS-79 local preparation proposal
+
+Only after human acceptance and merge, the [scoped runbook](../docs/operations/BUILD_ADMISSION.md#single-cs-79-quantity-correction-local-preparation) may permit one separately selected CS-79 local correction branch from verified main. It is not ordinary pickup or existing-PR repair. Its fresh inventory, dependency, single-worker and stop requirements apply. Do not publish under the ordinary completion instructions without separately explicit authority; retain exact-tree review, CI and all release gates.

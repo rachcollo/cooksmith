@@ -195,7 +195,7 @@ check is never picked up, and is reported as skipped with the specific reason.
 
 ### Selection and durable admission
 
-The [admission runbook](BUILD_ADMISSION.md) defines ordinary atomic admission and the bounded supervised existing-PR exception.
+The [admission runbook](BUILD_ADMISSION.md) defines ordinary atomic admission, the bounded supervised existing-PR exception and the single CS-79 local preparation proposal, inactive until human acceptance and merge. None enables automated pickup; CS-79 publication requires separate authority.
 `admit-next-build.mjs` atomically creates a fixed-name GitHub ref lock, rereads
 claims, branches, open PRs and Jira readiness under that lock, then persists a
 story reservation before returning build permission. `select-next-ready-issue.mjs`
