@@ -64,22 +64,29 @@ test('ordinary member refreshes public recipe amounts through the real repositor
         .select()
         .single(),
     )
-    await shopping.createFromPlan(householdId, meal.id, [
-      {
-        name: 'caster sugar see note 3',
-        quantity: 55,
-        unit: 'g',
-        category: 'pantry',
-        sourceQuantities: [{ name: 'caster sugar see note 3', quantity: '55', unit: 'g' }],
-      },
-      {
-        name: 'tomato',
-        quantity: 2,
-        unit: null,
-        category: 'produce',
-        sourceQuantities: [{ name: 'tomato', quantity: '2', unit: null }],
-      },
-    ])
+    // Seed through the released v1 contract, then exercise the new repository refresh.
+    await must(
+      member.rpc('reconcile_planned_meal_shopping', {
+        target_household_id: householdId,
+        target_planned_meal_id: meal.id,
+        ingredient_inputs: [
+          {
+            name: 'caster sugar see note 3',
+            quantity: 55,
+            unit: 'g',
+            category: 'pantry',
+            sourceQuantities: [{ name: 'caster sugar see note 3', quantity: '55', unit: 'g' }],
+          },
+          {
+            name: 'tomato',
+            quantity: 2,
+            unit: null,
+            category: 'produce',
+            sourceQuantities: [{ name: 'tomato', quantity: '2', unit: null }],
+          },
+        ],
+      }),
+    )
     const snapshot = () =>
       must(
         member

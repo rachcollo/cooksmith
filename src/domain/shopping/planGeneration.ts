@@ -1,12 +1,16 @@
+import { canonicalIngredientName as canonicalIngredientNameV1 } from './ingredientIdentityV1'
+import { categoriseIngredient } from './ingredientCategory'
+export { categoriseIngredient } from './ingredientCategory'
 import { convertPurchaseAmount, recipeMeasures } from '../measurements/purchaseMeasures'
 import type { PlannedMeal } from '../meal-plans/types'
 import { purchaseIngredientsFor, purchaseProductName } from './purchaseIngredients'
 import { purchaseMeasure } from './purchaseGroups'
 import type { Recipe } from '../recipes/types'
-import type { ShoppingCategory, ShoppingItem, ShoppingItemInput } from './types'
+import type { ShoppingItem, ShoppingItemInput } from './types'
 import {
   canonicalIngredientName,
   ingredientPurchaseKey,
+  ingredientIdentityVersion,
   parseIngredientQuantity,
 } from './ingredientIdentity'
 
@@ -18,135 +22,6 @@ export interface PlanAdditions {
 }
 
 const maxNameLength = 100
-
-const categoryKeywords: [ShoppingCategory, string[]][] = [
-  ['frozen', ['frozen', 'ice cream']],
-  [
-    'pantry',
-    [
-      'coconut milk',
-      'coconut cream',
-      'tomato paste',
-      'curry paste',
-      'stock',
-      'flour',
-      'sugar',
-      'rice',
-      'pasta',
-      'noodle',
-      'oil',
-      'vinegar',
-      'soy sauce',
-      'sauce',
-      'salt',
-      'pepper',
-      'spice',
-      'cumin',
-      'paprika',
-      'oregano',
-      'lentil',
-      'chickpea',
-      'canned',
-      'tinned',
-      'honey',
-      'oats',
-      'couscous',
-      'quinoa',
-      'mustard',
-      'peanut butter',
-    ],
-  ],
-  [
-    'meat_and_seafood',
-    [
-      'chicken',
-      'beef',
-      'pork',
-      'lamb',
-      'mince',
-      'bacon',
-      'sausage',
-      'ham',
-      'chorizo',
-      'steak',
-      'turkey',
-      'fish',
-      'salmon',
-      'tuna',
-      'prawn',
-      'seafood',
-    ],
-  ],
-  [
-    'dairy_and_eggs',
-    [
-      'milk',
-      'cheese',
-      'butter',
-      'cream',
-      'yoghurt',
-      'yogurt',
-      'egg',
-      'feta',
-      'parmesan',
-      'mozzarella',
-      'haloumi',
-    ],
-  ],
-  ['bakery', ['bread', 'roll', 'wrap', 'tortilla', 'bun', 'pita', 'bagel', 'croissant']],
-  [
-    'produce',
-    [
-      'spring onion',
-      'sweet potato',
-      'onion',
-      'garlic',
-      'tomato',
-      'potato',
-      'carrot',
-      'capsicum',
-      'zucchini',
-      'cucumber',
-      'lettuce',
-      'spinach',
-      'kale',
-      'cabbage',
-      'broccoli',
-      'cauliflower',
-      'mushroom',
-      'pumpkin',
-      'celery',
-      'corn',
-      'peas',
-      'bean',
-      'apple',
-      'banana',
-      'lemon',
-      'lime',
-      'orange',
-      'berries',
-      'berry',
-      'avocado',
-      'ginger',
-      'chilli',
-      'coriander',
-      'parsley',
-      'basil',
-      'mint',
-      'salad',
-    ],
-  ],
-  ['household', ['paper towel', 'foil', 'cling wrap', 'detergent', 'dishwashing', 'soap']],
-]
-
-const orderedKeywords = categoryKeywords
-  .flatMap(([category, keywords]) => keywords.map((keyword) => ({ category, keyword })))
-  .sort((left, right) => right.keyword.length - left.keyword.length)
-
-export function categoriseIngredient(name: string): ShoppingCategory {
-  const normalised = name.toLocaleLowerCase()
-  return orderedKeywords.find(({ keyword }) => normalised.includes(keyword))?.category ?? 'other'
-}
 
 export function buildPlanAdditions(
   meals: (Pick<PlannedMeal, 'recipeState'> &
@@ -205,6 +80,7 @@ export function buildPlanAdditions(
       if (displayName === '') continue
       const quantity = converted.quantity
       const source = {
+        ingredientIdentityVersion,
         ingredientStructure: row.structure,
         sourceIngredientId: row.sourceIngredientId,
         sourceRecipeId: recipe.id,
@@ -213,10 +89,12 @@ export function buildPlanAdditions(
         originalText: row.originalText,
         legacyPurchaseNames: [
           ...new Set(
-            [row.sourceName ?? row.name, ...(row.legacyNames ?? [])].map(canonicalIngredientName),
+            [row.sourceName ?? row.name, ...(row.legacyNames ?? [])].map(canonicalIngredientNameV1),
           ),
         ],
-        purchaseName: displayName,
+        purchaseName: canonicalIngredientNameV1(purchaseProductName(row.name)),
+        purchaseIdentityV2: displayName,
+        purchaseQuantity: quantity,
         measurementSystem: convention.system,
         measureSource: convention.source,
         purchaseUnit: converted.unit,
@@ -251,13 +129,28 @@ export function buildPlanAdditions(
   }
 
   return {
-    // Preserve source evidence when numeric(10,2) cannot represent positive demand.
-    // Null keeps it unquantified in storage; display can still use the exact sources.
-    additions: [...merged.values()].map((item) => ({
-      ...item,
-      quantity:
-        item.quantity !== null && item.quantity > 0 && item.quantity < 0.01 ? null : item.quantity,
-    })),
+    additions: [...merged.values()].map((item) => {
+      // v2 partitions storage by the original v1 purchase name. Apply the precision
+      // fallback at that boundary, before deriving the matching v2 total. Original
+      // recipe evidence remains unchanged for honest nonzero demand presentation.
+      const totals = new Map<string, number>()
+      for (const source of item.sourceQuantities ?? []) {
+        const key = source.purchaseName ?? ''
+        totals.set(key, (totals.get(key) ?? 0) + (source.purchaseQuantity ?? 0))
+      }
+      const sourceQuantities = item.sourceQuantities?.map((source) => {
+        const total = totals.get(source.purchaseName ?? '') ?? 0
+        return total > 0 && total < 0.01 ? { ...source, purchaseQuantity: null } : source
+      })
+      return {
+        ...item,
+        sourceQuantities,
+        quantity: sourceQuantities?.some((source) => source.purchaseQuantity === null)
+          ? null
+          : (sourceQuantities?.reduce((sum, source) => sum + (source.purchaseQuantity ?? 0), 0) ??
+            item.quantity),
+      }
+    }),
     linkedMealCount,
     unlinkedMealCount,
     alreadyListedNames: [...alreadyListed.values()],

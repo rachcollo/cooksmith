@@ -1,12 +1,28 @@
 import type { PantryItem } from '../pantry/types'
 import { canonicalIngredientName } from './ingredientIdentity'
 
-export const pantryMatchVersion = 2 as const
+export const pantryMatchVersion = 3 as const
 
 export type PantryMatch =
-  | { state: 'match'; pantryItemId: string; version: typeof pantryMatchVersion }
-  | { state: 'ambiguous'; version: typeof pantryMatchVersion }
+  | {
+      state: 'match'
+      pantryItemId: string
+      pantryItemNames: string[]
+      version: typeof pantryMatchVersion
+    }
+  | { state: 'ambiguous'; pantryItemNames: string[]; version: typeof pantryMatchVersion }
   | { state: 'no-match'; version: typeof pantryMatchVersion }
+
+function candidateNames(items: readonly PantryItem[]): string[] {
+  return [...new Set(items.map((item) => item.name.trim()))].sort((a, b) =>
+    a.localeCompare(b, 'en-AU'),
+  )
+}
+
+export function pantryMatchHint(match: PantryMatch | undefined): string | undefined {
+  if (!match || match.state === 'no-match') return undefined
+  return `Check Pantry: ${match.pantryItemNames.join(', ')}. Check the form and amount before buying.`
+}
 
 export function normalisePantryMatchName(value: string): string {
   return canonicalIngredientName(value)
@@ -22,11 +38,21 @@ export function matchShoppingItemToPantry(
   )
 
   if (exact.length === 1) {
-    return { state: 'match', pantryItemId: exact[0]!.id, version: pantryMatchVersion }
+    return {
+      state: 'match',
+      pantryItemId: exact[0]!.id,
+      pantryItemNames: [exact[0]!.name.trim()],
+      version: pantryMatchVersion,
+    }
   }
-  if (exact.length > 1) return { state: 'ambiguous', version: pantryMatchVersion }
+  if (exact.length > 1)
+    return {
+      state: 'ambiguous',
+      pantryItemNames: candidateNames(exact),
+      version: pantryMatchVersion,
+    }
 
-  const related = pantryItems.some((item) => {
+  const related = pantryItems.filter((item) => {
     if (!item.available) return false
     const pantryTokens = normalisePantryMatchName(item.name).split(' ').filter(Boolean)
     return (
@@ -37,16 +63,24 @@ export function matchShoppingItemToPantry(
     )
   })
 
-  return related
-    ? { state: 'ambiguous', version: pantryMatchVersion }
+  return related.length
+    ? { state: 'ambiguous', pantryItemNames: candidateNames(related), version: pantryMatchVersion }
     : { state: 'no-match', version: pantryMatchVersion }
 }
 
 export function buildPantryMatchIndex(
-  shoppingItems: readonly { id: string; name: string }[],
+  shoppingItems: readonly { id: string; name: string; householdId?: string }[],
   pantryItems: readonly PantryItem[],
 ): ReadonlyMap<string, PantryMatch> {
   return new Map(
-    shoppingItems.map((item) => [item.id, matchShoppingItemToPantry(item.name, pantryItems)]),
+    shoppingItems.map((item) => [
+      item.id,
+      matchShoppingItemToPantry(
+        item.name,
+        pantryItems.filter(
+          (pantry) => !item.householdId || pantry.householdId === item.householdId,
+        ),
+      ),
+    ]),
   )
 }

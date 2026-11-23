@@ -78,7 +78,7 @@ describe('one purchasing row per product', () => {
       groupShoppingPurchases(names.map((name, i) => row(String(i), name, 1, null))).map(
         (item) => item.name,
       ),
-    ).toEqual(['tomato', 'avocados', 'canned diced tomato', 'diced tomato', 'fresh baby spinach'])
+    ).toEqual(['tomato', 'avocado', 'canned diced tomato', 'diced tomato', 'fresh baby spinach'])
   })
   it('retains a legacy measure when cleaning its product label', () => {
     const [purchase] = groupShoppingPurchases([
@@ -153,7 +153,7 @@ describe('one purchasing row per product', () => {
       row('d', 'sea salt flakes to taste', null, null),
     ])
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ name: 'sea salt flakes', amountLabel: '10 ml + to taste' })
+    expect(result[0]).toMatchObject({ name: 'sea salt flake', amountLabel: '10 ml + to taste' })
   })
   it('does not merge explicitly fine/coarse salts or grades and forms of oil', () => {
     const names = [

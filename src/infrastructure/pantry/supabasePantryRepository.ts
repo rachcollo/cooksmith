@@ -70,20 +70,7 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
 
     async create(householdId, input) {
       const result = await database
-        .from('household_pantry_items')
-        .insert({
-          household_id: householdId,
-          name: input.name,
-          category: input.category,
-          category_source: input.categorySource,
-          storage_location: input.storageLocation,
-          storage_location_source: input.storageLocationSource,
-          classification_version: input.classificationVersion,
-          quantity: input.quantity,
-          unit: input.unit,
-          available: input.available,
-        } as never)
-        .select(selection)
+        .rpc('save_pantry_item_v2', { p_household_id: householdId, p_input: { ...input } })
         .single()
       pantryError(result.error)
       if (!result.data) throw new Error('Cooksmith could not save the pantry item.')
@@ -92,23 +79,7 @@ export function createSupabasePantryRepository(client: CooksmithSupabaseClient):
 
     async update(itemId, input) {
       const result = await database
-        .from('household_pantry_items')
-        .update({
-          ...(input.quantityUntracked === undefined
-            ? {}
-            : { quantity_untracked: input.quantityUntracked }),
-          name: input.name,
-          category: input.category,
-          category_source: input.categorySource,
-          storage_location: input.storageLocation,
-          storage_location_source: input.storageLocationSource,
-          classification_version: input.classificationVersion,
-          quantity: input.quantity,
-          unit: input.unit,
-          available: input.available,
-        } as never)
-        .eq('id', itemId)
-        .select(selection)
+        .rpc('save_pantry_item_v2', { p_item_id: itemId, p_input: { ...input } })
         .single()
       pantryError(result.error)
       if (!result.data) throw new Error('Cooksmith could not update the pantry item.')

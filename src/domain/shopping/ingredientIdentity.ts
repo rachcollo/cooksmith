@@ -1,24 +1,66 @@
 // Versioned purchasing identity. Preparation tasks keep their own recipe/source identity.
-export const ingredientIdentityVersion = 1 as const
+export const ingredientIdentityVersion = 2 as const
 
-const singulars: Readonly<Record<string, string>> = {
-  onions: 'onion',
-  carrots: 'carrot',
+// Inflection exceptions protect mass nouns, singular -s endings and irregular plurals.
+const singularExceptions: Readonly<Record<string, string>> = {
+  asparagus: 'asparagus',
+  couscous: 'couscous',
+  hummus: 'hummus',
+  molasses: 'molasses',
+  watercress: 'watercress',
+  cress: 'cress',
+  bass: 'bass',
+  citrus: 'citrus',
+  grass: 'grass',
+  lemongrass: 'lemongrass',
+  oats: 'oats',
+  news: 'news',
+  swiss: 'swiss',
+  mangoes: 'mango',
+  quiches: 'quiche',
+  mousses: 'mousse',
   potatoes: 'potato',
   tomatoes: 'tomato',
-  capsicums: 'capsicum',
-  zucchinis: 'zucchini',
-  courgettes: 'courgette',
   chillies: 'chilli',
   chilis: 'chilli',
-  peppers: 'pepper',
-  powders: 'powder',
-  cloves: 'clove',
-  eggs: 'egg',
-  lemons: 'lemon',
-  limes: 'lime',
-  apples: 'apple',
+  leaves: 'leaf',
+  loaves: 'loaf',
+  halves: 'half',
+  knives: 'knife',
+  anchovies: 'anchovy',
+  cookies: 'cookie',
+  brownies: 'brownie',
 }
+
+function singularIngredientWord(word: string): string {
+  if (singularExceptions[word]) return singularExceptions[word]
+  if (/(?:ss|us|is)$/u.test(word)) return word
+  if (/[^aeiou]ies$/u.test(word)) return word.slice(0, -3) + 'y'
+  if (/(?:ches|shes|xes|zzes|sses)$/u.test(word)) return word.slice(0, -2)
+  if (word.length > 3 && /s$/u.test(word)) return word.slice(0, -1)
+  return word
+}
+
+// Only interchangeable purchasing terms. Shallot, pumpkin/squash and generic
+// pepper are deliberately excluded because imported recipes use them ambiguously.
+const synonyms: readonly [RegExp, string][] = [
+  [/\bbell pepper\b/gu, 'capsicum'],
+  [/\bcourgette\b/gu, 'zucchini'],
+  [/\baubergine\b/gu, 'eggplant'],
+  [/\bcilantro\b/gu, 'coriander'],
+  [/\byogurt\b/gu, 'yoghurt'],
+  [/\bscallion\b/gu, 'spring onion'],
+  [/\bgreen onion\b/gu, 'spring onion'],
+  [/\barugula\b/gu, 'rocket'],
+  [/\bmangetout\b/gu, 'snow pea'],
+  [/\bgarbanzo bean\b/gu, 'chickpea'],
+  [/\bshrimp\b/gu, 'prawn'],
+  [/\bconfectioner sugar\b/gu, 'icing sugar'],
+  [/\bpowdered sugar\b/gu, 'icing sugar'],
+  [/\ball purpose flour\b/gu, 'plain flour'],
+  [/\bself rising flour\b/gu, 'self raising flour'],
+  [/\bevoo\b/gu, 'extra virgin olive oil'],
+]
 
 export function canonicalIngredientName(value: string): string {
   let name = value
@@ -29,14 +71,8 @@ export function canonicalIngredientName(value: string): string {
     .trim()
   // Quantity-bearing free text and packaged/pre-prepared products are not guessed away.
   if (/\d/u.test(name)) return name
-  name = name
-    .split(' ')
-    .map((word) => singulars[word] ?? word)
-    .join(' ')
-    .replace(/\bbell pepper\b/gu, 'capsicum')
-    .replace(/\bcourgette\b/gu, 'zucchini')
-    .replace(/\bcilantro\b/gu, 'coriander')
-    .replace(/\byogurt\b/gu, 'yoghurt')
+  name = name.split(' ').map(singularIngredientWord).join(' ')
+  for (const [pattern, replacement] of synonyms) name = name.replace(pattern, replacement)
   if (
     !/\b(frozen|canned|tinned|jar|jarred|pre|ready|packet|packaged|dried|powder|paste)\b/u.test(
       name,

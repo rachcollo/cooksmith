@@ -46,9 +46,9 @@ describe('exceptions-only put-away', () => {
     ['50 g parmesan plus extra to serve', 'parmesan'],
     ['freshly cracked black pepper', 'black pepper'],
     ['salt for pasta water', 'salt'],
-    ['pine nuts toasted note 1', 'pine nuts'],
+    ['pine nuts toasted note 1', 'pine nut'],
     ['miso use any type of miso I used hikari miso organic white miso', 'miso'],
-    ['white sesame seeds optional', 'white sesame seeds'],
+    ['white sesame seeds optional', 'white sesame seed'],
   ])('cleans %s without demanding a quantity', (name, expected) => {
     expect(groupPutAwaySources([source(name)])[0]).toMatchObject({
       name: expected,
@@ -205,4 +205,12 @@ it('combines corrected destinations without losing unknown stock or retry proven
   expect(() => combinePutAwayChoices([choice, { ...choice, pantryUpdatedAt: 'newer' }])).toThrow(
     /Pantry changed/,
   )
+})
+
+it('keeps plural Pantry aliases as a review choice instead of auto-combining stock', () => {
+  const existing = [pantry('mushrooms'), pantry('mushroom')]
+  const result = groupPutAwaySources([source('mushroom', { pantryItems: existing })])[0]!
+  expect(result).toMatchObject({ included: false, attention: 'pantry-match' })
+  expect(result.matches).toHaveLength(2)
+  expect(existing.map((item) => item.name)).toEqual(['mushrooms', 'mushroom'])
 })

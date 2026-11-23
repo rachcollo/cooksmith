@@ -24,7 +24,7 @@ import {
 } from '../domain/shopping/types'
 import { shoppingItemInputSchema } from '../domain/shopping/validationSchemas'
 import type { PantryItem } from '../domain/pantry/types'
-import { buildPantryMatchIndex } from '../domain/shopping/pantryMatching'
+import { buildPantryMatchIndex, pantryMatchHint } from '../domain/shopping/pantryMatching'
 
 import {
   groupShoppingPurchases,
@@ -594,7 +594,7 @@ function HouseholdShoppingPage() {
                   editErrors={editErrors}
                   editing={editing?.id === item.id}
                   item={item}
-                  pantryMatch={pantryMatches.get(item.id)?.state === 'match'}
+                  pantryMatch={pantryMatchHint(pantryMatches.get(item.id))}
                   pantryInfoOpen={openPantryInfoId === item.id}
                   key={item.id}
                   saving={saving}
@@ -734,7 +734,7 @@ function HouseholdShoppingPage() {
                 editErrors={editErrors}
                 editing={editing?.id === item.id}
                 item={item}
-                pantryMatch={pantryMatches.get(item.id)?.state === 'match'}
+                pantryMatch={pantryMatchHint(pantryMatches.get(item.id))}
                 pantryInfoOpen={openPantryInfoId === item.id}
                 key={item.id}
                 saving={saving}
@@ -774,7 +774,7 @@ function ShoppingItemRow({
   editErrors: FieldErrors
   editing: boolean
   item: ShoppingPurchase
-  pantryMatch: boolean
+  pantryMatch: string | undefined
   pantryInfoOpen: boolean
   saving: boolean
   onCancelEdit: () => void
@@ -936,8 +936,7 @@ function ShoppingItemRow({
                       id={`pantry-match-message-${item.id}`}
                       role="tooltip"
                     >
-                      Check your pantry — you might already have this item, and we hate wasting food
-                      and money!
+                      {pantryMatch}
                     </span>
                   ) : null}
                 </>

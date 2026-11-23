@@ -70,6 +70,9 @@ test('all stale Shopping snapshots return HTTP 409 without modifying purchases; 
           {
             ...old[0].sourceQuantities[0],
             purchaseName: 'brown sugar',
+            purchaseQuantity: 55,
+            purchaseUnit: 'g',
+            ingredientIdentityVersion: 2,
             legacyPurchaseNames: ['brown sugar see note 3'],
           },
         ],
@@ -87,7 +90,7 @@ test('all stale Shopping snapshots return HTTP 409 without modifying purchases; 
     [{ expected: [] }, 'Shopping contributions changed.'],
   ]) {
     const start = Date.now()
-    const result = await db.rpc('refresh_shopping_ingredient_structure', {
+    const result = await db.rpc('refresh_shopping_ingredient_structure_v2', {
       target_household_id: householdId,
       batches: [{ ...batch, ...patch }],
     })
@@ -98,14 +101,14 @@ test('all stale Shopping snapshots return HTTP 409 without modifying purchases; 
     assert.deepEqual(await state(), before)
   }
   // A valid first batch must roll back when a later stale snapshot fails.
-  const atomic = await db.rpc('refresh_shopping_ingredient_structure', {
+  const atomic = await db.rpc('refresh_shopping_ingredient_structure_v2', {
     target_household_id: householdId,
     batches: [batch, { ...batch, recipeVersion: '2000-01-01T00:00:00Z' }],
   })
   assert.equal(atomic.status, 409)
   assert.deepEqual(await state(), before)
   await must(
-    db.rpc('refresh_shopping_ingredient_structure', {
+    db.rpc('refresh_shopping_ingredient_structure_v2', {
       target_household_id: householdId,
       batches: [batch],
     }),
@@ -117,7 +120,7 @@ test('all stale Shopping snapshots return HTTP 409 without modifying purchases; 
   assert.equal(item.display_name, 'brown sugar')
   assert.equal(item.completed, true)
   assert.equal(Number(item.quantity), 55)
-  const denied = await localClient(3).rpc('refresh_shopping_ingredient_structure', {
+  const denied = await localClient(3).rpc('refresh_shopping_ingredient_structure_v2', {
     target_household_id: householdId,
     batches: [batch],
   })

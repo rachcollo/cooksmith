@@ -228,7 +228,7 @@ it('shares explicit package totals across ingestion, Shopping and intelligence w
   expect(r.ingredientRows[0]?.structure?.quantity.text).toBe('2 x 400 g')
   const purchases = additions(r)
   expect(purchases).toHaveLength(2)
-  expect(purchases.find((row) => row.name === 'cans tomato')).toMatchObject({
+  expect(purchases.find((row) => row.name === 'can tomato')).toMatchObject({
     quantity: 1000,
     unit: 'g',
   })

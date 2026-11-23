@@ -1,4 +1,5 @@
-import { canonicalIngredientName, parseIngredientQuantity } from '../shopping/ingredientIdentity.ts'
+import { canonicalIngredientName } from '../shopping/ingredientIdentityV1.ts'
+import { parseIngredientQuantity } from '../shopping/ingredientIdentity.ts'
 
 export const ingredientStructureSchemaVersion = 'ingredient-structure-v1' as const
 export const ingredientStructureRulesVersion = 'ingredient-structure-rules-v2' as const

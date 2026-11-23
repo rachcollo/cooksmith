@@ -52,7 +52,7 @@ function renderShopping(
 }
 
 describe('shopping list foundation', () => {
-  it('shows accessible pantry guidance only for a strong same-household match', async () => {
+  it('names exact and related Pantry candidates and supports repeated keyboard dismissal', async () => {
     const repository: ShoppingRepository = {
       list: async () => [item(), item({ id: 'shopping-rice', name: 'Rice' })],
       create: async () => item(),
@@ -107,9 +107,10 @@ describe('shopping list foundation', () => {
     expect(screen.getByRole('heading', { name: 'Dairy and eggs' })).toBeVisible()
     expect(info.closest('li')).toHaveClass('shopping-item-pantry-match')
     expect(screen.queryByText('May already have')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Why should I check my pantry for Rice?' }),
-    ).not.toBeInTheDocument()
+    const relatedInfo = screen.getByRole('button', {
+      name: 'Why should I check my pantry for Rice?',
+    })
+    expect(relatedInfo).toBeVisible()
     const milkRow = screen.getByText('Milk').closest('li')
     const riceRow = screen.getByText('Rice').closest('li')
     expect(within(milkRow!).getByRole('button', { name: 'Edit Milk' })).toBeVisible()
@@ -117,10 +118,18 @@ describe('shopping list foundation', () => {
 
     await user.click(info)
     expect(screen.getByRole('tooltip')).toHaveTextContent(
-      'Check your pantry — you might already have this item, and we hate wasting food and money!',
+      'Check Pantry: milk. Check the form and amount before buying.',
     )
     expect(info).toHaveAttribute('aria-describedby', 'pantry-match-message-shopping-milk')
     await user.keyboard('{Escape}')
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    await user.click(relatedInfo)
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Check Pantry: Rice vinegar.')
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+    await user.click(relatedInfo)
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Rice vinegar')
+    await user.tab()
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
   it('reviews completed shopping through the atomic boundary and keeps bought history', async () => {
