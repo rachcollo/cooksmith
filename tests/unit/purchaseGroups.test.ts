@@ -260,3 +260,78 @@ describe('one purchasing row per product', () => {
     expect(additions[0]?.sourceQuantities).toHaveLength(2)
   })
 })
+
+describe('nonzero recipe demand', () => {
+  it.each(['0.004 g saffron', '0.004 ml saffron', '1/300 onion'])(
+    'preserves source demand for %s through repeated generation',
+    (ingredients) => {
+      const recipe = {
+        id: 'tiny',
+        measurementSystem: 'unknown',
+        ingredients,
+        ingredientRows: [],
+      } as unknown as Recipe
+      const meals = [
+        {
+          recipeState: {
+            kind: 'active' as const,
+            recipe: { id: 'tiny', name: 'Synthetic', archivedAt: null },
+          },
+        },
+      ]
+      const first = buildPlanAdditions(meals, [recipe], []).additions
+      expect(first[0]?.quantity).toBeNull()
+      expect(first[0]?.sourceQuantities).toHaveLength(1)
+      expect(buildPlanAdditions(meals, [recipe], []).additions).toEqual(first)
+      const [purchase] = groupShoppingPurchases(
+        first.map((value) =>
+          row('tiny', value.name, value.quantity, value.unit, {
+            sourceQuantities: value.sourceQuantities,
+          }),
+        ),
+      )
+      expect(purchase?.amounts[0]?.quantity).toBeGreaterThan(0)
+      expect(purchase?.amountLabel).not.toMatch(/^0(?: |$)/)
+      expect(purchase?.members[0]?.sourceQuantities).toEqual(first[0]?.sourceQuantities)
+    },
+  )
+  it('uses exact smaller mass and volume units and aggregates before the precision fallback', () => {
+    const recipe = {
+      id: 'small',
+      ingredients: '0.004 kg rice\n0.004 L milk\n0.004 g saffron\n0.006 g saffron',
+      ingredientRows: [],
+    } as unknown as Recipe
+    const additions = buildPlanAdditions(
+      [
+        {
+          recipeState: {
+            kind: 'active',
+            recipe: { id: 'small', name: 'Synthetic', archivedAt: null },
+          },
+        },
+      ],
+      [recipe],
+      [],
+    ).additions
+    expect(additions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'rice', quantity: 4, unit: 'g' }),
+        expect.objectContaining({ name: 'milk', quantity: 4, unit: 'ml' }),
+        expect.objectContaining({ name: 'saffron', quantity: 0.01, unit: 'g' }),
+      ]),
+    )
+  })
+  it('does not infer repairs to legacy zeros or explicit overrides', () => {
+    const sourceQuantities = [{ name: 'saffron', quantity: '0.004', unit: 'g' }]
+    for (const extra of [
+      { quantity: 0 },
+      { quantity: null, planOverride: true },
+      { quantity: null, completed: true },
+    ]) {
+      const [purchase] = groupShoppingPurchases([
+        row('old', 'saffron', null, 'g', { sourceQuantities, ...extra }),
+      ])
+      expect(purchase?.amountLabel).toBe(extra.quantity === 0 ? '0 g' : 'amount to check')
+    }
+  })
+})

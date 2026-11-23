@@ -11,6 +11,12 @@ export type ShoppingCategory =
   | 'other'
 
 export interface ShoppingItem {
+  /** Local period projection after stock allocation; never persisted or substituted for provenance. */
+  remainingContributions?: {
+    quantity: number | null
+    unit: string | null
+    sourceQuantities: ShoppingSourceQuantity[]
+  }[]
   planOverride?: boolean
   stockCheck?: boolean
   measurementSystem?: MeasurementSystem

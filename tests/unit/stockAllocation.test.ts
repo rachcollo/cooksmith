@@ -1,3 +1,5 @@
+import { shoppingPeriodView, chooseShoppingPeriod } from '../../src/domain/shopping/period'
+import { groupShoppingPurchases } from '../../src/domain/shopping/purchaseGroups'
 import { expect, it } from 'vitest'
 import { allocateHouseholdStock } from '../../src/domain/shopping/stockAllocation'
 import type { PeriodShoppingItem } from '../../src/domain/shopping/period'
@@ -80,3 +82,55 @@ it('does not reserve current stock for an out-of-window historical contribution'
   }
   expect(amounts(allocateHouseholdStock([historical], meals, [stock], []))).toEqual([600, 100, 400])
 })
+
+it.each([10, 5, 0])(
+  'keeps allocated ordinary demand out of tiny source fallback with %s g stock',
+  (available) => {
+    const mixed: PeriodShoppingItem = {
+      ...row,
+      quantity: null,
+      unit: 'g',
+      completed: false,
+      contributions: [
+        {
+          plannedMealId: 'a',
+          quantity: null,
+          unit: 'g',
+          sourceQuantities: [
+            { name: 'rice', quantity: '0.004', unit: 'g', sourceIngredientId: 'tiny-source' },
+          ],
+        },
+        {
+          plannedMealId: 'b',
+          quantity: 10,
+          unit: 'g',
+          sourceQuantities: [
+            { name: 'rice', quantity: '10', unit: 'g', sourceIngredientId: 'ordinary-source' },
+          ],
+        },
+      ],
+    }
+    const original = structuredClone(mixed)
+    const allocated = allocateHouseholdStock(
+      [mixed],
+      meals,
+      [{ ...stock, quantity: available }],
+      [],
+    )
+    const today = new Date(2026, 9, 8, 12)
+    const view = shoppingPeriodView(allocated, chooseShoppingPeriod('week', today), meals, today)
+    const [purchase] = groupShoppingPurchases(view.items)
+    expect(purchase?.amounts[0]?.quantity).toBeCloseTo(10 - available + 0.004, 6)
+    expect(purchase?.sourceQuantities).toEqual(
+      original.contributions.flatMap((c) => c.sourceQuantities),
+    )
+    expect(mixed).toEqual(original)
+    const overridden = shoppingPeriodView(
+      [{ ...allocated[0]!, planOverride: true, quantity: 0.25 }],
+      chooseShoppingPeriod('week', today),
+      meals,
+      today,
+    )
+    expect(groupShoppingPurchases(overridden.items)[0]?.amounts[0]?.quantity).toBe(0.25)
+  },
+)
