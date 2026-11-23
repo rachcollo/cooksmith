@@ -63,7 +63,7 @@ function countAcceptanceCriteriaItems(content) {
   return Math.max(countCheckboxItems(content), countPlainListItemsNearHeading(content))
 }
 
-export function assessPackageReadiness({ jiraKey, cwd = process.cwd() } = {}) {
+export function assessPackageReadiness({ jiraKey, cwd = process.cwd(), recovery = false } = {}) {
   const checks = []
 
   const packagePath = findPackageReferencing(jiraKey, cwd)
@@ -95,7 +95,12 @@ export function assessPackageReadiness({ jiraKey, cwd = process.cwd() } = {}) {
 
   const status = extractStatus(content)
   checks.push(
-    status && /^ready(?: for build)?$/i.test(status) && !packagePath.includes('/planned/')
+    status &&
+      (recovery
+        ? /^(ready(?: for build)?|building|in progress|in review|testing)$/i
+        : /^ready(?: for build)?$/i
+      ).test(status) &&
+      !packagePath.includes('/planned/')
       ? { ok: true, message: `Package status is "${status}".` }
       : {
           ok: false,

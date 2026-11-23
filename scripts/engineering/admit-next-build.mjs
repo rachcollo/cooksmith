@@ -1,3 +1,4 @@
+import { assertNormalAdmission } from './lib/build-recovery.mjs'
 import { execFileSync } from 'node:child_process'
 import { admitBuild, githubClaimStore } from './lib/build-claims.mjs'
 import { readConfig as readGitHubConfig } from './lib/github.mjs'
@@ -6,6 +7,7 @@ import { resolveMaxParallelBuilds, selectNextReadyIssue } from './select-next-re
 
 // Run in an isolated, clean checkout of the exact current remote main.
 try {
+  assertNormalAdmission()
   const githubConfig = readGitHubConfig(process.env)
   const jiraConfig = readJiraConfig(process.env)
   if (!githubConfig || !jiraConfig)
