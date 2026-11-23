@@ -1,8 +1,10 @@
 # Build admission and recovery
 
 Ordinary new builds and scheduled pickup must reserve work before branching or editing.
-They remain frozen. The sole manual exception is the explicitly supervised
-existing-PR repair policy below; it does not use or claim atomic admission.
+They remain frozen. The manual exceptions are the explicitly supervised
+existing-PR repair policy and the single CS-79 local preparation proposal below,
+each effective only after its required human acceptance and merge. Neither uses
+or claims atomic admission.
 The atomic protocol protects cooperative builders; it cannot prevent a person or
 old scheduler from bypassing it. Before activating ordinary/atomic pickup, pause
 old runs and reconcile all existing workers. The supervised exception below
@@ -138,6 +140,94 @@ paid backfill, feature repair, merge or deployment.
 This is a scoped supplement to ADR 022; [ADR 023](../architecture/decisions/023-cs234-merged-baseline-repair.md)
 records the decision. Stop the allowance if its baseline/scope or release gates
 cannot be established; do not extend it to other dependency failures.
+
+## Single CS-79 quantity correction: local preparation
+
+**Proposed; inactive until independent review, human acceptance and merge of this
+policy.** The owner's 22 November 2026 approval authorises preparation of this
+one-off docs-only proposal despite the freeze; it authorises no feature edits in
+this governance task. See the [authority and evidence record](../engineering/handovers/cs79-quantity-preparation-policy.md).
+It creates no reusable governance bootstrap or permission to override a platform
+denial. Ordinary, scheduled and parallel admission remain disabled.
+
+After policy adoption, a fresh explicit supervisor selection may permit **one
+separate CS-79 Shopping quantity correction branch** from freshly verified accepted
+remote main. Only for that local correction, replace the reservation-before-branching
+requirement and the already-open-implementation-PR condition with this supervised
+record. This is neither package pickup nor an amendment to #228, #231–234. It does
+not authorise publication: local review may proceed, but any push, upload or draft
+PR requires separately explicit scope/authority and the checks below. Never create
+an empty PR or fabricated claim merely to appear eligible.
+
+Before branching or editing, record the adopted policy merge SHA, current main SHA,
+CS-79 package path/content and current Jira scope/status/dependencies, the bounded
+files/behaviour/tests, **one named supervisor and one selected worker/session**.
+The intended supervisor is Evie recovery coordinator; this proposal does not select
+an implementation worker or start a turn. Existing-repair status/completeness
+allowances apply to the approved CS-79 package; its declared dependency CS-22 must
+remain satisfied. Preserve every dependency link and honest Jira status. New or
+unknown upstream blockers and scope drift still stop work; no transitive dependency
+waiver or CS-79/CS-101 acceptance is granted. The #234-specific dependency allowance
+must not be reused here.
+
+Require fresh **complete paginated branch/open-PR/ref inventory**, including all
+build lock/claim/receipt refs, and preserve the evidence. Any lock or claim blocks
+preparation pending separate reconciliation. Preserve all receipts and historical
+branches. Recheck current main, selected local branch/head (once created), related
+PR heads and build refs before edits, after interruption and before any separately
+authorised publication. Unexpected movement, competing writes, missing evidence,
+uncertain write outcomes or a new denial stop work. No cleanup, force push, expiry,
+claim substitution or alternate-route retry. Main integration after movement needs
+a separate bounded decision and revalidation; do not silently advance the baseline.
+
+Keep this work serial with all other repairs. A resumed session needs fresh named
+selection and evidence; end its edit authority at handoff before selecting another.
+Unknown historical owners remain unknown. The owner's existing bounded acceptance
+of unresolved-worker risk is retained, not proof of cessation or exclusive ownership.
+Stable heads, completed turns, CS-110's limited receipt, rulesets and expected-SHA
+leases are not writer fencing. The denied CS-111 archive and other previously denied
+actions remain binding. No new live admission lock, adoption or receipt is created.
+
+### Exact scope and tests
+
+- Preserve raw decimal text through typing/paste, edit/reopen and submit in the
+  affected Shopping quantity fields, using existing shared primitives where suitable.
+  No full route-wide CS-111 adoption or unrelated dialog/numeric redesign.
+- Normalise only already supported exact kg-to-g and L-to-ml aliases where needed
+  before persistence; otherwise provide honest validation for unsupported tiny
+  manual amounts. Preserve unit identity, ordinary edits and household ownership.
+  No new density, regional convention or general conversion catalogue.
+- Do not show genuinely nonzero recipe demand as zero. Preserve original recipe
+  text, source/contribution/receipt IDs and uncertainty. Do not guess, backfill,
+  rewrite or combine prior data. A display-only fix cannot be claimed to repair
+  stored quantities already rounded to zero.
+- Limit implementation to necessary Shopping presentation/domain/persistence-adapter
+  code, focused regression tests and its handover. No schema/migration/generated-type,
+  RLS/ACL, workflow, credential, provider, security-setting or hosted-data changes.
+  If a reliable correction needs a schema or broader contract change, stop for
+  separately approved scope; this policy does not approve it.
+- Cover typing and paste of 0.004, edit/reopen/submit, exact kg/g and L/ml cases,
+  unsupported units/tiny values, null/zero and ordinary quantities, precise recipe
+  demand and regeneration, manual opt-in/overrides and preserved provenance.
+  Distinguish mock UI/repository tests from real disposable PostgreSQL persistence
+  evidence and authenticated/hosted validation. No real households or emails.
+
+Run all applicable repository-required preflight, formatting, lint, types, app/build,
+browser/accessibility and database/security/compatibility checks; state unavailable
+checks honestly. Obtain independent review of the exact local diff/tree. If later
+publication is separately authorised, preserve history, recheck inventory/heads/refs,
+verify the published tree equals the tested/reviewed tree, and require all exact-head
+quality/governance checks before claiming ready. Local-only preparation is not an
+exemption from CI; CI remains pending until authorised publication.
+
+Human acceptance/merge, applicable hosted acceptance and protected release gates
+remain unchanged. CS-79 product acceptance, the precision correction's final
+verification and CS-101 hosted lifecycle are not satisfied by this proposal. #234's
+release/no-backup decision and #228/#232/#233 gates are separate and untouched.
+No deployment, production access, paid processing, scheduler restart, Jira transition
+or deadline commitment. Stop assigning this exception when the one correction is
+handed off/completed; further corrections require new explicit scope, not reuse of
+this permission. Preserve evidence; no automatic cleanup or expiry is introduced.
 
 ## Ordinary atomic admission (currently frozen)
 

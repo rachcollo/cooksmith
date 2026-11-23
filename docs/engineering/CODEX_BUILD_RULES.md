@@ -38,6 +38,8 @@ The user reviews in GitHub and must not be asked to perform Git or Terminal work
 
 For an explicitly selected [supervised existing-PR repair](../operations/BUILD_ADMISSION.md#supervised-serial-existing-pr-repair), record current remote main and use the authorised exact existing PR head in an isolated clean checkout. That bounded exception replaces steps 1, 3 and 4 below and the new-branch default in section 4; preserve history and all testing, publication, review and release requirements. It does not authorise new work or concurrent pickup.
 
+The [single CS-79 local preparation proposal](../operations/BUILD_ADMISSION.md#single-cs-79-quantity-correction-local-preparation), only after human acceptance and merge, supplies a separate bounded admission route for one new local correction branch. Its exact scope, fresh supervisor selection, stop conditions and separate publication authority apply; the latest-main baseline and all validation/release requirements below remain. Preparation of that policy is not feature-edit authority.
+
 For other work, before editing, Codex must:
 
 1. begin from the latest remote `main` unless the approved task explicitly names another base;

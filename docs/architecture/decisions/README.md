@@ -50,3 +50,5 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 - [023: Merged prerequisites for the bounded #234 repair](023-cs234-merged-baseline-repair.md) (Proposed): release acceptance retained.
 
 - [024: Server-sent household invitations](024-server-sent-household-invitations.md) (Proposed).
+
+- [025: One local CS-79 quantity correction](025-cs79-local-quantity-preparation.md) (Proposed): inactive until reviewed, accepted and merged; publication separately authorised. Number 024 is already proposed by open invitation PR #232.

@@ -1,6 +1,7 @@
 import { ShoppingPutAway } from './shopping/ShoppingPutAway'
 import { ShoppingPeriodControl } from './shopping/ShoppingPeriodControl'
 import type { ShoppingPeriod, ShoppingPeriodView } from '../domain/shopping/period'
+import { parseNumericFieldValue } from '../components/ui/numericFieldValue'
 import { MeasurementSelect } from '../components/ui/MeasurementSelect'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
@@ -34,11 +35,28 @@ import {
   type PurchaseAmount,
 } from '../domain/shopping/purchaseGroups'
 
-const emptyInput: ShoppingItemInput = {
+type ShoppingDraft = Omit<ShoppingItemInput, 'quantity'> & { quantity: string }
+type PurchaseAmountDraft = Omit<PurchaseAmount, 'quantity'> & { quantity: string }
+
+const emptyInput: ShoppingDraft = {
   name: '',
-  quantity: null,
+  quantity: '',
   unit: null,
   category: 'other',
+}
+
+function parseShoppingQuantity(raw: string) {
+  const parsed = parseNumericFieldValue(raw, { min: 0 })
+  // A very small pasted decimal can underflow JavaScript Number before validation.
+  if (parsed.valid && parsed.value === 0 && /[1-9]/u.test(raw.split('/')[0]!)) {
+    return {
+      ...parsed,
+      valid: false as const,
+      value: null,
+      error: 'This amount is too small. Use a supported larger amount or leave the quantity blank.',
+    }
+  }
+  return parsed
 }
 
 type FieldErrors = Partial<Record<keyof ShoppingItemInput | 'form', string>>
@@ -68,16 +86,16 @@ function HouseholdShoppingPage() {
   const [periodBusy, setPeriodBusy] = useState(false)
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [pantryItems, setPantryItems] = useState<PantryItem[]>([])
-  const [draft, setDraft] = useState<ShoppingItemInput>(emptyInput)
+  const [draft, setDraft] = useState<ShoppingDraft>(emptyInput)
   const [purchaseEdit, setPurchaseEdit] = useState<{
     purchase: ShoppingPurchase
     combineWithPlan?: boolean
     measurementSystem?: ShoppingItem['measurementSystem']
     name: string
-    amounts: PurchaseAmount[]
+    amounts: PurchaseAmountDraft[]
   } | null>(null)
   const [editing, setEditing] = useState<ShoppingItem | null>(null)
-  const [editDraft, setEditDraft] = useState<ShoppingItemInput>(emptyInput)
+  const [editDraft, setEditDraft] = useState<ShoppingDraft>(emptyInput)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [editErrors, setEditErrors] = useState<FieldErrors>({})
   const [loading, setLoading] = useState(true)
@@ -221,8 +239,12 @@ function HouseholdShoppingPage() {
     [items, pantryItems],
   )
 
-  function validate(input: ShoppingItemInput, currentId?: string) {
-    const result = shoppingItemInputSchema.safeParse(input)
+  function validate(input: ShoppingDraft, currentId?: string) {
+    const parsedQuantity = parseShoppingQuantity(input.quantity)
+    const result = shoppingItemInputSchema.safeParse({
+      ...input,
+      quantity: parsedQuantity.valid ? parsedQuantity.value : Number.NaN,
+    })
     const nextErrors: FieldErrors = {}
     if (!result.success) {
       for (const issue of result.error.issues) {
@@ -232,6 +254,7 @@ function HouseholdShoppingPage() {
         }
       }
     }
+    if (!parsedQuantity.valid) nextErrors.quantity = parsedQuantity.error
     const parsedName = result.success ? result.data.name : input.name.trim()
     if (
       items.some(
@@ -298,12 +321,13 @@ function HouseholdShoppingPage() {
           ...amount,
           quantity:
             amount.quantity === null
-              ? null
-              : purchaseDisplayQuantity(
-                  amount.quantity,
+              ? ''
+              : String(
                   purchase.amounts.some(
                     (source) => source.unit === amount.unit && source.approximate,
-                  ),
+                  )
+                    ? purchaseDisplayQuantity(amount.quantity, true)
+                    : amount.quantity,
                 ),
         })),
       })
@@ -315,7 +339,7 @@ function HouseholdShoppingPage() {
       name: item.name,
       measurementSystem: item.measurementSystem,
       combineWithPlan: item.combineWithPlan,
-      quantity: item.quantity,
+      quantity: item.quantity === null ? '' : String(item.quantity),
       unit: item.unit,
       category: item.category,
     })
@@ -399,10 +423,7 @@ function HouseholdShoppingPage() {
     if (
       !name ||
       name.length > 100 ||
-      purchaseEdit.amounts.some(
-        (amount) =>
-          amount.quantity !== null && (!Number.isFinite(amount.quantity) || amount.quantity < 0),
-      )
+      purchaseEdit.amounts.some((amount) => !parseShoppingQuantity(amount.quantity).valid)
     ) {
       setEditErrors({ form: 'Check the item name and quantities.' })
       return
@@ -415,7 +436,8 @@ function HouseholdShoppingPage() {
       const unit = purchaseAmount(member).unit
       const amount = purchaseEdit.amounts.find((candidate) => candidate.unit === unit)
       const key = unit ?? ''
-      const quantity = assigned.has(key) ? 0 : (amount?.quantity ?? null)
+      const parsed = parseShoppingQuantity(amount?.quantity ?? '')
+      const quantity = assigned.has(key) ? 0 : parsed.value
       assigned.add(key)
       return {
         id: member.id,
@@ -429,9 +451,21 @@ function HouseholdShoppingPage() {
           : {}),
       }
     })
+    const validated = inputs.map((input) => shoppingItemInputSchema.safeParse(input))
+    const invalid = validated.find((result) => !result.success)
+    if (invalid && !invalid.success) {
+      setEditErrors({ form: invalid.error.issues[0]?.message ?? 'Check the quantities.' })
+      return
+    }
     setSaving(true)
     try {
-      await repository.updatePurchase(householdId, inputs)
+      await repository.updatePurchase(
+        householdId,
+        inputs.map((input, index) => ({
+          ...input,
+          ...validated[index]!.data,
+        })),
+      )
       setItems(await repository.list(householdId))
       setPurchaseEdit(null)
     } catch (saveError) {
@@ -515,11 +549,11 @@ function HouseholdShoppingPage() {
             inputMode="decimal"
             label="Quantity"
             optional
-            value={draft.quantity === null ? '' : String(draft.quantity)}
+            value={draft.quantity}
             onChange={(event) =>
               setDraft({
                 ...draft,
-                quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+                quantity: event.target.value,
               })
             }
           />
@@ -610,9 +644,11 @@ function HouseholdShoppingPage() {
               <TextField
                 key={`${amount.unit}-${index}`}
                 id={`purchase-amount-${index}`}
+                aria-invalid={Boolean(editErrors.form)}
+                aria-describedby={editErrors.form ? 'purchase-quantity-error' : undefined}
                 label={amount.unit ? `Quantity (${amount.unit})` : 'Quantity'}
                 inputMode="decimal"
-                value={amount.quantity === null ? '' : String(amount.quantity)}
+                value={amount.quantity}
                 onChange={(event) =>
                   setPurchaseEdit({
                     ...purchaseEdit,
@@ -620,8 +656,7 @@ function HouseholdShoppingPage() {
                       position === index
                         ? {
                             ...candidate,
-                            quantity:
-                              event.target.value.trim() === '' ? null : Number(event.target.value),
+                            quantity: event.target.value,
                           }
                         : candidate,
                     ),
@@ -646,7 +681,7 @@ function HouseholdShoppingPage() {
               </>
             ) : null}
             {editErrors.form ? (
-              <p className="form-error" role="alert">
+              <p className="form-error" id="purchase-quantity-error" role="alert">
                 {editErrors.form}
               </p>
             ) : null}
@@ -735,7 +770,7 @@ function ShoppingItemRow({
   onSaveEdit,
   onToggle,
 }: {
-  editDraft: ShoppingItemInput
+  editDraft: ShoppingDraft
   editErrors: FieldErrors
   editing: boolean
   item: ShoppingPurchase
@@ -744,7 +779,7 @@ function ShoppingItemRow({
   saving: boolean
   onCancelEdit: () => void
   onEdit: (item: ShoppingItem) => void
-  onEditDraftChange: (draft: ShoppingItemInput) => void
+  onEditDraftChange: (draft: ShoppingDraft) => void
   onRemove: (item: ShoppingItem) => void
   onPantryInfoChange: (open: boolean) => void
   onSaveEdit: (event: FormEvent<HTMLFormElement>) => void
@@ -775,11 +810,13 @@ function ShoppingItemRow({
           <input
             id={`shopping-quantity-${item.id}`}
             inputMode="decimal"
-            value={editDraft.quantity === null ? '' : String(editDraft.quantity)}
+            aria-invalid={Boolean(editErrors.quantity)}
+            aria-describedby={editErrors.quantity ? `shopping-error-${item.id}` : undefined}
+            value={editDraft.quantity}
             onChange={(event) =>
               onEditDraftChange({
                 ...editDraft,
-                quantity: event.target.value.trim() === '' ? null : Number(event.target.value),
+                quantity: event.target.value,
               })
             }
           />
@@ -852,7 +889,7 @@ function ShoppingItemRow({
             <X aria-hidden="true" />
           </button>
           {editErrors.name || editErrors.quantity || editErrors.form ? (
-            <p className="form-error" role="alert">
+            <p className="form-error" id={`shopping-error-${item.id}`} role="alert">
               {editErrors.name ?? editErrors.quantity ?? editErrors.form}
             </p>
           ) : null}
