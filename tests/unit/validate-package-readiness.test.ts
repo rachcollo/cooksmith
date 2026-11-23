@@ -168,3 +168,24 @@ describe('validate-package-readiness', () => {
     })
   })
 })
+
+it('allows an existing lifecycle status only for recovery, retaining completeness checks', () => {
+  withFixture(
+    { 'engineering/ready/cs-40.md': readyChecklistPackage.replace('`Ready`', '`In Review`') },
+    (cwd) => {
+      expect(formatReadinessReport(assessPackageReadiness({ jiraKey: 'CS-40', cwd })).ok).toBe(
+        false,
+      )
+      expect(
+        formatReadinessReport(assessPackageReadiness({ jiraKey: 'CS-40', cwd, recovery: true })).ok,
+      ).toBe(true)
+      writeFileSync(
+        join(cwd, 'engineering/ready/cs-40.md'),
+        readyChecklistPackage.replace('`Ready`', '`In Review`') + '\nTODO',
+      )
+      expect(
+        formatReadinessReport(assessPackageReadiness({ jiraKey: 'CS-40', cwd, recovery: true })).ok,
+      ).toBe(false)
+    },
+  )
+})

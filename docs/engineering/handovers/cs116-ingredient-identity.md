@@ -25,7 +25,7 @@ Recognise equivalent ingredients across recipe purchasing, Shopping and Pantry w
 
 ## Files and contracts
 
-Domain changes are in `src/domain/shopping`, frozen identity imports in recipe structure validators, and named guidance in `ShoppingPage.tsx`. Tests cover unit, integration, browser and database boundaries. [ADR 022](../../architecture/decisions/022-purchase-identity-v2-stable-sources.md) explains stable backing rows and compatibility. [Fixture review](../../../tests/fixtures/ingredient-identity-v2.md) records category policy.
+Domain changes are in `src/domain/shopping`, frozen identity imports in recipe structure validators, and named guidance in `ShoppingPage.tsx`. Tests cover unit, integration, browser and database boundaries. [ADR 026](../../architecture/decisions/026-purchase-identity-v2-stable-sources.md) explains stable backing rows and compatibility. [Fixture review](../../../tests/fixtures/ingredient-identity-v2.md) records category policy.
 
 ## Migration and release
 
@@ -71,3 +71,28 @@ Existing semantic controls and tooltip description wiring are preserved. Chromiu
 ## Rollback and remaining coordination
 
 Keep the PR draft until required CI and hosted validation are complete. Do not merge without coordinator clearance while CS-107 and package publication proceed. Revert compatible application changes if needed and forward-fix released database changes; never delete receipt evidence. No later milestone has been started.
+
+## 23 November conflict refresh
+
+The following supersedes historical expansion-release holds above. PR #234 was
+merged at `a052734d75941c1d6bc89e315d66e3f534d89ae7`; protected database release
+[45096852608](https://github.com/rachcollo/cooksmith/actions/runs/45096852608)
+succeeded, and the production ledger records both `20261117094901` and
+`20261119101837`. PR #233's earlier blocked-release proposal is superseded.
+
+This branch integrates that accepted main without changing either released
+migration. Its effective diff is application adoption, tests and documentation;
+it adds no migration or Edge Function change. The merge retains both the decimal
+entry/reopen regression and the plural-purchase/Pantry-hint regression. The
+unmerged purchase-identity ADR is now 026, preserving main's governance ADR 022
+and invitation PR #232's proposed ADR 024.
+
+This refresh does not establish signed-in acceptance or product approval.
+Staging setup is deferred; no hosted household tests, provider calls, deployment
+or Jira transition were performed. Existing local evidence above is historical;
+record refreshed local and exact-head CI evidence on the PR handoff. Separate
+review, acceptance and release decisions remain required.
+
+Independent integration review found a semantic conflict with the accepted Shopping precision correction: a tiny item's nullable total disagreed with its v2 source purchase quantity, which the released API rejects. The application now applies the existing nullable fallback per physical v1 name/unit partition and derives the v2 total from those source purchase quantities. Original recipe quantities, text, structure and identifiers remain intact. Same-partition tiny sources still aggregate before fallback; different physical names grouped by v2 cannot silently round to zero. No released migration or schema contract changes. The new opt-in local PostgreSQL regression sends `buildPlanAdditions` payloads to the actual v2 RPC, checks persisted amounts and original evidence, and repeats reconciliation to check stable source/item identities. Hosted acceptance remains separate.
+
+Validation of this integration: static checks passed (1,313 tests; six opt-in skips), and the new generated-payload suite passed all eight cases with the local PostgreSQL option enabled, including its four real persistence/retry cases. A clean local migration reset and all 46 database test files / 1,090 assertions passed. The first full local stack start ran out of workspace space; a database-only stack provided the SQL evidence, not hosted or Auth/Data API evidence. Required exact-head GitHub database/security/types and browser jobs still gate review after publication.

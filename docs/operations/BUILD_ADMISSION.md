@@ -1,11 +1,235 @@
 # Build admission and recovery
 
-Every scheduled or manual builder must reserve work before branching or editing.
-This protocol protects cooperative builders; it cannot prevent a person or old
-scheduler from bypassing it. Pause old pickup runs and reconcile all existing
-workers before activation. Do not activate while an untracked worker is running.
+Ordinary new builds and scheduled pickup must reserve work before branching or editing.
+They remain frozen. The manual exceptions are the explicitly supervised
+existing-PR repair policy and the single CS-79 local preparation proposal below,
+each effective only after its required human acceptance and merge. Neither uses
+or claims atomic admission.
+The atomic protocol protects cooperative builders; it cannot prevent a person or
+old scheduler from bypassing it. Before activating ordinary/atomic pickup, pause
+old runs and reconcile all existing workers. The supervised exception below
+explicitly accepts unresolved old-worker risk without activating pickup.
 
-## Admission
+## Supervised serial existing-PR repair
+
+This policy takes effect only after human acceptance and merge of its governance
+PR. The owner authorised this narrower reversal on 19 November 2026, accepting
+residual concurrent-worker risk. It supersedes the universal reservation and
+exhaustive historical-owner termination prerequisites **only for explicitly
+supervised repair of an already open implementation PR**. This governance task
+authorises no feature edits itself. It is not permission for new stories,
+package pickup, unattended work, parallel pickup, CS-113 publication or release.
+
+For each repair the supervisor must record, before editing:
+
+1. The owner's authorised bounded repair, one named supervisor and one selected
+   worker/session. Name the existing PR, Jira key, branch and exact current head,
+   independently verified current remote main, allowed files/behaviour and tests.
+   Do not infer that all open PRs are selected or must ship for a release date.
+2. A fresh complete branch/open-PR inventory and build lock/claim/receipt ref read.
+   Preserve the evidence and every historical branch. Unknown historical owners
+   are explicitly **unknown**, and their occupancy does not block this supervised
+   exception. Existing lock or claim refs still block it pending separate operator
+   reconciliation; never delete, overwrite, ignore or fabricate them. Retain all
+   consumption receipts. Missing/incomplete API evidence stops the repair.
+3. Current Jira/package scope and completeness, upstream blockers and declared
+   dependencies. Unknown links, unmet dependencies or scope drift still stop work,
+   except for the precisely bounded CS-79/CS-101 status allowance for #234 below.
+   Existing-repair Jira status must be In Progress, In Review or Testing; package
+   completeness uses the existing recovery status allowance. Existing connected
+   read access may supply this supervised evidence. The atomic admission commands
+   retain their secure GitHub/Jira credential contract; do not impersonate their
+   permission/claim receipts or extract connector credentials.
+4. The unresolved owner/session inventory and the owner's acceptance of the
+   resulting risk. State that no exhaustive cessation or exclusive writer fence
+   is proved. Completed turns, CS-110's limited archive receipt, stable branch
+   SHAs, rulesets and connector expected-SHA leases do not prove all workers stopped.
+
+Read and record the operative governance (AGENTS, build rules, runbook and relevant
+standards) from the exact verified current accepted main SHA before entering the
+feature checkout. Apply that accepted policy to this explicitly supervised repair;
+older governance files in the existing feature head do not reinstate superseded
+reservation rules. Keep this policy provenance separate from the feature-code
+baseline, and do not merge main solely to copy the policy.
+
+Use an isolated clean checkout of the explicitly authorised existing PR head,
+not an unrelated feature branch or main. Record current main separately; do not
+rewrite the PR's historical baseline. Preserve existing commits and real work.
+The default new-task workflow remains one scoped branch from verified main;
+this exception repairs only the exact named existing branch. If main integration
+is required, stop for a bounded integration decision, preserve history and rerun
+checks; never force-push, reset shared history or create a replacement feature PR.
+
+The supervisor coordinates **one selected repair at a time**, keeps all pickup
+sources off and issues no overlapping repair instructions. Record its outcome and
+end the current worker's edit instructions before selecting the next repair.
+A resumed session requires fresh supervisor selection and head/main checks; this
+is a cooperative operating rule, not a technical guarantee that old sessions
+cannot resume. Recheck target head, main and claim/lock refs before edits and
+publication. Unexpected movement, new refs, competing edits or uncertain writes
+stop the repair for reconciliation; do not overwrite them or retry a denied action.
+Use supported publication with exact-head checks and ordinary non-force history
+preservation. Never describe a client-side lease as an exclusive writer lock.
+
+This route creates **no live admission lock, claim or adoption receipt**. Its
+handover is a supervised work record, not an atomic reservation. A stale or
+unknown worker can still write between checks, and two cooperative supervisors
+could select conflicting work. Accepting that residual risk changes repository
+operating policy; it does not establish cessation or authorise provider bypasses.
+The earlier automatic-review denial of archiving CS-111 remains binding: do not
+retry that archive, delegate it or substitute another stopping action.
+
+All required tests, independent review, exact-head CI, applicable hosted validation,
+resolved review threads, human PR merge and separate protected production release
+remain required. AIEOS_Rules protects the default branch, not exclusive feature
+branch ownership. Do not alter rulesets, credentials, providers or live data.
+Keep new admission frozen in `engineering/build-recovery.json`; the scheduler and
+parallel pickup remain off. No executable bypass flag or new scheduler is added.
+
+The [atomic recovery route below](#reviewed-legacy-recovery-freeze-17-november-2026)
+remains available only when its stronger evidence and runtime requirements are met.
+Its historical owner-termination requirements do not apply to this supervised
+exception. Prior handovers remain dated evidence, not current operating authority.
+To stop this exception, stop assigning supervised work, preserve all evidence/refs
+and keep pickup disabled; no expiry or automatic cleanup is introduced.
+
+## Selected #234 repair: merged baseline versus release acceptance
+
+This clarification becomes operative only after independent review, human acceptance
+and merge of this governance proposal. On 19 November 2026, Rach explicitly
+approved this one-off proposal despite the freeze: “Yep i'm happy to remove that
+rule so you can keep going, then we move to jira done after the final check.”
+This authority covers preparation of this scoped policy change, not a reusable
+coordinator bootstrap or a platform-denial override.
+
+For a freshly selected supervised repair of existing PR **#234**, branch
+`feat/cs-116-database-expansion`, only the requirement that **CS-79 and CS-101 be
+Done before engineering repair** is replaced by verified merged technical
+baselines. Both remain In Review; preserve their dependency links and outstanding
+acceptance. The accepted CS-116 package already requires their code to be merged.
+Verify the merge commits in the [evidence handover](../engineering/handovers/cs234-repair-prerequisites.md)
+are ancestors of current accepted main and that the relevant baseline contracts
+remain available and compatible in the selected feature head. Unexpected baseline
+changes, missing contracts or new dependencies still stop work. If feature/main
+integration is needed, obtain the existing bounded integration decision first.
+
+Scope is only #234's reviewed database-expansion lock-order/contention and
+validation-before-lock repair, its deterministic legacy/v2 concurrency and
+compatibility/security tests, necessary generated types and handover. It does not
+permit #228 application adoption/release, unrelated CS-116 work, new stories,
+package pickup or scheduled/parallel work. Every other supervised prerequisite
+remains: fresh exact heads/main, complete inventory, named single supervisor and
+writer, no existing lock/claim refs, preserved receipts/history, honest unresolved
+worker risk, package scope, tests, independent review and exact-head CI. The denied
+archive/publication boundaries and ordinary/atomic admission freeze remain intact.
+No runtime admission command or normal dependency rule is changed.
+
+**Release and final-verification gates remain outstanding.** Before the relevant
+production release, record actual CS-79 product acceptance of supported conversion
+catalogue/ingredient-form coverage, source quality, precision/rounding and honest
+fallback; and CS-101 hosted acceptance of Shopping refresh, idempotence, deliberate
+overrides and household isolation, plus Get Ahead current-result/cache lifecycle.
+The accepted temporary Get Ahead unavailable/preparing behaviour is not a new
+zero-downtime requirement. Merged code, green CI and this engineering allowance
+are not acceptance evidence or release approval. Preserve compatibility, RLS/ACLs,
+receipt/source IDs, migration provenance and protected release controls; never
+rewrite released migrations. Keep Jira statuses honest and move to Done only
+after actual final checks. This proposal performs no Jira transition, hosted write,
+paid backfill, feature repair, merge or deployment.
+
+This is a scoped supplement to ADR 022; [ADR 023](../architecture/decisions/023-cs234-merged-baseline-repair.md)
+records the decision. Stop the allowance if its baseline/scope or release gates
+cannot be established; do not extend it to other dependency failures.
+
+## Single CS-79 quantity correction: local preparation
+
+**Proposed; inactive until independent review, human acceptance and merge of this
+policy.** The owner's 22 November 2026 approval authorises preparation of this
+one-off docs-only proposal despite the freeze; it authorises no feature edits in
+this governance task. See the [authority and evidence record](../engineering/handovers/cs79-quantity-preparation-policy.md).
+It creates no reusable governance bootstrap or permission to override a platform
+denial. Ordinary, scheduled and parallel admission remain disabled.
+
+After policy adoption, a fresh explicit supervisor selection may permit **one
+separate CS-79 Shopping quantity correction branch** from freshly verified accepted
+remote main. Only for that local correction, replace the reservation-before-branching
+requirement and the already-open-implementation-PR condition with this supervised
+record. This is neither package pickup nor an amendment to #228, #231–234. It does
+not authorise publication: local review may proceed, but any push, upload or draft
+PR requires separately explicit scope/authority and the checks below. Never create
+an empty PR or fabricated claim merely to appear eligible.
+
+Before branching or editing, record the adopted policy merge SHA, current main SHA,
+CS-79 package path/content and current Jira scope/status/dependencies, the bounded
+files/behaviour/tests, **one named supervisor and one selected worker/session**.
+The intended supervisor is Evie recovery coordinator; this proposal does not select
+an implementation worker or start a turn. Existing-repair status/completeness
+allowances apply to the approved CS-79 package; its declared dependency CS-22 must
+remain satisfied. Preserve every dependency link and honest Jira status. New or
+unknown upstream blockers and scope drift still stop work; no transitive dependency
+waiver or CS-79/CS-101 acceptance is granted. The #234-specific dependency allowance
+must not be reused here.
+
+Require fresh **complete paginated branch/open-PR/ref inventory**, including all
+build lock/claim/receipt refs, and preserve the evidence. Any lock or claim blocks
+preparation pending separate reconciliation. Preserve all receipts and historical
+branches. Recheck current main, selected local branch/head (once created), related
+PR heads and build refs before edits, after interruption and before any separately
+authorised publication. Unexpected movement, competing writes, missing evidence,
+uncertain write outcomes or a new denial stop work. No cleanup, force push, expiry,
+claim substitution or alternate-route retry. Main integration after movement needs
+a separate bounded decision and revalidation; do not silently advance the baseline.
+
+Keep this work serial with all other repairs. A resumed session needs fresh named
+selection and evidence; end its edit authority at handoff before selecting another.
+Unknown historical owners remain unknown. The owner's existing bounded acceptance
+of unresolved-worker risk is retained, not proof of cessation or exclusive ownership.
+Stable heads, completed turns, CS-110's limited receipt, rulesets and expected-SHA
+leases are not writer fencing. The denied CS-111 archive and other previously denied
+actions remain binding. No new live admission lock, adoption or receipt is created.
+
+### Exact scope and tests
+
+- Preserve raw decimal text through typing/paste, edit/reopen and submit in the
+  affected Shopping quantity fields, using existing shared primitives where suitable.
+  No full route-wide CS-111 adoption or unrelated dialog/numeric redesign.
+- Normalise only already supported exact kg-to-g and L-to-ml aliases where needed
+  before persistence; otherwise provide honest validation for unsupported tiny
+  manual amounts. Preserve unit identity, ordinary edits and household ownership.
+  No new density, regional convention or general conversion catalogue.
+- Do not show genuinely nonzero recipe demand as zero. Preserve original recipe
+  text, source/contribution/receipt IDs and uncertainty. Do not guess, backfill,
+  rewrite or combine prior data. A display-only fix cannot be claimed to repair
+  stored quantities already rounded to zero.
+- Limit implementation to necessary Shopping presentation/domain/persistence-adapter
+  code, focused regression tests and its handover. No schema/migration/generated-type,
+  RLS/ACL, workflow, credential, provider, security-setting or hosted-data changes.
+  If a reliable correction needs a schema or broader contract change, stop for
+  separately approved scope; this policy does not approve it.
+- Cover typing and paste of 0.004, edit/reopen/submit, exact kg/g and L/ml cases,
+  unsupported units/tiny values, null/zero and ordinary quantities, precise recipe
+  demand and regeneration, manual opt-in/overrides and preserved provenance.
+  Distinguish mock UI/repository tests from real disposable PostgreSQL persistence
+  evidence and authenticated/hosted validation. No real households or emails.
+
+Run all applicable repository-required preflight, formatting, lint, types, app/build,
+browser/accessibility and database/security/compatibility checks; state unavailable
+checks honestly. Obtain independent review of the exact local diff/tree. If later
+publication is separately authorised, preserve history, recheck inventory/heads/refs,
+verify the published tree equals the tested/reviewed tree, and require all exact-head
+quality/governance checks before claiming ready. Local-only preparation is not an
+exemption from CI; CI remains pending until authorised publication.
+
+Human acceptance/merge, applicable hosted acceptance and protected release gates
+remain unchanged. CS-79 product acceptance, the precision correction's final
+verification and CS-101 hosted lifecycle are not satisfied by this proposal. #234's
+release/no-backup decision and #228/#232/#233 gates are separate and untouched.
+No deployment, production access, paid processing, scheduler restart, Jira transition
+or deadline commitment. Stop assigning this exception when the one correction is
+handed off/completed; further corrections require new explicit scope, not reuse of
+this permission. Preserve evidence; no automatic cleanup or expiry is introduced.
+
+## Ordinary atomic admission (currently frozen)
 
 Run `node scripts/engineering/admit-next-build.mjs` from an isolated clean checkout
 of current remote `main`. It verifies HEAD against remote main and repository
@@ -123,7 +347,7 @@ Never use elapsed time alone as evidence that a worker has stopped.
 
 ## Activation and rollback
 
-Activation is blocked until the runner has the required secure environment
+Atomic admission activation is blocked until the runner has the required secure environment
 credentials. Connector-only access is not a substitute for this command; do not
 create or transmit new credentials as part of this repair.
 
@@ -138,3 +362,118 @@ and obtain an approved compatible configuration rather than weakening protection
 To disable pickup, pause the Routine and manual admissions. Preserve outstanding
 claims; reverting code or setting the limit to 1 does not release existing builds.
 Merge and production release remain separate human approval gates.
+
+## Reviewed legacy recovery freeze (17 November 2026)
+
+This is the retained atomic recovery route and its historical rationale. Its
+requirements govern that command, not the supervised exception above.
+
+The owner explicitly authorised one scoped governance bootstrap despite the
+admission deadlock: “Yes action and then fix”. This authorises preparation and
+review of this recovery mechanism on a chore branch from verified main, without
+inventing a normal claim. It does not authorise feature repairs before adoption,
+merges, releases, scheduler activation, platform-permission bypasses or future
+bootstrap exceptions. The scheduler remains off. Existing release, review, tag
+protection, package and dependency gates remain in force.
+
+`engineering/build-recovery.json` freezes normal/manual/scheduled new admission.
+The executable admission command stops even if that file is missing or malformed.
+The diagnostic selector also stops when it sees the freeze. Returning to normal
+or parallel operation requires a separate reviewed code change and positive
+owner/safety verification; changing an environment limit cannot lift this freeze.
+Old checkouts do not acquire new behaviour automatically: the operator must stop
+all old workers and admission sources before any recovery execution.
+
+### Prepare an exact external manifest, without adopting anything
+
+After this mechanism is reviewed and accepted, an operator must positively stop
+and join all existing owners, resumed sessions and admission sources. Suspended,
+unknown, uncontactable or merely old sessions are not terminated. Keep provider
+stop/join receipts and all relevant session IDs. Review every branch, every open
+PR and every existing lock/claim, including historical/package/v2 branches and
+branches with no PR. Preserve every branch and its work. Do not infer review
+clearance from Jira status, a closed PR or an old worker report.
+
+Capture the complete paginated branch and open-PR inventory after those stops,
+using the schema consumed by `inventorySnapshot` and `validateRecovery` in
+[`build-recovery.mjs`](../../scripts/engineering/lib/build-recovery.mjs). Store the
+manifest outside the checkout as an immutable review artifact, not on a new
+repository branch. A manifest containing its own publishing branch's final SHA
+would be circular. Obtain explicit independent approval of the exact artifact,
+canonical JSON digest, current main SHA, repair scope and termination evidence.
+The approval record must name all four; an arbitrary URL is not approval. The
+command validates evidence presence and exact state, but cannot authenticate a
+human decision or prove that an external worker was actually joined. The operator
+must verify the linked records and maintain the exclusive freeze throughout.
+
+Manifest fields (no live inventory or termination assertion is supplied here):
+
+- `version: 1`, `mode: "frozen"`, `baseline`: exact accepted remote main SHA.
+- `adoption.approval`: immutable review-request/evidence URL. The independent
+  approval of the digest is recorded separately so it does not change the artifact.
+- `adoption.sourcesStopped`: evidence URL confirming every admission source is off.
+- `adoption.owners`: nonempty records with `id`, `state: "terminated"`, nonempty
+  `sessions` IDs, and `evidence` URL proving stop/join, including resumed sessions.
+- `adoption.branches`: every remote branch except main, each with `name`, exact
+  `sha`, `owner` matching a terminated owner, `evidence` and `classification` of
+  `historical`, `frozen` or `target`. Exactly one is `target`. Historical means
+  preserved and stopped, never ignored: any movement still blocks adoption.
+- `adoption.pulls`: every open PR, with `number`, `branch`, `sha`, `repository`,
+  `base`, `baseRepository`, `baseSha`, `draft`. Every PR must map to its exact local
+  branch and target `main` in `rachcollo/cooksmith`. Its head repository must also
+  be `rachcollo/cooksmith`. Preserve the exact reported PR `baseSha`, even when it
+  predates current main; never replace it with the invocation baseline. Current
+  remote main is pinned and revalidated separately. Any change to the reported
+  PR base SHA, branch or repository still invalidates the inventory. Foreign or missing head
+  branches block recovery until explicitly reconciled through separate review.
+- `adoption.target`: `key`, `branch`, `sha`, `pr`, complete `dependencies` key list
+  and `scope` URL identifying the approved existing package and bounded repair.
+
+Compute the reviewed digest as SHA-256 of `JSON.stringify(JSON.parse(file))`.
+Changing any manifest field, even a historical classification, requires a new
+review. A new/missing/moving branch, changed PR draft/head/base, or moved main
+requires stopping and refreshing review, never silently editing the artifact.
+Package completeness still applies; only package lifecycle status may additionally
+be Building, In Progress, In Review or Testing for an existing repair. Jira must
+be In Progress, In Review or Testing. Ready/codex-ready selection remains the gate
+for ordinary new work, which is frozen. Unknown Jira links fail closed; every
+upstream and declared dependency (including build-safety metadata) must be Done.
+No metadata is added merely to manufacture eligibility.
+
+### Execute one adopted repair only after separate acceptance
+
+In an isolated clean checkout of that exact current remote main, with the existing
+secure GitHub and Jira credentials and independently verified review record, run:
+
+```sh
+node scripts/engineering/adopt-existing-build.mjs EXACT_MAIN_SHA /secure/path/reviewed-manifest.json REVIEWED_CANONICAL_JSON_SHA256
+```
+
+This command is not run by this governance change. Connector-only substitution,
+new credentials and weakening tag protection remain prohibited. First validate
+API permissions in a disposable repository using the existing API-contract plan.
+
+The command atomically creates the same fixed admission lock with a fresh owner,
+refuses any existing claim, verifies main, inventory, dependencies and lock
+ownership, creates an immutable `cooksmith-builds/recovery/<manifest-digest>`
+consumption receipt, repeats verification, creates the ordinary per-story claim
+with exact adoption metadata, verifies again, and removes only its owned lock.
+Only successful returned permission authorises the one exact existing branch
+repair. Record the receipt, claim, owner and baseline; recheck target/main immediately
+before editing. Stop if scope, ownership or any frozen work changes. The new owner
+must remain the sole writer until explicitly stopped and reconciled.
+
+Any failure preserves committed receipts and claims, and preserves the lock unless
+an unlock actually completed. A lost response never authorises work. Do not retry
+a possibly successful operation to recover permission; reconcile first. Stale
+locks/claims are not automatically retired. The existing stopped-owner recovery
+procedure still governs them. Never delete consumption receipts: they prevent
+reuse of a reviewed manifest even after its claim is retired. Another repair needs
+fresh evidence, fresh review and a different manifest, after the previous owner and
+all implementation/review/release occupancy have been reconciled. There is no TTL.
+
+For atomic CS-111 adoption, positive owner termination and an exact approved
+external manifest for PR #231 remain required. Supervised manual repair instead
+follows the exception above once that policy is accepted and the repair selected.
+Its React onCancel repair remains outside this governance change. No other feature
+branch, including CS-113, is published, edited or adopted here.

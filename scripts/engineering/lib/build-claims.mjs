@@ -66,6 +66,9 @@ export function githubClaimStore(config) {
         }),
       )
     },
+    async assertOwned(ref, sha) {
+      if ((await read(ref)) !== sha) throw new Error('Ref owner changed; stop')
+    },
     async removeOwned(ref, sha) {
       if ((await read(ref)) !== sha) throw new Error('Ref owner changed; refusing deletion')
       await request(`/git/refs/${ref}`, 'DELETE')

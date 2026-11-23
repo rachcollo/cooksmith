@@ -84,6 +84,13 @@ Run the full quality suite required by `docs/engineering/CODEX_BUILD_RULES.md` a
 ## Deferred Work and Open Questions
 
 - Do not start until CS-79 and CS-101 are merged; this package assumes their identity and structure code as the baseline.
+- Only the bounded existing #234 engineering repair may use the
+  [supervised merged-baseline allowance](../../docs/operations/BUILD_ADMISSION.md#selected-234-repair-merged-baseline-versus-release-acceptance)
+  after that proposal is accepted and merged. This does not complete either upstream
+  story, alter dependency links, approve #228 adoption or grant release authority.
+  CS-79 conversion product acceptance and CS-101 hosted Shopping/Get Ahead lifecycle
+  acceptance remain required before the relevant production release; Jira Done follows
+  actual final checks.
 
 ## Pull Request
 

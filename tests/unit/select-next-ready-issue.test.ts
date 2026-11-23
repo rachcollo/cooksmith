@@ -2,12 +2,22 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   resolveMaxParallelBuilds,
-  selectNextReadyIssue,
+  selectNextReadyIssue as selectFromCheckout,
 } from '../../scripts/engineering/select-next-ready-issue.mjs'
+
+let selectorCwd: string
+beforeEach(() => {
+  selectorCwd = mkdtempSync(join(tmpdir(), 'selector-isolated-'))
+})
+afterEach(() => {
+  rmSync(selectorCwd, { recursive: true, force: true })
+})
+const selectNextReadyIssue = (options: Record<string, unknown>) =>
+  selectFromCheckout({ cwd: selectorCwd, ...options })
 
 const jiraConfig = {
   baseUrl: 'https://example.atlassian.net',
@@ -81,6 +91,18 @@ afterEach(() => {
 })
 
 describe('selectNextReadyIssue', () => {
+  it('stops frozen diagnostic selection before any network request', async () => {
+    mkdirSync(join(selectorCwd, 'engineering'))
+    writeFileSync(
+      join(selectorCwd, 'engineering/build-recovery.json'),
+      JSON.stringify({ version: 1, mode: 'frozen' }),
+    )
+    const fetch = mockFetch()
+    vi.stubGlobal('fetch', fetch)
+    await expect(selectNextReadyIssue({ jiraConfig, githubConfig })).rejects.toThrow('frozen')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('allows CS-111 while its downstream CS-122 is unfinished', async () => {
     await withReadyPackageFixture('CS-111', async (cwd) => {
       vi.stubGlobal(

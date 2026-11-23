@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { assertNormalAdmission } from './lib/build-recovery.mjs'
 import { readBlockingLink } from './lib/jira-dependencies.mjs'
 // Diagnostic selection only; use admit-next-build.mjs before starting any work.
 import { readSafety, verifySafety, independent } from './lib/build-safety.mjs'
@@ -63,6 +66,7 @@ export async function selectNextReadyIssue({
   maxParallelBuilds = DEFAULT_MAX_PARALLEL_BUILDS,
   claims = [],
 } = {}) {
+  if (existsSync(join(cwd, 'engineering/build-recovery.json'))) assertNormalAdmission(cwd)
   maxParallelBuilds = resolveMaxParallelBuilds(maxParallelBuilds)
   const openPulls = await listOpenPullRequests(githubConfig)
   const branches = await listBranches(githubConfig)

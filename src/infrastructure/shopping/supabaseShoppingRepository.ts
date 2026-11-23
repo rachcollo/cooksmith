@@ -1,3 +1,4 @@
+import { shoppingItemInputSchema } from '../../domain/shopping/validationSchemas'
 import { allocateHouseholdStock } from '../../domain/shopping/stockAllocation'
 import { mapPantryRow, type PantryRow } from '../pantry/supabasePantryRepository'
 import { createSupabasePantryRepository } from '../pantry/supabasePantryRepository'
@@ -408,6 +409,7 @@ export function createSupabaseShoppingRepository(
     },
 
     async create(householdId, input) {
+      input = shoppingItemInputSchema.parse(input)
       const result = await database
         .from('shopping_list_items')
         .insert({
@@ -469,6 +471,7 @@ export function createSupabaseShoppingRepository(
       shoppingError(result.error)
     },
     async updatePurchase(householdId, inputs) {
+      inputs = inputs.map((input) => ({ ...input, ...shoppingItemInputSchema.parse(input) }))
       const result = await database.rpc(
         'update_shopping_purchase' as never,
         { target_household_id: householdId, item_inputs: inputs } as never,

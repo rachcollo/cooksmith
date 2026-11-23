@@ -129,7 +129,28 @@ export function buildPlanAdditions(
   }
 
   return {
-    additions: [...merged.values()],
+    additions: [...merged.values()].map((item) => {
+      // v2 partitions storage by the original v1 purchase name. Apply the precision
+      // fallback at that boundary, before deriving the matching v2 total. Original
+      // recipe evidence remains unchanged for honest nonzero demand presentation.
+      const totals = new Map<string, number>()
+      for (const source of item.sourceQuantities ?? []) {
+        const key = source.purchaseName ?? ''
+        totals.set(key, (totals.get(key) ?? 0) + (source.purchaseQuantity ?? 0))
+      }
+      const sourceQuantities = item.sourceQuantities?.map((source) => {
+        const total = totals.get(source.purchaseName ?? '') ?? 0
+        return total > 0 && total < 0.01 ? { ...source, purchaseQuantity: null } : source
+      })
+      return {
+        ...item,
+        sourceQuantities,
+        quantity: sourceQuantities?.some((source) => source.purchaseQuantity === null)
+          ? null
+          : (sourceQuantities?.reduce((sum, source) => sum + (source.purchaseQuantity ?? 0), 0) ??
+            item.quantity),
+      }
+    }),
     linkedMealCount,
     unlinkedMealCount,
     alreadyListedNames: [...alreadyListed.values()],

@@ -43,4 +43,12 @@ See the permanent [architecture decision standards](../../engineering/ARCHITECTU
 
 - [020: Durable build admission](020-durable-build-admission.md) (Proposed)
 
-- [022: Upgrade purchase identity while retaining source and receipt references](022-purchase-identity-v2-stable-sources.md) (Proposed)
+- [021: Reviewed serial legacy build recovery](021-reviewed-legacy-build-recovery.md) (Proposed).
+
+- [022: Supervised serial existing-PR repair](022-supervised-existing-pr-repair.md) (Proposed): bounded manual exception; ordinary pickup stays frozen.
+
+- [023: Merged prerequisites for the bounded #234 repair](023-cs234-merged-baseline-repair.md) (Proposed): release acceptance retained.
+
+- [025: One local CS-79 quantity correction](025-cs79-local-quantity-preparation.md) (Proposed): inactive until reviewed, accepted and merged; publication separately authorised. Number 024 is already proposed by open invitation PR #232.
+
+- [026: Upgrade purchase identity while retaining source and receipt references](026-purchase-identity-v2-stable-sources.md) (Proposed)

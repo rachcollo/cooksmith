@@ -215,3 +215,29 @@ describe('Shopping has no release maintenance burden', () => {
     },
   )
 })
+
+it('retains precise combined drafts and ids while rejecting unrepresentable overrides', async () => {
+  const repository = mount([
+    item('tiny-a', 'saffron', null, 'g', {
+      sourceQuantities: [{ name: 'saffron', quantity: '0.004', unit: 'g' }],
+    }),
+    item('tiny-b', 'saffron', 0, 'g'),
+  ])
+  await userEvent.click(await screen.findByRole('button', { name: 'Edit saffron' }))
+  const dialog = screen.getByRole('dialog', { name: 'Edit saffron' })
+  const quantity = within(dialog).getByLabelText('Quantity (g)')
+  expect(quantity).toHaveValue('0.004')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }))
+  expect(repository.updatePurchase).not.toHaveBeenCalled()
+  expect(within(dialog).getByText(/at most two decimal places/)).toBeVisible()
+  expect(quantity).toHaveValue('0.004')
+  await userEvent.clear(quantity)
+  await userEvent.type(quantity, '0.25')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }))
+  expect(repository.updatePurchase).toHaveBeenCalledWith(householdId, [
+    expect.objectContaining({ id: 'tiny-a', quantity: 0.25, unit: 'g' }),
+    expect.objectContaining({ id: 'tiny-b', quantity: 0, unit: 'g' }),
+  ])
+  await userEvent.click(screen.getByRole('button', { name: 'Edit saffron' }))
+  expect(screen.getByLabelText('Quantity (g)')).toHaveValue('0.25')
+})
