@@ -1,44 +1,36 @@
 import { describe, expect, it, vi } from 'vitest'
-
 import { createSupabaseHouseholdPeopleRepository } from '../../src/infrastructure/households/supabaseHouseholdPeopleRepository'
 import type { CooksmithSupabaseClient } from '../../src/infrastructure/auth/supabaseAuthClient'
 
 describe('household invitation delivery', () => {
-  it('uses the existing PKCE confirmation callback and Resend-backed Supabase email channel', async () => {
-    const signInWithOtp = vi.fn(async () => ({ error: null }))
-    const rpc = vi.fn(() => ({
-      single: async () => ({
-        data: {
-          invitation_id: 'invitation-1',
-          invitation_token: 'a'.repeat(64),
-          invited_email: 'member@example.test',
-          invitation_expires_at: '2026-08-01T00:00:00Z',
-        },
-        error: null,
-      }),
-    }))
-    const client = {
+  it('delegates invite and resend to the server without Auth calls or token RPCs', async () => {
+    const invoke = vi.fn(async () => ({ data: { status: 'sent' }, error: null }))
+    const signInWithOtp = vi.fn()
+    const rpc = vi.fn()
+    const repository = createSupabaseHouseholdPeopleRepository({
+      functions: { invoke },
       auth: { signInWithOtp },
       schema: () => ({ rpc }),
-    } as unknown as CooksmithSupabaseClient
-
-    await createSupabaseHouseholdPeopleRepository(client).invite(
-      'household-1',
-      'member@example.test',
+    } as unknown as CooksmithSupabaseClient)
+    await repository.invite('household-1', 'member@example.test')
+    await repository.resend('invitation-1')
+    expect(invoke).toHaveBeenNthCalledWith(1, 'send-household-invitation', {
+      body: { action: 'invite', householdId: 'household-1', email: 'member@example.test' },
+    })
+    expect(invoke).toHaveBeenNthCalledWith(2, 'send-household-invitation', {
+      body: { action: 'resend', invitationId: 'invitation-1' },
+    })
+    expect(signInWithOtp).not.toHaveBeenCalled()
+    expect(rpc).not.toHaveBeenCalled()
+  })
+  it('shows safe retry guidance without exposing provider errors', async () => {
+    const invoke = vi.fn(async () => ({ data: null, error: new Error('private-provider-token') }))
+    const repository = createSupabaseHouseholdPeopleRepository({
+      functions: { invoke },
+      schema: () => ({}),
+    } as unknown as CooksmithSupabaseClient)
+    await expect(repository.resend('invitation-1')).rejects.toThrow(
+      'Only the newest link will work',
     )
-
-    expect(rpc).toHaveBeenCalledWith('create_household_invitation', {
-      p_household_id: 'household-1',
-      p_email: 'member@example.test',
-    })
-    expect(signInWithOtp).toHaveBeenCalledWith({
-      email: 'member@example.test',
-      options: {
-        emailRedirectTo:
-          'http://localhost:3000/auth/confirm?returnTo=%2Finvitations%2Faccept%3Ftoken%3D' +
-          'a'.repeat(64),
-        shouldCreateUser: true,
-      },
-    })
   })
 })

@@ -20,7 +20,7 @@ select ok(
 );
 select ok(
   not has_table_privilege('anon', 'cooksmith.household_invitations', 'select')
-  and has_table_privilege('authenticated', 'cooksmith.household_invitations', 'select'),
+  and has_column_privilege('authenticated', 'cooksmith.household_invitations', 'id', 'select'),
   'Anonymous access is denied and authenticated access is policy gated'
 );
 select results_eq(
@@ -29,7 +29,7 @@ select results_eq(
     join pg_catalog.pg_namespace on pg_namespace.oid = pg_proc.pronamespace
     where pg_namespace.nspname = 'cooksmith_private'
       and pg_proc.proname in (
-        'create_household_invitation', 'resend_household_invitation',
+        'reserve_household_invitation',
         'cancel_household_invitation', 'accept_household_invitation',
         'remove_household_member', 'list_household_members'
       )
@@ -39,7 +39,7 @@ select results_eq(
         where setting like 'search_path=%'
           and replace(setting, 'search_path=', '') in ('', '""')
       )$$,
-  array[6],
+  array[5],
   'Every privileged invitation function has an empty search path'
 );
 
@@ -61,6 +61,8 @@ insert into auth.users (
   ('00000000-0000-0000-0000-000000000000', '60000000-0000-4000-8000-000000000005',
    'authenticated', 'authenticated', 'other-owner@test.invalid',
    '{"provider":"email","providers":["email"]}', '{}', now(), now());
+
+update auth.users set email_confirmed_at = now() where email like '%@test.invalid';
 
 insert into cooksmith.profiles (id, display_name, onboarding_step, onboarding_completed_at)
 values
@@ -103,8 +105,8 @@ select throws_ok(
   $$select cooksmith.create_household_invitation(
     '61000000-0000-4000-8000-000000000001', 'NEW-PERSON@test.invalid'
   )$$,
-  '23505', 'An active invitation already exists for this email.',
-  'Normalised duplicate active invitations are rejected'
+  'P0001', 'Invitation rate limit reached.',
+  'Duplicate clicks are rate limited across normalised recipient addresses'
 );
 select throws_ok(
   $$select cooksmith.create_household_invitation(
